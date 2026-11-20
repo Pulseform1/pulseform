@@ -101,6 +101,7 @@ export class Grass {
         .replace('#include <map_fragment>', 'diffuseColor.rgb = vGCol;')
         .replace('float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;', 'float faceDirection = 1.0;')
         .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+reflectedLight.directSpecular *= 0.0; reflectedLight.indirectSpecular *= 0.0;   // no glints: edge-on blades caught the light as bright specks
 reflectedLight.indirectDiffuse *= vGAo;
 { vec3 sv = normalize( ( viewMatrix * vec4( uSunDirF, 0.0 ) ).xyz ); float bl = pow( max( dot( - geometryViewDir, sv ), 0.0 ), 2.0 );
   reflectedLight.directDiffuse += diffuseColor.rgb * uSunCol * 0.12 * bl * vGAo; }   // a soft glow through the blades against the sun, not glints`);

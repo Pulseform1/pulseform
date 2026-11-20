@@ -72,10 +72,10 @@ export function flora(world, cx, cz, C) {
     const f = world.forest(x, z, s), q = hash2(gx, gz, seed + 14), rot = hash2(gx, gz, seed + 15) * 6.283, sz = hash2(gx, gz, seed + 16);
     const camp = world.camp ? Math.hypot(x - world.camp.x, z - world.camp.z) : 1e9;
     if (camp < 13) continue;
-    const rocky = smooth(0.9, 0.7, nrm[1]) + s.m * .3;
+    const rocky = smooth(0.9, 0.7, nrm[1]) + s.m * .3 + smooth(70, 180, s.h) * .6;   // the mountains: boulders and scree up high
     const edge = 4 * f * (1 - f);
     if (r < 0.02 + 0.06 * rocky) { // rocks
-      const big = q < 0.12 + 0.2 * rocky;
+      const big = q < 0.12 + 0.2 * Math.min(1, rocky);
       props.push(x, s.h - (big ? .45 : .06), z, rot, big ? 1.1 + sz * 2.4 : 0.22 + sz * .5, big ? 5 : 4); continue;
     }
     if (s.h < 1.3) { if (q < 0.25 && nrm[1] > .85) props.push(x, s.h, z, rot, .7 + sz * .6, 8); continue; }

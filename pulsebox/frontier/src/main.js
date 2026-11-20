@@ -156,19 +156,20 @@ async function start(opts) {
 const SLOT_NAME = { longrifle: 'Sniper', pump: 'Shotgun', double: 'Double', revolver: 'Pistol', rod: 'Rod' };
 {
   const row = $('#slots .row');
-  row.innerHTML = ORDER.map((k, i) => `<button type="button" data-slot="${k}"><kbd>${i + 1}</kbd>${SLOT_NAME[k] || GUNS[k].name}</button>`).join('') + '<button type="button" class="drone" data-slot="drone"><kbd>G</kbd>Drone</button>';
+  row.innerHTML = ORDER.map((k, i) => `<button type="button" data-slot="${k}"><kbd>${i + 1}</kbd>${SLOT_NAME[k] || GUNS[k].name}</button>`).join('') + '<button type="button" class="light" data-slot="light"><kbd>6</kbd>Light</button><button type="button" class="drone" data-slot="drone"><kbd>G</kbd>Drone</button>';
   row.addEventListener('click', e => { const b = e.target.closest('[data-slot]'); if (!b || G.state !== 'play') return; const k = b.dataset.slot;
-    if (k === 'drone') input.press('KeyG'); else if (!G.drone.on) G.weapons.select(G.weapons.want === k && k === 'rod' ? null : k); });
+    if (k === 'drone') input.press('KeyG'); else if (k === 'light') toggleTorch(); else if (!G.drone.on) G.weapons.select(G.weapons.want === k && k === 'rod' ? null : k); });
 }
 function drawSlots() {
   // hidden while the drone flies: its own screen lists its keys
   const el = $('#slots'), show = (G.state === 'play' || G.state === 'ui') && !G.drone.on; if (el.hidden === show) { el.hidden = !show; if (show) G._slotLit = performance.now(); } if (!show) return;
   const W = G.weapons, D = G.drone, touch = input.isTouch, now = performance.now();
-  const key = touch + '|' + W.want + '|' + ORDER.map(k => GUNS[k].rod ? '' : (W.ammo[k] + W.reserve[GUNS[k].ammo] > 0 ? 1 : 0)).join('') + '|' + (D.battery < .2) + '|' + !!D.landed;
+  const key = touch + '|' + W.want + '|' + ORDER.map(k => GUNS[k].rod ? '' : (W.ammo[k] + W.reserve[GUNS[k].ammo] > 0 ? 1 : 0)).join('') + '|' + (D.battery < .2) + '|' + !!D.landed + '|' + G.torchOn;
   if (key !== G._slotKey) {   // something changed: show it brightly for a few seconds
     if ((G._slotKey || '').split('|')[1] !== String(W.want)) G._slotLit = now;
-    G._slotKey = key; el.querySelector('.cap').textContent = touch ? 'Tap to switch' : '1–5 or scroll to switch · G drone';
+    G._slotKey = key; el.querySelector('.cap').textContent = touch ? 'Tap to switch' : '1–5 or scroll to switch · 6 light · G drone';
     for (const b of el.querySelectorAll('[data-slot]')) { const k = b.dataset.slot;
+      if (k === 'light') { b.classList.toggle('on', G.torchOn); continue; }
       if (k === 'drone') { b.classList.toggle('low', D.battery < .2); b.classList.toggle('out', !!D.landed); b.title = D.landed ? 'The drone is landed out there: G flies it from where it sits, E packs it when you reach it' : ''; continue; }
       const g = GUNS[k]; b.classList.toggle('on', W.want === k); b.classList.toggle('empty', !g.rod && W.ammo[k] + W.reserve[g.ammo] === 0); }
   }
@@ -224,6 +225,10 @@ G.onPanel = open => { if (open) { G.state = 'ui'; input.unlock(); } else if (G.s
 
 // the hand that carries the lantern: hangs low on the left, sways as you walk
 G.handL = new THREE.Group(); camera.add(G.handL); scene.add(camera);
+// the flashlight: a beam from where you look, on and off with 6 (it is always in the scene, only dark when off, so turning
+// it on never stalls the game while the lights are rebuilt)
+G.torch = new THREE.SpotLight(0xfff1d6, 0, 90, .42, .5, 1); G.torch.position.set(.18, -.12, 0); camera.add(G.torch); G.torch.target.position.set(.05, -.02, -10); camera.add(G.torch.target); G.torchOn = false;
+function toggleTorch(on = !G.torchOn) { G.torchOn = on; G.torch.intensity = on ? 150 : 0; audio.click && audio.click(); }
 
 // ---------- frame ----------
 let last = performance.now(), fpsT = 0, fpsN = 0, fps = 60;
@@ -256,6 +261,7 @@ function step(dt) {
     player.update(dt, input, (x, z, r) => collide(x, z, r));
     ORDER.forEach((k, i) => { if (input.hit('Digit' + (i + 1))) Wp.select(Wp.want === k && k === 'rod' ? null : k); });
     if (input.hit('KeyH')) Wp.select(null);
+    if (input.hit('Digit6')) toggleTorch();
     if (input.hit('KeyP')) G.drone.pinLook();   // pin the spot you are looking at (through the scope too)
     if (input.wheel && !(Wp.scoped > .5) && !(G.fishing && G.fishing.busy)) Wp.cycle(input.wheel > 0 ? 1 : -1);
     if (input.hit('KeyF') && G.health < 100) eat();

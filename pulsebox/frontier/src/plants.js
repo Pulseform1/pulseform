@@ -237,8 +237,9 @@ function foliageMat(tex, key, k, uKOut) {
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uSunCol; uniform vec3 uSunDirF;')
       .replace('float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;', 'float faceDirection = 1.0;')
       .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
-{ vec3 sv = normalize( ( viewMatrix * vec4( uSunDirF, 0.0 ) ).xyz ); float bl = pow( max( dot( - geometryViewDir, sv ), 0.0 ), 5.0 );
-  reflectedLight.directDiffuse += diffuseColor.rgb * uSunCol * ( 0.08 + 0.35 * bl ) * vColor.r; }`);
+reflectedLight.directSpecular *= 0.0; reflectedLight.indirectSpecular *= 0.0;   // leaves seen edge-on no longer sparkle
+{ vec3 sv = normalize( ( viewMatrix * vec4( uSunDirF, 0.0 ) ).xyz ); float bl = pow( max( dot( - geometryViewDir, sv ), 0.0 ), 3.0 );
+  reflectedLight.directDiffuse += diffuseColor.rgb * uSunCol * ( 0.06 + 0.14 * bl ) * vColor.r; }`);
   };
   if (uKOut) uKOut.uK = w.uK;
   return m;

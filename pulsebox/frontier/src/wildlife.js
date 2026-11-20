@@ -32,13 +32,13 @@ const ZONES = {
   heart: { k: 'heart', label: 'Heart & lungs', mult: 3, vital: true }, shoulder: { k: 'shoulder', label: 'Shoulder', mult: 1.8, lame: .3 },
   gut: { k: 'gut', label: 'Gut', mult: 1 }, hind: { k: 'hind', label: 'Hindquarter', mult: 1.3, lame: .25 }, leg: { k: 'leg', label: 'Leg', mult: .6, lame: .35 },
 };
-// the animals are drawn about twice life size (the small game a little more), so a shot can be placed: head, shoulder, rump
-const SIZE = { rabbit: 2.4, duck: 2.2, turkey: 2.2 };
+// the animals are drawn about two and a half times life size (the small game a little more), so a shot can be placed
+const SIZE = { rabbit: 2.8, duck: 2.6, turkey: 2.6 };
 class Animal {
   constructor(W, kind, x, z, group, rnd) {
     this.W = W; this.kind = kind; this.sp = SPECIES[kind]; this.group = group;
     const m = this.m = makeAnimal(kind, rnd);
-    this.size = SIZE[kind] || 2; this.reach = .6 + .4 * this.size; this.lame = 0;
+    this.size = SIZE[kind] || 2.4; this.reach = .6 + .4 * this.size; this.lame = 0;
     this.scale = (this.sp.scale[0] + (this.sp.scale[1] - this.sp.scale[0]) * ((rnd * 7.3) % 1)) * this.size;
     m.mesh.scale.setScalar(this.scale); m.mesh.rotation.order = 'YXZ'; W.scene.add(m.mesh);
     this.pos = new THREE.Vector3(x, 0, z); this.yaw = Math.random() * TAU; this.speed = 0; this.phase = Math.random();
@@ -59,7 +59,8 @@ class Animal {
     const w = this.W.world, h = w.height(x, z);
     if (this.sp.swim) return h < -.2; // ducks keep to the water
     if (h < (this.sp.water ? -1.1 : -.25)) return false;
-    let blocked = false; this.W.flora.near(x, z, .35 * this.scale, () => { blocked = true; }); if (blocked) return false;
+    // steers by about its real footprint, so the bigger look does not wedge it in the trees
+    let blocked = false; this.W.flora.near(x, z, .42 * this.scale / this.size, () => { blocked = true; }); if (blocked) return false;
     const n = w.normal(x, z, this._n || (this._n = [0, 1, 0]), 1.5); if (n[1] < (this.sp.climber ? .3 : this.sp.predator === 'cougar' ? .55 : .72)) return false;
     const c = this.W.camp; if (c && Math.hypot(x - c.c.x, z - c.c.z) < 12) return false;
     return true;
@@ -78,6 +79,7 @@ class Animal {
     this.speed += (speed - this.speed) * Math.min(1, dt * 3);
   }
   move(dt) {
+    if (this.lame > .5 && this.state !== 'down' && this.state !== 'dead') this.speed = Math.min(this.speed, this.sp.walk * .6);   // badly wounded: it can only limp
     if (this.speed < .01) return;
     const nx = this.pos.x + Math.sin(this.yaw) * this.speed * dt, nz = this.pos.z + Math.cos(this.yaw) * this.speed * dt;
     if (this.state === 'flee' || this.canGo(nx, nz) || !this.canGo(this.pos.x, this.pos.z)) { this.pos.x = nx; this.pos.z = nz; }
@@ -170,6 +172,7 @@ class Animal {
     return this.finish(dt, gait, head, alertK, lie);
   }
   finish(dt, gait = this.gait, head = 0, alertK = this.state === 'stalk' ? 1 : 0, lie = 0) {
+    if (this.lame > .5 && (gait === 'run' || gait === 'trot')) gait = 'walk';
     const sp = this.sp;
     if (this.state !== 'fly') this.move(dt);
     this.jawK += ((this.state === 'attack' || this.state === 'rear' || (this.state === 'charge' && sp.predator) || this.state === 'circle' ? 1 : 0) * (this.state === 'circle' ? .35 : 1) - this.jawK) * Math.min(1, dt * 6);
@@ -243,15 +246,18 @@ class Animal {
   hit(zone, power) {
     if (this.state === 'down' || this.state === 'dead' || this.state === 'fallfly') return false;
     const z = zone && typeof zone === 'object' ? zone : zone ? ZONES.heart : ZONES.gut; this.lastZone = z;
-    this.hp -= this.sp.small || this.sp.bird ? 99 : power * z.mult;   // small game drops to any hit; the rest by where it lands
-    if (z.lame && this.hp > 0) this.lame = Math.min(.6, this.lame + z.lame);
+    // a good shot (head, neck, heart and lungs, the shoulder over them) drops it where it stands; anything else wounds it,
+    // and a wounded animal can only limp: you can follow it and finish it
+    const good = z.vital || z === ZONES.shoulder;
+    if (this.sp.small || this.sp.bird || good) this.hp = 0;
+    else { this.hp -= power * z.mult; if (this.hp > 0) this.lame = .85; }
     if (this.hp > 0) {
       this.wounded = true; this.aware = 2; const sp = this.sp;
       if ((sp.bear || sp.ornery || sp.predator === 'cougar') && this.dist < 90 && this.state !== 'attack' && this.state !== 'charge') { this.real = true; this.setState('charge', 9); this.W.call(sp.bear ? 'roar' : sp.ornery ? 'bellow' : 'scream', this); }
       if (sp.predator === 'wolf' && Math.random() < .5) { this.group.scattered = true; this.W.alarm(this.group, this.W.lastShot || this.pos); }
       return false;
     }
-    this.state = this.state === 'fly' ? 'fallfly' : 'down'; this.downT = 0; this.rollDir = Math.random() < .5 ? 1 : -1; this.speed *= .5; this.rear = 0; this.leapY = 0;
+    this.state = this.state === 'fly' ? 'fallfly' : 'down'; this.downT = 0; this.rollDir = Math.random() < .5 ? 1 : -1; this.speed *= this.state === 'fallfly' ? .5 : .08; this.rear = 0; this.leapY = 0;   // down in its tracks
     if (this.sp.predator === 'wolf') { const left = this.group.members.filter(m => m.state !== 'down' && m.state !== 'dead'); if (left.length <= 1 || Math.random() < .5) { this.group.scattered = true; this.W.alarm(this.group, this.pos); } }
     return true;
   }

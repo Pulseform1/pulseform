@@ -144,12 +144,12 @@ button.on{background:#6b4a22;border-color:var(--gold)}
 body.touch #drone .dtouch{display:flex}body.touch #drone .dkeys{display:none}
 #drone .dtouch button{min-width:58px;height:52px;border-radius:12px;background:rgba(14,30,14,.6);border:1px solid rgba(220,255,210,.5);color:#d8ffd0;font:14px Georgia,serif}
 #drone .dtouch .tfire{background:rgba(120,90,20,.7);border-color:#ffd27a;color:#fff4dc}
-body.nv #game{filter:grayscale(1) sepia(1) hue-rotate(58deg) saturate(2.6) contrast(1.15) brightness(1.1)}
-body.nv #drone::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.6));}
+body.nv #game{filter:grayscale(1) contrast(1.12) brightness(1.08)}
+body.nv #drone::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.45));}
 /* body heat in night vision */
 #heat{position:fixed;inset:0;pointer-events:none;z-index:3}
-#heat i{position:absolute;left:0;top:0;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,230,.95),rgba(220,255,160,.5) 45%,transparent 70%);display:none}
-#heat i.hot{background:radial-gradient(circle,rgba(255,250,220,1),rgba(255,200,120,.6) 45%,transparent 70%)}
+#heat i{position:absolute;left:0;top:0;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:none;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 6px rgba(0,0,0,.6);display:none}
+#heat i.hot{border-color:#fff;border-width:3px}
 /* pins */
 #pins{position:fixed;inset:0;pointer-events:none;z-index:3}
 #pins .pin{position:absolute;left:0;top:0;display:none;white-space:nowrap}
@@ -177,3 +177,5 @@ body.touch #slots button kbd{display:none}
 /* where the shot landed */
 #zone{position:absolute;left:50%;top:calc(50% + 26px);transform:translateX(-50%);font:12px Georgia,serif;letter-spacing:.14em;color:#efe2c4;text-shadow:0 1px 3px #000,0 0 8px #000;opacity:0;transition:opacity .35s;white-space:nowrap;pointer-events:none;z-index:3}
 #zone.on{opacity:1;transition:none}#zone.vital{color:#ffd27a}#zone.lame{color:#ffb08a}
+/* the flashlight's slot */
+#slots button.light.on{background:rgba(70,62,30,.75);border-color:#fff1b8;color:#fff8e0}

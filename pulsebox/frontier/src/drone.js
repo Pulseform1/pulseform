@@ -1,6 +1,6 @@
 // The scout drone (G): send it up from where you stand and fly it out over the country to look for game.
-// Day vision is the plain camera; night vision (N) brightens the dark to a green picture and shows the body heat of
-// every animal in view as a small marker. Put the centre ring on an animal and click (or E) to pin it: the pin
+// Day vision is the plain camera; night vision (N) brings the dark up nearly to daylight in black and white, and rings
+// the body heat of every animal in view. Put the centre ring on an animal and click (or E) to pin it: the pin
 // follows that animal and stays on your screen, the compass and the map once you are back on foot, so you can walk
 // straight to it. The battery runs down in the air and charges again while the drone is packed; while you fly, you
 // stand still and blind where you left yourself, so mind the wolves.
@@ -63,7 +63,8 @@ export class Drone {
   }
   setVision(nv) { this.nv = nv; this.applyVision(this.on && nv); $('#dronemode').textContent = nv ? 'NIGHT VISION' : 'DAY VISION'; }
   applyVision(on) {
-    this.r.toneMappingExposure = on ? this.baseExposure * (1.25 + 2.6 * this.G.sky.night) : this.baseExposure;
+    // night vision: the dark brought up nearly to daylight, shown in black and white (the filter is in style.css)
+    this.r.toneMappingExposure = on ? this.baseExposure * (1.15 + 8 * this.G.sky.night) : this.baseExposure;
     document.body.classList.toggle('nv', on);
   }
   // the animal under the centre ring, if any (closest to the line of sight, not hidden behind a hill)

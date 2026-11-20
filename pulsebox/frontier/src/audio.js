@@ -111,31 +111,31 @@ export class Audio {
     if (!this.ctx || this.ctx.state !== 'running') return;
     const c = this.ctx, now = c.currentTime, sm = (p, v, k = .25) => p.setTargetAtTime(v, now, k);
     // the background is kept low and soft: a breath of wind, the water, birds now and then
-    sm(this.wind.g.gain, .012 + .06 * e.wind + .03 * e.rain); sm(this.wind.f.frequency, 220 + 360 * e.wind);
-    sm(this.windHi.g.gain, (.0015 + .008 * e.wind) * (.5 + e.forest)); sm(this.windHi.f.frequency, 700 + 900 * e.wind);
-    sm(this.rain.g.gain, e.rain * (e.inTent ? .04 : .09)); sm(this.rainLow.g.gain, e.rain * (e.inTent ? .3 : .07));
+    sm(this.wind.g.gain, .006 + .03 * e.wind + .015 * e.rain); sm(this.wind.f.frequency, 200 + 300 * e.wind);
+    sm(this.windHi.g.gain, (.0006 + .003 * e.wind) * (.5 + e.forest)); sm(this.windHi.f.frequency, 700 + 900 * e.wind);
+    sm(this.rain.g.gain, e.rain * (e.inTent ? .03 : .06)); sm(this.rainLow.g.gain, e.rain * (e.inTent ? .2 : .045));
     sm(this.rain.f.frequency, e.inTent ? 900 : 1800);
     const fireNear = Math.max(0, 1 - e.fireDist / 22) * e.fireFuel;
-    sm(this.fireRoar.g.gain, fireNear * fireNear * .3);
-    sm(this.water.g.gain, Math.max(0, 1 - e.waterDist / 30) * .11 * (.6 + .4 * Math.sin(now * .7) * Math.sin(now * .31)));
-    sm(this.river.g.gain, Math.max(0, 1 - e.riverDist / 45) * .045);
-    sm(this.crickets.g.gain, e.night * (1 - e.rain) * .004); this.crickets.lfo.frequency.value = 18 + 6 * Math.sin(now * .1);
+    sm(this.fireRoar.g.gain, fireNear * fireNear * .18);
+    sm(this.water.g.gain, Math.max(0, 1 - e.waterDist / 30) * .06 * (.6 + .4 * Math.sin(now * .7) * Math.sin(now * .31)));
+    sm(this.river.g.gain, Math.max(0, 1 - e.riverDist / 45) * .025);
+    sm(this.crickets.g.gain, e.night * (1 - e.rain) * .0018); this.crickets.lfo.frequency.value = 18 + 6 * Math.sin(now * .1);
     // rain drumming on canvas
     if (e.inTent && e.rain > .05) { const n = Math.floor(e.rain * 26 * e.dt + Math.random()); for (let i = 0; i < n; i++) this.burst(.05 + Math.random() * .05, 'bandpass', 500 + Math.random() * 900, 3, .05 + Math.random() * .07, Math.random() * 1.6 - .8, Math.random() * e.dt); }
     // fire crackles
-    if (fireNear > .02 && Math.random() < e.dt * (3 + 9 * e.fireFuel)) { this.burst(.012 + Math.random() * .03, 'highpass', 1800 + Math.random() * 3000, .7, (.08 + Math.random() * .22) * fireNear, Math.random() - .5); if (Math.random() < .2) this.burst(.06, 'bandpass', 600, 1.5, .14 * fireNear); }
+    if (fireNear > .02 && Math.random() < e.dt * (3 + 9 * e.fireFuel)) { this.burst(.012 + Math.random() * .03, 'highpass', 1800 + Math.random() * 3000, .7, (.05 + Math.random() * .12) * fireNear, Math.random() - .5); if (Math.random() < .2) this.burst(.06, 'bandpass', 600, 1.5, .08 * fireNear); }
     const due = (k, min, max) => { if (!this.next[k]) this.next[k] = now + min + Math.random() * (max - min); if (now >= this.next[k]) { this.next[k] = now + min + Math.random() * (max - min); return true; } return false; };
     // birds by day in the trees
-    if (e.day > .4 && e.rain < .4 && due('bird', 5, 14)) {
-      const base = 2200 + Math.random() * 2600, n = 2 + Math.floor(Math.random() * 5), pan = Math.random() * 1.6 - .8, g = (.006 + Math.random() * .01) * (.4 + e.forest), kind = Math.random();
+    if (e.day > .4 && e.rain < .4 && due('bird', 8, 20)) {
+      const base = 2200 + Math.random() * 2600, n = 2 + Math.floor(Math.random() * 5), pan = Math.random() * 1.6 - .8, g = (.004 + Math.random() * .006) * (.4 + e.forest), kind = Math.random();
       for (let i = 0; i < n; i++) {
         const f = base * (kind < .5 ? 1 + (i % 2) * .25 : 1 + i * .06), d = kind < .5 ? .08 : .05;
         this.tone([f, f * (kind < .3 ? 1.4 : .8)], [d], 'sine', g, pan, 0, true, i * (d + .05));
       }
     }
-    if (e.day > .3 && e.day < .9 && e.rain < .3 && due('dove', 25, 60)) { const f = 520 + Math.random() * 60, p = Math.random() - .5; this.tone([f, f * .92], [.5], 'sine', .02, p, 0, true); this.tone([f * .95, f * .9], [.35], 'sine', .018, p, 0, true, .7); this.tone([f * .95, f * .88], [.35], 'sine', .016, p, 0, true, 1.2); }
-    if (e.night > .6 && due('owl', 18, 50)) { const f = 360 + Math.random() * 60, p = Math.random() * 1.4 - .7; this.tone([f, f * .94], [.32], 'sine', .03, p, 4, true); this.tone([f * 1.02, f * .9], [.5], 'sine', .03, p, 4, true, .5); }
-    if (e.night > .7 && due('wolf', 70, 160)) { const f = 420 + Math.random() * 80, p = Math.random() * 1.6 - .8; this.tone([f * .8, f, f * 1.1, f * .95, f * .7], [.6, .9, 1.2, .8], 'sine', .02, p, 6, true); }
-    if (e.day > .2 && due('elk', 90, 200)) { const p = Math.random() * 1.6 - .8; this.tone([600, 1300, 1550, 1450, 700], [.4, .6, .8, .3], 'sawtooth', .006, p, 9, true); this.tone([300, 650, 760, 720, 350], [.4, .6, .8, .3], 'sine', .01, p, 4, true); }
+    if (e.day > .3 && e.day < .9 && e.rain < .3 && due('dove', 25, 60)) { const f = 520 + Math.random() * 60, p = Math.random() - .5; this.tone([f, f * .92], [.5], 'sine', .011, p, 0, true); this.tone([f * .95, f * .9], [.35], 'sine', .01, p, 0, true, .7); this.tone([f * .95, f * .88], [.35], 'sine', .009, p, 0, true, 1.2); }
+    if (e.night > .6 && due('owl', 18, 50)) { const f = 360 + Math.random() * 60, p = Math.random() * 1.4 - .7; this.tone([f, f * .94], [.32], 'sine', .014, p, 4, true); this.tone([f * 1.02, f * .9], [.5], 'sine', .014, p, 4, true, .5); }
+    if (e.night > .7 && due('wolf', 70, 160)) { const f = 420 + Math.random() * 80, p = Math.random() * 1.6 - .8; this.tone([f * .8, f, f * 1.1, f * .95, f * .7], [.6, .9, 1.2, .8], 'sine', .01, p, 6, true); }
+    if (e.day > .2 && due('elk', 90, 200)) { const p = Math.random() * 1.6 - .8; this.tone([600, 1300, 1550, 1450, 700], [.4, .6, .8, .3], 'sawtooth', .003, p, 9, true); this.tone([300, 650, 760, 720, 350], [.4, .6, .8, .3], 'sine', .005, p, 4, true); }
   }
 }

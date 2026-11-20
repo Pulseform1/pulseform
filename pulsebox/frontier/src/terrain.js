@@ -61,6 +61,21 @@ tN *= 1.0 - 0.65 * smoothstep( 50.0, 260.0, camD );
 tA *= 0.8 + 0.4 * mac.r;
 tA = mix( tA, tA * vec3( 1.14, 1.03, 0.74 ), W[0] * smoothstep( 0.42, 0.78, mac.g ) * 0.85 );
 tA = mix( tA, tA * vec3( 0.86, 1.0, 0.86 ), W[0] * smoothstep( 0.55, 0.3, mac.g ) * 0.5 );
+// the mountains: rock in beds that wander with the noise (some warmer, iron-stained), dark gullies down the fall line,
+// and snow lying in the high gullies; it all reads from far off, where the ground textures blur away
+{ float steep = 1.0 - smoothstep( 0.55, 0.92, tw.y ), hi = smoothstep( 35.0, 150.0, vWP.y );
+  float k = clamp( W[3] * 1.2 + steep * hi * 0.7, 0.0, 1.0 );
+  if ( k > 0.02 ) {
+    float wob = ( mac2.g - 0.5 ) * 9.0 + ( mac.b - 0.5 ) * 26.0;
+    float band = sin( ( vWP.y + wob ) * 0.42 ) * 0.5 + 0.5, band2 = sin( ( vWP.y + wob * 1.7 ) * 1.7 ) * 0.5 + 0.5;
+    vec3 bed = mix( vec3( 0.8 ), vec3( 1.13, 1.06, 0.95 ), smoothstep( 0.35, 0.95, band ) ) * mix( 0.92, 1.06, band2 );
+    tA = mix( tA, tA * bed, k * 0.85 );
+    vec2 gd = normalize( tw.xz + 1e-4 ); float across = dot( vWP.xz, vec2( -gd.y, gd.x ) );
+    float gul = smoothstep( 0.7, 0.96, sin( across * 0.19 + mac2.r * 7.0 + mac.g * 4.0 ) * 0.5 + 0.5 ) * steep;
+    tA *= 1.0 - 0.3 * gul * k;
+    float sn = smoothstep( 135.0, 215.0, vWP.y + ( mac.b - 0.5 ) * 50.0 ) * smoothstep( 0.55, 0.85, sin( across * 0.27 + mac2.b * 5.0 ) * 0.5 + 0.5 ) * steep;
+    tA = mix( tA, vec3( 0.86, 0.88, 0.92 ), sn * 0.75 );
+  } }
 float wet = max( vSplat2.z, uWet * 0.55 * ( 1.0 - W[5] ) );
 tA *= 1.0 - 0.4 * wet;
 tA = mix( tA, tA * vec3( 0.42, 0.55, 0.52 ), smoothstep( 0.0, -2.6, vWP.y ) );
@@ -82,7 +97,7 @@ function terrainMaterial(tex, far, cover) {
       .replace('#include <map_fragment>', SAMPLE_FS)
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = tRough;')
       .replace('#include <normal_fragment_maps>', `{ vec3 pn = normalize( vec3( tw.x + tN.x, tw.y, tw.z + tN.y ) ); normal = normalize( ( viewMatrix * vec4( pn, 0.0 ) ).xyz ); }`)
-      .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\nreflectedLight.indirectDiffuse *= vSplat2.y; reflectedLight.indirectSpecular *= vSplat2.y;');
+      .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\nreflectedLight.indirectDiffuse *= vSplat2.y; reflectedLight.indirectSpecular *= vSplat2.y * 0.4; reflectedLight.directSpecular *= 0.3;');
   });
   return m;
 }
