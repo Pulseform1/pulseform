@@ -54,6 +54,7 @@
     if (/[?&]room=/.test(location.search)) openParty();   // arrived from an invite: straight to the party
   };
   GAME.update = dt => {
+    queueTick();
     if (screen !== 'play' || !M || posed) return;
     if (UI.pendingArmory && !loadingNow() && !UI.switched) { UI.pendingArmory = false; if (M.phase === 'buy') openArmory(true); }
     acc += Math.min(dt, .1); let n = 0; while (acc >= 1 / 60 && n++ < 5) { for (const f of M.fs) { f.px = f.x; f.py = f.y; f.pz = f.z; } tick(1 / 60); acc -= 1 / 60; }
@@ -103,6 +104,6 @@
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
     team: () => ({ dropHeld, dropCharge, giveCharge, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
-    botMe: d => { me().bot = { diff: d }; me().local = false; }, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
+    botMe: d => { me().bot = { diff: d }; me().local = false; }, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
   };
 })();

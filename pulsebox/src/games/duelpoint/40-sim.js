@@ -466,19 +466,19 @@
     if (d && !f.net) net({ t: 'dp', id: d.id, k, x: r2(d.x), z: r2(d.z), m: d.m, r: d.r, fo: d.fo || undefined, f: f.key }); return d;
   }
   // drop the gun in a slot (the Pip and the knife stay with you): thrown a step ahead, or where you fall
-  function dropGun(f, slot, dead) {
+  function dropGun(f, slot, dead, at) {   // (at: where it goes instead, e.g. the spot of the gun you swapped it for)
     const k = f.guns[slot]; if (!k || slot === 3 || (slot === 2 && k === 'pip')) return null;
     const A = f.ammo[k] || {}, fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw), far = dead ? .15 : 1.25;
     f.guns[slot] = slot === 2 ? 'pip' : null; if (slot === 2) giveAmmo(f, 'pip'); delete f.spent[slot];   // a gun you dropped is not yours to sell back
     if (f.slot === slot) { f.slot = f.guns[1] ? 1 : 2; f.reloadT = 0; f.scoped = 0; f.burst = null; f.spray = 0; }
     if (!dead) emit('swap', f);
-    return lootAt(f, k, f.x + fx * far, f.z + fz * far, A.mag, A.res);
+    return at ? lootAt(f, k, at.x, at.z, A.mag, A.res) : lootAt(f, k, f.x + fx * far, f.z + fz * far, A.mag, A.res);
   }
   // T: the gun in your hand
   function dropHeld(f) { if (!f.alive || f.plant > 0 || f.defuse > 0 || M.mode === 'range' || M.phase === 'end') return false; return !!dropGun(f, f.slot, false); }
   function takeLoot(f, d, remote) {
     const G = GUNS[d.k]; if (!G || !M.loot) return; M.loot = M.loot.filter(q => q.id !== d.id); const s = G.slot;
-    if (!remote) { const have = f.guns[s]; if (have && !(s === 2 && have === 'pip')) dropGun(f, s, false); }
+    if (!remote) { const have = f.guns[s]; if (have && !(s === 2 && have === 'pip')) dropGun(f, s, false, d); }   // a swap: the one you had goes down where this one lay
     f.guns[s] = d.k; f.ammo[d.k] = { mag: d.m, res: d.r }; delete f.spent[s];
     if (!remote) { f.slot = s; f.reloadT = 0; f.scoped = 0; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, G.equip * .7); }
     emit('pickup', f, d); if (!remote) net({ t: 'pk', id: d.id, f: f.key });

@@ -1337,19 +1337,19 @@ const GAME = {
     if (d && !f.net) net({ t: 'dp', id: d.id, k, x: r2(d.x), z: r2(d.z), m: d.m, r: d.r, fo: d.fo || undefined, f: f.key }); return d;
   }
   // drop the gun in a slot (the Pip and the knife stay with you): thrown a step ahead, or where you fall
-  function dropGun(f, slot, dead) {
+  function dropGun(f, slot, dead, at) {   // (at: where it goes instead, e.g. the spot of the gun you swapped it for)
     const k = f.guns[slot]; if (!k || slot === 3 || (slot === 2 && k === 'pip')) return null;
     const A = f.ammo[k] || {}, fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw), far = dead ? .15 : 1.25;
     f.guns[slot] = slot === 2 ? 'pip' : null; if (slot === 2) giveAmmo(f, 'pip'); delete f.spent[slot];   // a gun you dropped is not yours to sell back
     if (f.slot === slot) { f.slot = f.guns[1] ? 1 : 2; f.reloadT = 0; f.scoped = 0; f.burst = null; f.spray = 0; }
     if (!dead) emit('swap', f);
-    return lootAt(f, k, f.x + fx * far, f.z + fz * far, A.mag, A.res);
+    return at ? lootAt(f, k, at.x, at.z, A.mag, A.res) : lootAt(f, k, f.x + fx * far, f.z + fz * far, A.mag, A.res);
   }
   // T: the gun in your hand
   function dropHeld(f) { if (!f.alive || f.plant > 0 || f.defuse > 0 || M.mode === 'range' || M.phase === 'end') return false; return !!dropGun(f, f.slot, false); }
   function takeLoot(f, d, remote) {
     const G = GUNS[d.k]; if (!G || !M.loot) return; M.loot = M.loot.filter(q => q.id !== d.id); const s = G.slot;
-    if (!remote) { const have = f.guns[s]; if (have && !(s === 2 && have === 'pip')) dropGun(f, s, false); }
+    if (!remote) { const have = f.guns[s]; if (have && !(s === 2 && have === 'pip')) dropGun(f, s, false, d); }   // a swap: the one you had goes down where this one lay
     f.guns[s] = d.k; f.ammo[d.k] = { mag: d.m, res: d.r }; delete f.spent[s];
     if (!remote) { f.slot = s; f.reloadT = 0; f.scoped = 0; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, G.equip * .7); }
     emit('pickup', f, d); if (!remote) net({ t: 'pk', id: d.id, f: f.key });
@@ -5964,6 +5964,7 @@ const GAME = {
   // the ultimates
   // the charge hits the floor mid-round: a bright ping for the attackers so they go and get it
   cue('charge', f => { if (f || !M || M.mode === 'demo' || M.phase !== 'live' || sideOf(me()) !== 'att') return; const o = outFor(null); [1175, 1568, 1175].forEach((q, i) => tone(o, q, .16, 'square', .045, 0, i * .11)); });
+  on('qfound', () => { if (!K.ac) return; const o = outFor(null); [523, 659, 784, 1047].forEach((q, i) => tone(o, q, .22, 'triangle', .09, 0, i * .08)); });
   cue('novaRefund', f => { if (f !== me()) return; const o = outFor(null); [740, 1110].forEach((q, i) => tone(o, q, .14, 'triangle', .07, 0, i * .07)); });
   cue('ultReady', f => { if (f !== me()) return; const o = outFor(null); [660, 880, 1320].forEach((q, i) => tone(o, q, .3, 'triangle', .08, 0, i * .09)); });
   cue('ultUsed', f => { const o = outFor(f, 1.3); tone(o, 110, .9, 'sawtooth', .07, 220); tone(o, 440, .6, 'triangle', .05, 440, .1); hiss(o, .6, .08, 'bandpass', 1800, .05); });
@@ -6955,8 +6956,13 @@ const GAME = {
     { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
       portraitTile(g, CFG.op, rx + 10 * u, ry + 10 * u, h - 20 * u, h - 20 * u, { r: 6 }); tx(g, 'YOUR OPERATIVE', rx + h + 4 * u, ry + 24 * u, 10 * u, DIM, 'left', 900); tx(g, O.n, rx + h + 2 * u, ry + 54 * u, 28 * u, BONE, 'left', 900);
       tx(g, `${O.q.n} · ${O.e.n}`, rx + h + 4 * u, ry + 80 * u, 12 * u, O.col, 'left', 800); tx(g, hot ? 'CHANGE →' : 'CHANGE', rx + rw - 14 * u, ry + h - 16 * u, 10 * u, hot ? O.col : DIM, 'right', 900); ry += h + 14 * u; }
-    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'up to eight, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
-      btn(g, rx + 16 * u, ry + 56 * u, rw - 32 * u, 36 * u, MP.online() ? 'BACK TO YOUR PARTY · ' + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u }); ry += h + 14 * u; }
+    // a short screen (a phone on its side): the queue shares the friends card, so PLAY stays on screen
+    const tight = ry + (104 + 14 + 96 + 14 + 12 + 72) * u + tapH(42) > V.y1 - 4 * u;
+    { const h = 104 * u, bw = tight ? (rw - 40 * u) / 2 : rw - 32 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, tight ? 'up to eight' : 'up to eight, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
+      btn(g, rx + 16 * u, ry + 56 * u, bw, 36 * u, MP.online() ? (tight ? 'PARTY · ' : 'BACK TO YOUR PARTY · ') + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u });
+      if (tight) { tx(g, 'FIND A MATCH', rx + rw - 16 * u, ry + 24 * u, 12 * u, GOLD, 'right', 900); tx(g, 'anyone · unrated', rx + rw - 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'right', 700); drawQueueMini(g, rx + 24 * u + bw, ry + 56 * u, bw, 36 * u, u); }
+      ry += h + 14 * u; }
+    if (!tight) ry += drawQueueCard(g, rx, ry, rw, u) + 14 * u;   // the global queue: 1v1 or 2v2 against anyone
     btn(g, rx, ry, (rw - 10 * u) / 2, tapH(42), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 13 * u }); btn(g, rx + (rw + 10 * u) / 2, ry, (rw - 10 * u) / 2, tapH(42), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 13 * u, sub: 'try every gun' });
     // PLAY
     const lvl = (CFG.diff === 'auto' ? (CFG.queue === 'ranked' ? DIFF[botLevelFor(rankStrength(CFG.size))].n : rankName(STATS.rating)) : DIFF[CFG.diff].n) + ' bots', ph = 72 * u, below = ry + tapH(42) + 12 * u, roomy = V.y1 - ph - 64 * u >= below, pyy = roomy ? V.y1 - ph - 64 * u : below, pw = roomy ? rw : rw - 84 * u;   // clear of the sound button in the corner, and of the buttons above
@@ -7466,8 +7472,8 @@ const GAME = {
      'lteam' (the host's teams and settings), 'lswap' (please move me). */
   const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false };
   const myId = () => MP.id;
-  function openParty() { screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; }
-  function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join('') }; }
+  function openParty() { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; }
+  function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join(''), qt: QUE.found ? QUE.tok : undefined }; }
   function sendProfile(force) { if (!MP.online()) return; const p = partyProfile(), key = JSON.stringify(p); if (!force && key === PARTY.sent) return; PARTY.sent = key; PARTY.prof.set(myId(), p); MP.send(Object.assign({ t: 'lprof' }, p)); }
   // the host keeps everyone on a team: newcomers go to the shorter side, and nobody stays on a team that has no room
   function hostTeams() {
@@ -7486,7 +7492,7 @@ const GAME = {
   MP.opts.onStatus = s => { PARTY.status = s; };
   // lobby messages; anything else is the match's
   function partyMsg(m) {
-    if (m.t === 'lprof') { const rk = {}; if (m.rk && typeof m.rk === 'object') for (const k of RQ) rk[k] = cl(+m.rk[k] || 0, 0, 4000); PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd, rk, rkp: typeof m.rkp === 'string' ? m.rkp.slice(0, 4) : '' }); return true; }
+    if (m.t === 'lprof') { const rk = {}; if (m.rk && typeof m.rk === 'object') for (const k of RQ) rk[k] = cl(+m.rk[k] || 0, 0, 4000); PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd, rk, rkp: typeof m.rkp === 'string' ? m.rkp.slice(0, 4) : '', qt: typeof m.qt === 'string' ? m.qt.slice(0, 16) : '' }); return true; }
     if (m.t === 'lteam') { if (m.from === MP.hostId) { PARTY.teams = m.teams || {}; PARTY.set = Object.assign(PARTY.set, m.set || {}); } return true; }
     if (m.t === 'lswap') { if (MP.isHost()) { swapTeam(m.from); } return true; }
     if (m.t === 'mp-rejoin' && MP.isHost() && PARTY.teams[m.old] != null) { PARTY.teams[m.from] = PARTY.teams[m.old]; delete PARTY.teams[m.old]; const pf = PARTY.prof.get(m.old); if (pf) PARTY.prof.set(m.from, pf); MP.send({ t: 'lteam', teams: PARTY.teams, set: PARTY.set }); }   // back after a drop: same team (the match hears it too)
@@ -7530,6 +7536,12 @@ const GAME = {
     const V = K.view, u = uiScale(), W = V.x1 - V.x0, H = V.y1 - V.y0, on = MP.online(), x0 = V.x0 + 60 / pxPer() + 20 * u;
     g.fillStyle = 'rgba(8,10,14,.8)'; g.fillRect(V.x0, V.y0, W, H);
     tx(g, 'PLAY WITH FRIENDS', x0, V.y0 + 46 * u, 34 * u, BONE, 'left', 900); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, on ? 'LEAVE' : 'BACK', () => { if (on) MP.leave(); PARTY.status = ''; if (!on) { screen = 'menu'; UI.panel = 'home'; } MP.opts.onRoster(); }, { px: 13 * u });
+    if (QUE.found) {   // a match from the queue: say so, and who is in yet
+      const F = QUE.found, n = on ? F.toks.filter(tok => MP.players().some(p => (p.id === myId() ? QUE.tok : (PARTY.prof.get(p.id) || {}).qt) === tok)).length : 0, pulse = .75 + .25 * Math.sin(performance.now() / 160);
+      rr(g, 640 - 260 * u, V.y0 + 90 * u, 520 * u, 64 * u, 10, 'rgba(255,214,102,.12)', GOLD, 2); g.globalAlpha = pulse; tx(g, `MATCH FOUND  ·  ${F.mode}V${F.mode}`, 640, V.y0 + 114 * u, 22 * u, GOLD, 'center', 900); g.globalAlpha = 1;
+      tx(g, on ? `${n} of ${F.toks.length} players in  ·  starting as soon as everyone is here` : 'Joining the match room...', 640, V.y0 + 140 * u, 12 * u, BONE, 'center', 700);
+      if (!on) { hideBoxes(); return; }
+    }
     if (!on) {   // make a party or join one
       tx(g, 'YOUR NAME', 640, V.y0 + 150 * u, 12 * u, DIM, 'center', 900); const nm = textBox('name', 640 - 160 * u, V.y0 + 164 * u, 320 * u, 44 * u, 'Your name', 12, MP.name === 'You' ? '' : MP.name, v => MP.setName(v));
       const cw = 300 * u, ch = 190 * u, cy = V.y0 + 250 * u;
@@ -7587,6 +7599,109 @@ const GAME = {
     const waiting = ps.filter(p => p.id !== MP.hostId && !(p.id === me2 ? PARTY.ready : (PARTY.prof.get(p.id) || {}).rd)).length;
     tx(g, ps.length < 2 ? 'Send your friends the code. You can also start now and play with bots.' : waiting ? `Waiting for ${waiting} to ready up` : 'Everyone is ready', 640, by - 22 * u, 13 * u, waiting ? DIM : YOU, 'center', 800);
   }
+  /* ---------- 98 queue: find a match against anyone, 1v1 or 2v2 ----------
+     Everyone looking for a game of one size waits together in a queue room on the room relay (Q1V0 for 1v1, Q2V0 for
+     2v2; when one is full, Q1V1, Q1V2 ... take the overflow). Each says who they are ('qhi': rating, a token, how long
+     they have waited). The queue room's host (whoever has been in it longest) does the matching once a second: the
+     player who has waited longest is paired with the nearest ratings inside a window that widens the longer they wait
+     (anyone at all after 25 s). It picks a fresh party room code and the teams (2v2: best and worst against the middle
+     two) and tells the room ('qmatch'). The chosen leave the queue and walk into that party room; its host, once the
+     whole group is in (matched up by token), sets the teams and starts the match. Anyone who has not arrived after 15 s
+     is replaced by a bot. A queued match is unrated. */
+  const QV = 1, QW = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? location.host : 'box.pulseform.org';
+  const QUE = { mode: 0, ws: null, me: 0, host: 0, peers: new Map(), t0: 0, shard: 0, tok: '', found: null, err: '', mT: 0 };
+  function queueStart(mode, shard = 0) {   // (shard: the tests queue apart from real players)
+    queueStop(); QUE.found = null; if (MP.online()) MP.leave();
+    QUE.mode = mode; QUE.t0 = performance.now(); QUE.shard = shard; QUE.base = shard; QUE.err = ''; QUE.tok = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6); qConnect();
+  }
+  function queueStop() { const w = QUE.ws; QUE.ws = null; QUE.mode = 0; QUE.me = 0; QUE.host = 0; QUE.peers.clear(); QUE.err = ''; if (w) try { w.close(); } catch (e) {} }
+  const qSend = m => { if (QUE.ws && QUE.ws.readyState === 1) QUE.ws.send(JSON.stringify(m)); };
+  const qHi = () => ({ t: 'qhi', v: QV, rt: STATS.rating | 0, tok: QUE.tok, nm: MP.name, w: Math.round((performance.now() - QUE.t0) / 1000) });
+  function qConnect() {
+    const code = 'Q' + QUE.mode + 'V' + (QUE.shard < 10 ? QUE.shard : String.fromCharCode(55 + QUE.shard)); let ws;
+    try { ws = new WebSocket(`wss://${QW}/api/room/${code}?n=${encodeURIComponent(MP.name)}&g=duelpoint`); } catch (e) { QUE.err = 'Could not reach the queue.'; return; }
+    QUE.ws = ws; QUE.me = 0;
+    ws.onmessage = e => { if (QUE.ws !== ws) return; let m; try { m = JSON.parse(e.data); } catch (er) { return; } qMsg(m); };
+    ws.onclose = () => { if (QUE.ws !== ws) return; QUE.ws = null; QUE.me = 0; QUE.peers.clear();
+      if (QUE.mode && !QUE.found) { QUE.err = 'Lost the queue: getting back in...'; setTimeout(() => { if (QUE.mode && !QUE.ws && !QUE.found) qConnect(); }, 1500); } };
+  }
+  function qMsg(m) {
+    if (m.t === 'full') { QUE.ws = null; if (QUE.shard < (QUE.base || 0) + 9) { QUE.shard++; qConnect(); } else QUE.err = 'Every queue is full: try again in a moment.'; return; }
+    if (m.t === 'hello') { QUE.me = m.id; QUE.host = m.host; QUE.err = ''; qSend(qHi()); return; }
+    if (m.t === 'join') { qSend(Object.assign(qHi(), { to: m.id })); return; }   // tell a newcomer who we are
+    if (m.t === 'leave') { QUE.peers.delete(m.id); return; }
+    if (m.t === 'host') { QUE.host = m.id; return; }
+    if (m.t === 'qhi' && m.v === QV && m.from) { const p = QUE.peers.get(m.from); QUE.peers.set(m.from, { rt: cl(m.rt | 0, 0, 5000), tok: String(m.tok || '').slice(0, 16), since: p ? p.since : performance.now() - cl(m.w | 0, 0, 600) * 1000 }); return; }
+    if (m.t === 'qmatch' && Array.isArray(m.toks) && typeof m.code === 'string' && /^[A-Z0-9]{4}$/.test(m.code)) {
+      if (m.toks.includes(QUE.tok)) qFound(m); else for (const t2 of m.toks) for (const [id, p] of QUE.peers) if (p.tok === t2) QUE.peers.delete(id);   // they are spoken for
+    }
+  }
+  // the queue host's matching, once a second
+  function qMatch() {
+    const need = QUE.mode * 2, now = performance.now(), all = [{ id: QUE.me, rt: STATS.rating | 0, tok: QUE.tok, since: QUE.t0 }].concat([...QUE.peers].filter(([, p]) => p.tok).map(([id, p]) => Object.assign({ id }, p))).sort((a, b) => a.since - b.since);
+    if (all.length < need) return;
+    for (const A of all) {
+      const wait = (now - A.since) / 1000, win = wait > 25 ? 1e9 : 150 + wait * 30;
+      const near = all.filter(q => q !== A && Math.abs(q.rt - A.rt) <= win).sort((a, b) => Math.abs(a.rt - A.rt) - Math.abs(b.rt - A.rt)).slice(0, need - 1);
+      if (near.length < need - 1) continue;
+      const grp = [A, ...near], toks = grp.map(q => q.tok), teams = {};
+      if (need === 2) { teams[grp[0].tok] = 0; teams[grp[1].tok] = 1; } else { const s = grp.slice().sort((a, b) => b.rt - a.rt); [s[0], s[3]].forEach(q => { teams[q.tok] = 0; }); [s[1], s[2]].forEach(q => { teams[q.tok] = 1; }); }
+      const L = 'ABCDEFGHJKLMNPRSTUVWXYZ', code = Array.from({ length: 4 }, () => L[Math.floor(Math.random() * L.length)]).join('');
+      const m = { t: 'qmatch', code, toks, teams, mode: QUE.mode, lead: grp[0].tok };
+      qSend(m); if (toks.includes(QUE.tok)) qFound(m); else for (const q of grp) QUE.peers.delete(q.id);
+      return;
+    }
+  }
+  function qFound(m) {
+    QUE.found = { code: m.code, toks: m.toks.slice(0, 4), teams: Object.assign({}, m.teams), mode: m.mode === 2 ? 2 : 1, at: performance.now(), lead: m.lead === QUE.tok, started: false };
+    const w = QUE.ws; QUE.ws = null; QUE.mode = 0; QUE.peers.clear(); setTimeout(() => { if (w) try { w.close(); } catch (e) {} }, 400);   // (a moment, so the news gets out first)
+    emit('qfound'); openParty(); PARTY.status = 'Match found: joining...';
+    setTimeout(() => { if (QUE.found && !MP.online()) MP.join(QUE.found.code); }, QUE.found.lead ? 0 : 900);   // the first of the group opens the room
+  }
+  // every frame, whatever screen you are on
+  function queueTick() {
+    if (QUE.mode) {
+      if (screen === 'play') { queueStop(); return; }   // you started something else
+      if (QUE.ws && QUE.me && QUE.host === QUE.me && performance.now() >= QUE.mT) { QUE.mT = performance.now() + 1000; qMatch(); }
+    }
+    const F = QUE.found; if (!F) return;
+    if (screen === 'play' && M && M.online) { QUE.found = null; return; }   // the match is on
+    const age = performance.now() - F.at;
+    if (!MP.online()) { if (age > 20000) { QUE.found = null; PARTY.status = 'That match fell through: find another'; } return; }
+    PARTY.ready = true;
+    if (!MP.isHost() || F.started) return;
+    const ps = MP.players(), S2 = PARTY.set, T2 = {};
+    Object.assign(S2, { size: F.mode, sites: F.mode === 1 ? 1 : 2, fill: true, ranked: false });
+    const tokOf = p => p.id === myId() ? QUE.tok : (PARTY.prof.get(p.id) || {}).qt;
+    for (const p of ps) { const t = F.teams[tokOf(p)]; if (t === 0 || t === 1) T2[p.id] = t; }
+    for (const p of ps) if (T2[p.id] == null) { const n0 = ps.filter(q => T2[q.id] === 0).length; T2[p.id] = n0 < F.mode ? 0 : 1; }
+    PARTY.teams = T2;
+    const allIn = F.toks.every(tok => ps.some(p => tokOf(p) === tok));
+    if ((allIn && age > 1500) || age > 15000) { F.started = true; MP.send({ t: 'lteam', teams: T2, set: S2 }); CFG.sites = S2.sites; setTimeout(() => { if (MP.online() && MP.isHost() && screen === 'party') MP.start(); }, 500); }
+  }
+  // the card on the play page: two buttons, or the search going on
+  function drawQueueCard(g, rx, ry, rw, u) {
+    const h = 96 * u, on = !!QUE.mode; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', on ? GOLD : 'rgba(239,233,220,.14)', on ? 2 : 1.5);
+    tx(g, 'FIND A MATCH', rx + 16 * u, ry + 22 * u, 12 * u, GOLD, 'left', 900); tx(g, 'anyone, anywhere · unrated', rx + rw - 16 * u, ry + 22 * u, 10 * u, '#aeb6c2', 'right', 700);
+    if (on) {
+      const s = Math.floor((performance.now() - QUE.t0) / 1000), dots = '.'.repeat(1 + Math.floor(performance.now() / 400) % 3);
+      tx(g, `SEARCHING ${QUE.mode}V${QUE.mode}  ·  ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`, rx + 16 * u, ry + 50 * u, 16 * u, BONE, 'left', 900);
+      tx(g, QUE.err || (QUE.ws && QUE.me ? `${QUE.peers.size + 1} looking for a ${QUE.mode}v${QUE.mode}${dots}` : 'Joining the queue' + dots), rx + 16 * u, ry + 74 * u, 11 * u, QUE.err ? WARN : '#aeb6c2', 'left', 700);
+      btn(g, rx + rw - 112 * u, ry + 40 * u, 96 * u, 40 * u, 'CANCEL', () => queueStop(), { px: 14 * u });
+    } else {
+      const bw = (rw - 42 * u) / 2;
+      btn(g, rx + 16 * u, ry + 36 * u, bw, 48 * u, '1V1', () => queueStart(1), { on: true, fill: GOLD, solid: true, col: INK, px: 20 * u, sub: 'DUEL · ONE SITE' });
+      btn(g, rx + 26 * u + bw, ry + 36 * u, bw, 48 * u, '2V2', () => queueStart(2), { on: true, fill: GOLD, solid: true, col: INK, px: 20 * u, sub: 'TEAMS · TWO SITES' });
+    }
+    return h;
+  }
+  // the same, squeezed into half of the friends card on a short screen
+  function drawQueueMini(g, x, y, w, h, u) {
+    if (QUE.mode) { const s = Math.floor((performance.now() - QUE.t0) / 1000); btn(g, x, y, w, h, 'CANCEL', () => queueStop(), { px: 13 * u, sub: QUE.err ? 'GETTING BACK IN' : `SEARCHING ${QUE.mode}V${QUE.mode} · ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` }); return; }
+    const bw = (w - 8 * u) / 2;
+    btn(g, x, y, bw, h, '1V1', () => queueStart(1), { on: true, fill: GOLD, solid: true, col: INK, px: 15 * u });
+    btn(g, x + bw + 8 * u, y, bw, h, '2V2', () => queueStart(2), { on: true, fill: GOLD, solid: true, col: INK, px: 15 * u });
+  }
   /* ---------- 99 main: the kit's hooks, moving between screens, demo and cover-art modes, the test handle ---------- */
   let booted = false, acc = 0, lastDraw = 0;
   function toMenu() { if (M && M.ranked && !M.over && M.mode !== 'demo' && M.round > 0) rankedLeft(); UI.trying = null; M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
@@ -7643,6 +7758,7 @@ const GAME = {
     if (/[?&]room=/.test(location.search)) openParty();   // arrived from an invite: straight to the party
   };
   GAME.update = dt => {
+    queueTick();
     if (screen !== 'play' || !M || posed) return;
     if (UI.pendingArmory && !loadingNow() && !UI.switched) { UI.pendingArmory = false; if (M.phase === 'buy') openArmory(true); }
     acc += Math.min(dt, .1); let n = 0; while (acc >= 1 / 60 && n++ < 5) { for (const f of M.fs) { f.px = f.x; f.py = f.y; f.pz = f.z; } tick(1 / 60); acc -= 1 / 60; }
@@ -7692,7 +7808,7 @@ const GAME = {
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
     team: () => ({ dropHeld, dropCharge, giveCharge, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
-    botMe: d => { me().bot = { diff: d }; me().local = false; }, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
+    botMe: d => { me().bot = { diff: d }; me().local = false; }, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
   };
 })();
 

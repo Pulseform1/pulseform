@@ -166,7 +166,8 @@ function pickupPingNovaChecks() {
   const d = T.lootAt(F, 'vesper', P.x + 2, P.z, 30, 60); T.tick(DT);
   ok(d && P.nearLoot && P.nearLoot.id === d.id && P.guns[1] === 'lancer', 'look at a rifle on the floor two metres off: it is offered (not taken)', d ? d.k : 'none');
   I = { ...idle(), use: true }; T.tick(DT); I = idle(); T.tick(DT);
-  ok(P.guns[1] === 'vesper' && !M.loot.some(q => q.id === d.id), 'press F and it is yours (your old one goes on the floor)', P.guns[1]);
+  ok(P.guns[1] === 'vesper' && !M.loot.some(q => q.id === d.id), 'press F and it is yours', P.guns[1]);
+  { const old = M.loot.find(q => q.k === 'lancer'); ok(old && Math.hypot(old.x - d.x, old.z - d.z) < .3, 'and the rifle you had goes on the floor right where that one lay', old ? `${old.k} at ${Math.hypot(old.x - d.x, old.z - d.z).toFixed(2)} m` : 'none'); }
   P.yaw = Math.PI / 2; const d2 = T.lootAt(F, 'mako', P.x + 2, P.z, 24, 48); T.tick(DT); ok(!P.nearLoot, 'a gun behind you is not offered', String(!!P.nearLoot));
   [M, P, F] = lab(); P.yaw = -Math.PI / 2; I = idle(); const d3 = T.lootAt(F, 'vesper', P.x, P.z, 30, 60); T.tick(DT); T.tick(DT);
   ok(P.guns[1] === 'vesper', 'walk over a rifle with your main slot empty and you just take it', String(P.guns[1]));

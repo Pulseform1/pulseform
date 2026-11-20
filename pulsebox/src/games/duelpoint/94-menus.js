@@ -134,8 +134,13 @@
     { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
       portraitTile(g, CFG.op, rx + 10 * u, ry + 10 * u, h - 20 * u, h - 20 * u, { r: 6 }); tx(g, 'YOUR OPERATIVE', rx + h + 4 * u, ry + 24 * u, 10 * u, DIM, 'left', 900); tx(g, O.n, rx + h + 2 * u, ry + 54 * u, 28 * u, BONE, 'left', 900);
       tx(g, `${O.q.n} · ${O.e.n}`, rx + h + 4 * u, ry + 80 * u, 12 * u, O.col, 'left', 800); tx(g, hot ? 'CHANGE →' : 'CHANGE', rx + rw - 14 * u, ry + h - 16 * u, 10 * u, hot ? O.col : DIM, 'right', 900); ry += h + 14 * u; }
-    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'up to eight, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
-      btn(g, rx + 16 * u, ry + 56 * u, rw - 32 * u, 36 * u, MP.online() ? 'BACK TO YOUR PARTY · ' + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u }); ry += h + 14 * u; }
+    // a short screen (a phone on its side): the queue shares the friends card, so PLAY stays on screen
+    const tight = ry + (104 + 14 + 96 + 14 + 12 + 72) * u + tapH(42) > V.y1 - 4 * u;
+    { const h = 104 * u, bw = tight ? (rw - 40 * u) / 2 : rw - 32 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, tight ? 'up to eight' : 'up to eight, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
+      btn(g, rx + 16 * u, ry + 56 * u, bw, 36 * u, MP.online() ? (tight ? 'PARTY · ' : 'BACK TO YOUR PARTY · ') + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u });
+      if (tight) { tx(g, 'FIND A MATCH', rx + rw - 16 * u, ry + 24 * u, 12 * u, GOLD, 'right', 900); tx(g, 'anyone · unrated', rx + rw - 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'right', 700); drawQueueMini(g, rx + 24 * u + bw, ry + 56 * u, bw, 36 * u, u); }
+      ry += h + 14 * u; }
+    if (!tight) ry += drawQueueCard(g, rx, ry, rw, u) + 14 * u;   // the global queue: 1v1 or 2v2 against anyone
     btn(g, rx, ry, (rw - 10 * u) / 2, tapH(42), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 13 * u }); btn(g, rx + (rw + 10 * u) / 2, ry, (rw - 10 * u) / 2, tapH(42), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 13 * u, sub: 'try every gun' });
     // PLAY
     const lvl = (CFG.diff === 'auto' ? (CFG.queue === 'ranked' ? DIFF[botLevelFor(rankStrength(CFG.size))].n : rankName(STATS.rating)) : DIFF[CFG.diff].n) + ' bots', ph = 72 * u, below = ry + tapH(42) + 12 * u, roomy = V.y1 - ph - 64 * u >= below, pyy = roomy ? V.y1 - ph - 64 * u : below, pw = roomy ? rw : rw - 84 * u;   // clear of the sound button in the corner, and of the buttons above
