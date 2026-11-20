@@ -547,7 +547,7 @@
     M.fs.forEach(f => {
       const side = sideOf(f), sp = SPAWN[side], p = sp[(n + order.filter(q => sideOf(q) === side).indexOf(f)) % sp.length];
       if (!f.alive || pistolRound(n) || ot === 1) { f.guns = { 1: null, 2: 'pip', 3: 'knife' }; f.sh = 0; f.ammo = {}; f.smokes = 0; }   // you keep what you survived with
-      if (!f.net && n === HALF() + 1) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
+      if (!f.net && n === HALF() + 1) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; if (n === HALF() + 1 || ot === 1) f.lossRun = 0;   // the loss bonus starts again with the new half f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, surge: 0, cloak: 0, daze: 0, snare: 0, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
       f.ab.e = 1; if (n === 1 || n === HALF() + 1 || ot === 1) f.ab.q = 0; if (n === 1) f.ult = 0;
       Object.assign(f, { guard: 0, od: 0, phase: 0, lock: 0, chan: null, volley: null, orbT: 0 });
