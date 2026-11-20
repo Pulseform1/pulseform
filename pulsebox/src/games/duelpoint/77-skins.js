@@ -190,53 +190,56 @@
     return SKMAT[key] = M2;
   }
   // a line's parts, sized from the gun: bb is the gun's box, len its barrel, ax the barrel's axis height
-  function skinKit(G, k, line, m, len) {
+  function skinKit(G, k, line, m, len, bore) {
     const L = LINES[line], tier = RARITY[L.r].tier, gl = !!L.gk; if (k === 'knife') { if (gl) knifeGlow(G, line); return; } if (tier < 1) return;
-    G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(G), top = bb.max.y, ax = .025, lc = c => new THREE.Color(c).convertSRGBToLinear();
+    G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(G), top = bb.max.y, ax = bore ? bore.y : .025, tip = bore ? bore.z : -len, lc = c => new THREE.Color(c).convertSRGBToLinear();
     // the gun's own surface under a point along it (so parts sit on the barrel, not up at the height of the sight)
     const ray = new THREE.Raycaster(), meshes = []; G.traverse(o => { if (o.isMesh) meshes.push(o); });
     const topAt = z => { ray.set(new THREE.Vector3(0, top + .2, z), new THREE.Vector3(0, -1, 0)); const h = ray.intersectObjects(meshes, false)[0]; return h ? h.point.y : ax + .02; };
+    // how thick the gun is round the barrel's axis at a point along it (rings and collars are sized to wrap it, not float off it)
+    const rAt = z => { ray.set(new THREE.Vector3(bb.max.x + .2, ax, z), new THREE.Vector3(-1, 0, 0)); const h = ray.intersectObjects(meshes, false)[0]; return h ? cl(Math.abs(h.point.x), .006, .032) : .012; };
+    const rM = Math.max(bore ? bore.r : 0, rAt(tip + .004)), ring = (z, gap = .0025) => rAt(z) + gap;
     const K2 = new THREE.Group(); G.add(K2);
     const add = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); K2.add(o); return o; };
     const glowM = c => new THREE.MeshBasicMaterial({ color: lc(c), toneMapped: false, transparent: true, opacity: .9, blending: THREE.AdditiveBlending, depthWrite: false });
     const live = (o, fn) => { o.userData.live = true; o.userData.anim = fn; return o; };
-    const along = q => lp(bb.max.z, -len, q);   // along the gun: 0 at the back, 1 at the muzzle
+    const along = q => lp(bb.max.z, tip, q);   // along the gun: 0 at the back, 1 at the very front of the muzzle
     if (L.pat) {
       const hw = (bb.max.x - bb.min.x) / 2;
-      if (!gl) for (const q of [.86, .93]) add(new THREE.TorusGeometry(.016, .003, 8, 18), m.acc, 0, ax, along(q));   // (a glowing line brings its own rings)
+      if (!gl) for (const q of [.86, .93]) add(new THREE.TorusGeometry(ring(along(q)), .003, 8, 18), m.acc, 0, ax, along(q));   // (a glowing line brings its own rings)
       for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.003, .016, (bb.max.z - bb.min.z) * .18), m.acc, sx * (hw + .0015), ax + .004, along(.42));
-      if (tier >= 2) { for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.002, .005, (bb.max.z - bb.min.z) * .3), m.glow, sx * (hw + .003), ax - .008, along(.35)); add(new THREE.CylinderGeometry(.015, .013, .028, 12, 1, true), m.acc, 0, ax, along(.985), Math.PI / 2); }
+      if (tier >= 2) { for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.002, .005, (bb.max.z - bb.min.z) * .3), m.glow, sx * (hw + .003), ax - .008, along(.35)); add(new THREE.CylinderGeometry(rM + .0025, rM + .0025, .022, 16, 1, true), m.acc, 0, ax, tip + .0115, Math.PI / 2); }   // a collar flush with the muzzle
       if (tier >= 3 && !(gl && L.gk.pts)) { const id = L.fx && L.fx.idle;
         if (id === 'embers') for (let i = 0; i < 8; i++) { const z0 = along(.5 + R() * .4); live(add(new THREE.PlaneGeometry(.006, .006), glowM(i % 2 ? '#ffd27a' : L.alt), 0, topAt(z0), z0), (o, t, dt) => { const u = o.userData; u.k = (u.k == null ? R() : u.k) + dt * .6; if (u.k > 1) { u.k = 0; u.x = (R() - .5) * .02; } o.position.y = topAt(z0) + u.k * .07; o.position.x = (u.x || 0) + Math.sin(u.k * 9) * .004; o.material.opacity = 1 - u.k; }); }
         else if (id === 'motes') for (let i = 0; i < 6; i++) live(add(new THREE.PlaneGeometry(.005, .005), glowM(i % 2 ? '#ffffff' : L.alt), 0, 0, 0), (o, t) => { const a = t * 1.2 + i * TAU / 6; o.position.set(Math.cos(a) * .045, ax + Math.sin(a * 1.3) * .03, along(.55) + Math.sin(a) * .05); });
         else if (id === 'arcs') for (let i = 0; i < 2; i++) { const g2 = new THREE.BufferGeometry(); g2.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(18), 3)); const ln = new THREE.Line(g2, new THREE.LineBasicMaterial({ color: lc(L.alt), transparent: true, opacity: .9 })); K2.add(ln); ln.userData.live = true;
           ln.userData.anim = (o, t, dt) => { const u = o.userData; if ((u.n = (u.n || 0) - dt) > 0) return; u.n = .04 + R() * .14; o.visible = R() < .5; const pa = o.geometry.attributes.position.array, z0 = along(.45 + R() * .35); for (let k = 0; k < 6; k++) { pa[k * 3] = (k % 2 ? 1 : -1) * hw * .8 + (R() - .5) * .006; pa[k * 3 + 1] = ax + (R() - .5) * .02; pa[k * 3 + 2] = z0 - k * .008; } o.geometry.attributes.position.needsUpdate = true; }; } }
-      if (tier >= 4 && !gl) { for (const [r, sp] of [[.03, 1.4], [.022, -2]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, along(.99)), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
+      if (tier >= 4 && !gl) { for (const [r, sp] of [[Math.max(.03, rM + .012), 1.4], [Math.max(.022, rM + .005), -2]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, tip + .006), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
         const cz = along(.62), cy0 = topAt(cz) + .04; live(add(new THREE.OctahedronGeometry(.012, 0), glowM(L.alt), 0, cy0, cz), (o, t) => { o.position.y = cy0 + Math.sin(t * 2) * .006; o.rotation.y = t * 1.5; }); }
     }
-    if (gl) glowKit(G, K2, k, line, { bb, len, ax, topAt, along, add, live, meshes, m });   // 77-skinfx: strips, rings, cells, halos, particles, its signature piece
-    if (line === 'tidewater') for (const q of [.72, .8, .88]) add(new THREE.TorusGeometry(.016, .0028, 8, 18), m.acc, 0, ax, along(q));
+    if (gl) glowKit(G, K2, k, line, { bb, len, ax, tip, rM, rAt, topAt, along, add, live, meshes, m });   // 77-skinfx: strips, rings, cells, halos, particles, its signature piece
+    if (line === 'tidewater') for (const q of [.72, .8, .88]) add(new THREE.TorusGeometry(ring(along(q)), .0028, 8, 18), m.acc, 0, ax, along(q));
     if (line === 'circuit') { add(new THREE.BoxGeometry(.012, .024, .05), m.dark, .024, ax + .01, along(.45)); add(new THREE.BoxGeometry(.003, .016, .04), m.glow, .031, ax + .01, along(.45)); }
     if (line === 'glacier') {   // ice: shards along the top and a crown of them round the muzzle
       const ice = new THREE.MeshPhysicalMaterial({ color: lc('#cfeaff'), roughness: .05, metalness: 0, clearcoat: 1, transparent: true, opacity: .82, emissive: lc('#3a8ad0'), emissiveIntensity: .35 }); if (X.env) { ice.envMap = X.env; ice.envMapIntensity = 1.6; }
       for (let i = 0; i < 7; i++) { const q = .15 + i * .1, s = .014 + R() * .014, z = along(q), o = add(new THREE.OctahedronGeometry(s, 0), ice, (R() - .5) * .01, topAt(z) + s * .6, z, R() * .4, R(), R() * .4); o.scale.set(.6, 1.7 + R() * .6, .8); }
-      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU, o = add(new THREE.ConeGeometry(.007, .045, 5), ice, Math.cos(a) * .018, ax + Math.sin(a) * .018, along(.97), 0, 0, 0); o.rotation.set(Math.PI / 2 + Math.sin(a) * .5, 0, -Math.cos(a) * .5); }
+      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU, o = add(new THREE.ConeGeometry(.007, .045, 5), ice, Math.cos(a) * (rM + .004), ax + Math.sin(a) * (rM + .004), tip + .012, 0, 0, 0); o.rotation.set(Math.PI / 2 + Math.sin(a) * .5, 0, -Math.cos(a) * .5); }
     }
     if (line === 'aurum') { for (const sx of [-1, 1]) { add(new THREE.BoxGeometry(.003, .03, (bb.max.z - bb.min.z) * .3), m.metal, sx * ((bb.max.x - bb.min.x) / 2 + .001), ax - .005, along(.3)); }
-      add(new THREE.CylinderGeometry(.014, .012, .03, 12), m.metal, 0, ax, along(1) - .01, Math.PI / 2); for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + .78; add(new THREE.ConeGeometry(.004, .022, 4), m.metal, Math.cos(a) * .012, ax + Math.sin(a) * .012, along(1) - .03, -Math.PI / 2); } }
+      add(new THREE.CylinderGeometry(rM + .003, rM + .002, .026, 16), m.metal, 0, ax, tip + .013, Math.PI / 2); for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + .78; add(new THREE.ConeGeometry(.004, .022, 4), m.metal, Math.cos(a) * (rM + .002), ax + Math.sin(a) * (rM + .002), tip + .004, -Math.PI / 2); } }
     if (line === 'inferno') {   // heat fins on top, a burning core on the side, embers that rise
       for (let i = 0; i < 6; i++) { const z = along(.5 + i * .07), h = .02 + i % 2 * .006; add(new THREE.BoxGeometry(.003, h, .022), m.acc, 0, topAt(z) + h / 2 - .003, z); }
       const core = live(add(new THREE.BoxGeometry(.006, .02, .07), glowM(L.alt), (bb.max.x - bb.min.x) / 2 + .002, ax, along(.4)), (o, t) => { o.material.opacity = .65 + Math.sin(t * 4) * .3; });
       for (let i = 0; i < 8; i++) { const z0 = along(.5 + R() * .4), e = live(add(new THREE.PlaneGeometry(.006, .006), glowM(i % 2 ? '#ffd27a' : L.alt), 0, topAt(z0), z0), (o, t, dt) => { const u = o.userData; u.k = (u.k == null ? R() : u.k) + dt * (.6 + u.s); if (u.k > 1) { u.k = 0; o.position.z = along(.5 + R() * .45); u.y0 = topAt(o.position.z); o.position.x = (R() - .5) * .03; } o.position.y = (u.y0 || topAt(o.position.z)) + u.k * .1; o.material.opacity = (1 - u.k) * .9; o.rotation.z += dt * 3; }); e.userData.s = R(); e.material.side = THREE.DoubleSide; }
     }
     if (line === 'storm') {   // copper coils, capacitors, and arcs that jump between them
-      for (let i = 0; i < 7; i++) add(new THREE.TorusGeometry(.017, .0032, 6, 16), m.acc, 0, ax, along(.55 + i * .045));
+      for (let i = 0; i < 7; i++) { const z = along(.55 + i * .045); add(new THREE.TorusGeometry(ring(z, .003), .0032, 6, 16), m.acc, 0, ax, z); }
       for (const sx of [-1, 1]) add(new THREE.CylinderGeometry(.006, .006, .05, 10), m.glow, sx * .022, ax + .012, along(.35), Math.PI / 2);
       for (let i = 0; i < 3; i++) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(18), 3)); const ln = new THREE.Line(g, new THREE.LineBasicMaterial({ color: lc('#bff2ff'), transparent: true, blending: THREE.AdditiveBlending, toneMapped: false })); ln.userData.live = true; K2.add(ln);
         ln.userData.anim = (o, t, dt) => { const u = o.userData; if ((u.n = (u.n || 0) - dt) > 0) return; u.n = .03 + R() * .12; o.visible = R() < .55; const p = o.geometry.attributes.position.array, z0 = along(.5 + R() * .3), z1 = z0 - .04 - R() * .05; for (let j = 0; j < 6; j++) { const q = j / 5; p[j * 3] = (R() - .5) * .03; p[j * 3 + 1] = ax + .018 + (R() - .3) * .015; p[j * 3 + 2] = lp(z0, z1, q); } o.geometry.attributes.position.needsUpdate = true; }; }
     }
     if (line === 'voidline') {   // two rings turning round the muzzle, a crystal hovering over the receiver, motes
-      for (const [r, sp] of [[.03, 1.6], [.022, -2.3]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, along(.98)), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
+      for (const [r, sp] of [[Math.max(.03, rM + .012), 1.6], [Math.max(.022, rM + .005), -2.3]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, tip + .008), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
       const cz = along(.62), cy0 = topAt(cz) + .04, cr = live(add(new THREE.OctahedronGeometry(.014, 0), new THREE.MeshPhysicalMaterial({ color: lc('#2a1840'), emissive: lc(L.alt), emissiveIntensity: .9, roughness: .1, metalness: .4, clearcoat: 1 }), 0, cy0, cz), (o, t) => { o.rotation.y = t * 1.4; o.position.y = cy0 + Math.sin(t * 2) * .006; }); cr.scale.set(1, 1.6, 1);
       for (let i = 0; i < 6; i++) live(add(new THREE.PlaneGeometry(.005, .005), glowM(i % 2 ? '#f0dcff' : L.alt), 0, 0, 0), (o, t) => { const a = t * 1.3 + i * TAU / 6; o.position.set(Math.cos(a) * .045, ax + Math.sin(a * 1.3) * .03, along(.6) + Math.sin(a) * .1); o.material.opacity = .5 + Math.sin(t * 5 + i) * .4; });
     }
@@ -247,6 +250,8 @@
       for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.002, .018, (bb.max.z - bb.min.z) * .25), m.metal, sx * ((bb.max.x - bb.min.x) / 2 + .002), top - .01, along(.45), sx * .25);
       for (let i = 0; i < 6; i++) live(add(new THREE.PlaneGeometry(.005, .005), glowM('#fff1c4'), 0, 0, 0), (o, t) => { const a = t * .9 + i * TAU / 6; o.position.set(Math.cos(a) * .05, top + .02 + Math.sin(a * 2) * .02, along(.5) + Math.sin(a) * .12); o.material.opacity = .45 + Math.sin(t * 4 + i) * .4; });
     }
+
+    return K2;
   }
   // knife blades by line: the shape of the blade and what is built round it
   const KNIFE_SHAPE = { dune: 'kukri', nightshift: 'tanto', tidewater: 'kukri', circuit: 'tanto', glacier: 'crystal', aurum: 'ornate', inferno: 'cleaver', storm: 'coil', voidline: 'energy', solaris: 'energy', starforge: 'cleaver', riftborn: 'energy', glyphbound: 'ornate', permafrost: 'crystal', holoform: 'energy' };

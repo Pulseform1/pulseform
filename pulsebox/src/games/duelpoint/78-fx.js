@@ -183,7 +183,7 @@
     if (G.k === 'breaker' && rt > .1 && rt < .85) { const ph = (rt * 5) % 1; RK[1] += Math.sin(ph * Math.PI) * .012; RK[3] += Math.sin(ph * Math.PI) * .06; }   // each shell pushed in
     X.view.position.set(VO[0] + bobX + swayX + X.lag * .5 + RK[0] - X.runK * .03 + sideK * .02, VO[1] + Math.abs(bob) * .6 + sway + RK[1] + seat * .012 - rk * .22 - raise * raise * .3 - X.dip * .5 - X.runK * .035 + X.air + climb * .028, VO[2] + RK[2] + rk * .9 + raise * .05 + X.runK * .02 + climb * .02);
     X.view.rotation.set(rk * 1.6 + RK[3] + seat * .05 - raise * .7 - X.runK * .14 - dry * .035 + climb * .2, .02 + RK[4] + X.lag + X.runK * .38 - sideK * .35, RK[5] + raise * .35 + X.lag * .6 + X.runK * .26 - sideK * .3);
-    X.mflash.position.set(0, .025, -(X.viewGun.userData.len || .5) - .03); X.mflash.visible = X.flashT > 0 && !G.melee; X.mflash.rotation.z = Math.random() * 3; X.mflash.scale.setScalar(G.cat === 'Sniper' || G.cat === 'Shotgun' ? 1.5 : G.cat === 'Sidearm' ? .8 : 1);
+    { const bo = X.viewGun.userData.bore; X.mflash.position.set(0, bo ? bo.y : .025, -(X.viewGun.userData.len || .5) - .03); } X.mflash.visible = X.flashT > 0 && !G.melee; X.mflash.rotation.z = Math.random() * 3; X.mflash.scale.setScalar(G.cat === 'Sniper' || G.cat === 'Shotgun' ? 1.5 : G.cat === 'Sidearm' ? .8 : 1);
     viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / INSP_D : -1 });
     { const pb = X.viewGun.userData.parts.boltL; if (pb) { X.view.rotation.z += pb.rotation.z * .14; X.view.position.y -= pb.rotation.z * .012; } }   // working a bolt rolls the rifle
     X.viewGun.rotation.z = G.melee && X.drawT > 0 ? (1 - sm(cl(dq, 0, 1))) * TAU : 0;   // the knife flips into the hand

@@ -69,7 +69,7 @@
     zones.length = 0;
     if (!ready) { g.fillStyle = INK; g.fillRect(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0); tx(g, failed ? 'Could not load the 3D engine. Check your connection and reload.' : 'LOADING', 640, 360, failed ? 22 : 30, failed ? WARN : BONE); return; }
     renderFrame(dt); if (posed) return;
-    const mute = document.getElementById('bMute'); if (mute) mute.style.display = isTouch() && screen === 'play' && K.state === 'play' ? 'none' : '';
+    const mute = document.getElementById('bMute'); if (mute) mute.style.display = K.state === 'play' ? 'none' : '';   // the kit's round sound button sat over our buttons in the corner: inside the game, sound is in Settings (Sound, Volume)
     if (K.bot && !DEMO) return;
     if (screen !== 'party') hideBoxes();
     if (screen === 'menu') drawMenu(g); else if (screen === 'party') drawParty(g); else if (screen === 'select') drawSelect(g); else if (screen === 'play' && M) drawHud(g); else if (screen === 'over' && M) drawOver(g);
