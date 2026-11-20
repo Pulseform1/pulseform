@@ -6,11 +6,11 @@
      sky is [overhead, middle, horizon]; extras is the scenery past the walls. */
   const THEMES = {
     harbor: { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'], fog: '#cfe3ee', far: 420, hemi: ['#dfeeff', '#8a7a66'], sun: ['#fff0d8', 1.3], tint: {} },
-    neon: { sky: ['#07061a', '#24124a', '#4a1f5e'], fog: '#2a1640', far: 260, hemi: ['#8a7cff', '#2a1a3a'], sun: ['#b9a8ff', .55], stars: 1, glow: 1, tint: { wall: '#6a6f8c', ground: '#5a5e70', steel: '#c8c8ff', crate: '#8c7aa8', steeltop: '#9a9ac8' }, steel: ['#ff3ea5', '#3df2ff', '#ffd23f', '#7c5cff', '#2b2f45'] },
-    snow: { sky: ['#6f9ccc', '#b9d3ea', '#eef4f8'], fog: '#e9f0f5', far: 230, hemi: ['#f2f8ff', '#b8c4d0'], sun: ['#ffffff', 1.15], tint: { wall: '#eef3f7', ground: '#ffffff', crate: '#9a8a78', steeltop: '#ffffff' }, steel: ['#c0392b', '#2d6a8f', '#e0e6ea', '#3a4a55'] },
+    neon: { sky: ['#07061a', '#24124a', '#4a1f5e'], fog: '#2a1640', far: 260, hemi: ['#8a7cff', '#2a1a3a'], sun: ['#b9a8ff', .55], stars: 1, glow: 1, tint: { wall: '#6a6f8c', ground: '#5a5e70', steel: '#c8c8ff', crate: '#b6a4cc', steeltop: '#9a9ac8' }, steel: ['#ff3ea5', '#3df2ff', '#ffd23f', '#7c5cff', '#5a6290'] },
+    snow: { sky: ['#6f9ccc', '#b9d3ea', '#eef4f8'], fog: '#e9f0f5', far: 230, hemi: ['#f2f8ff', '#b8c4d0'], sun: ['#ffffff', 1.15], tint: { wall: '#eef3f7', ground: '#ffffff', crate: '#9a8a78', steeltop: '#ffffff' }, steel: ['#c0392b', '#3a7fa8', '#e0e6ea', '#5a7286'] },
     desert: { sky: ['#4f8fd0', '#9cc6e8', '#f2dcb0'], fog: '#f0d9ae', far: 300, hemi: ['#fff1d6', '#b08a58'], sun: ['#ffe2b0', 1.45], tint: { wall: '#f0d29a', ground: '#f2d6a0', crate: '#c8a070', steeltop: '#e8d0a0' }, steel: ['#a0522d', '#c9a227', '#6b7f5a', '#8a6a48'] },
-    jungle: { sky: ['#4a8a7a', '#9fc9a8', '#cfe6c8'], fog: '#b7d4b0', far: 200, hemi: ['#d8f0d0', '#4a5a30'], sun: ['#fff4c8', 1.1], tint: { wall: '#a8b890', ground: '#9ab070', crate: '#8a6a40', steeltop: '#a0b080' }, steel: ['#4f6b3a', '#7a5a3a', '#3a5a5a', '#8a8a4a'] },
-    lava: { sky: ['#1a0e0c', '#5a1e10', '#c2501e'], fog: '#5a2414', far: 220, hemi: ['#ff9a6a', '#2a1410'], sun: ['#ffb070', .9], glow: 1, tint: { wall: '#7a6a62', ground: '#6a5a54', crate: '#5a4a40', steel: '#b0a0a0', steeltop: '#8a7a74' }, steel: ['#ff6a1a', '#3a3a40', '#c9862e', '#5a2a1a'] },
+    jungle: { sky: ['#4a8a7a', '#9fc9a8', '#cfe6c8'], fog: '#b7d4b0', far: 200, hemi: ['#d8f0d0', '#4a5a30'], sun: ['#fff4c8', 1.1], tint: { wall: '#a8b890', ground: '#9ab070', crate: '#b08a58', steeltop: '#a0b080' }, steel: ['#4f6b3a', '#7a5a3a', '#3a5a5a', '#8a8a4a'] },
+    lava: { sky: ['#1a0e0c', '#5a1e10', '#c2501e'], fog: '#5a2414', far: 220, hemi: ['#ff9a6a', '#2a1410'], sun: ['#ffb070', .9], glow: 1, tint: { wall: '#7a6a62', ground: '#6a5a54', crate: '#9a7e66', steel: '#b0a0a0', steeltop: '#8a7a74' }, steel: ['#ff6a1a', '#6a6a74', '#c9862e', '#8a3a22'] },
     space: { sky: ['#000004', '#060a1e', '#141a3a'], fog: '#0a1028', far: 320, hemi: ['#bcd4ff', '#2a3044'], sun: ['#e8f0ff', 1.2], stars: 1, glow: 1, tint: { wall: '#d4dcea', ground: '#aab4c8', crate: '#8a96aa', steeltop: '#c8d0e0' }, steel: ['#e8eef6', '#38e8ff', '#ff8a3d', '#5a6680'] },
   };
   // a new map: clear the old world away and build this one, with its sky and light
@@ -59,7 +59,7 @@
     // containers that touch share a colour
     const group = new Int16Array(NC).fill(-1); let groups = 0;
     for (let k = 0; k < NC; k++) if (SRC[Math.floor(k / GW)][k % GW] === 'X' && group[k] < 0) { const st = [k]; group[k] = groups; while (st.length) { const q = st.pop(), qi = q % GW, qj = Math.floor(q / GW); for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(qi + di, qj + dj); if (nk >= 0 && group[nk] < 0 && chAt(qi + di, qj + dj) === 'X') { group[nk] = groups; st.push(nk); } } } groups++; }
-    const uvWall = (u, y) => [u / 4, y / WALL_H], uvBox = (u, y) => [u / CS, y / BOX_H], uvCrate = (u, y) => [u / CS, y / CRATE_H], uvDock = (u, y) => [u / CS, y / DOCK_H], uvPlain = (u, y) => [u / 4, y / 4];
+    const uvWall = (u, y) => [u / 8, y / WALL_H], uvBox = (u, y) => [u / CS, y / BOX_H], uvCrate = (u, y) => [u / CS, y / CRATE_H], uvDock = (u, y) => [u / CS, y / DOCK_H], uvPlain = (u, y) => [u / 4, y / 4];
 
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
       const c = SRC[j][i], k = j * GW + i, x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS, area = AREA[k] >= 0 ? AREAS[AREA[k]] : null, dim = roofed[k] ? .62 : 1;
@@ -133,39 +133,107 @@
     }
     // textures
     const T = {
-      wall: canvasTex(512, 512, (g, w, h) => {
-        grain(g, w, h, '#d6ccb6', .09, 12000);
-        g.fillStyle = 'rgba(70,60,45,.13)'; for (let yy = 0; yy < h; yy += 43) g.fillRect(0, yy, w, 2);   // courses of block showing through the wash
-        for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(255,252,240,${.05 + Math.random() * .1})`; g.fillRect(Math.random() * w, Math.random() * h * .8, 30 + Math.random() * 110, 12 + Math.random() * 40); }
-        g.fillStyle = 'rgba(95,82,62,.5)'; g.fillRect(0, 0, w, 9); g.fillStyle = 'rgba(60,50,38,.5)'; g.fillRect(0, 9, w, 3);
-        for (let i = 0; i < 60; i++) { g.fillStyle = `rgba(120,105,80,${.02 + Math.random() * .04})`; g.fillRect(0, Math.random() * h, w, 2 + Math.random() * 10); }
-        for (let i = 0; i < 16; i++) { const x = Math.random() * w, l = 60 + Math.random() * 200, gr = g.createLinearGradient(0, 0, 0, l); gr.addColorStop(0, 'rgba(90,80,60,.16)'); gr.addColorStop(1, 'rgba(90,80,60,0)'); g.fillStyle = gr; g.fillRect(x, 0, 4 + Math.random() * 14, l); }
-        const dg = g.createLinearGradient(0, h * .8, 0, h); dg.addColorStop(0, 'rgba(150,135,105,0)'); dg.addColorStop(.35, 'rgba(150,135,105,.75)'); dg.addColorStop(1, 'rgba(110,98,78,.95)'); g.fillStyle = dg; g.fillRect(0, h * .8, w, h * .2);
-        g.strokeStyle = 'rgba(60,50,40,.3)'; g.lineWidth = 1; for (let i = 0; i < 5; i++) { let x = Math.random() * w, y = Math.random() * h * .7; g.beginPath(); g.moveTo(x, y); for (let s = 0; s < 6; s++) { x += (Math.random() - .5) * 30; y += 12 + Math.random() * 22; g.lineTo(x, y); } g.stroke(); }
+      // Walls and floors, painted clean and bold: big shapes, soft light, little noise, so a fighter reads at a glance.
+      // A wall (8 m across, its full 6 m up): smooth plaster lit from above, panel seams every 2 m, a concrete coping
+      // along the top and a skirting along the floor, and here and there the plaster broken away to show the brick
+      // behind. Light enough that each map's tint carries its colour.
+      wall: canvasTex(1024, 512, (g, w, h) => {
+        const sk = Math.round(h * .075), cop = Math.round(h * .045);
+        const base = g.createLinearGradient(0, 0, 0, h); base.addColorStop(0, '#ece4d2'); base.addColorStop(.6, '#ddd3bd'); base.addColorStop(1, '#cdc1a8'); g.fillStyle = base; g.fillRect(0, 0, w, h);
+        // soft painted mottling: wide, faint washes rather than speckle
+        for (let i = 0; i < 130; i++) { const lt = Math.random() < .55; g.fillStyle = lt ? `rgba(255,250,236,${.04 + Math.random() * .07})` : `rgba(120,104,80,${.03 + Math.random() * .05})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 30 + Math.random() * 120, 14 + Math.random() * 60, Math.random() * 3, 0, 7); g.fill(); }
+        // brick showing through where the plaster has broken away (two or three patches, never on the skirting)
+        const patch = (cx, cy, rx, ry) => {
+          const pts = []; for (let a = 0; a < 14; a++) { const t = a / 14 * Math.PI * 2, r = .72 + Math.random() * .38; pts.push([cx + Math.cos(t) * rx * r, cy + Math.sin(t) * ry * r]); }
+          const path = () => { g.beginPath(); pts.forEach(([x, y], k) => k ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); };
+          g.save(); path(); g.clip(); g.fillStyle = '#a88e78'; g.fillRect(cx - rx * 1.2, cy - ry * 1.2, rx * 2.4, ry * 2.4);
+          const bw = 34, bh = 15; for (let r = 0, y = cy - ry * 1.2; y < cy + ry * 1.2; y += bh, r++) for (let x = cx - rx * 1.2 - (r % 2) * bw / 2; x < cx + rx * 1.2; x += bw) {
+            const v = Math.random() * 18; g.fillStyle = `rgb(${196 + v},${150 + v * .7},${122 + v * .5})`; g.fillRect(x + 1.5, y + 1.5, bw - 3, bh - 3);
+            g.fillStyle = 'rgba(255,230,200,.18)'; g.fillRect(x + 1.5, y + 1.5, bw - 3, 2); g.fillStyle = 'rgba(60,30,20,.18)'; g.fillRect(x + 1.5, y + bh - 3.5, bw - 3, 2); }
+          const sh = g.createLinearGradient(0, cy - ry, 0, cy - ry * .4); sh.addColorStop(0, 'rgba(60,40,24,.3)'); sh.addColorStop(1, 'rgba(40,24,14,0)'); g.fillStyle = sh; g.fillRect(cx - rx * 1.2, cy - ry * 1.2, rx * 2.4, ry * .9);
+          g.restore(); path(); g.lineWidth = 3; g.strokeStyle = 'rgba(110,94,72,.35)'; g.stroke(); g.lineWidth = 2; g.strokeStyle = 'rgba(255,250,236,.6)'; g.save(); g.translate(0, 2.5); path(); g.stroke(); g.restore();
+        };
+        for (let n = 0, tries = 0; n < 1 + (Math.random() < .5 ? 1 : 0) && tries < 20; tries++) { const cx = 80 + (n ? w / 2 : 0) + Math.random() * (w / 2 - 160), cy = cop + 50 + Math.random() * (h - sk - cop - 210); if (cy > h * .62) continue; patch(cx, cy, 34 + Math.random() * 36, 22 + Math.random() * 22); n++; }
+        // panel seams every 2 m: a fine recessed line with a lit lip
+        for (const x of [0, 256, 512, 768]) { g.fillStyle = 'rgba(80,68,50,.38)'; g.fillRect(x, cop, 3, h - sk - cop); g.fillStyle = 'rgba(255,250,236,.45)'; g.fillRect(x + 3, cop, 2, h - sk - cop); }
+        // a fine horizontal reveal two-thirds of the way up
+        { const y = Math.round(h * .3); g.fillStyle = 'rgba(80,68,50,.32)'; g.fillRect(0, y, w, 3); g.fillStyle = 'rgba(255,250,236,.4)'; g.fillRect(0, y + 3, w, 2); }
+        // rain streaks below the coping and a little grime above the skirting
+        for (let i = 0; i < 22; i++) { const x = Math.random() * w, l = 40 + Math.random() * 150, gr = g.createLinearGradient(0, cop, 0, cop + l); gr.addColorStop(0, 'rgba(100,88,66,.22)'); gr.addColorStop(1, 'rgba(100,88,66,0)'); g.fillStyle = gr; g.fillRect(x, cop, 3 + Math.random() * 10, l); }
+        { const gr = g.createLinearGradient(0, h - sk - 70, 0, h - sk); gr.addColorStop(0, 'rgba(110,96,72,0)'); gr.addColorStop(1, 'rgba(110,96,72,.32)'); g.fillStyle = gr; g.fillRect(0, h - sk - 70, w, 70); }
+        // the coping along the top
+        g.fillStyle = '#a89d88'; g.fillRect(0, 0, w, cop); g.fillStyle = 'rgba(255,250,236,.35)'; g.fillRect(0, 0, w, 3); g.fillStyle = 'rgba(50,40,28,.45)'; g.fillRect(0, cop, w, 4); g.fillStyle = 'rgba(50,40,28,.15)'; g.fillRect(0, cop + 4, w, 6);
+        for (let x = 0; x < w; x += 64) { g.fillStyle = 'rgba(60,50,36,.3)'; g.fillRect(x, 0, 2, cop); }
+        // the skirting along the floor: darker concrete with a bevelled top edge
+        g.fillStyle = '#9c917c'; g.fillRect(0, h - sk, w, sk); g.fillStyle = 'rgba(255,250,236,.5)'; g.fillRect(0, h - sk, w, 3); g.fillStyle = 'rgba(50,40,28,.35)'; g.fillRect(0, h - sk - 4, w, 4);
+        for (let i = 0; i < 80; i++) { g.fillStyle = `rgba(60,50,36,${.05 + Math.random() * .1})`; g.fillRect(Math.random() * w, h - sk + 4 + Math.random() * (sk - 6), 6 + Math.random() * 30, 2 + Math.random() * 4); }
+        for (let x = 0; x < w; x += 128) { g.fillStyle = 'rgba(60,50,36,.35)'; g.fillRect(x, h - sk, 2, sk); }
       }),
+      // A floor (4 m square): stone slabs a metre deep and two long, laid in running bond, each a touch different in tone,
+      // bevelled so light catches the near edge, with the odd crack, worn patch and a few slabs cut into four.
       ground: canvasTex(512, 512, (g, w, h) => {
-        grain(g, w, h, '#b8b2a6', .11, 14000);
-        for (let i = 0; i < 22; i++) { g.fillStyle = `rgba(60,52,40,${.04 + Math.random() * .06})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 18 + Math.random() * 60, 10 + Math.random() * 36, Math.random() * 3, 0, 7); g.fill(); }
-        for (let i = 0; i < 400; i++) { g.fillStyle = `rgba(255,255,255,${.1 + Math.random() * .25})`; g.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5); }
-        g.strokeStyle = 'rgba(40,36,30,.42)'; g.lineWidth = 3; for (const q of [0, 256]) { g.beginPath(); g.moveTo(q + 1, 0); g.lineTo(q + 1, h); g.moveTo(0, q + 1); g.lineTo(w, q + 1); g.stroke(); }
+        g.fillStyle = '#6e695f'; g.fillRect(0, 0, w, h);   // the grout between the slabs
+        const slab = (x, y, sw, sh) => {
+          const v = (Math.random() - .5) * 18, warm = Math.random() < .5 ? 4 : -2, c0 = `rgb(${190 + v + warm},${185 + v},${174 + v - warm})`, c1 = `rgb(${176 + v + warm},${171 + v},${160 + v - warm})`;
+          const gr = g.createLinearGradient(x, y, x + sw * .6, y + sh); gr.addColorStop(0, c0); gr.addColorStop(1, c1); g.fillStyle = gr; g.fillRect(x + 2, y + 2, sw - 4, sh - 4);
+          g.fillStyle = 'rgba(255,252,242,.42)'; g.fillRect(x + 2, y + 2, sw - 4, 3); g.fillRect(x + 2, y + 2, 3, sh - 4);
+          g.fillStyle = 'rgba(40,36,28,.28)'; g.fillRect(x + 2, y + sh - 5, sw - 4, 3); g.fillRect(x + sw - 5, y + 2, 3, sh - 4);
+          for (let i = 0; i < 6; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,252,240' : '90,82,70'},${.03 + Math.random() * .05})`; g.beginPath(); g.ellipse(x + Math.random() * sw, y + Math.random() * sh, 10 + Math.random() * 40, 6 + Math.random() * 20, Math.random() * 3, 0, 7); g.fill(); }
+          for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(70,64,54,${.08 + Math.random() * .12})`; g.fillRect(x + 4 + Math.random() * (sw - 8), y + 4 + Math.random() * (sh - 8), 1.5, 1.5); }
+          if (Math.random() < .22) { g.strokeStyle = 'rgba(60,54,44,.5)'; g.lineWidth = 1.4; let cx = x + 8 + Math.random() * (sw - 16), cy = y + 6; g.beginPath(); g.moveTo(cx, cy); for (let k = 0; k < 5; k++) { cx += (Math.random() - .5) * 26; cy += sh / 6; g.lineTo(cx, cy); } g.stroke(); }
+        };
+        for (let r = 0; r < 4; r++) { const y = r * 128, off = r % 2 ? 128 : 0;
+          for (let x = -off; x < w; x += 256) {
+            if (Math.random() < .16) { for (const [dx, dy] of [[0, 0], [128, 0], [0, 64], [128, 64]]) for (const wx of [x + dx, x + dx + w]) slab(wx, y + dy, 128, 64); }
+            else for (const wx of [x, x + w]) slab(wx, y, 256, 128);
+          } }
       }),
       deck: canvasTex(512, 512, (g, w, h) => {
         for (let r = 0; r < 8; r++) { const v = 118 + Math.random() * 34; g.fillStyle = `rgb(${v + 28},${v},${v - 34})`; g.fillRect(0, r * 64, w, 64); for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(60,38,18,${.05 + Math.random() * .1})`; g.fillRect(Math.random() * w, r * 64 + Math.random() * 64, 40 + Math.random() * 160, 1 + Math.random() * 2); }
           g.fillStyle = 'rgba(30,20,10,.75)'; g.fillRect(0, r * 64, w, 3); const off = (r % 2) * 128 + 60; for (const x of [off, off + 256]) { g.fillRect(x % w, r * 64, 3, 64); g.fillStyle = 'rgba(20,14,8,.8)'; for (const dx of [-10, 12]) for (const dy of [14, 50]) { g.beginPath(); g.arc((x + dx + w) % w, r * 64 + dy, 2.2, 0, 7); g.fill(); } g.fillStyle = 'rgba(30,20,10,.75)'; } }
       }),
-      steel: canvasTex(256, 256, (g, w, h) => {
-        g.fillStyle = '#d2d2d2'; g.fillRect(0, 0, w, h);
-        for (let x = 0; x < w; x += 32) { const gr = g.createLinearGradient(x, 0, x + 32, 0); gr.addColorStop(0, 'rgba(0,0,0,.28)'); gr.addColorStop(.3, 'rgba(255,255,255,.14)'); gr.addColorStop(.6, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.28)'); g.fillStyle = gr; g.fillRect(x, 0, 32, h); }
-        g.fillStyle = 'rgba(0,0,0,.3)'; g.fillRect(0, 0, w, 12); g.fillRect(0, h - 14, w, 14);
-        for (let i = 0; i < 14; i++) { const x = Math.random() * w, l = 30 + Math.random() * 120, gr = g.createLinearGradient(0, 12, 0, 12 + l); gr.addColorStop(0, 'rgba(90,45,20,.35)'); gr.addColorStop(1, 'rgba(90,45,20,0)'); g.fillStyle = gr; g.fillRect(x, 12, 3 + Math.random() * 8, l); }
+      // corrugated steel: eight ribs a cell, each lit on one side and shaded on the other, a heavy rail top and bottom,
+      // rust running down from the top rail and road dirt kicked up along the bottom
+      steel: canvasTex(512, 256, (g, w, h) => {
+        g.fillStyle = '#cfcfcf'; g.fillRect(0, 0, w, h);
+        for (let x = 0; x < w; x += 64) { const gr = g.createLinearGradient(x, 0, x + 64, 0); gr.addColorStop(0, 'rgba(0,0,0,.30)'); gr.addColorStop(.12, 'rgba(255,255,255,.22)'); gr.addColorStop(.38, 'rgba(255,255,255,.10)'); gr.addColorStop(.5, 'rgba(0,0,0,.05)'); gr.addColorStop(.62, 'rgba(0,0,0,.16)'); gr.addColorStop(.88, 'rgba(0,0,0,.30)'); gr.addColorStop(1, 'rgba(0,0,0,.36)'); g.fillStyle = gr; g.fillRect(x, 0, 64, h);
+          g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(x + 7, 0, 2, h); g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(x + 54, 0, 2, h); }
+        for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '0,0,0' : '255,255,255'},${Math.random() * .05})`; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+        g.fillStyle = 'rgba(0,0,0,.34)'; g.fillRect(0, 0, w, 14); g.fillRect(0, h - 16, w, 16); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(0, 14, w, 2); g.fillRect(0, h - 18, w, 2);
+        for (let i = 0; i < 18; i++) { const x = Math.random() * w, l = 30 + Math.random() * 130, gr = g.createLinearGradient(0, 14, 0, 14 + l); gr.addColorStop(0, 'rgba(110,52,20,.45)'); gr.addColorStop(1, 'rgba(110,52,20,0)'); g.fillStyle = gr; g.fillRect(x, 14, 2 + Math.random() * 7, l); }
+        const dg = g.createLinearGradient(0, h * .72, 0, h); dg.addColorStop(0, 'rgba(70,58,44,0)'); dg.addColorStop(1, 'rgba(70,58,44,.45)'); g.fillStyle = dg; g.fillRect(0, h * .72, w, h * .28);
+        for (let i = 0; i < 10; i++) { g.fillStyle = `rgba(90,40,16,${.15 + Math.random() * .2})`; g.beginPath(); g.ellipse(Math.random() * w, 20 + Math.random() * (h - 40), 3 + Math.random() * 10, 2 + Math.random() * 6, 0, 0, 7); g.fill(); }
       }),
       steeltop: canvasTex(128, 128, (g, w, h) => { grain(g, w, h, '#c4c4c4', .1, 1500); g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6); }),
-      crate: canvasTex(256, 256, (g, w, h) => {
-        grain(g, w, h, '#b08552', .12, 2500); for (let r = 0; r < 8; r++) { g.fillStyle = 'rgba(60,35,15,.4)'; g.fillRect(0, r * 32, w, 3); }
-        g.strokeStyle = '#6f4d2a'; g.lineWidth = 22; g.strokeRect(11, 11, w - 22, h - 22); g.lineWidth = 18; g.beginPath(); g.moveTo(16, 16); g.lineTo(w - 16, h - 16); g.stroke();
-        g.fillStyle = 'rgba(20,14,8,.7)'; for (const [x, y] of [[14, 14], [w - 14, 14], [14, h - 14], [w - 14, h - 14]]) { g.beginPath(); g.arc(x, y, 4, 0, 7); g.fill(); }
+      // a wooden shipping crate's face: six planks with gaps between them and nails at the ends, a brace corner to
+      // corner, scuffs and a stencilled mark (the frame, posts and brackets round it are real 3D boards, see below)
+      crate: canvasTex(512, 512, (g, w, h) => {
+        g.fillStyle = '#1e140b'; g.fillRect(0, 0, w, h);
+        const ph = h / 6;
+        for (let r = 0; r < 6; r++) { const v = 150 + Math.random() * 30, y = r * ph; g.fillStyle = `rgb(${v + 22},${v - 12},${v - 62})`; g.fillRect(0, y + 3, w, ph - 6);
+          for (let i = 0; i < 70; i++) { g.fillStyle = `rgba(70,40,15,${.05 + Math.random() * .12})`; g.fillRect(Math.random() * w, y + 4 + Math.random() * (ph - 8), 30 + Math.random() * 180, 1 + Math.random() * 1.6); }
+          const gr = g.createLinearGradient(0, y, 0, y + ph); gr.addColorStop(0, 'rgba(255,240,210,.16)'); gr.addColorStop(.5, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.22)'); g.fillStyle = gr; g.fillRect(0, y + 3, w, ph - 6);
+          if (Math.random() < .5) { g.fillStyle = 'rgba(40,24,10,.5)'; g.beginPath(); g.ellipse(60 + Math.random() * (w - 120), y + ph / 2, 7, 4, 0, 0, 7); g.fill(); }
+          g.fillStyle = 'rgba(25,18,12,.85)'; for (const x of [44, w - 44]) for (const dy of [ph * .3, ph * .7]) { g.beginPath(); g.arc(x, y + dy, 3.4, 0, 7); g.fill(); } }
+        g.save(); g.translate(w / 2, h / 2); g.rotate(-Math.atan2(h - 120, w - 120)); g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(-w * .62, -24, w * 1.24, 52); g.fillStyle = '#9a6c3e'; g.fillRect(-w * .62, -26, w * 1.24, 48);
+        for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(70,40,15,${.08 + Math.random() * .1})`; g.fillRect(-w * .6 + Math.random() * w * 1.2, -24 + Math.random() * 44, 40 + Math.random() * 120, 1.4); }
+        g.fillStyle = 'rgba(25,18,12,.85)'; for (const x of [-w * .5, -w * .2, w * .2, w * .5]) { g.beginPath(); g.arc(x, -2, 4, 0, 7); g.fill(); } g.restore();
+        g.font = '700 40px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.fillStyle = 'rgba(30,22,16,.55)'; g.fillText('DP-' + (10 + Math.floor(Math.random() * 89)), w * .3, h * .2 + 14);
+        g.lineWidth = 6; g.strokeStyle = 'rgba(30,22,16,.5)'; for (const x of [w * .72, w * .82]) { g.beginPath(); g.moveTo(x - 14, h * .86); g.lineTo(x, h * .78); g.lineTo(x + 14, h * .86); g.moveTo(x, h * .78); g.lineTo(x, h * .9); g.stroke(); }
+        for (let i = 0; i < 8; i++) { g.fillStyle = `rgba(255,235,200,${.05 + Math.random() * .08})`; g.fillRect(Math.random() * w, Math.random() * h, 20 + Math.random() * 60, 2 + Math.random() * 4); }
       }),
-      dock: canvasTex(256, 256, (g, w, h) => { grain(g, w, h, '#a9a49a', .12, 4000); for (let i = 0; i < 8; i++) { g.fillStyle = `rgba(50,44,36,${.05 + Math.random() * .08})`; g.fillRect(Math.random() * w, 40 + Math.random() * 200, 20 + Math.random() * 60, 4 + Math.random() * 30); } }),
+      // the crate's frame boards and the bare wood of the posts
+      trim: canvasTex(256, 64, (g, w, h) => { grain(g, w, h, '#8a6038', .14, 900); for (let i = 0; i < 30; i++) { g.fillStyle = `rgba(60,34,14,${.08 + Math.random() * .14})`; g.fillRect(Math.random() * w, Math.random() * h, 30 + Math.random() * 90, 1.2); } }),
+      // the side of a raised dock or ledge: poured concrete in formwork panels, tie holes in rows, a chipped top edge
+      dock: canvasTex(256, 256, (g, w, h) => {
+        const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#b6b1a6'); gr.addColorStop(1, '#a29d92'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        for (let i = 0; i < 18; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,252,240' : '80,74,64'},${.04 + Math.random() * .05})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 20 + Math.random() * 50, 8 + Math.random() * 20, 0, 0, 7); g.fill(); }
+        for (const x of [0, 128]) { g.fillStyle = 'rgba(70,64,54,.35)'; g.fillRect(x, 0, 2, h); g.fillStyle = 'rgba(255,252,240,.3)'; g.fillRect(x + 2, 0, 1, h); }
+        g.fillStyle = 'rgba(70,64,54,.3)'; g.fillRect(0, h / 2, w, 2); g.fillStyle = 'rgba(255,252,240,.28)'; g.fillRect(0, h / 2 + 2, w, 1);
+        for (const y of [h * .25, h * .75]) for (const x of [32, 96, 160, 224]) { g.fillStyle = 'rgba(50,46,40,.55)'; g.beginPath(); g.arc(x, y, 4, 0, 7); g.fill(); g.fillStyle = 'rgba(255,252,240,.3)'; g.beginPath(); g.arc(x + 1, y + 1.5, 2, 0, 7); g.fill(); }
+        g.fillStyle = 'rgba(255,252,240,.4)'; g.fillRect(0, 0, w, 3); for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(90,84,72,.5)'; g.fillRect(Math.random() * w, 0, 6 + Math.random() * 16, 4 + Math.random() * 5); }
+        const dg = g.createLinearGradient(0, h * .8, 0, h); dg.addColorStop(0, 'rgba(70,62,50,0)'); dg.addColorStop(1, 'rgba(70,62,50,.35)'); g.fillStyle = dg; g.fillRect(0, h * .8, w, h * .2);
+      }),
       roof: canvasTex(128, 128, (g, w, h) => { g.fillStyle = '#6a6d72'; g.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 16) { const gr = g.createLinearGradient(x, 0, x + 16, 0); gr.addColorStop(0, 'rgba(0,0,0,.4)'); gr.addColorStop(.5, 'rgba(255,255,255,.1)'); gr.addColorStop(1, 'rgba(0,0,0,.4)'); g.fillStyle = gr; g.fillRect(x, 0, 16, h); } }),
     };
     // the mechanic's floors: ice, belts (one texture each way, so each can run), vent grates, the low-gravity deck
@@ -180,6 +248,53 @@
     T.lowg = canvasTex(256, 256, (g, w, h) => { grain(g, w, h, '#3a4256', .1, 2000); g.strokeStyle = 'rgba(110,220,255,.85)'; g.lineWidth = 3; const r = 32;
       for (let yy = 0, row = 0; yy < h + r; yy += r * 1.5, row++) for (let xx = (row % 2) * r * .866; xx < w + r; xx += r * 1.732) { g.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * TAU / 6; g.lineTo(xx + Math.cos(a) * r * .95, yy + Math.sin(a) * r * .95); } g.closePath(); g.stroke(); } });
     X.tex = T;
+    // ---- crates and containers in 3D: the box itself is the cell (its texture above), and round it real parts --------
+    // a crate: four corner posts, frame boards round the top and the bottom, and a steel bracket on every corner;
+    // a container: corner posts with cast corner blocks, top and bottom rails, a rib where one container ends and the next
+    // starts, and on the end doors two locking bars with handles. All of it merged into a few meshes, a hand-breadth proud
+    // of the cell at most, so it never changes what you can stand on or shoot past.
+    {
+      const PG = new THREE.Group(); W.add(PG);
+      const lam = (c, map) => { const m = new THREE.MeshLambertMaterial({ color: c, map: map || null }); m.userData.keepUV = false; return m; };
+      const ct = TH.tint.crate ? LC(TH.tint.crate) : new THREE.Color(1, 1, 1);
+      const trimM = lam(ct.clone().multiplyScalar(.82), T.trim), brM = lam(LC('#3c3f45')), castM = lam(LC('#2e3136')), barM = lam(LC('#a4aab2'));
+      const railM = STEEL.map(c => lam(new THREE.Color(c[0] * .62, c[1] * .62, c[2] * .62)));
+      const bx = (m, w, h, d, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); PG.add(o); };
+      const isX = (i, j) => chAt(i, j) === 'X';
+      // each container group's long way, so the doors go on its ends
+      const ext = {}; for (let k = 0; k < NC; k++) if (group[k] >= 0) { const i = k % GW, j = Math.floor(k / GW), e = ext[group[k]] || (ext[group[k]] = [i, j, i, j]); e[0] = Math.min(e[0], i); e[1] = Math.min(e[1], j); e[2] = Math.max(e[2], i); e[3] = Math.max(e[3], j); }
+      for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
+        const c = SRC[j][i], k = j * GW + i, x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS, top = CH[k];
+        if (c === 'c') {
+          const q = .05, t = .16;
+          for (const [cx, cz] of [[x0 + q, z0 + q], [x1 - q, z0 + q], [x0 + q, z1 - q], [x1 - q, z1 - q]]) { bx(trimM, t, top, t, cx, top / 2, cz); bx(brM, t + .07, .2, t + .07, cx, top - .1, cz); bx(brM, t + .07, .16, t + .07, cx, .08, cz); }
+          for (const y of [top - .07, .08]) { bx(trimM, CS - .1, .13, t, (x0 + x1) / 2, y, z0 + q); bx(trimM, CS - .1, .13, t, (x0 + x1) / 2, y, z1 - q); bx(trimM, t, .13, CS - .1, x0 + q, y, (z0 + z1) / 2); bx(trimM, t, .13, CS - .1, x1 - q, y, (z0 + z1) / 2); }
+        } else if (c === 'X') {
+          const gi = group[k], rm = railM[gi % railM.length], E = ext[gi], longI = E[2] - E[0] >= E[3] - E[1];
+          const out = [!isX(i + 1, j), !isX(i - 1, j), !isX(i, j + 1), !isX(i, j - 1)];   // east, west, south, north faces open
+          const o = .04;
+          for (let e = 0; e < 4; e++) {
+            if (!out[e]) continue; const ni = i + (e === 0 ? 1 : e === 1 ? -1 : 0), nj = j + (e === 2 ? 1 : e === 3 ? -1 : 0), nk = idx(ni, nj); if (nk >= 0 && CH[nk] >= top) continue;
+            const alongX = e >= 2, fx = e === 0 ? x1 + o : e === 1 ? x0 - o : (x0 + x1) / 2, fz = e === 2 ? z1 + o : e === 3 ? z0 - o : (z0 + z1) / 2;
+            // top and bottom rails
+            for (const y of [top - .09, .1]) bx(rm, alongX ? CS : .1, .18, alongX ? .1 : CS, fx, y, fz);
+            // a rib between containers every third cell along a side
+            const along = alongX ? i : j; if (along % 3 === 0) bx(rm, alongX ? .12 : .1, top - .2, alongX ? .1 : .12, alongX ? x0 : fx, top / 2, alongX ? fz : z0);
+            // the doors on the ends: two locking bars with their handles and keepers
+            const isEnd = longI ? e < 2 : e >= 2;
+            if (isEnd) for (const s of [-.45, .45]) { const bxp = alongX ? (x0 + x1) / 2 + s : fx + (e === 0 ? .04 : -.04), bzp = alongX ? fz + (e === 2 ? .04 : -.04) : (z0 + z1) / 2 + s;
+              bx(barM, .06, top - .3, .06, bxp, top / 2, bzp); bx(barM, alongX ? .3 : .08, .06, alongX ? .08 : .3, bxp + (alongX ? .14 : 0), top * .45, bzp + (alongX ? 0 : .14));
+              for (const y of [.28, top - .28]) bx(brM, .14, .1, .14, bxp, y, bzp); }
+          }
+          // corner posts and cast corner blocks where two open faces meet
+          for (const [ex, ez, cx, cz] of [[0, 2, x1, z1], [0, 3, x1, z0], [1, 2, x0, z1], [1, 3, x0, z0]]) if (out[ex] && out[ez]) {
+            const px = cx + (ex === 0 ? -.06 : .06), pz = cz + (ez === 2 ? -.06 : .06); bx(rm, .2, top, .2, px, top / 2, pz);
+            for (const y of [top - .13, .13]) bx(castM, .28, .26, .28, px, y, pz);
+          }
+        }
+      }
+      bake(PG, sh); PG.traverse(o => { if (o.isMesh) o.receiveShadow = sh; });
+    }
     for (const k in bags) {
       const b = bags[k], geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(b.p, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(b.n, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2)); geo.setAttribute('color', new THREE.Float32BufferAttribute(b.c, 3)); geo.setIndex(b.i);
