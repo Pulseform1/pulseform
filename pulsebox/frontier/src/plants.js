@@ -239,7 +239,7 @@ function foliageMat(tex, key, k, uKOut) {
       .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
 reflectedLight.directSpecular *= 0.0; reflectedLight.indirectSpecular *= 0.0;   // leaves seen edge-on no longer sparkle
 { vec3 sv = normalize( ( viewMatrix * vec4( uSunDirF, 0.0 ) ).xyz ); float bl = pow( max( dot( - geometryViewDir, sv ), 0.0 ), 3.0 );
-  reflectedLight.directDiffuse += diffuseColor.rgb * uSunCol * ( 0.06 + 0.14 * bl ) * vColor.r; }`);
+  reflectedLight.directDiffuse += diffuseColor.rgb * uSunCol * ( 0.06 + 0.14 * bl ) * vColor.r * ( 1.0 - smoothstep( 8.0, 30.0, length( vViewPosition ) ) ); }`);   // (the glow fades off with distance: far off, lit leaf edges were bright specks)
   };
   if (uKOut) uKOut.uK = w.uK;
   return m;

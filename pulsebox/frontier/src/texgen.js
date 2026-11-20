@@ -133,11 +133,11 @@ function paintDirt(T) {
   g.putImageData(im, 0, 0);
   const R = T.R;
   for (let i = 0; i < 900; i++) {
-    const x = R() * GS, y = R() * GS, r = 1.2 + R() * R() * 7, sh = 90 + R() * 70, a = R() * Math.PI;
+    const x = R() * GS, y = R() * GS, r = 1.2 + R() * R() * 7, sh = 82 + R() * 52, a = R() * Math.PI;   // (duller pebbles: bright ones sparkled as white dots further off)
     wrapDraw(GS, x, y, r + 2, (px, py) => {
       g.fillStyle = `rgba(20,14,8,.45)`; g.beginPath(); g.ellipse(px + 1, py + 1.3, r, r * .75, a, 0, Math.PI * 2); g.fill();
       g.fillStyle = `rgb(${sh},${sh * .92},${sh * .82})`; g.beginPath(); g.ellipse(px, py, r, r * .75, a, 0, Math.PI * 2); g.fill();
-      g.fillStyle = `rgba(255,250,235,.18)`; g.beginPath(); g.ellipse(px - r * .25, py - r * .25, r * .45, r * .3, a, 0, Math.PI * 2); g.fill();
+      g.fillStyle = `rgba(255,250,235,.07)`; g.beginPath(); g.ellipse(px - r * .25, py - r * .25, r * .45, r * .3, a, 0, Math.PI * 2); g.fill();
     });
   }
   return c;

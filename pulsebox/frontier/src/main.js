@@ -55,6 +55,9 @@ if (params.get('q')) G.settings.quality = params.get('q');
 // ---------- renderer ----------
 const canvas = $('#game');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', stencil: false });
+// shader error checks read each compile's log, which makes the browser finish compiling there and then (a freeze); only
+// with ?debug=1
+renderer.debug.checkShaderErrors = params.get('debug') === '1';
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.62;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
@@ -141,8 +144,10 @@ async function start(opts) {
   sky.update(0, camera.position, 0);
   // compile every animal's shaders (fur too) while the loading screen is up, so the first bear or elk to walk into view
   // does not freeze the game for a moment
-  { const tmp = []; for (const k of Object.keys(SPECIES)) { try { const a = makeAnimal(k, .5); a.mesh.position.set(camera.position.x, camera.position.y - 40, camera.position.z); for (const sh of a.shells || []) sh.visible = true; scene.add(a.mesh); tmp.push(a.mesh); } catch (e) { } }
-    renderer.compile(scene, camera); for (const m of tmp) scene.remove(m); }
+  // ... and draw one whole frame behind the loading screen with them standing in the open, so the shadow and glow passes
+  // compile their shaders now too, not the first time something casts a shadow in play
+  { const tmp = []; let i = 0; for (const k of Object.keys(SPECIES)) { try { const a = makeAnimal(k, .5), d = 7 + (i++ % 4) * 3; a.mesh.position.set(camera.position.x - Math.sin(player.yaw) * d, world.height(camera.position.x, camera.position.z), camera.position.z - Math.cos(player.yaw) * d); for (const sh of a.shells || []) sh.visible = true; scene.add(a.mesh); tmp.push(a.mesh); } catch (e) { } }
+    renderer.compile(scene, camera); try { G.post.render(0, U.uSunDirW.value, 1, 0); } catch (e) { renderer.render(scene, camera); } for (const m of tmp) scene.remove(m); }
   $('#loading').hidden = true; $('#hud').hidden = false; G.state = 'play'; G.saveT = 20;
   $('#touch').hidden = !input.isTouch; document.body.classList.toggle('touch', input.isTouch);
   setTimeout(() => toast(opts.restore ? `Back at camp. Day ${G.day + 1}.` : input.isTouch ? 'Drag left to walk, right to look. Tap ? for all the controls.' : 'Press Tab any time to see all the controls.'), 1500);

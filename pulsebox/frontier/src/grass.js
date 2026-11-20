@@ -22,7 +22,7 @@ function bladeGeometry() {
 const VS_HEAD = `#include <common>
 attribute vec4 aOff; attribute vec4 aRnd;
 uniform sampler2D uField; uniform vec4 uFieldO; uniform vec4 uRing; uniform float uOnly; uniform float uTime; uniform vec4 uWind; uniform vec3 uPlayer; uniform float uH; uniform vec4 uFade;
-varying vec3 vGCol; varying float vGAo;
+varying vec3 vGCol; varying float vGAo; varying float vGFar;
 vec4 fieldAt( vec2 wp ) {
   vec2 t = ( wp - uFieldO.xy ) / uFieldO.z; vec2 i = floor( t ), f = t - i; ivec2 b = ivec2( i );
   ivec2 m = ivec2( ${FN - 1} );
@@ -35,8 +35,11 @@ float T = uRing.w;
 vec2 cam = cameraPosition.xz;
 vec2 wp = cam + mod( aOff.xy - cam + T * 0.5, T ) - T * 0.5;
 float dist = length( wp - cam );
-vec4 fd = fieldAt( wp );
-float keep = step( aRnd.x, fd.g ) * smoothstep( uFade.x, uFade.y, dist ) * ( 1.0 - smoothstep( uFade.z, uFade.w, dist ) ) * ( uOnly > 0.5 ? step( 2.15, fd.g ) : 1.0 );
+// blades behind you are never seen: skip their reads of the field (most of the lattice, which wraps all round you)
+vec3 cfw = - vec3( viewMatrix[ 0 ][ 2 ], viewMatrix[ 1 ][ 2 ], viewMatrix[ 2 ][ 2 ] );
+bool behind = dot( wp - cam, cfw.xz ) < - 1.5;
+vec4 fd = behind ? vec4( 0.0 ) : fieldAt( wp );
+float keep = ( behind ? 0.0 : 1.0 ) * step( aRnd.x, fd.g ) * smoothstep( uFade.x, uFade.y, dist ) * ( 1.0 - smoothstep( uFade.z, uFade.w, dist ) ) * ( uOnly > 0.5 ? step( 2.15, fd.g ) : 1.0 );
 // the super-tall spots (field over 2.15): blades shoulder high to over your head, a little wider, more upright
 float sup = smoothstep( 2.15, 2.9, fd.g );
 float hgt = mix( uH * ( 0.35 + aRnd.y * aRnd.y * 1.1 ) * ( 0.2 + 0.9 * min( fd.g, 2.1 ) ), uH * ( 2.7 + aRnd.y * 1.6 ), sup ) * keep;
@@ -61,8 +64,14 @@ transformed.y += y * hgt * ( 1.0 - 0.25 * dot( bend, bend ) );
 vec3 green = mix( vec3( 0.16, 0.24, 0.06 ), vec3( 0.32, 0.36, 0.12 ), aOff.w );
 vec3 dry = vec3( 0.46, 0.41, 0.2 );
 vec3 tip = mix( green, dry, smoothstep( 0.4, 0.85, fd.b + aOff.w * 0.25 - 0.1 ) );
-vGCol = mix( tip * 0.68, tip * 0.98, y );
-vGAo = mix( 0.62, 1.0, y ) * ( 1.0 - 0.4 * fd.a );`;
+vGCol = mix( tip * 0.74, tip * 0.92, y );   // (a gentle step from root to tip: bright tips against dark blades read as specks)
+vGAo = mix( 0.62, 1.0, y ) * ( 1.0 - 0.4 * fd.a );
+// a little way out a blade is a pixel or two across: drawn lighter than the ground under it, each one was a lone bright green
+// dot that flickered as you moved. From a few metres out the blades take on the ground's own colour (dry where it is dry) and lose
+// their light tips, so the far meadow reads as one soft surface instead of speckle
+float far = smoothstep( 2.5, 16.0, dist );
+vec3 gnd = mix( vec3( 0.088, 0.12, 0.028 ), vec3( 0.2, 0.17, 0.07 ), smoothstep( 0.4, 0.85, fd.b ) * 0.6 ) * mix( 0.92, 1.12, aOff.w );
+vGCol = mix( vGCol, gnd, far * 0.9 ); vGAo = mix( vGAo, 0.92, far ); vGFar = far;`;
 
 export class Grass {
   constructor(scene, jobs, opts = {}) {
@@ -97,14 +106,14 @@ export class Grass {
       Object.assign(sh.uniforms, { uField: { value: this.field.tex }, uFieldO: this.field.o, uRing, uFade, uOnly, uTime: U.uTime, uWind: U.uWind, uPlayer: this.uPlayer, uH, uSunCol: U.uSunCol, uSunDirF: U.uSunDirW });
       sh.vertexShader = sh.vertexShader.replace('#include <common>', VS_HEAD).replace('#include <begin_vertex>', VS_BODY)
         .replace('#include <beginnormal_vertex>', 'vec3 objectNormal = vec3( 0.0, 1.0, 0.0 );');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vGCol; varying float vGAo; uniform vec3 uSunCol; uniform vec3 uSunDirF;')
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vGCol; varying float vGAo; varying float vGFar; uniform vec3 uSunCol; uniform vec3 uSunDirF;')
         .replace('#include <map_fragment>', 'diffuseColor.rgb = vGCol;')
         .replace('float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;', 'float faceDirection = 1.0;')
         .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
 reflectedLight.directSpecular *= 0.0; reflectedLight.indirectSpecular *= 0.0;   // no glints: edge-on blades caught the light as bright specks
 reflectedLight.indirectDiffuse *= vGAo;
 { vec3 sv = normalize( ( viewMatrix * vec4( uSunDirF, 0.0 ) ).xyz ); float bl = pow( max( dot( - geometryViewDir, sv ), 0.0 ), 2.0 );
-  reflectedLight.directDiffuse += diffuseColor.rgb * uSunCol * 0.12 * bl * vGAo; }   // a soft glow through the blades against the sun, not glints`);
+  reflectedLight.directDiffuse += diffuseColor.rgb * uSunCol * 0.12 * bl * vGAo * ( 1.0 - vGFar ); }   // a soft glow through the blades against the sun, not glints`);
     });
     const mesh = new THREE.Mesh(g, mat); mesh.frustumCulled = false; mesh.receiveShadow = true; mesh.castShadow = false; mesh.renderOrder = 1;
     this.group.add(mesh);

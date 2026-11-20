@@ -239,7 +239,17 @@ if ( ! gl_FrontFacing ) { vec3 sv = normalize( ( viewMatrix * vec4( uSunDirF, 0.
     this.addCircle(lx, lz, .08);
     this.lanternSpot = this.addInteract('lantern', lx + .36, 1.4, lz, 1.3, () => 'Lantern');
   }
+  // small camp pieces (rope ties, pegs, stakes, cups, kindling, the chest's fittings) cast no shadow of their own: each was a
+  // draw of its own into the shadow map every frame, about 170 of them, for shadows too small to see. Checked now and
+  // then, so things added to the camp later (meat, firewood, hides) are trimmed too.
+  trimShadows() {
+    const v = new THREE.Vector3();
+    this.group.traverse(o => { if (!o.isMesh || o.userData.shTrim) return; o.userData.shTrim = true; if (!o.castShadow || !o.geometry) return;
+      if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); o.getWorldScale(v); const r = o.geometry.boundingSphere.radius * Math.max(v.x, v.y, v.z);
+      if (r < .5) o.castShadow = false; });
+  }
   update(dt, night, wind) {
+    this.shT = (this.shT || 0) - dt; if (this.shT <= 0) { this.shT = 2; this.trimShadows(); }
     this.fire.update(dt, night, wind);
     if (!this.lantern.carried) this.lantern.update(dt, night);
     this.chestLid.rotation.x += ((this.chestOpen ? -1.6 : 0) - this.chestLid.rotation.x) * Math.min(1, dt * 6);

@@ -23,7 +23,7 @@ const r = await p.evaluate(() => { __fh.hold(true); const G = __fh.G, W = G.wild
   const c = __fh.camera.position, t = a.pos; G.drone.yaw = Math.atan2(-(t.x - c.x), -(t.z - c.z)); G.drone.pitch = Math.atan2(t.y + .8 - c.y, Math.hypot(t.x - c.x, t.z - c.z));
   for (let i = 0; i < 3; i++) __fh.tick(1, 1/30);
   const tgt = G.drone.target && G.drone.target.sp.label, alt = c.y - G.world.height(c.x, c.z);
-  return { on, tgt, alt: Math.round(alt), frozen: P.frozen, gunHidden: !G.weapons.root.visible };
+  return { on, tgt, alt: Math.round(alt), frozen: P.frozen, gunHidden: G.weapons.root.children.every(c => c.isLight || !c.visible) };   // (the gun's models hide; its light stays, so no shader rebuilds)
 });
 ok(r.on && r.frozen && r.gunHidden, 'G sends the drone up; you stand still, gun away', r);
 ok(r.alt > 15, 'Space climbs', r.alt);

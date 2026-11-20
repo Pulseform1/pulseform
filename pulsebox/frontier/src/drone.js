@@ -33,7 +33,7 @@ export class Drone {
     if (this.batt < 8) { G.ui.toast(L ? 'The drone battery is flat. Walk to it and press E to pack it away; it charges in your pack.' : 'The drone battery is flat. It charges while it is packed away.'); return; }
     this.on = true; this.landing = false; this.vel.set(0, 0, 0); this.vy = 3; this.pitch = -.3; this.fov = 72;
     if (L) { this.pos.set(L.x, L.y + .4, L.z); this.yaw = L.yaw; this.landed = null; this.showModel(false); } else { this.pos.set(P.pos.x, P.pos.y + 2.4, P.pos.z); this.yaw = P.yaw; }
-    P.frozen = true; P.vel.set(0, 0, 0); G.weapons.root.visible = false; G.handL.visible = false;
+    P.frozen = true; P.vel.set(0, 0, 0); this.gunVis = G.weapons.root.children.map(c => c.visible); for (const c of G.weapons.root.children) if (!c.isLight) c.visible = false; G.handL.visible = false;   // (the gun's light stays: a light coming or going makes every material rebuild its shader, a freeze)
     this.el.hidden = false; this.setVision(this.nv);
     G.ui.toast(G.input.isTouch ? 'Drone up. Drag to fly and look; Pin marks the animal in the ring.' : 'Drone up. WASD fly, Space up, C down, wheel zoom, N night vision, click to pin, X to land, G to bring it back.');
   }
@@ -57,7 +57,7 @@ export class Drone {
   pickUp() { if (!this.nearLanded) return false; this.landed = null; this.showModel(false); this.G.ui.toast('You pack the drone away. It charges in your pack.'); return true; }
   recall(why) {
     if (!this.on) return; const G = this.G;
-    this.on = false; G.player.frozen = false; G.weapons.root.visible = true; this.el.hidden = true; this.applyVision(false); this.up = 0;
+    this.on = false; G.player.frozen = false; G.weapons.root.children.forEach((c, i) => { if (!c.isLight) c.visible = this.gunVis ? this.gunVis[i] !== false : true; }); this.el.hidden = true; this.applyVision(false); this.up = 0;
     this.cam.fov = 72; this.cam.updateProjectionMatrix(); G.player.applyCamera(); this.target = null;
     if (why) G.ui.toast(why); else if (this.pins.length) G.ui.toast(`Drone packed. Follow the pin${this.pins.length > 1 ? 's' : ''} to the game.`);
   }
