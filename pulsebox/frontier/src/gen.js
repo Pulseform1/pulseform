@@ -75,8 +75,10 @@ export function flora(world, cx, cz, C) {
     const rocky = smooth(0.9, 0.7, nrm[1]) + s.m * .3 + smooth(70, 180, s.h) * .6;   // the mountains: boulders and scree up high
     const edge = 4 * f * (1 - f);
     if (r < 0.02 + 0.06 * rocky) { // rocks
-      const big = q < 0.12 + 0.2 * Math.min(1, rocky);
-      props.push(x, s.h - (big ? .45 : .06), z, rot, big ? 1.1 + sz * 2.4 : 0.22 + sz * .5, big ? 5 : 4); continue;
+      if (nrm[1] < .5) continue;   // nothing lodges on a sheer face
+      // on a slope a stone sits down into the hill, so its low side does not hang in the air
+      const big = q < 0.12 + 0.2 * Math.min(1, rocky), sc = big ? 1.1 + sz * 2.4 : 0.22 + sz * .5;
+      props.push(x, s.h - (big ? .45 : .06) - (1 - nrm[1]) * sc * 1.1, z, rot, sc, big ? 5 : 4); continue;
     }
     if (s.h < 1.3) { if (q < 0.25 && nrm[1] > .85) props.push(x, s.h, z, rot, .7 + sz * .6, 8); continue; }
     if (nrm[1] < 0.7) continue;
