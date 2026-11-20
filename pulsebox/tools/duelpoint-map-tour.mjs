@@ -30,6 +30,12 @@ for (let mi = 0; mi < n; mi++) {
     await p.waitForTimeout(450);
     await p.screenshot({ path: `${O}/${String(mi).padStart(2, '0')}-${views.name.replace(/\W+/g, '')}-${v.tag}.png` });
   }
+  // two views from high over opposite corners, to check the whole layout
+  for (const [k, cx, cz] of [['over1', -.15, -.15], ['over2', 1.15, 1.15]]) {
+    await p.evaluate(([cx, cz]) => { const t = GAME.test, m = t.mech(), W = m.GW * 2, H = m.GH * 2; t.X.camHook = cam => { cam.position.set(W * cx, Math.max(W, H) * .55, H * cz); cam.lookAt(W / 2, 0, H / 2); }; t.tick(.05); }, [cx, cz]);
+    await p.waitForTimeout(450); await p.screenshot({ path: `${O}/${String(mi).padStart(2, '0')}-${views.name.replace(/\W+/g, '')}-${k}.png` });
+  }
+  await p.evaluate(() => { GAME.test.X.camHook = null; });
   console.log(mi, views.name, views.rows, views.v.map(v => v.tag).join(','));
 }
 console.log('ERRORS', JSON.stringify(errs.slice(0, 5))); await b.close();

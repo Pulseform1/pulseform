@@ -303,13 +303,14 @@
     }
     // the sites: every plantable cell painted on the floor, and on a map of two or three, big letters on the walls round each
     (X.siteTex || []).forEach(t => t.dispose()); X.siteTex = [];   // the last map's paint
-    for (const S of SITES) siteMarks(W, S, TH, sh);
+    X.wallMarks = []; for (const S of SITES) siteMarks(W, S, TH, sh);
     // door signs
     const signMat = {};
     for (const s of signs) {
       const m = signMat[s.a.k] || (signMat[s.a.k] = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, map: (() => { const t = canvasTex(256, 64, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = s.a.col; g.fillRect(0, 8, 14, 48); g.font = '700 46px "Chakra Petch", sans-serif'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(40,38,34,.82)'; g.fillText(s.a.n.toUpperCase(), 26, 34); }); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; })() }));
       const p = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), m); p.position.set(s.x, 3.35, s.z); p.rotation.y = s.ry; W.add(p);
     }
+    detail(W, TH, sh, roofed, signs);
     if (MAP.theme !== 'harbor') { scenery(W, TH); buildMech(W, TH); return; }
     // beyond the sea wall: water, a jetty with a boat, a lighthouse; and two cranes over the east wall
     const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); W.add(o); return o; };
@@ -364,6 +365,100 @@
      faint hatch, a bold border wherever the site meets open ground (dark at its outer side, so it reads on snow and sand
      as well as on the dark floors), the ring at the site's spot, and the letter (a plant mark on a one-site map) in the ring
      and stencilled by the ways in. Nothing is drawn off the site's cells, so nothing spills onto the ground round it. */
+  /* The life on the walls and floors: what makes a lane look lived in, never anything you can hide behind or that stops
+     a shot. Everything here hugs a wall (a hand-breadth proud at most) or lies flat on the ground, and keeps clear of the
+     lane bands, the door signs and the site letters. Placed from a hash of the map and the cell, so every player on
+     every device sees the same walls.
+       on the walls: pipe runs with brackets, downpipes, lamps throwing a pool of light (neon tubes on the city and
+         station maps), electrical boxes, vent grilles; and by theme icicles, vines, life rings or cloth banners
+       on the floor: drain grates along the walls, manhole covers, and stains */
+  function detail(W, TH, sh, roofed, signs) {
+    const t = MAP.theme, seed = [...MAP.k].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+    const hash = (...v) => { let h = seed ^ 0x9e3779b9; for (const q of v) { h = Math.imul(h ^ (q | 0), 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; } return (h >>> 0) / 4294967296; };
+    const G = new THREE.Group(); W.add(G);
+    const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o || {})), bas = c => new THREE.MeshBasicMaterial({ color: LC(c) });
+    const PAL = { harbor: ['#6f7780', '#b8452e'], neon: ['#3a3f58', '#ff3ea5'], snow: ['#7d8a96', '#c0392b'], desert: ['#8a6a48', '#c9862e'], jungle: ['#5a6448', '#8a6a40'], lava: ['#5a4a44', '#ff6a1a'], space: ['#9aa6ba', '#38e8ff'] }[t] || ['#6f7780', '#b8452e'];
+    const pipeM = lam(PAL[0]), bracketM = lam('#2e3136'), boxM = lam('#8f9690'), boxDoorM = lam('#a9b0aa'), lampM = lam('#30343a'), bulbM = bas(t === 'lava' ? '#ffb070' : '#fff1c8');
+    const neon = t === 'neon' || t === 'space', NEON = t === 'space' ? ['#38e8ff', '#9ad8ff', '#ff8a3d'] : ['#ff3ea5', '#3df2ff', '#ffd23f', '#9a7cff'], neonM = NEON.map(bas);
+    const put = (geo, m, x, y, z, ry = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.y = ry; G.add(o); return o; };
+    // decals and glows: flat quads in one mesh per texture
+    const quads = {}, quad = (key, cx, cy, cz, ux, uz, vx, vy, vz, w, h) => { const q = quads[key] || (quads[key] = { P: [], U: [], I: [] }), n = q.P.length / 3, hw = w / 2, hh = h / 2;
+      for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) q.P.push(cx + ux * a * hw + vx * b * hh, cy + vy * b * hh, cz + uz * a * hw + vz * b * hh);
+      q.U.push(0, 0, 1, 0, 1, 1, 0, 1); q.I.push(n, n + 1, n + 2, n, n + 2, n + 3); };
+    const quadMesh = (key, mat, order) => { const q = quads[key]; if (!q) return; const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(q.P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(q.U, 2)); g.setIndex(q.I); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, mat); m.renderOrder = order || 1; W.add(m); };
+    const decal = (map, o) => Object.assign(new THREE.MeshLambertMaterial({ map, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, side: THREE.DoubleSide }), o || {});
+    if (!X.detailT) X.detailT = {
+      glow: canvasTex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.35, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }),
+      grate: canvasTex(128, 64, (g, w, h) => { g.fillStyle = '#3a3c40'; g.fillRect(0, 0, w, h); g.fillStyle = '#121315'; for (let x = 10; x < w - 8; x += 12) g.fillRect(x, 8, 6, h - 16); g.strokeStyle = '#6a6e74'; g.lineWidth = 4; g.strokeRect(2, 2, w - 4, h - 4); }),
+      vent: canvasTex(128, 80, (g, w, h) => { g.fillStyle = '#7d8288'; g.fillRect(0, 0, w, h); for (let y = 10; y < h - 8; y += 9) { g.fillStyle = '#2a2c30'; g.fillRect(8, y, w - 16, 5); g.fillStyle = 'rgba(255,255,255,.3)'; g.fillRect(8, y + 5, w - 16, 1.5); } g.strokeStyle = '#4a4e54'; g.lineWidth = 4; g.strokeRect(2, 2, w - 4, h - 4); g.fillStyle = '#2a2c30'; for (const [x, y] of [[7, 7], [w - 7, 7], [7, h - 7], [w - 7, h - 7]]) { g.beginPath(); g.arc(x, y, 2.5, 0, 7); g.fill(); } }),
+      manhole: canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = '#4a4c50'; g.beginPath(); g.arc(64, 64, 62, 0, 7); g.fill(); g.strokeStyle = '#2a2b2e'; g.lineWidth = 5; g.beginPath(); g.arc(64, 64, 56, 0, 7); g.stroke(); g.lineWidth = 3; for (let r = 14; r < 52; r += 12) { g.beginPath(); g.arc(64, 64, r, 0, 7); g.stroke(); } for (let a = 0; a < 8; a++) { g.beginPath(); g.moveTo(64, 64); g.lineTo(64 + Math.cos(a * Math.PI / 4) * 52, 64 + Math.sin(a * Math.PI / 4) * 52); g.stroke(); } g.fillStyle = 'rgba(255,255,255,.12)'; g.beginPath(); g.arc(56, 56, 30, 0, 7); g.fill(); }),
+      stain: canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); for (let i = 0; i < 10; i++) { const x = 64 + (Math.random() - .5) * 50, y = 64 + (Math.random() - .5) * 50, r = 12 + Math.random() * 26, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(60,52,40,.13)'); gr.addColorStop(1, 'rgba(60,52,40,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); } }),
+      vine: canvasTex(128, 256, (g, w, h) => { g.clearRect(0, 0, w, h); for (let s = 0; s < 6; s++) { let x = 10 + Math.random() * (w - 20); g.strokeStyle = '#3d5a24'; g.lineWidth = 3; g.beginPath(); g.moveTo(x, 0); const len = h * (.45 + Math.random() * .55);
+        for (let y = 0; y < len; y += 8) { x += (Math.random() - .5) * 6; g.lineTo(x, y); if (Math.random() < .55) { g.save(); g.fillStyle = Math.random() < .5 ? '#5a8a34' : '#4a7a2c'; g.translate(x, y); g.rotate((Math.random() - .5) * 2.4); g.beginPath(); g.ellipse(6, 0, 7, 3.6, 0, 0, 7); g.fill(); g.restore(); } } g.stroke(); } }),
+      banner: canvasTex(64, 160, (g, w, h) => { const c = ['#b8452e', '#2f6f8f', '#c9862e', '#5a7a3a'][Math.floor(Math.random() * 4)]; g.fillStyle = c; g.fillRect(0, 0, w, h - 12); for (let x = 0; x < w; x += 8) { g.beginPath(); g.moveTo(x, h - 12); g.lineTo(x + 4, h); g.lineTo(x + 8, h - 12); g.fill(); }
+        g.fillStyle = 'rgba(255,240,210,.85)'; g.fillRect(0, 16, w, 6); g.fillRect(0, h - 34, w, 6); g.save(); g.translate(w / 2, h / 2); g.rotate(Math.PI / 4); g.fillRect(-12, -12, 24, 24); g.restore(); g.fillStyle = 'rgba(0,0,0,.18)'; for (let x = 0; x < w; x += 16) g.fillRect(x, 0, 3, h); }),
+    };
+    const DT = X.detailT;
+    const nearMark = (x, z, y0, y1) => { for (const m of X.wallMarks || []) if (Math.hypot(m[0] - x, m[1] - z) < 1.6 && y1 > m[2] - .9 && y0 < m[2] + .9) return true; for (const sg of signs) if (Math.hypot(sg.x - x, sg.z - z) < 1.9 && y1 > 3.0 && y0 < 3.7) return true; return false; };
+    const open = (i, j) => { const k = idx(i, j); return k >= 0 && CH[k] <= .01 && '.ADoqr'.includes(SRC[j][i]); };
+    // ---- the walls, face by face (a face of a wall cell that looks onto open, unroofed ground)
+    for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
+      if (SRC[j][i] !== '#') continue; const k = idx(i, j); if (CH[k] < WALL_H - .01) continue;
+      for (let e = 0; e < 4; e++) {
+        const ni = i + (e === 0 ? 1 : e === 1 ? -1 : 0), nj = j + (e === 2 ? 1 : e === 3 ? -1 : 0); if (!open(ni, nj) || roofed[idx(ni, nj)]) continue;
+        const nx = e === 0 ? 1 : e === 1 ? -1 : 0, nz = e === 2 ? 1 : e === 3 ? -1 : 0, ux = nz ? 1 : 0, uz = nx ? 1 : 0;   // u runs along the wall
+        const fx = e === 0 ? (i + 1) * CS : e === 1 ? i * CS : (i + .5) * CS, fz = e === 2 ? (j + 1) * CS : e === 3 ? j * CS : (j + .5) * CS;   // the middle of the face, on the wall
+        const line = nx ? i * 2 + (e === 0 ? 1 : 0) : j * 2 + (e === 2 ? 1 : 0), along = nx ? j : i, ry = Math.atan2(nx, nz);
+        const at = (u, out) => [fx + ux * u + nx * out, fz + uz * u + nz * out];
+        const site = SRC[nj][ni] === 'o' || SRC[nj][ni] === 'q' || SRC[nj][ni] === 'r';
+        // a pipe run high on the wall: runs of a few cells, one height per run, a bracket every cell
+        const run = Math.floor(along / 5), py = 4.35 + hash(line, e, run, 2) * .5;
+        if (hash(line, e, run, 1) < .24 && !nearMark(fx, fz, py - .2, py + .2)) {
+          const [x, z] = at(0, .13); put(new THREE.CylinderGeometry(.075, .075, CS + .02, 8), pipeM, x, py, z, ry).rotation.z = Math.PI / 2;
+          const [bx, bz] = at(-CS / 2 + .3, .07); put(new THREE.BoxGeometry(.12, .2, .14), bracketM, bx, py, bz, ry);
+          if (hash(line, e, run, 3) < .5) { const [x2, z2] = at(0, .13); put(new THREE.CylinderGeometry(.045, .045, CS + .02, 6), pipeM, x2, py + .22, z2, ry).rotation.z = Math.PI / 2; }
+        }
+        // a downpipe now and then, with a shoe at the bottom
+        if (hash(i, j, e, 4) < .05 && !site) { const [x, z] = at(.45, .12); put(new THREE.CylinderGeometry(.06, .06, 5.6, 8), pipeM, x, 2.8, z); for (const y of [1.2, 3, 4.8]) { const [bx, bz] = at(.45, .06); put(new THREE.BoxGeometry(.16, .06, .12), bracketM, bx, y, bz, ry); }
+          const [sx, sz] = at(.45, .2); put(new THREE.BoxGeometry(.14, .1, .2), pipeM, sx, .12, sz, ry); }
+        // lamps every few cells, or neon on the city and the station
+        if (along % 3 === 1 && hash(i, j, e, 5) < .6 && !nearMark(fx, fz, 2.9, 3.9)) {
+          if (neon) { const m = neonM[Math.floor(hash(line, e, 6) * neonM.length)], [x, z] = at(0, .05); put(new THREE.BoxGeometry(1.5, .06, .06), m, x, 3.35, z, ry); const [bx, bz] = at(0, .03); put(new THREE.BoxGeometry(1.6, .14, .04), bracketM, bx, 3.35, bz, ry);
+            const [gx, gz] = at(0, .015); quad('glow:' + neonM.indexOf(m), gx, 3.35, gz, ux, uz, 0, 1, 0, 3.2, 1.1); }
+          else { const [px, pz] = at(0, .04); put(new THREE.BoxGeometry(.22, .3, .08), lampM, px, 3.4, pz, ry); const [ax, az] = at(0, .16); put(new THREE.BoxGeometry(.06, .06, .24), lampM, ax, 3.42, az, ry);
+            const [hx, hz] = at(0, .28); put(new THREE.CylinderGeometry(.1, .2, .16, 10, 1, true), lampM, hx, 3.38, hz); put(new THREE.SphereGeometry(.075, 8, 6), bulbM, hx, 3.31, hz);
+            const [gx, gz] = at(0, .015); quad('glow:lamp', gx, 3.1, gz, ux, uz, 0, 1, 0, 2.4, 2.2); const [fx2, fz2] = at(0, 1.1); quad('pool', fx2, .025, fz2, 1, 0, 0, 0, 1, 3.2, 3.2); }
+        }
+        // an electrical box with its conduit
+        if (hash(i, j, e, 7) < .07 && !site && !nearMark(fx, fz, 1.8, 4.3)) { const u = (hash(i, j, e, 8) - .5) * .8, [x, z] = at(u, .07); put(new THREE.BoxGeometry(.52, .7, .14), boxM, x, 2.25, z, ry); const [dx, dz] = at(u, .145); put(new THREE.BoxGeometry(.44, .6, .02), boxDoorM, dx, 2.25, dz, ry);
+          const [cx, cz] = at(u + .15, .05); put(new THREE.CylinderGeometry(.03, .03, 1.7, 6), pipeM, cx, 3.45, cz); }
+        // a vent grille low on the wall (between the skirting and the lane band)
+        if (hash(i, j, e, 9) < .08) { const [x, z] = at((hash(i, j, e, 10) - .5) * .9, .012); quad('vent', x, .86, z, ux, uz, 0, 1, 0, .78, .48); }
+        // by theme
+        if (t === 'snow' && hash(i, j, e, 11) < .5) for (let n = 0; n < 4; n++) { const L = .25 + hash(i, j, e, 12 + n) * .7, [x, z] = at(-.8 + n * .5 + hash(i, j, n, 20) * .2, .07); put(new THREE.ConeGeometry(.06 + L * .04, L, 5), lam('#e6f2fb', { emissive: LC('#2a3a48') }), x, WALL_H - L / 2, z).rotation.x = Math.PI; }
+        if (t === 'jungle' && hash(i, j, e, 13) < .32) { const L = 1.8 + hash(i, j, e, 14) * 2.2, [x, z] = at((hash(i, j, e, 15) - .5) * .6, .03); quad('vine', x, WALL_H - L / 2, z, ux, uz, 0, 1, 0, 1.2, L); }
+        if (t === 'harbor' && hash(i, j, e, 16) < .045 && !site && !nearMark(fx, fz, 1.9, 2.8)) { const [x, z] = at(0, .1); const r = put(new THREE.TorusGeometry(.3, .075, 6, 16), lam('#e8622c'), x, 2.35, z, ry); for (let q = 0; q < 4; q++) { const a = q * Math.PI / 2 + Math.PI / 4; put(new THREE.BoxGeometry(.09, .1, .17), lam('#f2efe6'), x + ux * Math.cos(a) * .3, 2.35 + Math.sin(a) * .3, z + uz * Math.cos(a) * .3, ry); } }
+        if (t === 'desert' && hash(i, j, e, 17) < .07 && !nearMark(fx, fz, 2.6, 5.6)) { const [x, z] = at(0, .03); quad('banner', x, 4.25, z, ux, uz, 0, 1, 0, .9, 2.4); const [bx, bz] = at(0, .07); put(new THREE.CylinderGeometry(.035, .035, 1.2, 6), lam('#5a4026'), bx, 5.47, bz, ry).rotation.z = Math.PI / 2; }
+      }
+    }
+    // ---- the floor: drains along the walls, manhole covers out in the open, stains
+    for (let j = 1; j < GH - 1; j++) for (let i = 1; i < GW - 1; i++) {
+      if (SRC[j][i] !== '.' || CH[idx(i, j)] > .01) continue; const cx = (i + .5) * CS, cz = (j + .5) * CS, y = hAt(cx, cz) + .02;
+      const wall = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([di, dj]) => SRC[j + dj] && SRC[j + dj][i + di] === '#');
+      if (wall && hash(i, j, 30) < .06) { const [di, dj] = wall;   // a grate lying along the wall, its long side with it
+        if (dj) quad('grate', cx, y, cz + dj * .62, 1, 0, 0, 0, 1, .9, .42); else quad('grate', cx + di * .62, y, cz, 0, 1, 1, 0, 0, .9, .42); }
+      else if (!wall && hash(i, j, 31) < .025 && !roofed[idx(i, j)]) quad('manhole', cx, y, cz, 1, 0, 0, 0, 1, 1.05, 1.05);
+      else if (hash(i, j, 32) < .07) { const s = 1.2 + hash(i, j, 33) * 1.2; quad('stain', cx + (hash(i, j, 34) - .5), y, cz + (hash(i, j, 35) - .5), 1, 0, 0, 0, 1, s, s); }
+    }
+    // the merged meshes
+    bake(G, sh); G.traverse(o => { if (o.isMesh) o.receiveShadow = sh; });
+    const glow = c => new THREE.MeshBasicMaterial({ map: DT.glow, color: c, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+    quadMesh('glow:lamp', glow(LC(t === 'lava' ? '#ff9a50' : '#ffd79a')), 3); NEON.forEach((c, n) => quadMesh('glow:' + n, glow(LC(c)), 3));
+    quadMesh('pool', new THREE.MeshBasicMaterial({ map: DT.glow, color: LC(t === 'lava' ? '#ff8a40' : '#ffcf8a'), transparent: true, opacity: .2, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }), 2);
+    quadMesh('vent', decal(DT.vent, { transparent: false }), 1); quadMesh('grate', decal(DT.grate, { transparent: false }), 1); quadMesh('manhole', decal(DT.manhole, { alphaTest: .5 }), 1); quadMesh('stain', decal(DT.stain, { opacity: .8 }), 1);
+    quadMesh('vine', new THREE.MeshLambertMaterial({ map: DT.vine, alphaTest: .4, side: THREE.DoubleSide }), 1); quadMesh('banner', new THREE.MeshLambertMaterial({ map: DT.banner, alphaTest: .4, side: THREE.DoubleSide }), 1);
+  }
   function siteMarks(W, S, TH, sh) {
     const P = siteSpot(S), two = SITES.length > 1, COL = '255,138,61';
     let i0 = 1e9, j0 = 1e9, i1 = -1, j1 = -1; for (const [i, j] of P.cells) { i0 = Math.min(i0, i); j0 = Math.min(j0, j); i1 = Math.max(i1, i); j1 = Math.max(j1, j); }
@@ -414,7 +509,7 @@
       for (let d = 1; d < 16; d += .5) { const x = P.x + dx * d, z = P.z + dz * d; if (chAt(Math.floor(x / CS), Math.floor(z / CS)) !== '#') continue;
         const fx = dx ? (dx > 0 ? Math.floor(x / CS) * CS : Math.floor(x / CS) * CS + CS) : x, fz = dz ? (dz > 0 ? Math.floor(z / CS) * CS : Math.floor(z / CS) * CS + CS) : z;
         const ceil = CEIL[idx(Math.floor((fx - dx * .5) / CS), Math.floor((fz - dz * .5) / CS))] || 0, y = ceil ? Math.min(3.6, ceil - 1) : 3.6;
-        const p = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), letM); p.position.set(fx - dx * .02, y, fz - dz * .02); p.rotation.y = Math.atan2(-dx, -dz); W.add(p); break; }
+        const p = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), letM); p.position.set(fx - dx * .02, y, fz - dz * .02); p.rotation.y = Math.atan2(-dx, -dz); W.add(p); (X.wallMarks || (X.wallMarks = [])).push([fx, fz, y]); break; }
     }
   }
   // scenery for the other maps: what you see over the walls
