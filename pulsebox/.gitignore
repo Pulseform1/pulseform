@@ -7,3 +7,6 @@ arrowwood/.data/
 tools/__pycache__/
 stillwater/node_modules/
 frontier/node_modules/
+
+# the Frontier generation worker is source, not the site build output above
+!frontier/src/worker.js

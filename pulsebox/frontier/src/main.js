@@ -24,6 +24,8 @@ import { SPECIES, makeAnimal } from './animals.js';
 import { CampLife } from './camplife.js';
 import { UI } from './ui.js';
 import { SurveyMap } from './map.js';
+import { Dens } from './dens.js';
+import { ForestMist } from './mist.js';
 
 const $ = s => document.querySelector(s);
 const params = new URLSearchParams(location.search);
@@ -116,6 +118,11 @@ async function start(opts) {
   wildlife.panOf = p => { const r = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion), d = p.clone().sub(camera.position).normalize(); return Math.max(-1, Math.min(1, r.dot(d))); };
   wildlife.onBump = a => { const d = player.pos.clone().sub(a.pos).setY(0).normalize(); player.vel.addScaledVector(d, 9); G.shake = .6; toast('The bear bowls you over, then wheels away into the timber.'); };
   wildlife.onAttack = (a, dmg) => hurt(dmg, a);
+  // bear dens in the deep forest, and the bears that keep them
+  const dens = G.dens = new Dens(scene, world, TEX); wildlife.dens = dens;
+  dens.onFound = () => { if (G.state === 'play') { toast('A bear den in the hillside. Gnawed bones at the mouth, claw marks raked into the rock. Whatever lives here will defend it: back away, or be ready.'); audio.animal('bear', 70, 0); } };
+  wildlife.onDen = () => { const t = performance.now(); if (G.state === 'play' && t - (G.denToast || 0) > 8000) { G.denToast = t; toast('The den bear is coming for you! You cannot outrun it. Stand and shoot: the head drops it, the heart slows it.'); } };
+  G.mist = new ForestMist(scene, TEX.puff, ({ low: 8, medium: 12, high: 16 })[G.settings.quality] || 12);
   wildlife.region = opts.spawn; wildlife.home = world.camp; wildlife.furN = (QUALITY[G.settings.quality] || QUALITY.medium).fur;
   player.onStep = kind => audio.step(surfaceAt(kind), kind === 'run');
   // stand in the tent doorway looking out at the fire
@@ -147,6 +154,7 @@ async function start(opts) {
   // ... and draw one whole frame behind the loading screen with them standing in the open, so the shadow and glow passes
   // compile their shaders now too, not the first time something casts a shadow in play
   { const tmp = []; let i = 0; for (const k of Object.keys(SPECIES)) { try { const a = makeAnimal(k, .5), d = 7 + (i++ % 4) * 3; a.mesh.position.set(camera.position.x - Math.sin(player.yaw) * d, world.height(camera.position.x, camera.position.z), camera.position.z - Math.cos(player.yaw) * d); for (const sh of a.shells || []) sh.visible = true; scene.add(a.mesh); tmp.push(a.mesh); } catch (e) { } }
+    { const w0 = dens.warm(); w0.position.set(camera.position.x - Math.sin(player.yaw) * 9, world.height(camera.position.x, camera.position.z), camera.position.z - Math.cos(player.yaw) * 9); scene.add(w0); tmp.push(w0); }
     renderer.compile(scene, camera); try { G.post.render(0, U.uSunDirW.value, 1, 0); } catch (e) { renderer.render(scene, camera); } for (const m of tmp) scene.remove(m); }
   $('#loading').hidden = true; $('#hud').hidden = false; G.state = 'play'; G.saveT = 20;
   $('#touch').hidden = !input.isTouch; document.body.classList.toggle('touch', input.isTouch);
@@ -287,15 +295,23 @@ function step(dt) {
   U.uTime.value += dt;
   const w = U.uWind.value;
   const gameDt = live ? dt * 60 * G.timeScale : 0, before = sky.hours;
+  // how deep in the timber you are: thick forest all round dims the light, thickens the fog and mist, quiets the birds
+  // (camp stays a clearing you can see across)
+  G.gloomT = (G.gloomT || 0) - dt;
+  if (G.gloomT <= 0) { G.gloomT = .4; let f = 0; for (let k = 0; k < 9; k++) { const a = k / 8 * Math.PI * 2, r = k ? 38 : 0; f += G.world.forest(player.pos.x + Math.cos(a) * r, player.pos.z + Math.sin(a) * r); }
+    const cp = G.world.camp, dc = cp ? Math.hypot(player.pos.x - cp.x, player.pos.z - cp.z) : 1e9; G.gloomTgt = THREE.MathUtils.smoothstep(f / 9, .55, .85) * THREE.MathUtils.smoothstep(dc, 60, 170); }
+  G.gloom = (G.gloom || 0) + ((G.gloomTgt || 0) - (G.gloom || 0)) * Math.min(1, dt * .25); sky.gloom = G.gloom;
   sky.update(dt, camera.position, gameDt);
   if (sky.hours < before) G.day++;
   G.gameHours = G.day * 24 + sky.hours;
   G.life.update(dt * (live ? G.timeScale : 0), gameDt);
   G.weather.update(dt, gameDt, sky.hours, G.day);
   senseSurroundings(dt);
-  audio.update({ day: sky.daylight, night: sky.night, wind: U.uWind.value.z, rain: G.weather.cur.rain, inTent: camp.inside(player.pos.x, player.pos.z), fireDist: camera.position.distanceTo(camp.firePos), fireFuel: camp.fire.u.uFuel.value, waterDist: G.env.waterDist, riverDist: G.env.riverDist, forest: G.env.forest, dt });
+  audio.update({ gloom: G.gloom || 0, day: sky.daylight, night: sky.night, wind: U.uWind.value.z, rain: G.weather.cur.rain, inTent: camp.inside(player.pos.x, player.pos.z), fireDist: camera.position.distanceTo(camp.firePos), fireFuel: camp.fire.u.uFuel.value, waterDist: G.env.waterDist, riverDist: G.env.riverDist, forest: G.env.forest, dt });
   terrain.update(camera.position, dt); terrain.sync(); flora.update(camera.position, dt); grass.update(camera.position, player.pos); water.update(camera.position); jobs.tick(4);
   camp.update(dt * G.timeScale, sky.night, new THREE.Vector3(w.x * w.z, 0, w.y * w.z));
+  G.dens.update(dt, player.pos);
+  G.mist.update(dt, player.pos, G.world, G.gloom, (G.mistCol || (G.mistCol = new THREE.Color())).copy(scene.fog.color).multiplyScalar(1.7), { x: w.x * w.z, y: w.y * w.z });
   // wildlife and guns
   const moving = player.speed > .4, noise = player.swimming ? .7 : !moving ? .04 : player.crouched ? .14 : player.speed > 4.5 ? 1 : .42;
   const lookV = G.drone.on ? new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)) : camera.getWorldDirection(new THREE.Vector3()), inCamp = Math.hypot(player.pos.x - camp.c.x, player.pos.z - camp.c.z) < 16;
@@ -334,7 +350,7 @@ function step(dt) {
   const h = sky.hours, hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
   $('#clock').textContent = `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'am' : 'pm'}`;
   if (G.debug) $('#debug').textContent = `${fps.toFixed(0)} fps  calls ${renderer.info.render.calls}  tris ${(renderer.info.render.triangles / 1e6).toFixed(2)}M  trees ${flora.counts.near}/${flora.counts.mid}/${flora.counts.far}  jobs ${jobs.pending}`;
-  if (!G.noRender) G.post.render(dt, U.uSunDirW.value, sky.daylight * (1 - Math.min(1, G.weather.cur.rain * 2)), sky.night);
+  if (!G.noRender) G.post.render(dt, U.uSunDirW.value, sky.daylight * (1 - Math.min(1, G.weather.cur.rain * 2)), sky.night, G.gloom || 0);
   input.endFrame();
 }
 requestAnimationFrame(loop);
@@ -371,9 +387,9 @@ const gunCtx = {
       const fall = gun && gun.pellets > 1 ? Math.max(.25, 1 - h.t / range) : 1;   // shot spreads and slows with distance
       const down = h.a.hit(h.zone || h.vital, power * fall); G.hitT = .15; showZone(h.zone, down, h.a);
       spawnDust(h.point, 0x8a7a64, .4);
-      if (down) { const c = BOUNTY[h.a.sp.name] || 5; G.coins += c; coinPop(c); }
+      if (down) { const c = (BOUNTY[h.a.sp.name] || 5) + (h.a.den ? 40 : 0); G.coins += c; coinPop(c); }
       const danger = h.a.sp.bear || h.a.sp.ornery || h.a.sp.predator;
-      if (first || down) toast(down ? (h.a.sp.small || h.a.sp.bird ? `Got the ${h.a.sp.label.toLowerCase()}. +${BOUNTY[h.a.sp.name] || 5} coins` : `A clean shot. The ${h.a.sp.label.toLowerCase()} is down. +${BOUNTY[h.a.sp.name] || 5} coins`) : danger ? `Hit! The ${h.a.sp.label.toLowerCase()} is wounded, and angry.` : `Hit, but the ${h.a.sp.label.toLowerCase()} runs on. Follow it.`);
+      if (first || down) toast(down ? (h.a.sp.small || h.a.sp.bird ? `Got the ${h.a.sp.label.toLowerCase()}. +${(BOUNTY[h.a.sp.name] || 5) + (h.a.den ? 40 : 0)} coins` : `A clean shot. The ${h.a.sp.label.toLowerCase()} is down. +${(BOUNTY[h.a.sp.name] || 5) + (h.a.den ? 40 : 0)} coins`) : danger ? `Hit! The ${h.a.sp.label.toLowerCase()} is wounded, and angry.` : `Hit, but the ${h.a.sp.label.toLowerCase()} runs on. Follow it.`);
     } else if (blockT < range && first) spawnDust(o.clone().addScaledVector(d, blockT), hitTree ? 0x6a5040 : 0x7a6a50, .6);
   },
 };
@@ -404,7 +420,7 @@ function hurt(dmg, a) {
 function die(a) {
   G.dead = true; if (G.drone.on) G.drone.recall(); G.weapons.select(null); if (G.state === 'ui') G.ui.close();
   const lost = Math.floor(G.coins * .25); G.coins -= lost; G.life.pack.meat.length = 0;
-  $('#death').hidden = false; $('#deathmsg').textContent = `${a.sp.bear ? 'Mauled by a grizzly' : a.sp.ornery ? 'Trampled by a moose' : a.sp.predator === 'cougar' ? 'Taken by a cougar' : 'Pulled down by wolves'}. You lost the meat in your pack${lost ? ` and ${lost} coins` : ''}.`;
+  $('#death').hidden = false; $('#deathmsg').textContent = `${a.sp.bear ? (a.den ? 'Mauled by a den grizzly: you came too close to its cave' : 'Mauled by a grizzly') : a.sp.ornery ? 'Trampled by a moose' : a.sp.predator === 'cougar' ? 'Taken by a cougar' : 'Pulled down by wolves'}. You lost the meat in your pack${lost ? ` and ${lost} coins` : ''}.`;
   setTimeout(() => {
     fade(1800);
     setTimeout(() => {
@@ -456,6 +472,7 @@ function surfaceAt(kind) {
 function collide(x, z, r) {
   let p = [x, z];
   G.flora.near(p[0], p[1], r, (cx, cz, cr) => { p = pushOut(p[0], p[1], r, { t: 'c', x: cx, z: cz, r: cr }); });
+  if (G.dens) G.dens.collide(p[0], p[1], r, col => { p = pushOut(p[0], p[1], r, col); });
   const c = G.camp.c;
   if (Math.abs(x - c.x) < 20 && Math.abs(z - c.z) < 20) for (const col of G.camp.colliders) p = pushOut(p[0], p[1], r, col);
   return { x: p[0], z: p[1] };
@@ -466,11 +483,12 @@ function saveGame() {
   if (!G.world || (G.state !== 'play' && G.state !== 'pause' && G.state !== 'ui')) return;
   const P = G.player, W = G.weapons, c = G.world.camp;
   const d = { v: 1, seed: G.seed, spawn: G.spawn, camp: { x: c.x, z: c.z }, player: { x: P.pos.x, z: P.pos.z, yaw: P.yaw }, hours: G.sky.hours, day: G.day,
-    weather: G.weather.state, life: G.life.save(), ammo: W.ammo, reserve: W.reserve, gun: W.want, map: G.map.save(), stats: G.stats, coins: G.coins, health: G.health, fish: G.fishing ? G.fishing.save() : null, drone: G.drone ? G.drone.save() : null, lantern: { carried: G.camp.lantern.carried, on: G.camp.lantern.on }, fire: { lit: G.camp.fire.lit, fuel: G.camp.fire.fuel }, saved: Date.now() };
+    weather: G.weather.state, life: G.life.save(), ammo: W.ammo, reserve: W.reserve, gun: W.want, map: G.map.save(), stats: G.stats, coins: G.coins, health: G.health, fish: G.fishing ? G.fishing.save() : null, drone: G.drone ? G.drone.save() : null, dens: G.dens ? G.dens.save() : null, lantern: { carried: G.camp.lantern.carried, on: G.camp.lantern.on }, fire: { lit: G.camp.fire.lit, fuel: G.camp.fire.fuel }, saved: Date.now() };
   try { localStorage.setItem('fh-save', JSON.stringify(d)); $('#saved').textContent = 'Saved.'; } catch { }
 }
 function loadSave() { try { const d = JSON.parse(localStorage.getItem('fh-save') || 'null'); return d && d.v === 1 ? d : null; } catch { return null; } }
 function restore(d) {
+  if (d.dens && G.dens) G.dens.load(d.dens);
   G.day = d.day || 0; G.life.load(d.life); G.weapons.load(d.ammo, d.reserve); G.map.load(d.map); G.stats = d.stats || { taken: {} }; if (d.coins != null) G.coins = d.coins; if (d.health != null) G.health = Math.max(30, d.health); if (G.fishing) G.fishing.load(d.fish); if (G.drone) G.drone.load(d.drone);
   if (d.weather) { G.weather.state = d.weather === 'rain' ? 'cloudy' : 'clear'; G.weather.roll(); Object.assign(G.weather.cur, G.weather.tgt); }
   if (d.fire) { G.camp.fire.lit = d.fire.lit; G.camp.fire.fuel = d.fire.fuel; }

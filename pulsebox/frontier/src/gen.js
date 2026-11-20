@@ -48,15 +48,17 @@ export function flora(world, cx, cz, C) {
     const gx = cx * nc + i, gz = cz * nc + j, r1 = hash2(gx, gz, seed + 1), r2 = hash2(gx, gz, seed + 2), r3 = hash2(gx, gz, seed + 3);
     const x = x0 + (i + .15 + r1 * .7) * C / nc, z = z0 + (j + .15 + r2 * .7) * C / nc, s = at(x, z);
     if (s.h < 1.0) continue;
-    const f = world.forest(x, z, s);
-    if (r3 > f * 0.66) { // the odd young spruce at forest edges
+    const f = world.forest(x, z, s), dp = smooth(.72, .95, f);   // dp: deep timber, where the forest closes up
+    // deep in the timber, young spruce fill the gaps between the big trees
+    if (dp > .3 && hash2(gx, gz, seed + 21) < .3 * dp) { const yx = x + (hash2(gx, gz, seed + 22) - .5) * cell * .9, yz = z + (hash2(gx, gz, seed + 23) - .5) * cell * .9, ys = at(yx, yz); if (ys.h > 1 && world.denClear(yx, yz) > .9) { world.normal(yx, yz, nrm, 1); if (nrm[1] > .78) trees.push(yx, ys.h - .1, yz, hash2(gx, gz, seed + 24) * 6.283, .3 + hash2(gx, gz, seed + 25) * .35, 11); } s.h = at(x, z).h; }
+    if (r3 > f * (0.66 + 0.24 * dp)) { // the odd young spruce at forest edges
       if (f > 0.1 && f < 0.55 && hash2(gx, gz, seed + 9) < 0.07) { world.normal(x, z, nrm, 1); if (nrm[1] > .8) trees.push(x, s.h - .1, z, hash2(gx, gz, seed + 4) * 6.283, .28 + hash2(gx, gz, seed + 5) * .3, 11); }
       continue;
     }
     world.normal(x, z, nrm, 1); if (nrm[1] < 0.72) continue;
     const r4 = hash2(gx, gz, seed + 4), r5 = hash2(gx, gz, seed + 5), r6 = hash2(gx, gz, seed + 6), r7 = hash2(gx, gz, seed + 7);
     let kind;
-    if (r6 < 0.035) kind = 9 + (r7 < .5 ? 0 : 1);
+    if (r6 < 0.035 + 0.035 * dp) kind = 9 + (r7 < .5 ? 0 : 1);   // (more dead snags where it is darkest)
     else { const sp = world.species(x, z, s, r6); kind = sp * 3 + Math.min(2, (r7 * 3) | 0); }
     const sc = (0.78 + r5 * 0.42) * (0.85 + 0.25 * f) * (kind >= 6 && kind <= 8 ? 0.9 : 1);
     trees.push(x, s.h - 0.12 - (1 - nrm[1]) * 1.2, z, r4 * 6.283, sc, kind);
@@ -65,9 +67,10 @@ export function flora(world, cx, cz, C) {
   const pc = 2.0, np = Math.round(C / pc);
   for (let j = 0; j < np; j++) for (let i = 0; i < np; i++) {
     const gx = cx * np + i, gz = cz * np + j, r = hash2(gx, gz, seed + 11);
-    if (r > 0.42) continue;
+    if (r > 0.72) continue;
     const x = x0 + (i + hash2(gx, gz, seed + 12)) * pc, z = z0 + (j + hash2(gx, gz, seed + 13)) * pc, s = at(x, z);
     if (s.h < 0.4) continue;
+    if (world.denClear(x, z) < .6) continue;   // (nothing in a den's rock or its mouth)
     world.normal(x, z, nrm, .8);
     const f = world.forest(x, z, s), q = hash2(gx, gz, seed + 14), rot = hash2(gx, gz, seed + 15) * 6.283, sz = hash2(gx, gz, seed + 16);
     const camp = world.camp ? Math.hypot(x - world.camp.x, z - world.camp.z) : 1e9;
@@ -80,8 +83,19 @@ export function flora(world, cx, cz, C) {
       const big = q < 0.12 + 0.2 * Math.min(1, rocky), sc = big ? 1.1 + sz * 2.4 : 0.22 + sz * .5;
       props.push(x, s.h - (big ? .45 : .06) - (1 - nrm[1]) * sc * 1.1, z, rot, sc, big ? 5 : 4); continue;
     }
-    if (s.h < 1.3) { if (q < 0.25 && nrm[1] > .85) props.push(x, s.h, z, rot, .7 + sz * .6, 8); continue; }
+    if (s.h < 1.3) { if (r <= 0.42 && q < 0.25 && nrm[1] > .85) props.push(x, s.h, z, rot, .7 + sz * .6, 8); continue; }
     if (nrm[1] < 0.7) continue;
+    // deep timber: a thick, mixed understory of ferns, leafy bushes, junipers, tufts of tall grass, stumps and deadfall
+    const dp = smooth(.72, .95, f);
+    if (dp > .25 && r < .72 * dp) {
+      if (q < .3) props.push(x, s.h - .05, z, rot, .6 + sz * .8, 2);
+      else if (q < .46) props.push(x, s.h - .08, z, rot, .7 + sz * .9, 0);
+      else if (q < .56) props.push(x, s.h - .08, z, rot, .6 + sz * .7, 1);
+      else if (q < .7) props.push(x, s.h, z, rot, .6 + sz * .6, 8);
+      else if (q < .76) props.push(x, s.h - .05, z, rot, .7 + sz * .5, q < .73 ? 6 : 7);
+      continue;
+    }
+    if (r > 0.42) continue;   // (outside the deep timber, the lattice stays as sparse as it was)
     if (f > 0.35 && r < 0.02 + 0.11 * f && q < 0.25) { props.push(x, s.h - .05, z, rot, .7 + sz * .5, q < 0.12 ? 6 : 7); continue; }
     if (f > 0.3 && q < 0.55 * f) { props.push(x, s.h - .05, z, rot, .55 + sz * .7, 2); continue; }
     if (q < 0.04 + 0.22 * edge) { props.push(x, s.h - .08, z, rot, .6 + sz * .8, q < 0.12 * edge ? 1 : 0); continue; }

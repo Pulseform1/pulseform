@@ -178,13 +178,16 @@ export class Sky {
     const grey = (c, k) => { const l = (c[0] + c[1] + c[2]) / 3; return c.map(v => v + (l * 1.05 - v) * k); };
     let fa = away.map((v, i) => v + (nightCol[i] - v) * this.night), ft = toward.map((v, i) => v + (nightCol[i] * 1.2 - v) * this.night);
     fa = grey(fa, .25 + .5 * storm).map(v => v * (1 - .35 * storm)); ft = grey(ft, .15 + .5 * storm).map(v => v * (1 - .3 * storm));
+    // deep in the timber (gloom): a dim, grey-green murk closes in, thick mist hangs low, the light under the canopy fails
+    const gl = this.gloom || 0, dk = [.035, .05, .045];
+    if (gl > 0) { fa = grey(fa, .5 * gl).map((v, i) => v + (v * .32 + dk[i] * (1 - this.night) - v) * gl * .85); ft = grey(ft, .5 * gl).map((v, i) => v + (v * .38 + dk[i] * (1 - this.night) - v) * gl * .8); }
     this.scene.fog.color.setRGB(fa[0], fa[1], fa[2]); U.uFogSun.value.setRGB(ft[0], ft[1], ft[2]); U.uSunDirW.value.copy(s);
     u.uFogAway.value.copy(this.scene.fog.color); u.uFogSunC.value.copy(U.uFogSun.value);
-    this.scene.fog.density = 0.00042 + 0.0011 * storm + 0.0001 * this.night;
-    U.uFogP.value.set(0.05, this.mist * 0.035, -2 + 0 * camPos.y, 1);
+    this.scene.fog.density = 0.00042 + 0.0011 * storm + 0.0001 * this.night + 0.0075 * gl;
+    U.uFogP.value.set(0.05, Math.max(this.mist, gl * .85) * 0.035, -2 + 0 * camPos.y, 1);
     // sun or moon light
     const low = 1 - sstep(0.0, 0.42, sunUp), sunCol = new THREE.Color().setRGB(1, 0.96 - 0.38 * low, 0.9 - 0.62 * low);
-    const sunI = 3.6 * sstep(-0.02, 0.12, sunUp) * (1 - 0.6 * storm) * (1 - 0.35 * this.cloudCover * this.cloudCover);
+    const sunI = 3.6 * sstep(-0.02, 0.12, sunUp) * (1 - 0.6 * storm) * (1 - 0.35 * this.cloudCover * this.cloudCover) * (1 - 0.62 * gl);
     const moonI = 0.32 * this.night * (1 - 0.6 * storm);
     const useSun = sunUp > -0.04, L = useSun ? s : m;
     this.sun.color.copy(useSun ? sunCol : new THREE.Color(0.62, 0.72, 1.0)); this.sun.intensity = useSun ? sunI : moonI; U.uSunCol.value.copy(this.sun.color).multiplyScalar(this.sun.intensity);
@@ -202,8 +205,8 @@ export class Sky {
     // sky light
     const skyAmb = new THREE.Color().setRGB(fa[0], fa[1], fa[2]);
     this.hemi.color.setRGB(0.32 + 0.4 * day, 0.38 + 0.42 * day, 0.62 + 0.38 * day); this.hemi.groundColor.setRGB(0.10 + 0.12 * day, 0.09 + 0.1 * day, 0.07 + 0.06 * day);
-    this.hemi.intensity = 0.14 + 0.1 * day + 0.14 * this.night;
-    this.scene.environmentIntensity = 0.82 + 0.25 * storm;
+    this.hemi.intensity = (0.14 + 0.1 * day + 0.14 * this.night) * (1 - 0.45 * gl);
+    this.scene.environmentIntensity = (0.82 + 0.25 * storm) * (1 - 0.5 * gl);
     // cloud colours
     const cl = sunCol.clone().multiplyScalar(0.55 * day + 0.04).lerp(new THREE.Color(.04, .05, .08), this.night * .8);
     u.uCloudLit.value.copy(cl).multiplyScalar(1 - 0.5 * storm); u.uCloudDark.value.copy(skyAmb).multiplyScalar(0.75 - 0.2 * storm);

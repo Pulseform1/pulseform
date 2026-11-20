@@ -106,8 +106,13 @@ class Animal {
     this.perceive(dt, P);
     const act = ACTIVE[this.kind](hours), lead = g.leader === this ? null : g.leader;
     if (this.fight(dt, P)) return this.finish(dt);
+    // a den bear: anyone who comes onto its ground (or that it sees close by) is charged, for real, every time
+    if (this.den && !P.dead && this.state !== 'charge' && this.state !== 'rear' && this.state !== 'attack' && !(this.state === 'flee' && this.homing)) {
+      const dd = Math.hypot(P.pos.x - this.den.x, P.pos.z - this.den.z);
+      if (dd < this.den.R || (this.dist < 40 && this.aware > .5)) { this.real = true; this.mad = true; this.homing = false; g.charged = true; this.setState('rear', .9); this.W.call('roar', this); if (this.W.onDen) this.W.onDen(this); }
+    }
     // the group bolts together
-    if (g.fleeUntil > this.W.time && this.state !== 'flee' && this.state !== 'charge' && this.state !== 'rear' && this.state !== 'fly') this.startFlee(P, g.fleeFrom);
+    if (g.fleeUntil > this.W.time && !this.mad && this.state !== 'flee' && this.state !== 'charge' && this.state !== 'rear' && this.state !== 'fly') this.startFlee(P, g.fleeFrom);
     if (this.state !== 'flee' && this.state !== 'charge' && this.state !== 'rear' && this.state !== 'fly') {
       if (this.aware > 1 || (this.wounded && this.aware > .2)) {
         if (sp.bear && !g.charged && this.dist < 45) { g.charged = true; this.real = Math.random() < .75 || this.wounded; this.setState('rear', 1.4); this.W.call('roar', this); }
@@ -129,13 +134,13 @@ class Animal {
         const fx = this.fleeTo.x, fz = this.fleeTo.y;
         if (sp.swim) { this.setState('fly', 12); break; }
         this.steer(fx, fz, (this.wounded ? .75 : 1) * (1 - this.lame) * sp.run * (this.stateT > 2 ? 1 : .7), dt, 4);
-        gait = 'run'; if (this.stateT < 0 || Math.hypot(fx - this.pos.x, fz - this.pos.z) < 6) { this.setState('alert', 4); this.aware = .5; }
+        gait = 'run'; if (this.stateT < 0 || Math.hypot(fx - this.pos.x, fz - this.pos.z) < 6) { this.setState('alert', 4); this.aware = .5; if (this.homing) { this.homing = false; this.aware = 0; } }
         break;
       }
       case 'rear': { alertK = 1; this.speed *= .8; this.rear = Math.min(1, (this.rear || 0) + dt * 2); this.jawK = 1; if (this.stateT < 0) { this.rear = 0; this.setState('charge', this.real ? 9 : 3.5); this.W.call('roar', this); } break; }
       case 'charge': {
-        this.steer(P.pos.x, P.pos.z, (1 - this.lame) * sp.run * (sp.ornery ? .8 : .9), dt, 5); gait = 'run'; this.jawK = sp.predator ? 1 : 0; head = sp.ornery ? .55 : 0;
-        if (this.real) { if (this.dist < (sp.ornery ? 2.6 : 2.3) * this.reach) this.startAttack(P); else if (this.stateT < 0) { g.fleeUntil = this.W.time + 10; this.startFlee(P, P.pos); } }
+        this.steer(P.pos.x, P.pos.z, (1 - this.lame) * sp.run * (sp.ornery ? .8 : .9) * (this.mad ? 1.12 : 1), dt, 5); gait = 'run'; this.jawK = sp.predator ? 1 : 0; head = sp.ornery ? .55 : 0;
+        if (this.real) { if (this.dist < (sp.ornery ? 2.6 : 2.3) * this.reach) this.startAttack(P); else if (this.stateT < 0) { if (this.mad && this.denNear(P)) this.stateT = 5; else if (this.den) this.goHome(); else { g.fleeUntil = this.W.time + 10; this.startFlee(P, P.pos); } } }
         else if (this.dist < 3 * this.reach || this.stateT < 0) { g.fleeUntil = this.W.time + 10; this.startFlee(P, P.pos); }
         break;
       }
@@ -219,22 +224,27 @@ class Animal {
     if (s === 'attack') {
       this.yaw += angDiff(this.yaw, toP) * Math.min(1, dt * 7);
       const reach = (sp.ornery ? 2.4 : sp.bear ? 2.0 : 1.7) * this.reach;
+      if (this.mad && this.dist > reach + 3) { this.setState('charge', 5); return true; }   // (you will not outrun it)
       if (this.dist > reach + 1.4) { this.steer(P.pos.x, P.pos.z, sp.trot * 1.4, dt, 6); this.fightGait = 'trot'; } else { this.speed *= Math.pow(.01, dt); this.fightGait = 'stand'; }
       if (sp.bear) this.rear = Math.max(0, (this.rear || 0) - dt * 2);
       this.atkT -= dt;
       if (this.atkT <= 0 && this.dist < reach + .8) {
-        this.swipe = 1; this.strikes++; this.atkT = sp.bear ? 1.05 : sp.ornery ? 1.6 : sp.predator === 'cougar' ? .85 : 1.2;
+        this.swipe = 1; this.strikes++; this.atkT = this.mad ? .9 : sp.bear ? 1.05 : sp.ornery ? 1.6 : sp.predator === 'cougar' ? .85 : 1.2;
         const k = this.scale / this.size, dmg = sp.bear ? 26 + 16 * Math.random() : sp.ornery ? 30 + 12 * Math.random() : sp.predator === 'cougar' ? (this.strikes === 1 ? 34 : 16 + 8 * Math.random()) : 11 + 8 * Math.random();
-        W.attack(this, dmg * k);
+        W.attack(this, dmg * k * (this.mad ? 1.45 : 1));
         W.call(sp.bear ? 'roar' : sp.ornery ? 'bellow' : sp.predator === 'cougar' ? 'scream' : 'snarl', this);
       }
       // it breaks off: a moose after one blow, a wolf after a bite or two, a bear or a cat when it has done enough (or is hurt)
       const done = sp.ornery ? this.strikes >= 1 && this.atkT < .8 : sp.predator === 'wolf' ? this.strikes >= 1 + (this.slot.y > 0 ? 1 : 0) && this.atkT < .6 : this.strikes >= (this.wounded ? 6 : 3) || (this.wounded && this.hp < this.sp.hp * .3);
+      if (this.mad) { if (this.hp < this.maxHp * .22 || !this.denNear(P)) this.goHome(); return true; }
       if (done) { if (sp.predator === 'wolf' && !g.scattered) this.setState('circle', 6); else { g.fleeUntil = W.time + 12; this.fled = true; this.startFlee(P, P.pos); } }
       return true;
     }
     return false;
   }
+  // a den bear keeps after you while you are anywhere near its den; done with you, it goes back to the mouth of its cave
+  denNear(P) { return !!this.den && Math.hypot(P.pos.x - this.den.x, P.pos.z - this.den.z) < this.den.R * 1.8; }
+  goHome() { this.mad = false; this.homing = true; this.fleeTo = new THREE.Vector2(this.den.door.x, this.den.door.z); this.setState('flee', 14); }
   startAttack(P) { this.setState('attack', 30); this.atkT = this.sp.ornery ? .05 : .25; this.strikes = 0; if (this.sp.ornery) this.atkT = 0; }
   startFlee(P, from) {
     const a = Math.atan2(this.pos.x - from.x, this.pos.z - from.z) + (Math.random() - .5) * .6, r = 90 + Math.random() * 80;
@@ -248,12 +258,14 @@ class Animal {
     const z = zone && typeof zone === 'object' ? zone : zone ? ZONES.heart : ZONES.gut; this.lastZone = z;
     // a good shot (head, neck, heart and lungs, the shoulder over them) drops it where it stands; anything else wounds it,
     // and a wounded animal can only limp: you can follow it and finish it
-    const good = z.vital || z === ZONES.shoulder;
+    // a den bear drops only to a head shot; anything else wounds it (the heart hardest) and it keeps coming
+    const good = this.den ? z === ZONES.head : z.vital || z === ZONES.shoulder;
     if (this.sp.small || this.sp.bird || good) this.hp = 0;
-    else { this.hp -= power * z.mult; if (this.hp > 0) this.lame = .85; }
+    else { this.hp -= power * z.mult * (this.den && z.vital ? 1.3 : 1); if (this.hp > 0) this.lame = this.den ? Math.min(.25, this.lame + .06) : .85; }
     if (this.hp > 0) {
       this.wounded = true; this.aware = 2; const sp = this.sp;
-      if ((sp.bear || sp.ornery || sp.predator === 'cougar') && this.dist < 90 && this.state !== 'attack' && this.state !== 'charge') { this.real = true; this.setState('charge', 9); this.W.call(sp.bear ? 'roar' : sp.ornery ? 'bellow' : 'scream', this); }
+      if (this.den) { this.mad = true; this.homing = false; }
+      if ((sp.bear || sp.ornery || sp.predator === 'cougar') && this.dist < (this.den ? 160 : 90) && this.state !== 'attack' && this.state !== 'charge') { this.real = true; this.setState('charge', 9); this.W.call(sp.bear ? 'roar' : sp.ornery ? 'bellow' : 'scream', this); }
       if (sp.predator === 'wolf' && Math.random() < .5) { this.group.scattered = true; this.W.alarm(this.group, this.W.lastShot || this.pos); }
       return false;
     }
@@ -297,13 +309,15 @@ export class Wildlife {
   constructor(scene, world, flora, camp, audio) {
     this.scene = scene; this.world = world; this.flora = flora; this.camp = camp; this.audio = audio;
     this.groups = []; this.animals = []; this.time = 0; this.spawnT = 0; this.target = 20; this.onBump = null; this.onAttack = null; this.seeded = false;
-    this.region = null; this.home = null; this.furR = 32; this.lightK = 0; this.camPos = new THREE.Vector3();
+    this.region = null; this.home = null; this.furR = 32; this.lightK = 0; this.camPos = new THREE.Vector3(); this.dens = null; this.onDen = null;
   }
   call(kind, a) { if (this.audio && this.audio.ctx && a.dist < 220) this.audio.animal(kind, a.dist, this.panOf ? this.panOf(a.pos) : 0); }
   alarm(g, from) { g.fleeUntil = this.time + 8; g.fleeFrom = from.clone(); }
   bump(a) { if (this.onBump) this.onBump(a); }
   attack(a, dmg) { if (this.onAttack) this.onAttack(a, dmg); }
   wander(g, leader) {
+    // den bears keep to the mouth of their cave
+    if (g.den) { const a = Math.random() * TAU, r = 3 + Math.random() * 14; g.target = { x: g.den.door.x + Math.sin(a) * r, z: g.den.door.z + Math.cos(a) * r }; return; }
     // drift about the home range; sometimes head to water
     const w = this.world;
     if (!g.water && !leader.sp.swim && (leader.kind === 'deer' || leader.kind === 'elk' || leader.kind === 'moose') && Math.random() < .12) {
@@ -352,7 +366,7 @@ export class Wildlife {
     }
     g.leader = g.members[0]; this.groups.push(g); return g;
   }
-  removeGroup(g) { for (const a of g.members) { a.dispose(); this.animals.splice(this.animals.indexOf(a), 1); } this.groups.splice(this.groups.indexOf(g), 1); }
+  removeGroup(g) { if (g.den) g.den.group = null; for (const a of g.members) { a.dispose(); this.animals.splice(this.animals.indexOf(a), 1); } this.groups.splice(this.groups.indexOf(g), 1); }
   trySpawn(P, rMin, rMax) {
     for (let tries = 0; tries < 12; tries++) {
       const a = Math.random() * TAU, r = rMin + Math.random() * (rMax - rMin), x = P.pos.x + Math.cos(a) * r, z = P.pos.z + Math.sin(a) * r;
@@ -382,6 +396,14 @@ export class Wildlife {
       this.spawnT = 1.5;
       for (const g of [...this.groups]) { const d = Math.hypot(g.leader.pos.x - P.pos.x, g.leader.pos.z - P.pos.z); if (d > (g.kind === 'goat' ? FAR : 560) || g.members.every(a => a.gone)) this.removeGroup(g); }
       if (this.groups.length < this.target) this.trySpawn(P, 130, this.regionK(P.pos.x, P.pos.z).valley ? 640 : 330);
+      // every den within a few hundred metres has its bears at home (one, sometimes two; bigger and far tougher)
+      if (this.dens) this.dens.near(P.pos.x, P.pos.z, 420, s => {
+        if (s.cleared || s.group) return;
+        const g = this.spawnGroup('bear', s.door.x, s.door.z, s.id % 3 === 0 ? 2 : 1); g.den = s; g.home = { x: s.door.x, z: s.door.z }; g.target = { ...g.home }; s.group = g;
+        for (const a of g.members) { a.den = s; a.maxHp = a.hp = a.sp.hp * 3.2; a.scale *= 1.08; a.m.mesh.scale.setScalar(a.scale); }
+      });
+      // a den whose bears are all dead stays empty
+      for (const g of this.groups) if (g.den && !g.den.cleared && g.members.every(a => a.state === 'down' || a.state === 'dead')) this.dens.clear(g.den);
     }
     for (const g of this.groups) {
       if (g.leader.state === 'down' || g.leader.state === 'dead' || g.leader.gone) { const alive = g.members.find(a => a.state !== 'down' && a.state !== 'dead' && !a.gone); if (alive) g.leader = alive; }

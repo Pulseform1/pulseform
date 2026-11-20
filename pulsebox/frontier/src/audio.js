@@ -111,7 +111,8 @@ export class Audio {
     if (!this.ctx || this.ctx.state !== 'running') return;
     const c = this.ctx, now = c.currentTime, sm = (p, v, k = .25) => p.setTargetAtTime(v, now, k);
     // the background is kept low and soft: a breath of wind, the water, birds now and then
-    sm(this.wind.g.gain, .006 + .03 * e.wind + .015 * e.rain); sm(this.wind.f.frequency, 200 + 300 * e.wind);
+    const gl = e.gloom || 0;   // deep in the timber: a lower, steadier moan of wind, fewer birds, and things in the dark
+    sm(this.wind.g.gain, .006 + .03 * e.wind + .015 * e.rain + .012 * gl); sm(this.wind.f.frequency, (200 + 300 * e.wind) * (1 - .45 * gl));
     sm(this.windHi.g.gain, (.0006 + .003 * e.wind) * (.5 + e.forest)); sm(this.windHi.f.frequency, 700 + 900 * e.wind);
     sm(this.rain.g.gain, e.rain * (e.inTent ? .03 : .06)); sm(this.rainLow.g.gain, e.rain * (e.inTent ? .2 : .045));
     sm(this.rain.f.frequency, e.inTent ? 900 : 1800);
@@ -126,7 +127,7 @@ export class Audio {
     if (fireNear > .02 && Math.random() < e.dt * (3 + 9 * e.fireFuel)) { this.burst(.012 + Math.random() * .03, 'highpass', 1800 + Math.random() * 3000, .7, (.05 + Math.random() * .12) * fireNear, Math.random() - .5); if (Math.random() < .2) this.burst(.06, 'bandpass', 600, 1.5, .08 * fireNear); }
     const due = (k, min, max) => { if (!this.next[k]) this.next[k] = now + min + Math.random() * (max - min); if (now >= this.next[k]) { this.next[k] = now + min + Math.random() * (max - min); return true; } return false; };
     // birds by day in the trees
-    if (e.day > .4 && e.rain < .4 && due('bird', 8, 20)) {
+    if (e.day > .4 && e.rain < .4 && due('bird', 8, 20) && Math.random() > gl * .85) {
       const base = 2200 + Math.random() * 2600, n = 2 + Math.floor(Math.random() * 5), pan = Math.random() * 1.6 - .8, g = (.004 + Math.random() * .006) * (.4 + e.forest), kind = Math.random();
       for (let i = 0; i < n; i++) {
         const f = base * (kind < .5 ? 1 + (i % 2) * .25 : 1 + i * .06), d = kind < .5 ? .08 : .05;
@@ -134,6 +135,12 @@ export class Audio {
       }
     }
     if (e.day > .3 && e.day < .9 && e.rain < .3 && due('dove', 25, 60)) { const f = 520 + Math.random() * 60, p = Math.random() - .5; this.tone([f, f * .92], [.5], 'sine', .011, p, 0, true); this.tone([f * .95, f * .9], [.35], 'sine', .01, p, 0, true, .7); this.tone([f * .95, f * .88], [.35], 'sine', .009, p, 0, true, 1.2); }
+    if (gl > .35) {
+      if (due('creak', 9, 24)) this.tone([62 + Math.random() * 30, 48 + Math.random() * 20, 70], [.7, .9], 'sawtooth', .006 * gl, Math.random() * 1.6 - .8, 3, true);   // a trunk creaking
+      if (due('snap', 14, 38)) { const p = Math.random() < .5 ? -.9 : .9; this.burst(.03, 'highpass', 2600, .8, .12 * gl, p, 0, true); this.burst(.02, 'highpass', 3200, .8, .08 * gl, p, .09, true); }   // a twig snaps, off to one side
+      if (due('moan', 18, 45)) this.burst(2.6, 'bandpass', 320, 2.2, .05 * gl, Math.random() * 1.4 - .7, 0, true);   // wind moaning through the trunks
+      if (gl > .6 && due('growl', 40, 95)) this.animal('grunt', 130, Math.random() * 1.6 - .8);   // something big, somewhere out there
+    }
     if (e.night > .6 && due('owl', 18, 50)) { const f = 360 + Math.random() * 60, p = Math.random() * 1.4 - .7; this.tone([f, f * .94], [.32], 'sine', .014, p, 4, true); this.tone([f * 1.02, f * .9], [.5], 'sine', .014, p, 4, true, .5); }
     if (e.night > .7 && due('wolf', 70, 160)) { const f = 420 + Math.random() * 80, p = Math.random() * 1.6 - .8; this.tone([f * .8, f, f * 1.1, f * .95, f * .7], [.6, .9, 1.2, .8], 'sine', .01, p, 6, true); }
     if (e.day > .2 && due('elk', 90, 200)) { const p = Math.random() * 1.6 - .8; this.tone([600, 1300, 1550, 1450, 700], [.4, .6, .8, .3], 'sawtooth', .003, p, 9, true); this.tone([300, 650, 760, 720, 350], [.4, .6, .8, .3], 'sine', .005, p, 4, true); }
