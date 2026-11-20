@@ -1312,7 +1312,7 @@ const GAME = {
 
   /* ---------- guns on the floor, and the one charge the attackers share ----------
      A fighter who dies drops the gun they had (their main gun, or a sidearm better than the Pip). Anyone can drop the gun in
-     their hand (T) for a teammate, or buy one for a teammate in the armory, which lands at that teammate's feet. Walking
+     their hand (T) for a teammate. Walking
      over a gun picks it up if that slot is free; F swaps it for the one you have. Bots take a better gun when they pass one.
      The charge: one attacker carries it (chosen in the buy phase, and passed on in the armory or by dropping it with H).
      A carrier who dies drops it; an attacker who walks over it picks it up; only the carrier can plant.
@@ -1363,11 +1363,6 @@ const GAME = {
     const c = carrier(); if (!to || to.team !== from.team || sideOf(to) !== 'att' || !to.alive || M.planted) return false;
     if (c && c !== from && !(c.bot || c.isBot)) return false;   // another person has it: theirs to pass on
     setCharge(to, 0, 0, false, from); return true;
-  }
-  // buy a gun for a teammate: it lands at their feet
-  function buyFor(f, mate, k) {
-    const G = GUNS[k]; if (!canBuy() || !G || G.melee || !mate || mate === f || mate.team !== f.team || f.credits < G.cost) return false;
-    f.credits -= G.cost; const fx = -Math.sin(mate.yaw), fz = -Math.cos(mate.yaw); lootAt(f, k, mate.x + fx * .5, mate.z + fz * .5, null, null, mate.key); emit('gift', f, mate, k); return true;
   }
   // each tick, for a fighter this device runs: the charge and any gun underfoot
   function stepLoot(f, I, press) {
@@ -1799,9 +1794,6 @@ const GAME = {
     else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub']));
     if (f.credits >= 200 && R() < .65) buy(f, 'smoke'); if (f.credits >= 1400 && R() < .45) buy(f, 'smoke');
     for (let n = 0; n < 2; n++) if (f.credits >= OPS[f.op].q.cost && R() < .8) buy(f, 'abq');   // ability charges
-    // flush, with a teammate (a person on this device) who can't afford a rifle: buy them one; it lands at their feet
-    if (!pistolRound(M.round) && f.credits >= 3300) { const mate = M.fs.find(q => q !== f && q.team === f.team && !q.bot && !q.isBot && !q.net && !q.gone && !q.guns[1] && q.credits < 2000 && !(M.loot || []).some(d => d.by === f.key));
-      if (mate) buyFor(f, mate, f.credits >= 3900 && R() < .5 ? 'lancer' : 'vesper'); }
   }
 
   // the newer operatives' abilities, each with a reason
@@ -5231,7 +5223,6 @@ const GAME = {
   // how far in from the right edge the kit's round sound button reaches (in HUD units), or 0 when it is hidden
   const muteGap = () => { try { const b = document.getElementById('bMute'); if (!b || b.style.display === 'none') return 0; const r = b.getBoundingClientRect(); return (innerWidth - r.left) / pxPer(); } catch (e) { return 0; } };
   let TOAST = null; const toast = s => { TOAST = { s, at: performance.now() }; };
-  on('gift', (f, mate, k) => { if (!M || M.mode === 'demo') return; if (mate === me()) toast(`${f.name.toUpperCase()} BOUGHT YOU A ${GUNS[k].n.toUpperCase()}`); else if (f === me()) toast(`YOU BOUGHT ${mate.name.toUpperCase()} A ${GUNS[k].n.toUpperCase()}`); });
   on('charge', f => { if (!M || M.mode === 'demo' || M.phase === 'end') return; const P = me(); if (f === P) toast(isTouch() ? 'YOU HAVE THE CHARGE' : 'YOU HAVE THE CHARGE  ·  H TO DROP IT'); else if (f && f.team === P.team && M.round && M.time - (M.chargeToastT || -9) > .5) toast(f.name.toUpperCase() + ' HAS THE CHARGE'); else if (!f && sideOf(P) === 'att') toast('THE CHARGE IS ON THE FLOOR'); M.chargeToastT = M.time; });
   function tx(g, s, x, y, px, col = BONE, align = 'center', weight = 700) { px = fitPx(g, px); g.font = `${weight} ${px}px ${FONT}`; g.fillStyle = col; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); }
   function rr(g, x, y, w, h, r, fill, stroke, lw = 2) {
@@ -6087,13 +6078,13 @@ const GAME = {
     const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), x = V.x0 + 20 * u, w = W - 40 * u, y0 = V.y0 + 56 * Math.min(u, 1.15), h = V.y1 - y0 - 10 * u, gap = 7 * Math.min(u, 1.2), range = M.mode === 'range';
     rr(g, x, y0, w, h, 12, 'rgba(12,16,22,.95)', 'rgba(239,233,220,.25)');
     const pad = isTouch() ? 46 / pxPer() : 0; tx(g, 'ARMORY', x + 18 * u + pad, y0 + 24 * u, 24 * u, BONE, 'left'); tx(g, `◈ ${P.credits}`, x + w - 18 * u - pad, y0 + 24 * u, 23 * u, GOLD, 'right');
-    { const bf = UI.buyFor && M.byKey[UI.buyFor]; tx(g, range ? 'Everything is free on the range' : bf ? `BUYING FOR ${bf.name.toUpperCase()}  ·  press a gun` : `${pistolRound(M.round) ? 'Pistol round · ' : otRound(M.round) ? 'Overtime · ' : ''}Round starts in ${Math.max(0, Math.ceil(M.t))}${lossNext(P)}`, x + w / 2, y0 + 24 * u, 14 * u, bf ? GOLD : DIM); }
+    { tx(g, range ? 'Everything is free on the range' : `${pistolRound(M.round) ? 'Pistol round · ' : otRound(M.round) ? 'Overtime · ' : ''}Round starts in ${Math.max(0, Math.ceil(M.t))}${lossNext(P)}`, x + w / 2, y0 + 24 * u, 14 * u, DIM); }
     const by = y0 + 46 * u, bh = y0 + h - by - 12 * u, hh = fitPx(g, 12 * u) * 1.7, cw = (w - 28 * u - 4 * gap) / 5, ch = (bh - hh - 4 * gap) / 5; let focus = null;
     const card = (it, cx, cy, cw2 = cw) => {
       const cw = cw2, A = it.armor, AB = it.ab ? it : null, N = it === NADE ? it : null, G = A || N || AB ? null : it, sp = P.spent, lock = false;
       const on = A ? P.sh >= A.sh : AB ? (P.ab.q | 0) >= AB.ab.q.max : N ? (P.smokes || 0) >= NADE.per : P.guns[G.slot] === it.k, mineNow = A ? sp.sh && sp.sh.k === it.k : AB ? sp.abq > 0 : N ? sp.smoke > 0 : sp[G.slot] && sp[G.slot].k === it.k;
       const refund = A ? (sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0) : N || AB ? 0 : (sp[G.slot] ? GUNS[sp[G.slot].k].cost : 0), can = !on && P.credits + refund >= it.cost;
-      const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; const mate = UI.buyFor && M.byKey[UI.buyFor]; if (mate && G && !G.melee) { if (!buyFor(P, mate, it.k)) click(); } else buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
+      const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
       rr(g, cx, cy, cw, ch, 8, on ? 'rgba(53,224,200,.14)' : hot && can ? 'rgba(255,138,61,.18)' : 'rgba(255,255,255,.045)', on ? YOU : hot || UI.pick === it.k ? 'rgba(239,233,220,.6)' : can ? 'rgba(239,233,220,.2)' : 'rgba(255,255,255,.06)');
       const tp = Math.min(15 * u, ch * .2, cw * .075), ty = cy + tp * .95;
       g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nm = it.short && g.measureText((it.n + '  ◈ 200').toUpperCase()).width > cw - 18 * u ? it.short : it.n;
@@ -6118,12 +6109,10 @@ const GAME = {
     });
     // the right column, under the shields: what you are pointing at, a buy button for a gold-edged one, and the way out
     const dx = x + 14 * u + 4 * (cw + gap), rh = tapH(50);
-    // your team, under the details: who you are buying for (press a teammate, then a gun: it lands at their feet), and,
-    // attacking, who carries the charge (press the diamond to hand it over)
-    const team = range ? [] : M.fs.filter(q => q.team === P.team && !q.gone).sort((a, b) => (b === P) - (a === P)), att = sideOf(P) === 'att', trh = Math.min(tapH(30, 26), 34 * u), tph = team.length > 1 ? 22 * u + team.length * (trh + 4 * u) : 0;
-    if (UI.buyFor && !team.some(q => q.key === UI.buyFor && q !== P)) UI.buyFor = null;
-    if (tph) { let ty2 = by + bh - rh - gap - tph; tx(g, att ? 'TEAM  ·  BUY FOR  ·  CHARGE' : 'TEAM  ·  BUY FOR', dx + 2, ty2 + 9 * u, 11 * u, DIM, 'left', 900); ty2 += 22 * u;
-      for (const q of team) { const sel = q === P ? !UI.buyFor : UI.buyFor === q.key, cw3 = att ? cw - trh - 6 * u : cw, hot = zone(dx, ty2, cw3, trh, () => { UI.buyFor = q === P ? null : q.key; click(); });
+    // attacking: your team, under the details, and who carries the charge (press the diamond to hand it over)
+    const team = range || sideOf(P) !== 'att' ? [] : M.fs.filter(q => q.team === P.team && !q.gone).sort((a, b) => (b === P) - (a === P)), att = sideOf(P) === 'att', trh = Math.min(tapH(30, 26), 34 * u), tph = team.length > 1 ? 22 * u + team.length * (trh + 4 * u) : 0;
+    if (tph) { let ty2 = by + bh - rh - gap - tph; tx(g, 'TEAM  ·  CHARGE', dx + 2, ty2 + 9 * u, 11 * u, DIM, 'left', 900); ty2 += 22 * u;
+      for (const q of team) { const sel = false, cw3 = att ? cw - trh - 6 * u : cw, hot = false;
         rr(g, dx, ty2, cw3, trh, 6, sel ? 'rgba(255,214,102,.16)' : hot ? 'rgba(255,255,255,.08)' : 'rgba(255,255,255,.035)', sel ? GOLD : 'rgba(239,233,220,.14)', sel ? 1.5 : 1);
         portraitTile(g, q.op, dx + 3, ty2 + 3, trh - 6, trh - 6, { r: 3, dead: !q.alive });
         const known = q === P || !q.net, [nm, npx] = fitName(g, q === P ? 'YOU' : q.name.toUpperCase(), cw3 - trh - (known ? 62 * u : 14 * u), Math.min(12.5 * u, trh * .45)); tx(g, nm, dx + trh + 4 * u, ty2 + trh / 2, npx, q === P ? YOU : BONE, 'left', 800);
@@ -6625,7 +6614,7 @@ const GAME = {
   on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; UI.lastSide = null; UI.switched = null; });   // an online match began (60-net started it)
   // each round opens on the armory, after the loading screen or the switching-sides band if there is one
   on('round', n => {
-    UI.armory = false; UI.pick = null; UI.buyFor = null; UI.pendingArmory = false; if (M.mode === 'demo' || M.mode === 'range') return;
+    UI.armory = false; UI.pick = null; UI.pendingArmory = false; if (M.mode === 'demo' || M.mode === 'range') return;
     const side = sideOf(me()), decider = otRound(n) > 0; UI.switched = n > 1 && UI.lastSide && side !== UI.lastSide ? { t0: performance.now(), side, decider, sd: suddenDeath(n), first: otRound(n) === 1 } : null; UI.lastSide = side;
     if (loadingNow() || UI.switched) UI.pendingArmory = true; else openArmory(true);
   });
@@ -6719,7 +6708,7 @@ const GAME = {
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
-    team: () => ({ dropHeld, dropCharge, giveCharge, buyFor, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
+    team: () => ({ dropHeld, dropCharge, giveCharge, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
     botMe: d => { me().bot = { diff: d }; me().local = false; }, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
   };
 })();

@@ -441,7 +441,7 @@
 
   /* ---------- guns on the floor, and the one charge the attackers share ----------
      A fighter who dies drops the gun they had (their main gun, or a sidearm better than the Pip). Anyone can drop the gun in
-     their hand (T) for a teammate, or buy one for a teammate in the armory, which lands at that teammate's feet. Walking
+     their hand (T) for a teammate. Walking
      over a gun picks it up if that slot is free; F swaps it for the one you have. Bots take a better gun when they pass one.
      The charge: one attacker carries it (chosen in the buy phase, and passed on in the armory or by dropping it with H).
      A carrier who dies drops it; an attacker who walks over it picks it up; only the carrier can plant.
@@ -492,11 +492,6 @@
     const c = carrier(); if (!to || to.team !== from.team || sideOf(to) !== 'att' || !to.alive || M.planted) return false;
     if (c && c !== from && !(c.bot || c.isBot)) return false;   // another person has it: theirs to pass on
     setCharge(to, 0, 0, false, from); return true;
-  }
-  // buy a gun for a teammate: it lands at their feet
-  function buyFor(f, mate, k) {
-    const G = GUNS[k]; if (!canBuy() || !G || G.melee || !mate || mate === f || mate.team !== f.team || f.credits < G.cost) return false;
-    f.credits -= G.cost; const fx = -Math.sin(mate.yaw), fz = -Math.cos(mate.yaw); lootAt(f, k, mate.x + fx * .5, mate.z + fz * .5, null, null, mate.key); emit('gift', f, mate, k); return true;
   }
   // each tick, for a fighter this device runs: the charge and any gun underfoot
   function stepLoot(f, I, press) {

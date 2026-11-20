@@ -227,13 +227,13 @@
     const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), x = V.x0 + 20 * u, w = W - 40 * u, y0 = V.y0 + 56 * Math.min(u, 1.15), h = V.y1 - y0 - 10 * u, gap = 7 * Math.min(u, 1.2), range = M.mode === 'range';
     rr(g, x, y0, w, h, 12, 'rgba(12,16,22,.95)', 'rgba(239,233,220,.25)');
     const pad = isTouch() ? 46 / pxPer() : 0; tx(g, 'ARMORY', x + 18 * u + pad, y0 + 24 * u, 24 * u, BONE, 'left'); tx(g, `◈ ${P.credits}`, x + w - 18 * u - pad, y0 + 24 * u, 23 * u, GOLD, 'right');
-    { const bf = UI.buyFor && M.byKey[UI.buyFor]; tx(g, range ? 'Everything is free on the range' : bf ? `BUYING FOR ${bf.name.toUpperCase()}  ·  press a gun` : `${pistolRound(M.round) ? 'Pistol round · ' : otRound(M.round) ? 'Overtime · ' : ''}Round starts in ${Math.max(0, Math.ceil(M.t))}${lossNext(P)}`, x + w / 2, y0 + 24 * u, 14 * u, bf ? GOLD : DIM); }
+    { tx(g, range ? 'Everything is free on the range' : `${pistolRound(M.round) ? 'Pistol round · ' : otRound(M.round) ? 'Overtime · ' : ''}Round starts in ${Math.max(0, Math.ceil(M.t))}${lossNext(P)}`, x + w / 2, y0 + 24 * u, 14 * u, DIM); }
     const by = y0 + 46 * u, bh = y0 + h - by - 12 * u, hh = fitPx(g, 12 * u) * 1.7, cw = (w - 28 * u - 4 * gap) / 5, ch = (bh - hh - 4 * gap) / 5; let focus = null;
     const card = (it, cx, cy, cw2 = cw) => {
       const cw = cw2, A = it.armor, AB = it.ab ? it : null, N = it === NADE ? it : null, G = A || N || AB ? null : it, sp = P.spent, lock = false;
       const on = A ? P.sh >= A.sh : AB ? (P.ab.q | 0) >= AB.ab.q.max : N ? (P.smokes || 0) >= NADE.per : P.guns[G.slot] === it.k, mineNow = A ? sp.sh && sp.sh.k === it.k : AB ? sp.abq > 0 : N ? sp.smoke > 0 : sp[G.slot] && sp[G.slot].k === it.k;
       const refund = A ? (sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0) : N || AB ? 0 : (sp[G.slot] ? GUNS[sp[G.slot].k].cost : 0), can = !on && P.credits + refund >= it.cost;
-      const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; const mate = UI.buyFor && M.byKey[UI.buyFor]; if (mate && G && !G.melee) { if (!buyFor(P, mate, it.k)) click(); } else buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
+      const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
       rr(g, cx, cy, cw, ch, 8, on ? 'rgba(53,224,200,.14)' : hot && can ? 'rgba(255,138,61,.18)' : 'rgba(255,255,255,.045)', on ? YOU : hot || UI.pick === it.k ? 'rgba(239,233,220,.6)' : can ? 'rgba(239,233,220,.2)' : 'rgba(255,255,255,.06)');
       const tp = Math.min(15 * u, ch * .2, cw * .075), ty = cy + tp * .95;
       g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nm = it.short && g.measureText((it.n + '  ◈ 200').toUpperCase()).width > cw - 18 * u ? it.short : it.n;
@@ -258,12 +258,10 @@
     });
     // the right column, under the shields: what you are pointing at, a buy button for a gold-edged one, and the way out
     const dx = x + 14 * u + 4 * (cw + gap), rh = tapH(50);
-    // your team, under the details: who you are buying for (press a teammate, then a gun: it lands at their feet), and,
-    // attacking, who carries the charge (press the diamond to hand it over)
-    const team = range ? [] : M.fs.filter(q => q.team === P.team && !q.gone).sort((a, b) => (b === P) - (a === P)), att = sideOf(P) === 'att', trh = Math.min(tapH(30, 26), 34 * u), tph = team.length > 1 ? 22 * u + team.length * (trh + 4 * u) : 0;
-    if (UI.buyFor && !team.some(q => q.key === UI.buyFor && q !== P)) UI.buyFor = null;
-    if (tph) { let ty2 = by + bh - rh - gap - tph; tx(g, att ? 'TEAM  ·  BUY FOR  ·  CHARGE' : 'TEAM  ·  BUY FOR', dx + 2, ty2 + 9 * u, 11 * u, DIM, 'left', 900); ty2 += 22 * u;
-      for (const q of team) { const sel = q === P ? !UI.buyFor : UI.buyFor === q.key, cw3 = att ? cw - trh - 6 * u : cw, hot = zone(dx, ty2, cw3, trh, () => { UI.buyFor = q === P ? null : q.key; click(); });
+    // attacking: your team, under the details, and who carries the charge (press the diamond to hand it over)
+    const team = range || sideOf(P) !== 'att' ? [] : M.fs.filter(q => q.team === P.team && !q.gone).sort((a, b) => (b === P) - (a === P)), att = sideOf(P) === 'att', trh = Math.min(tapH(30, 26), 34 * u), tph = team.length > 1 ? 22 * u + team.length * (trh + 4 * u) : 0;
+    if (tph) { let ty2 = by + bh - rh - gap - tph; tx(g, 'TEAM  ·  CHARGE', dx + 2, ty2 + 9 * u, 11 * u, DIM, 'left', 900); ty2 += 22 * u;
+      for (const q of team) { const sel = false, cw3 = att ? cw - trh - 6 * u : cw, hot = false;
         rr(g, dx, ty2, cw3, trh, 6, sel ? 'rgba(255,214,102,.16)' : hot ? 'rgba(255,255,255,.08)' : 'rgba(255,255,255,.035)', sel ? GOLD : 'rgba(239,233,220,.14)', sel ? 1.5 : 1);
         portraitTile(g, q.op, dx + 3, ty2 + 3, trh - 6, trh - 6, { r: 3, dead: !q.alive });
         const known = q === P || !q.net, [nm, npx] = fitName(g, q === P ? 'YOU' : q.name.toUpperCase(), cw3 - trh - (known ? 62 * u : 14 * u), Math.min(12.5 * u, trh * .45)); tx(g, nm, dx + trh + 4 * u, ty2 + trh / 2, npx, q === P ? YOU : BONE, 'left', 800);

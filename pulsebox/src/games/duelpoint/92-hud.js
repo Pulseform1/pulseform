@@ -9,7 +9,6 @@
   // how far in from the right edge the kit's round sound button reaches (in HUD units), or 0 when it is hidden
   const muteGap = () => { try { const b = document.getElementById('bMute'); if (!b || b.style.display === 'none') return 0; const r = b.getBoundingClientRect(); return (innerWidth - r.left) / pxPer(); } catch (e) { return 0; } };
   let TOAST = null; const toast = s => { TOAST = { s, at: performance.now() }; };
-  on('gift', (f, mate, k) => { if (!M || M.mode === 'demo') return; if (mate === me()) toast(`${f.name.toUpperCase()} BOUGHT YOU A ${GUNS[k].n.toUpperCase()}`); else if (f === me()) toast(`YOU BOUGHT ${mate.name.toUpperCase()} A ${GUNS[k].n.toUpperCase()}`); });
   on('charge', f => { if (!M || M.mode === 'demo' || M.phase === 'end') return; const P = me(); if (f === P) toast(isTouch() ? 'YOU HAVE THE CHARGE' : 'YOU HAVE THE CHARGE  ·  H TO DROP IT'); else if (f && f.team === P.team && M.round && M.time - (M.chargeToastT || -9) > .5) toast(f.name.toUpperCase() + ' HAS THE CHARGE'); else if (!f && sideOf(P) === 'att') toast('THE CHARGE IS ON THE FLOOR'); M.chargeToastT = M.time; });
   function tx(g, s, x, y, px, col = BONE, align = 'center', weight = 700) { px = fitPx(g, px); g.font = `${weight} ${px}px ${FONT}`; g.fillStyle = col; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); }
   function rr(g, x, y, w, h, r, fill, stroke, lw = 2) {

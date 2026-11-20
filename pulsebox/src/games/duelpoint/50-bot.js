@@ -84,9 +84,6 @@
     else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub']));
     if (f.credits >= 200 && R() < .65) buy(f, 'smoke'); if (f.credits >= 1400 && R() < .45) buy(f, 'smoke');
     for (let n = 0; n < 2; n++) if (f.credits >= OPS[f.op].q.cost && R() < .8) buy(f, 'abq');   // ability charges
-    // flush, with a teammate (a person on this device) who can't afford a rifle: buy them one; it lands at their feet
-    if (!pistolRound(M.round) && f.credits >= 3300) { const mate = M.fs.find(q => q !== f && q.team === f.team && !q.bot && !q.isBot && !q.net && !q.gone && !q.guns[1] && q.credits < 2000 && !(M.loot || []).some(d => d.by === f.key));
-      if (mate) buyFor(f, mate, f.credits >= 3900 && R() < .5 ? 'lancer' : 'vesper'); }
   }
 
   // the newer operatives' abilities, each with a reason

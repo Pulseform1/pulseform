@@ -50,10 +50,5 @@ ok(r.c.includes('vesper'), 'the host drops a gun: it lies on the floor on the fr
 await T(C, () => { const t = GAME.test, M = t.M, P = M.fs[0], d = M.loot.find(q => q.k === 'vesper'); P.guns[1] = null; P.x = d.x; P.z = d.z; P.y = d.y; }); await wait(1200);
 r = { c: await T(C, () => ({ gun: GAME.test.M.fs[0].guns[1], floor: GAME.test.M.loot.length })), h: await T(H, fk => ({ floor: GAME.test.M.loot.length, friendGun: GAME.test.M.byKey[fk].guns[1] }), friendKey) };
 ok(r.c.gun === 'vesper' && r.c.floor === 0 && r.h.floor === 0 && r.h.friendGun === 'vesper', 'the friend picks it up; it is gone from the host\'s floor too', JSON.stringify(r));
-// buying for a teammate across the room: the host buys the friend a Lancer; it lands at their feet on their screen
-await T(C, () => { const P = GAME.test.M.fs[0]; GAME.test.team().dropHeld(P); P.guns[1] = null; }); await wait(800);
-await T(H, fk => { const t = GAME.test, P = t.M.fs[0]; P.credits = 9000; t.team().buyFor(P, t.M.byKey[fk], 'lancer'); }, friendKey); await wait(1500);
-r = await T(C, () => ({ gun: GAME.test.M.fs[0].guns[1], floor: GAME.test.M.loot.map(d => d.k) }));
-ok(r.gun === 'lancer', 'the host buys the friend a gun: it lands at their feet and is theirs', JSON.stringify(r));
 await C.waitForTimeout(400); await C.screenshot({ path: O + '/online-friend.png' });
 console.log('ERRORS', JSON.stringify(errs)); await b.close();

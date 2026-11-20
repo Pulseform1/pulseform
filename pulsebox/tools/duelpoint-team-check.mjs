@@ -29,11 +29,8 @@ r = await T(() => { const t = GAME.test, X2 = t.team(), M = t.M, P = M.fs[0]; P.
   const d = M.loot[0]; P.x = d.x; P.z = d.z; d.at -= 5; t.tick(.1); return { had, loot, slot, back: P.guns[1], left: M.loot.length }; });
 ok(r.had === 'vesper' && r.loot[0] === 'vesper' && r.slot === null && r.back === 'vesper' && r.left === 0, 'T drops the gun in your hand; walking over it picks it up', JSON.stringify(r));
 await p.waitForTimeout(300);
-// buy one for a teammate: it lands at their feet and the bot takes it
-r = await T(() => { const t = GAME.test, X2 = t.team(), M = t.M, P = M.fs[0], mate = M.fs.find(f => f !== P && f.team === P.team && f.bot); mate.guns[1] = null; const c0 = P.credits; const ok2 = X2.buyFor(P, mate, 'lancer'); const n = M.loot.length; t.tick(.2); return { ok2, spent: c0 - P.credits, n, got: mate.guns[1], left: M.loot.length }; });
-ok(r.ok2 && r.spent === 2900 && r.n === 1 && r.got === 'lancer' && r.left === 0, 'buying for a teammate: the gun lands at their feet and they pick it up', JSON.stringify(r));
 // F swaps: stand on a better gun with your slot full
-r = await T(() => { const t = GAME.test, X2 = t.team(), M = t.M, P = M.fs[0], mate = M.fs.find(f => f !== P && f.team === P.team && f.bot); mate.credits = 9000; X2.buyFor(mate, P, 'torrent'); const d = M.loot.find(q => q.k === 'torrent'); P.x = d.x; P.z = d.z; d.at -= 5; t.tick(.05);
+r = await T(() => { const t = GAME.test, X2 = t.team(), M = t.M, P = M.fs[0], mate = M.fs.find(f => f !== P && f.team === P.team && f.bot); mate.guns[1] = 'torrent'; mate.ammo.torrent = { mag: 30, res: 90 }; mate.slot = 1; mate.x = P.x + 1; mate.z = P.z; X2.dropHeld(mate); const d = M.loot.find(q => q.k === 'torrent'); P.x = d.x; P.z = d.z; d.at -= 5; t.tick(.05);
   const near = P.nearLoot && P.nearLoot.k; X2.stepLoot(P, { use: true }, true); return { near, now: P.guns[1], floor: M.loot.map(q => q.k) }; });
 ok(r.near === 'torrent' && r.now === 'torrent' && r.floor.includes('vesper'), 'F swaps your gun for the one underfoot (yours drops)', JSON.stringify(r));
 await T(() => { const t = GAME.test, M = t.M; t.UI.armory = false; M.t = .01; t.tick(.3); });
