@@ -7,7 +7,9 @@ export class Audio {
     if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
     const c = this.ctx = new AC();
-    this.master = c.createGain(); this.master.gain.value = this.vol; this.master.connect(c.destination);
+    this.master = c.createGain(); this.master.gain.value = this.vol;
+    this.limit = c.createDynamicsCompressor(); this.limit.threshold.value = -6; this.limit.knee.value = 4; this.limit.ratio.value = 14; this.limit.attack.value = .002; this.limit.release.value = .22;
+    this.master.connect(this.limit); this.limit.connect(c.destination);
     // a shared space for far sounds
     this.verb = c.createConvolver(); const len = c.sampleRate * 2.6, ir = c.createBuffer(2, len, c.sampleRate);
     for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
@@ -47,12 +49,43 @@ export class Audio {
     else if (surface === 'rock') { this.burst(.07, 'bandpass', 900, 2, .16 * k); }
     else { this.burst(.14, 'highpass', 1800 + Math.random() * 900, .5, .055 * k); this.burst(.08, 'lowpass', 280, .6, .12 * k); }
   }
+  // Gunshots, built in layers: the supersonic crack (rifle only), the muzzle blast, a low thump you feel more than hear,
+  // and the roll of the shot off the hills (a long tail and a couple of distinct echoes). The long rifle is the loudest
+  // thing in the country and rolls on for seconds; the shotguns are a deep boom; the revolver a sharper, smaller bang.
+  thump(f0, f1, dur, gain, when = 0) {
+    const c = this.ctx, o = c.createOscillator(), g = c.createGain(), t = c.currentTime + when; o.type = 'sine';
+    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + .004); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g); g.connect(this.master); o.start(t); o.stop(t + dur + .05);
+  }
+  echo(when, gain, f, dur) { this.burst(dur, 'lowpass', f, .6, gain, Math.random() * 1.2 - .6, when, true); }
   shot(kind) {
     if (!this.ctx) return;
-    if (kind === 'pistol') { this.burst(.32, 'lowpass', 2400, .7, .7, 0, 0, true); this.burst(.06, 'highpass', 3200, .5, .5); this.burst(1.1, 'lowpass', 300, .5, .22, 0, .03, true); return; }
-    if (kind === 'shotgun') { this.burst(.5, 'lowpass', 1700, .6, .95, 0, 0, true); this.burst(.1, 'highpass', 2200, .5, .4); this.burst(2, 'lowpass', 200, .5, .4, 0, .04, true); return; }
-    // the long rifle: a hard crack and a long roll off the hills
-    this.burst(.6, 'lowpass', 1300, .7, 1, 0, 0, true); this.burst(.07, 'highpass', 3000, .5, .55); this.burst(2.6, 'lowpass', 180, .5, .45, 0, .05, true); this.burst(1.4, 'lowpass', 260, .6, .18, 0, .9, true);
+    if (kind === 'rifle') {
+      this.burst(.006, 'highpass', 4200, .7, 1.1);                    // crack
+      this.burst(.22, 'lowpass', 2600, .7, 1.25, 0, 0, true);          // blast
+      this.burst(.5, 'lowpass', 900, .7, .7, 0, .01, true);
+      this.thump(78, 32, .45, 1.1);                                    // the punch
+      this.burst(3.4, 'lowpass', 230, .5, .62, 0, .06, true);          // the roll off the hills
+      this.echo(.55, .32, 700, .7); this.echo(1.25, .22, 500, 1.1); this.echo(2.3, .12, 380, 1.4);
+      return;
+    }
+    if (kind === 'shotgun' || kind === 'double') {
+      const k = kind === 'double' ? 1.08 : 1;
+      this.burst(.005, 'highpass', 3000, .7, .55 * k);
+      this.burst(.3, 'lowpass', 1900, .6, 1.05 * k, 0, 0, true);
+      this.burst(.55, 'lowpass', 600, .7, .55 * k, 0, .01, true);
+      this.thump(kind === 'double' ? 72 : 88, 38, .32, .95 * k);
+      this.burst(2.1, 'lowpass', 210, .5, .42 * k, 0, .05, true);
+      this.echo(.5, .24 * k, 600, .7); this.echo(1.2, .13 * k, 420, 1);
+      return;
+    }
+    // the revolver
+    this.burst(.004, 'highpass', 3600, .7, .42);
+    this.burst(.14, 'bandpass', 1500, .8, .55, 0, 0, true);
+    this.burst(.25, 'lowpass', 1100, .7, .3, 0, .005, true);
+    this.thump(150, 70, .14, .38);
+    this.burst(1, 'lowpass', 320, .5, .16, 0, .04, true);
+    this.echo(.45, .1, 700, .5);
   }
   hurt(dmg) { if (!this.ctx) return; this.burst(.25, 'lowpass', 420, 1, .5); this.tone([180, 120], [.25], 'sawtooth', .04 + dmg / 1200, 0, 0, false); }
   splash(big, pan = 0) { if (!this.ctx) return; this.burst(big ? .5 : .22, 'bandpass', big ? 700 : 1300, .8, big ? .4 : .18, pan); this.burst(.15, 'highpass', 2500, .5, .08, pan, .03); }
@@ -77,23 +110,24 @@ export class Audio {
   update(e) {
     if (!this.ctx || this.ctx.state !== 'running') return;
     const c = this.ctx, now = c.currentTime, sm = (p, v, k = .25) => p.setTargetAtTime(v, now, k);
-    sm(this.wind.g.gain, .05 + .22 * e.wind + .05 * e.rain); sm(this.wind.f.frequency, 260 + 520 * e.wind);
-    sm(this.windHi.g.gain, (.006 + .03 * e.wind) * (.5 + e.forest)); sm(this.windHi.f.frequency, 700 + 900 * e.wind);
-    sm(this.rain.g.gain, e.rain * (e.inTent ? .05 : .16)); sm(this.rainLow.g.gain, e.rain * (e.inTent ? .5 : .12));
+    // the background is kept low and soft: a breath of wind, the water, birds now and then
+    sm(this.wind.g.gain, .012 + .06 * e.wind + .03 * e.rain); sm(this.wind.f.frequency, 220 + 360 * e.wind);
+    sm(this.windHi.g.gain, (.0015 + .008 * e.wind) * (.5 + e.forest)); sm(this.windHi.f.frequency, 700 + 900 * e.wind);
+    sm(this.rain.g.gain, e.rain * (e.inTent ? .04 : .09)); sm(this.rainLow.g.gain, e.rain * (e.inTent ? .3 : .07));
     sm(this.rain.f.frequency, e.inTent ? 900 : 1800);
     const fireNear = Math.max(0, 1 - e.fireDist / 22) * e.fireFuel;
-    sm(this.fireRoar.g.gain, fireNear * fireNear * .5);
-    sm(this.water.g.gain, Math.max(0, 1 - e.waterDist / 30) * .25 * (.6 + .4 * Math.sin(now * .7) * Math.sin(now * .31)));
-    sm(this.river.g.gain, Math.max(0, 1 - e.riverDist / 45) * .1);
-    sm(this.crickets.g.gain, e.night * (1 - e.rain) * .012); this.crickets.lfo.frequency.value = 18 + 6 * Math.sin(now * .1);
+    sm(this.fireRoar.g.gain, fireNear * fireNear * .3);
+    sm(this.water.g.gain, Math.max(0, 1 - e.waterDist / 30) * .11 * (.6 + .4 * Math.sin(now * .7) * Math.sin(now * .31)));
+    sm(this.river.g.gain, Math.max(0, 1 - e.riverDist / 45) * .045);
+    sm(this.crickets.g.gain, e.night * (1 - e.rain) * .004); this.crickets.lfo.frequency.value = 18 + 6 * Math.sin(now * .1);
     // rain drumming on canvas
     if (e.inTent && e.rain > .05) { const n = Math.floor(e.rain * 26 * e.dt + Math.random()); for (let i = 0; i < n; i++) this.burst(.05 + Math.random() * .05, 'bandpass', 500 + Math.random() * 900, 3, .05 + Math.random() * .07, Math.random() * 1.6 - .8, Math.random() * e.dt); }
     // fire crackles
-    if (fireNear > .02 && Math.random() < e.dt * (3 + 9 * e.fireFuel)) { this.burst(.012 + Math.random() * .03, 'highpass', 1800 + Math.random() * 3000, .7, (.15 + Math.random() * .4) * fireNear, Math.random() - .5); if (Math.random() < .2) this.burst(.06, 'bandpass', 600, 1.5, .25 * fireNear); }
+    if (fireNear > .02 && Math.random() < e.dt * (3 + 9 * e.fireFuel)) { this.burst(.012 + Math.random() * .03, 'highpass', 1800 + Math.random() * 3000, .7, (.08 + Math.random() * .22) * fireNear, Math.random() - .5); if (Math.random() < .2) this.burst(.06, 'bandpass', 600, 1.5, .14 * fireNear); }
     const due = (k, min, max) => { if (!this.next[k]) this.next[k] = now + min + Math.random() * (max - min); if (now >= this.next[k]) { this.next[k] = now + min + Math.random() * (max - min); return true; } return false; };
     // birds by day in the trees
-    if (e.day > .4 && e.rain < .4 && due('bird', 2, 7)) {
-      const base = 2200 + Math.random() * 2600, n = 2 + Math.floor(Math.random() * 5), pan = Math.random() * 1.6 - .8, g = (.012 + Math.random() * .02) * (.4 + e.forest), kind = Math.random();
+    if (e.day > .4 && e.rain < .4 && due('bird', 5, 14)) {
+      const base = 2200 + Math.random() * 2600, n = 2 + Math.floor(Math.random() * 5), pan = Math.random() * 1.6 - .8, g = (.006 + Math.random() * .01) * (.4 + e.forest), kind = Math.random();
       for (let i = 0; i < n; i++) {
         const f = base * (kind < .5 ? 1 + (i % 2) * .25 : 1 + i * .06), d = kind < .5 ? .08 : .05;
         this.tone([f, f * (kind < .3 ? 1.4 : .8)], [d], 'sine', g, pan, 0, true, i * (d + .05));

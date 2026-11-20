@@ -174,3 +174,6 @@ body.touch #slots button kbd{display:none}
 #toast{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 70px)}
 #slots[hidden]{display:none}
 #slots button.drone.out{opacity:.6;border-style:dashed}
+/* where the shot landed */
+#zone{position:absolute;left:50%;top:calc(50% + 26px);transform:translateX(-50%);font:12px Georgia,serif;letter-spacing:.14em;color:#efe2c4;text-shadow:0 1px 3px #000,0 0 8px #000;opacity:0;transition:opacity .35s;white-space:nowrap;pointer-events:none;z-index:3}
+#zone.on{opacity:1;transition:none}#zone.vital{color:#ffd27a}#zone.lame{color:#ffb08a}

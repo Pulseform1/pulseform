@@ -208,7 +208,7 @@ function horns(mat, s = 1) {
 // ---- species ----
 const C = {};
 export const SPECIES = {
-  deer: { name: 'deer', graze: [1.55, -.85], label: 'Mule deer', meat: 'venison', lb: [55, 85], walk: 1.3, trot: 3.2, run: 11, stride: 1.25, herd: [2, 5], wary: 1, sight: 75, hear: 1, hp: 1, scale: [.9, 1.1], gait: 'gallop',
+  deer: { name: 'deer', graze: [1.55, -.85], label: 'Mule deer', meat: 'venison', lb: [55, 85], walk: 1.3, trot: 3.2, run: 11, stride: 1.25, herd: [2, 5], wary: 1, sight: 75, hear: 1, hp: 1.4, scale: [.9, 1.1], gait: 'gallop',
     build: () => quadruped({ L: .82, hipH: .78, shH: .76, R: .18, H: .2, neckAng: 50, neckLen: .46, neckR0: .12, neckR1: .072, headLen: .3, headR: .075, snoutR: .042, headAng: 55, legR: .036, tailLen: .18, tailR: .035, earLen: .2, earW: .065, earUp: .55, earOut: .85,
       col: (part, s, sa, ca, st, front) => { const back = hex('#7a5a3e'), belly = hex('#d8cfc0'), dark = hex('#2a201a'); if (part === 'tail') return s > .55 ? dark : mixc(hex('#e8e4dc'), back, sa > 0 ? .4 : 0); if (part === 'ear') return mixc(back, dark, s); if (part === 'leg') return st.hoof ? dark : mixc(back, hex('#5e4a3a'), s * .8);
         if (st.nose) return dark; let c = mixc(back, belly, (-sa - .35) * 2.2); if (s < .06 && sa < .3) c = mixc(c, hex('#ede8de'), .8); if (st.head) c = mixc(c, hex('#d6cbb8'), sa < -.2 ? .7 : 0); if (s > .8 && s < .9 && sa < 0) c = mixc(c, belly, .7); return c; } }),
@@ -296,7 +296,7 @@ export function makeAnimal(name, rnd) {
   const shine = [], D = rig.dims;
   if (D.eyes && !sp.bird) for (const p of D.eyes) {
     const eye = new THREE.Mesh(new THREE.SphereGeometry(D.eyeR, 10, 8), mats.eye); eye.position.copy(p); B.head.add(eye);
-    const s = new THREE.Sprite(mats.shine.clone()); s.position.copy(p).add(V(0, 0, D.eyeR * .6)); s.scale.setScalar(D.eyeR * 5); s.renderOrder = 3; B.head.add(s); shine.push(s);
+    // (no eyeshine: the glowing eyes read as green dots all over the dark)
   }
   if (D.jaw) {   // fangs above and below, and the red of the mouth between
     const dir = D.hdDir, fang = (bone, x, y, z, up, l) => { const t = new THREE.Mesh(new THREE.ConeGeometry(D.snoutR * .14, l, 6), mats.tooth); t.position.set(x, y, z); t.rotation.x = up ? Math.PI : 0; bone.add(t); };

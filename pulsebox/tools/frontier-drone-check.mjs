@@ -62,5 +62,14 @@ const again = await p.evaluate(() => { const G = __fh.G, D = G.drone, L = { ...D
 ok(again.on && again.fromSpot < 1 && !again.model, 'G flies it again from where it sat', again);
 const pack = await p.evaluate(() => { const G = __fh.G, D = G.drone, L = D.landed, P = G.player; P.place(L.x + 1.2, L.z + .5, 0); __fh.tick(2, 1/30); const prompt = document.querySelector('#prompt').textContent; __fh.input.press('KeyE'); __fh.tick(2, 1/30); return { prompt, landed: !!D.landed, model: D.model.visible }; });
 ok(/Pack the drone/.test(pack.prompt) && !pack.landed && !pack.model, 'walk up to it: E packs it away', pack);
+// pins anywhere: P pins the spot you look at; the map pins where you click; a fourth takes the oldest's place
+const pins = await p.evaluate(() => { const G = __fh.G, D = G.drone, P = G.player; D.pins.length = 0; P.pitch = -.35; P.applyCamera(); __fh.tick(1, 1/30);
+  __fh.input.press('KeyP'); __fh.tick(1, 1/30); const a = D.pins.map(q => q.label);
+  D.pinAt(P.pos.x + 60, P.pos.z, 'map', 10); D.pinAt(P.pos.x - 60, P.pos.z, 'map', 10); const b = D.pins.map(q => q.label);
+  D.pinAt(P.pos.x, P.pos.z + 90, 'map', 10); const c = D.pins.map(q => q.label);
+  D.pinAt(P.pos.x, P.pos.z + 90, 'map', 10); const d = D.pins.map(q => q.label); __fh.tick(1, 1/30);
+  const shown = [...document.querySelectorAll('#pins .pin')].filter(e => e.style.display === 'block').length;
+  return { a, b, c, d, shown }; });
+ok(pins.a.length === 1 && pins.b.length === 3 && pins.c.length === 3 && pins.c[0] === pins.b[1] && pins.d.length === 2 && pins.shown === 2, 'pins anywhere: P on foot, clicks on the map; a fourth replaces the oldest; a click on a pin takes it off', pins);
 console.log('ERRORS', JSON.stringify(errs.filter(e => !/Pointer Lock/.test(e)).slice(0, 5)));
 await b.close();

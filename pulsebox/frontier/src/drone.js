@@ -81,18 +81,37 @@ export class Drone {
     for (let i = 1; i < n; i++) { const k = i / n, x = c.x + (a.pos.x - c.x) * k, z = c.z + (a.pos.z - c.z) * k, y = c.y + (a.pos.y + .8 - c.y) * k; if (w.height(x, z) > y + .5) return false; }
     return true;
   }
+  // Pins: up to three at once, on animals (the pin follows them) or on any spot (from the drone, on foot with P, or on
+  // the map). A fourth takes the place of the oldest.
+  nextN() { return (this.pins.reduce((m, p) => Math.max(m, p.n), 0) % 9) + 1; }
+  addPin(p) {
+    const G = this.G, gone = this.pins.length >= MAXPINS ? this.pins.shift() : null; p.n = this.nextN(); this.pins.push(p);
+    return gone ? ` (pin ${gone.n}, ${gone.label.toLowerCase()}, was taken off: three at a time)` : '';
+  }
+  // the ground where a view line first meets it (up to 900 m), or null
+  groundHit(o, d) {
+    const w = this.G.world; let prev = 0;
+    for (let t = 1; t < 900; t += t < 60 ? 1 : t < 300 ? 3 : 6) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t; if (y < Math.max(w.height(x, z), WATER_Y)) { let a = prev, b = t; for (let i = 0; i < 8; i++) { const m = (a + b) / 2, yy = o.y + d.y * m; if (yy < Math.max(w.height(o.x + d.x * m, o.z + d.z * m), WATER_Y)) b = m; else a = m; } return { x: o.x + d.x * b, z: o.z + d.z * b }; } prev = t; }
+    return null;
+  }
+  pinAt(x, z, from, tol = 6) {
+    const G = this.G, near = this.pins.findIndex(p => p.place && Math.hypot(p.x - x, p.z - z) < tol);
+    if (near >= 0) { const p = this.pins.splice(near, 1)[0]; G.ui.toast(`Pin ${p.n} taken off.`); return; }
+    const y = Math.max(G.world.height(x, z), WATER_Y), p = { place: true, label: 'Pin', x, y, z, lost: false }, more = this.addPin(p);
+    p.label = 'Pin ' + p.n;
+    G.ui.toast(`Pinned the spot, ${fmtD(Math.hypot(x - G.player.pos.x, z - G.player.pos.z))} from you${more}.`);
+  }
+  pinLook() { const c = this.cam, d = c.getWorldDirection(this._f).clone(), h = this.groundHit(c.position, d); if (!h) { this.G.ui.toast('Look at the ground to pin a spot.'); return; } this.pinAt(h.x, h.z, 'look'); }
   pin(a) {
-    const G = this.G; if (!a) { G.ui.toast('Nothing in the ring. Centre an animal, then pin it.'); return; }
+    const G = this.G; if (!a) { this.pinLook(); return; }
     const i = this.pins.findIndex(p => p.a === a); if (i >= 0) { this.pins.splice(i, 1); G.ui.toast(`Pin taken off the ${a.sp.label.toLowerCase()}.`); return; }
-    if (this.pins.length >= MAXPINS) this.pins.shift();
-    const n = (this.pins.reduce((m, p) => Math.max(m, p.n), 0) % 9) + 1;
-    this.pins.push({ a, n, label: a.sp.label, x: a.pos.x, y: a.pos.y, z: a.pos.z, lost: false });
-    G.ui.toast(`Pinned: ${a.sp.label}, ${fmtD(Math.hypot(a.pos.x - G.player.pos.x, a.pos.z - G.player.pos.z))} from you. The pin follows it.`);
+    const more = this.addPin({ a, label: a.sp.label, x: a.pos.x, y: a.pos.y, z: a.pos.z, lost: false });
+    G.ui.toast(`Pinned: ${a.sp.label}, ${fmtD(Math.hypot(a.pos.x - G.player.pos.x, a.pos.z - G.player.pos.z))} from you. The pin follows it${more}.`);
   }
   update(dt, input, sens) {
     const G = this.G, P = G.player;
     // pins follow their animals; one you walk up to (or that wanders off the land you know) is cleared
-    for (let i = this.pins.length - 1; i >= 0; i--) { const p = this.pins[i], a = p.a;
+    for (let i = this.pins.length - 1; i >= 0; i--) { const p = this.pins[i], a = p.a; if (p.place) continue;
       if (a && !a.gone) { p.x = a.pos.x; p.y = a.pos.y; p.z = a.pos.z; p.down = !alive(a); } else p.lost = true;
       if (!this.on && Math.hypot(p.x - P.pos.x, p.z - P.pos.z) < (p.down ? 3 : 8)) { this.pins.splice(i, 1); G.ui.toast(p.down ? `You reach the ${p.label.toLowerCase()}.` : `The ${p.label.toLowerCase()} should be right here.`); } }
     if (!this.on) { if (!this.landed) this.batt = Math.min(BATTERY, this.batt + dt * .9); return; }
@@ -140,6 +159,7 @@ export class Drone {
     while (this.pinEls.length < this.pins.length) { const e = document.createElement('div'); e.className = 'pin'; e.innerHTML = '<i></i><b></b><span></span>'; this.pinBox.appendChild(e); this.pinEls.push(e); }
     this.pinEls.forEach((e, i) => {
       const p = this.pins[i]; if (!p || !show) { e.style.display = 'none'; return; }
+      if (p.place && !p.y) p.y = Math.max(G.world.height(p.x, p.z), WATER_Y);
       const v = this._v.set(p.x, p.y + 2.2, p.z).project(cam), behind = v.z > 1; let sx = (v.x * .5 + .5) * w, sy = (-v.y * .5 + .5) * h;
       const edge = behind || sx < 30 || sx > w - 30 || sy < 70 || sy > h - 40;
       if (edge) { let ex = sx - w / 2, ey = sy - h / 2; if (behind) { ex = -ex; ey = -ey; } const s = Math.min((w / 2 - 40) / Math.abs(ex || 1), (h / 2 - 60) / Math.abs(ey || 1)); sx = w / 2 + ex * s; sy = h / 2 + ey * s; }
@@ -156,7 +176,7 @@ export class Drone {
     }
     for (let i = n; i < this.heatEls.length; i++) this.heatEls[i].style.display = 'none';
   }
-  save() { return { batt: this.batt, nv: this.nv, landed: this.landed, pins: this.pins.map(p => ({ n: p.n, label: p.label, x: p.x, y: p.y, z: p.z, lost: true })) }; }
+  save() { return { batt: this.batt, nv: this.nv, landed: this.landed, pins: this.pins.map(p => ({ n: p.n, label: p.label, x: p.x, y: p.y, z: p.z, place: !!p.place, lost: !p.place })) }; }
   load(d) { if (!d) return; this.batt = d.batt ?? BATTERY; this.nv = !!d.nv; this.pins = d.pins || []; this.landed = d.landed || null; this.showModel(true); }
   reset() { if (this.on) this.recall(); this.batt = BATTERY; this.pins = []; this.landed = null; this.landing = false; this.showModel(false); }
 }

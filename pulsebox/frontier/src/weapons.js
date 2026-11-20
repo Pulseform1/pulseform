@@ -19,7 +19,7 @@ function mats(tex) {
     glove: new THREE.MeshStandardMaterial({ color: 0x6a4a2c, roughness: .7 }),
     glass: new THREE.MeshStandardMaterial({ color: 0x102a3a, metalness: 1, roughness: .05, emissive: 0x0a1820, emissiveIntensity: .4 }),
     black: new THREE.MeshStandardMaterial({ color: 0x060606, roughness: .9 }),
-    // fiber-optic sight inserts: unlit, so they read in shade and at dusk; green at the back, orange at the front
+    // a fiber-optic front sight: unlit, so it reads in shade and at dusk (the rear sights are plain)
     fiberR: new THREE.MeshBasicMaterial({ color: 0x5dff7a }), fiberF: new THREE.MeshBasicMaterial({ color: 0xff8a1a }),
     cork: new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: .9 }),
     line: new THREE.LineBasicMaterial({ color: 0xe8e4d8, transparent: true, opacity: .7 }),
@@ -80,13 +80,12 @@ function frontPost(g, M, z, base, top, r = .0072) {
   g.add(at(new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), M.fiberF), 0, top, z + .003));   // on the shooter's side of the post
 }
 function rearBlade(g, M, z, base, top, gap = .007, r = .0034) {
-  for (const x of [-1, 1]) { g.add(at(bx(.009, top - base + .004, .006, M.steel), x * (gap / 2 + .0045), (top + base) / 2, z)); g.add(at(new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), M.fiberR), x * (gap / 2 + .0045), top - .003, z + .0035)); }
+  for (const x of [-1, 1]) { g.add(at(bx(.009, top - base + .004, .006, M.steel), x * (gap / 2 + .0045), (top + base) / 2, z)); }   // (no dots on the rear blade: just the notch, and the orange front dot to aim with)
   g.add(at(bx(gap + .018, .004, .008, M.steel), 0, base + .002, z));
 }
 function ghostRing(g, M, z, base, y) {
   const ring = new THREE.Mesh(new THREE.TorusGeometry(.0085, .0022, 8, 22), M.steel); at(ring, 0, y, z); g.add(ring);
   for (const x of [-1, 1]) g.add(at(bx(.003, y - base, .006, M.steel), x * .0085, (y + base) / 2 - .004, z));
-  for (const a of [-.6, Math.PI + .6]) g.add(at(new THREE.Mesh(new THREE.SphereGeometry(.0011, 8, 6), M.fiberR), Math.cos(a) * .0085, y + Math.sin(a) * .0085, z + .003));
 }
 function pumpGun(M) {
   const g = new THREE.Group();
@@ -153,7 +152,7 @@ function rod(M) {
 export const GUNS = {
   longrifle: { key: 'longrifle', name: 'Long rifle', ammo: 'rifle', mag: 5, fov: 40, scope: [8, 4], cycle: 1.2, reloadEach: .62, pellets: 1, spread: 0, hip: .035, range: 900, power: 2.4, kick: .075, sound: 'rifle' },
   pump: { key: 'pump', name: 'Pump shotgun', ammo: 'shell', mag: 5, fov: 52, cycle: .82, reloadEach: .55, pellets: 9, spread: .032, hip: .02, range: 62, power: .55, kick: .085, sound: 'shotgun' },
-  double: { key: 'double', name: 'Double barrel', ammo: 'shell', mag: 2, fov: 54, cycle: .2, reloadAll: 1.75, pellets: 12, spread: .042, hip: .022, range: 52, power: .55, kick: .11, sound: 'shotgun' },
+  double: { key: 'double', name: 'Double barrel', ammo: 'shell', mag: 2, fov: 54, cycle: .2, reloadAll: 1.75, pellets: 12, spread: .042, hip: .022, range: 52, power: .55, kick: .11, sound: 'double' },
   revolver: { key: 'revolver', name: 'Revolver', ammo: 'pistol', mag: 6, fov: 56, cycle: .36, reloadEach: .44, pellets: 1, spread: .003, hip: .018, range: 150, power: 1.1, kick: .055, sound: 'pistol' },
   rod: { key: 'rod', name: 'Fishing rod', rod: true },
 };

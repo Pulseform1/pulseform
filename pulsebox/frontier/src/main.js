@@ -256,6 +256,7 @@ function step(dt) {
     player.update(dt, input, (x, z, r) => collide(x, z, r));
     ORDER.forEach((k, i) => { if (input.hit('Digit' + (i + 1))) Wp.select(Wp.want === k && k === 'rod' ? null : k); });
     if (input.hit('KeyH')) Wp.select(null);
+    if (input.hit('KeyP')) G.drone.pinLook();   // pin the spot you are looking at (through the scope too)
     if (input.wheel && !(Wp.scoped > .5) && !(G.fishing && G.fishing.busy)) Wp.cycle(input.wheel > 0 ? 1 : -1);
     if (input.hit('KeyF') && G.health < 100) eat();
     if (input.hit('KeyE') && G.drone.nearLanded && !nearestInteract()) G.drone.pickUp(); else if (input.hit('KeyE')) { const it = nearestInteract(), carcass = !it && G.carcass; if (player.seated && (!it || it.id === 'seat')) { player.seated = null; player.frozen = false; toast('You stand up.'); } else if (it) doInteract(it); else if (carcass) harvest(carcass); else if (G.wood) G.life.gather(G.wood); }
@@ -357,7 +358,7 @@ const gunCtx = {
     const h = G.wildlife.raycast(o, d, blockT);
     if (h) {
       const fall = gun && gun.pellets > 1 ? Math.max(.25, 1 - h.t / range) : 1;   // shot spreads and slows with distance
-      const down = h.a.hit(h.vital, power * fall); G.hitT = .15;
+      const down = h.a.hit(h.zone || h.vital, power * fall); G.hitT = .15; showZone(h.zone, down, h.a);
       spawnDust(h.point, 0x8a7a64, .4);
       if (down) { const c = BOUNTY[h.a.sp.name] || 5; G.coins += c; coinPop(c); }
       const danger = h.a.sp.bear || h.a.sp.ornery || h.a.sp.predator;
@@ -412,6 +413,12 @@ function eat() {
   toast(`You eat ${m.state === 'raw' ? 'some raw' : m.state === 'dried' ? 'dried' : 'roast'} ${m.meat}. ${m.state === 'raw' ? 'It sits poorly.' : 'You feel stronger.'}`);
 }
 G.coinPop = n => coinPop(n);
+// where the shot landed, under the crosshair for a moment
+function showZone(z, down, a) {
+  if (!z) return; const e = $('#zone'); if (!e) return;
+  e.textContent = (z.label + (down ? '  ·  down' : a && a.lame > .2 && z.lame ? '  ·  limping' : '')).toUpperCase();
+  e.className = 'on ' + (z.vital ? 'vital' : z.lame ? 'lame' : ''); clearTimeout(G.zoneT); G.zoneT = setTimeout(() => { e.className = ''; }, 1400);
+}
 function coinPop(n) { const e = $('#coinpop'); e.textContent = `+${n}`; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
 function updateHud(force) {
   const h = Math.round(G.health || 0), c = G.coins | 0;

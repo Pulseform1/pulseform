@@ -1,6 +1,6 @@
 // The survey map (M): a parchment chart drawn tile by tile in the workers, revealed as you explore, with the camp,
-// you, your bearing and your own markers. Drag to pan, wheel or +/- to zoom, click to set a marker, click a marker
-// to clear it. Also the compass strip along the top of the screen, with an optional heading to camp.
+// you, your bearing and your pins. Drag to pan, wheel or +/- to zoom, click to drop a pin (three at a time, the
+// oldest goes), click a pin to take it off. Also the compass strip along the top of the screen, with an optional heading to camp.
 const $ = s => document.querySelector(s);
 const CELL = 64, REVEAL = 170;
 
@@ -26,9 +26,9 @@ export class SurveyMap {
   toScreen(x, z) { const W = this.cv.width, H = this.cv.height, k = devicePixelRatio || 1; return [W / 2 + (x - this.view.x) / this.view.mpp * k, H / 2 + (z - this.view.z) / this.view.mpp * k]; }
   toWorld(sx, sy) { const r = this.cv.getBoundingClientRect(); return [this.view.x + (sx - r.left - r.width / 2) * this.view.mpp, this.view.z + (sy - r.top - r.height / 2) * this.view.mpp]; }
   click(e) {
-    const [x, z] = this.toWorld(e.clientX, e.clientY), k = devicePixelRatio || 1;
-    const hit = this.markers.findIndex(m => Math.hypot(m.x - x, m.z - z) < 14 * this.view.mpp);
-    if (hit >= 0) this.markers.splice(hit, 1); else if (this.markers.length < 12) this.markers.push({ x, z, n: (this.markers.reduce((a, m) => Math.max(a, m.n), 0) + 1) });
+    // a click drops a pin there (the same three pins as the drone's and P's); a click on a pin takes it off
+    const [x, z] = this.toWorld(e.clientX, e.clientY);
+    if (this.G.drone) this.G.drone.pinAt(x, z, 'map', 14 * this.view.mpp);
   }
   // mark ground near the player as explored
   reveal(dt) {
@@ -77,12 +77,10 @@ export class SurveyMap {
     }
     { const P = this.G.player.pos, c = this.G.world.camp, [ax, ay] = this.toScreen(P.x, P.z), [bx, by] = this.toScreen(c.x, c.z); g.save(); g.setLineDash([8 * k, 7 * k]); g.strokeStyle = 'rgba(40,24,10,.75)'; g.lineWidth = 2 * k; g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke(); g.restore();
       const d = Math.hypot(c.x - P.x, c.z - P.z); if (d > 40) { g.fillStyle = 'rgba(244,232,204,.85)'; const mx = (ax + bx) / 2, my = (ay + by) / 2, txt = `camp ${d > 1000 ? (d / 1000).toFixed(1) + ' km' : Math.round(d) + ' m'} ${this.dirWord(c.x - P.x, c.z - P.z)}`; g.font = `italic ${12 * k}px Georgia, serif`; const tw = g.measureText(txt).width; g.fillRect(mx - tw / 2 - 5 * k, my - 13 * k, tw + 10 * k, 18 * k); g.fillStyle = '#2a1a0c'; g.textAlign = 'center'; g.fillText(txt, mx, my); g.textAlign = 'left'; } }
-    // markers
-    for (const m of this.markers) { const [sx, sy] = this.toScreen(m.x, m.z); this.flag(g, sx, sy, k, '#8a2a1a', String(m.n)); }
     // the drone, where it was landed
     { const L = this.G.drone && this.G.drone.landed; if (L) { const [sx, sy] = this.toScreen(L.x, L.z); this.flag(g, sx, sy, k, '#4a9a3a', 'Drone'); } }
     // animals pinned from the drone
-    if (this.G.drone) for (const p of this.G.drone.pins) { const [sx, sy] = this.toScreen(p.x, p.z); this.flag(g, sx, sy, k, p.down ? '#8a8070' : '#e8781e', `${p.label}`); }
+    if (this.G.drone) for (const p of this.G.drone.pins) { const [sx, sy] = this.toScreen(p.x, p.z); this.flag(g, sx, sy, k, p.down ? '#8a8070' : p.place ? '#c0401e' : '#e8781e', p.place ? p.label : `${p.n} ${p.label}`); }
     // camp: a big tent, pinned to the edge when off the chart
     const c = this.G.world.camp; let [cx, cy] = this.toScreen(c.x, c.z); const pad = 28 * k, off = cx < pad || cy < pad || cx > W - pad || cy > H - pad;
     if (off) { const dx = cx - W / 2, dy = cy - H / 2, s = Math.min((W / 2 - pad) / Math.abs(dx || 1), (H / 2 - pad) / Math.abs(dy || 1)); cx = W / 2 + dx * s; cy = H / 2 + dy * s; }
@@ -123,10 +121,9 @@ export class SurveyMap {
     for (let i = 0; i < 72; i++) { const a = i / 72 * Math.PI * 2, x = at(a); if (x === null) continue; const big = i % 9 === 0, mid = i % 3 === 0; g.strokeStyle = `rgba(243,231,207,${big ? .9 : .5})`; g.lineWidth = k; g.beginPath(); g.moveTo(x, H * (big ? .45 : mid ? .55 : .65)); g.lineTo(x, H * .8); g.stroke(); if (big) { g.fillStyle = i === 0 ? '#ffd27a' : 'rgba(243,231,207,.95)'; g.fillText(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][i / 9], x, H * .38); } }
     const mark = (x, z, col, txt) => { const a = Math.atan2(x - P.pos.x, -(z - P.pos.z)), sx = at((a + Math.PI * 2) % (Math.PI * 2)); if (sx === null) return; g.fillStyle = col; g.beginPath(); g.moveTo(sx, H * .82); g.lineTo(sx - 5 * k, H); g.lineTo(sx + 5 * k, H); g.fill(); if (txt) { g.font = `${10.5 * k}px Georgia, serif`; g.fillText(txt, sx, H * .2 + 2 * k); } };
     const c = this.G.world.camp, cd = Math.hypot(c.x - P.pos.x, c.z - P.pos.z); if (this.guide && cd > 18) mark(c.x, c.z, '#ffb24a', `camp ${cd > 1000 ? (cd / 1000).toFixed(1) + ' km' : Math.round(cd) + ' m'}`);
-    for (const m of this.markers) mark(m.x, m.z, '#e06a4a', '');
     { const L = this.G.drone && !this.G.drone.on && this.G.drone.landed; if (L) { const d = Math.hypot(L.x - P.pos.x, L.z - P.pos.z); if (d > 6) mark(L.x, L.z, '#8af07a', `drone ${d > 1000 ? (d / 1000).toFixed(1) + ' km' : Math.round(d) + ' m'}`); } }
-    if (this.G.drone) for (const p of this.G.drone.pins) { const d = Math.hypot(p.x - P.pos.x, p.z - P.pos.z); mark(p.x, p.z, '#ff9a3a', `${p.label.toLowerCase()} ${d > 1000 ? (d / 1000).toFixed(1) + ' km' : Math.round(d) + ' m'}`); }
+    if (this.G.drone) for (const p of this.G.drone.pins) { const d = Math.hypot(p.x - P.pos.x, p.z - P.pos.z); mark(p.x, p.z, '#ff9a3a', `${p.place ? p.label.toLowerCase() : p.n + ' ' + p.label.toLowerCase()} ${d > 1000 ? (d / 1000).toFixed(1) + ' km' : Math.round(d) + ' m'}`); }
   }
   save() { return { explored: [...this.explored].slice(-6000), markers: this.markers, guide: this.guide, trail: this.trail.slice(-1500) }; }
-  load(d) { if (!d) return; this.explored = new Set(d.explored || []); this.markers = d.markers || []; this.guide = d.guide !== false; this.trail = d.trail || []; }
+  load(d) { if (!d) return; this.explored = new Set(d.explored || []); this.markers = []; const D = this.G.drone; if (D && d.markers && d.markers.length && !D.pins.length) for (const m of d.markers.slice(-3)) D.pins.push({ place: true, n: D.nextN(), label: '', x: m.x, y: 0, z: m.z }), D.pins[D.pins.length - 1].label = 'Pin ' + D.pins[D.pins.length - 1].n; this.guide = d.guide !== false; this.trail = d.trail || []; }
 }

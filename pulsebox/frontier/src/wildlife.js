@@ -26,11 +26,20 @@ const ACTIVE = {
 };
 const FAR = 900;   // how far an animal is still drawn and kept: far enough to glass a goat on the mountain
 
+// Where a shot lands matters: each zone does its own damage, and a broken shoulder, hip or leg makes the animal limp.
+const ZONES = {
+  head: { k: 'head', label: 'Head', mult: 4, vital: true }, neck: { k: 'neck', label: 'Neck', mult: 2.6, vital: true },
+  heart: { k: 'heart', label: 'Heart & lungs', mult: 3, vital: true }, shoulder: { k: 'shoulder', label: 'Shoulder', mult: 1.8, lame: .3 },
+  gut: { k: 'gut', label: 'Gut', mult: 1 }, hind: { k: 'hind', label: 'Hindquarter', mult: 1.3, lame: .25 }, leg: { k: 'leg', label: 'Leg', mult: .6, lame: .35 },
+};
+// the animals are drawn about twice life size (the small game a little more), so a shot can be placed: head, shoulder, rump
+const SIZE = { rabbit: 2.4, duck: 2.2, turkey: 2.2 };
 class Animal {
   constructor(W, kind, x, z, group, rnd) {
     this.W = W; this.kind = kind; this.sp = SPECIES[kind]; this.group = group;
     const m = this.m = makeAnimal(kind, rnd);
-    this.scale = this.sp.scale[0] + (this.sp.scale[1] - this.sp.scale[0]) * ((rnd * 7.3) % 1);
+    this.size = SIZE[kind] || 2; this.reach = .6 + .4 * this.size; this.lame = 0;
+    this.scale = (this.sp.scale[0] + (this.sp.scale[1] - this.sp.scale[0]) * ((rnd * 7.3) % 1)) * this.size;
     m.mesh.scale.setScalar(this.scale); m.mesh.rotation.order = 'YXZ'; W.scene.add(m.mesh);
     this.pos = new THREE.Vector3(x, 0, z); this.yaw = Math.random() * TAU; this.speed = 0; this.phase = Math.random();
     this.state = 'graze'; this.t = Math.random() * 5; this.stateT = 3 + Math.random() * 6; this.aware = 0; this.hp = this.sp.hp; this.wounded = false;
@@ -117,15 +126,15 @@ class Animal {
       case 'flee': {
         const fx = this.fleeTo.x, fz = this.fleeTo.y;
         if (sp.swim) { this.setState('fly', 12); break; }
-        this.steer(fx, fz, (this.wounded ? .75 : 1) * sp.run * (this.stateT > 2 ? 1 : .7), dt, 4);
+        this.steer(fx, fz, (this.wounded ? .75 : 1) * (1 - this.lame) * sp.run * (this.stateT > 2 ? 1 : .7), dt, 4);
         gait = 'run'; if (this.stateT < 0 || Math.hypot(fx - this.pos.x, fz - this.pos.z) < 6) { this.setState('alert', 4); this.aware = .5; }
         break;
       }
       case 'rear': { alertK = 1; this.speed *= .8; this.rear = Math.min(1, (this.rear || 0) + dt * 2); this.jawK = 1; if (this.stateT < 0) { this.rear = 0; this.setState('charge', this.real ? 9 : 3.5); this.W.call('roar', this); } break; }
       case 'charge': {
-        this.steer(P.pos.x, P.pos.z, sp.run * (sp.ornery ? .8 : .9), dt, 5); gait = 'run'; this.jawK = sp.predator ? 1 : 0; head = sp.ornery ? .55 : 0;
-        if (this.real) { if (this.dist < (sp.ornery ? 2.6 : 2.3)) this.startAttack(P); else if (this.stateT < 0) { g.fleeUntil = this.W.time + 10; this.startFlee(P, P.pos); } }
-        else if (this.dist < 3 || this.stateT < 0) { g.fleeUntil = this.W.time + 10; this.startFlee(P, P.pos); }
+        this.steer(P.pos.x, P.pos.z, (1 - this.lame) * sp.run * (sp.ornery ? .8 : .9), dt, 5); gait = 'run'; this.jawK = sp.predator ? 1 : 0; head = sp.ornery ? .55 : 0;
+        if (this.real) { if (this.dist < (sp.ornery ? 2.6 : 2.3) * this.reach) this.startAttack(P); else if (this.stateT < 0) { g.fleeUntil = this.W.time + 10; this.startFlee(P, P.pos); } }
+        else if (this.dist < 3 * this.reach || this.stateT < 0) { g.fleeUntil = this.W.time + 10; this.startFlee(P, P.pos); }
         break;
       }
       case 'fly': {
@@ -190,9 +199,9 @@ class Animal {
       return true;
     }
     if (s === 'pounce') {
-      this.yaw += angDiff(this.yaw, toP) * Math.min(1, dt * 8); this.speed = sp.run * 1.05; this.fightGait = 'run';
+      this.yaw += angDiff(this.yaw, toP) * Math.min(1, dt * 8); this.speed = (1 - this.lame) * sp.run * 1.05; this.fightGait = 'run';
       this.leapV -= 14 * dt; this.leapY = Math.max(0, (this.leapY || 0) + this.leapV * dt);
-      if (this.dist < 2.1) { this.leapY = 0; this.startAttack(P); } else if (this.stateT < 0) { this.leapY = 0; this.setState('charge', 3); this.real = true; }
+      if (this.dist < 2.1 * this.reach) { this.leapY = 0; this.startAttack(P); } else if (this.stateT < 0) { this.leapY = 0; this.setState('charge', 3); this.real = true; }
       return true;
     }
     // wolves: the pack rings you, snarling, and one at a time they rush in
@@ -206,13 +215,13 @@ class Animal {
     }
     if (s === 'attack') {
       this.yaw += angDiff(this.yaw, toP) * Math.min(1, dt * 7);
-      const reach = sp.ornery ? 2.4 : sp.bear ? 2.0 : 1.7;
+      const reach = (sp.ornery ? 2.4 : sp.bear ? 2.0 : 1.7) * this.reach;
       if (this.dist > reach + 1.4) { this.steer(P.pos.x, P.pos.z, sp.trot * 1.4, dt, 6); this.fightGait = 'trot'; } else { this.speed *= Math.pow(.01, dt); this.fightGait = 'stand'; }
       if (sp.bear) this.rear = Math.max(0, (this.rear || 0) - dt * 2);
       this.atkT -= dt;
       if (this.atkT <= 0 && this.dist < reach + .8) {
         this.swipe = 1; this.strikes++; this.atkT = sp.bear ? 1.05 : sp.ornery ? 1.6 : sp.predator === 'cougar' ? .85 : 1.2;
-        const k = this.scale, dmg = sp.bear ? 26 + 16 * Math.random() : sp.ornery ? 30 + 12 * Math.random() : sp.predator === 'cougar' ? (this.strikes === 1 ? 34 : 16 + 8 * Math.random()) : 11 + 8 * Math.random();
+        const k = this.scale / this.size, dmg = sp.bear ? 26 + 16 * Math.random() : sp.ornery ? 30 + 12 * Math.random() : sp.predator === 'cougar' ? (this.strikes === 1 ? 34 : 16 + 8 * Math.random()) : 11 + 8 * Math.random();
         W.attack(this, dmg * k);
         W.call(sp.bear ? 'roar' : sp.ornery ? 'bellow' : sp.predator === 'cougar' ? 'scream' : 'snarl', this);
       }
@@ -231,9 +240,11 @@ class Animal {
     if (this.sp.swim) this.W.call('quack', this);
     if (this.sp.name === 'turkey') this.W.call('gobble', this);
   }
-  hit(vital, power) {
+  hit(zone, power) {
     if (this.state === 'down' || this.state === 'dead' || this.state === 'fallfly') return false;
-    this.hp -= this.sp.hp <= 1 ? 99 : power * (vital ? 2.6 : 1);
+    const z = zone && typeof zone === 'object' ? zone : zone ? ZONES.heart : ZONES.gut; this.lastZone = z;
+    this.hp -= this.sp.small || this.sp.bird ? 99 : power * z.mult;   // small game drops to any hit; the rest by where it lands
+    if (z.lame && this.hp > 0) this.lame = Math.min(.6, this.lame + z.lame);
     if (this.hp > 0) {
       this.wounded = true; this.aware = 2; const sp = this.sp;
       if ((sp.bear || sp.ornery || sp.predator === 'cougar') && this.dist < 90 && this.state !== 'attack' && this.state !== 'charge') { this.real = true; this.setState('charge', 9); this.W.call(sp.bear ? 'roar' : sp.ornery ? 'bellow' : 'scream', this); }
@@ -279,7 +290,7 @@ class Animal {
 export class Wildlife {
   constructor(scene, world, flora, camp, audio) {
     this.scene = scene; this.world = world; this.flora = flora; this.camp = camp; this.audio = audio;
-    this.groups = []; this.animals = []; this.time = 0; this.spawnT = 0; this.target = 13; this.onBump = null; this.onAttack = null; this.seeded = false;
+    this.groups = []; this.animals = []; this.time = 0; this.spawnT = 0; this.target = 20; this.onBump = null; this.onAttack = null; this.seeded = false;
     this.region = null; this.home = null; this.furR = 32; this.lightK = 0; this.camPos = new THREE.Vector3();
   }
   call(kind, a) { if (this.audio && this.audio.ctx && a.dist < 220) this.audio.animal(kind, a.dist, this.panOf ? this.panOf(a.pos) : 0); }
@@ -354,7 +365,7 @@ export class Wildlife {
   // the first animals: some close enough to find within a few minutes
   seed(P) {
     this.seeded = true;
-    for (let i = 0; i < 6; i++) this.trySpawn(P, 70, 260);
+    for (let i = 0; i < 9; i++) this.trySpawn(P, 60, 240);
     if (!this.groups.some(g => g.kind === 'deer')) for (let k = 0; k < 20; k++) { const a = Math.random() * TAU, r = 90 + Math.random() * 60, x = P.pos.x + Math.cos(a) * r, z = P.pos.z + Math.sin(a) * r; if (this.habitat(x, z).deer > 0) { this.spawnGroup('deer', x, z); break; } }
   }
   update(dt, P, hours) {
@@ -364,7 +375,7 @@ export class Wildlife {
     if (this.spawnT < 0) {
       this.spawnT = 1.5;
       for (const g of [...this.groups]) { const d = Math.hypot(g.leader.pos.x - P.pos.x, g.leader.pos.z - P.pos.z); if (d > (g.kind === 'goat' ? FAR : 560) || g.members.every(a => a.gone)) this.removeGroup(g); }
-      if (this.groups.length < this.target) this.trySpawn(P, 170, this.regionK(P.pos.x, P.pos.z).valley ? 640 : 330);
+      if (this.groups.length < this.target) this.trySpawn(P, 130, this.regionK(P.pos.x, P.pos.z).valley ? 640 : 330);
     }
     for (const g of this.groups) {
       if (g.leader.state === 'down' || g.leader.state === 'dead' || g.leader.gone) { const alive = g.members.find(a => a.state !== 'down' && a.state !== 'dead' && !a.gone); if (alive) g.leader = alive; }
@@ -393,22 +404,26 @@ export class Wildlife {
       const dd = Math.hypot(a.pos.x - o.x, a.pos.z - o.z); if (dd > maxT + 5) continue;
       a.m.mesh.updateMatrixWorld(true);
       for (const part of this.parts(a)) {
-        part.bone.getWorldPosition(c); c.add(part.off);
+        part.bone.getWorldPosition(c); c.add(part.off); if (part.fw) { c.x += Math.sin(a.yaw) * part.fw; c.z += Math.cos(a.yaw) * part.fw; }
         oc.subVectors(o, c); const b = oc.dot(dir), cc = oc.lengthSq() - part.r * part.r, disc = b * b - cc; if (disc < 0) continue;
-        const t = -b - Math.sqrt(disc); if (t > 0 && t < maxT && (!best || t < best.t)) best = { a, t, vital: part.vital, point: o.clone().addScaledVector(dir, t) };
+        let t = -b - Math.sqrt(disc); if (t <= 0 && cc < 0) t = .01;   // fired from inside it, point blank
+        if (t > 0 && t < maxT && (!best || t < best.t)) best = { a, t, vital: part.zone.vital, zone: part.zone, point: o.clone().addScaledVector(dir, t) };
       }
     }
     return best;
   }
   parts(a) {
     if (a._parts) return a._parts;
-    const B = a.m.B, s = a.scale, sp = a.sp, R = (sp.bird ? .14 : .2) * s, out = [];
+    const B = a.m.B, s = a.scale, sp = a.sp, R = (sp.bird ? .14 : .2) * s, out = [], V3 = (x, y, z) => new THREE.Vector3(x, y, z);
     const body = sp.bird ? (sp.name === 'duck' ? .11 : .2) : ({ deer: .26, elk: .4, moose: .5, bison: .62, bear: .45, rabbit: .09, cougar: .22, goat: .3, wolf: .2 }[sp.name] || .3);
-    out.push({ bone: B.chest, r: body * s, vital: true, off: new THREE.Vector3(0, -body * .2 * s, 0) });
-    out.push({ bone: B.spine, r: body * .95 * s, vital: false, off: new THREE.Vector3() });
-    out.push({ bone: B.hips, r: body * .9 * s, vital: false, off: new THREE.Vector3() });
-    out.push({ bone: B.head, r: R * .7, vital: true, off: new THREE.Vector3() });
-    if (!sp.bird) out.push({ bone: B.neck, r: body * .55 * s, vital: true, off: new THREE.Vector3() });
+    out.push({ bone: B.head, r: R * .75, zone: ZONES.head, off: V3(0, 0, 0) });
+    if (sp.bird) { out.push({ bone: B.chest, r: body * s, zone: ZONES.heart, off: V3(0, 0, 0) }, { bone: B.hips, r: body * .9 * s, zone: ZONES.gut, off: V3(0, 0, 0) }); return (a._parts = out); }
+    out.push({ bone: B.neck, r: body * .55 * s, zone: ZONES.neck, off: V3(0, 0, 0) });
+    out.push({ bone: B.chest, r: body * .62 * s, zone: ZONES.heart, off: V3(0, -body * .3 * s, 0), fw: body * .12 * s });     // low behind the front leg
+    out.push({ bone: B.chest, r: body * .78 * s, zone: ZONES.shoulder, off: V3(0, body * .22 * s, 0), fw: body * .18 * s });  // the shoulder over it
+    out.push({ bone: B.spine, r: body * .9 * s, zone: ZONES.gut, off: V3(0, 0, 0) });
+    out.push({ bone: B.hips, r: body * .88 * s, zone: ZONES.hind, off: V3(0, 0, 0) });
+    for (const n of ['FL1', 'FR1', 'HL1', 'HR1']) if (B[n]) out.push({ bone: B[n], r: body * .32 * s, zone: ZONES.leg, off: V3(0, 0, 0) });
     return (a._parts = out);
   }
   carcassNear(p, dir) {
@@ -422,7 +437,7 @@ export class Wildlife {
     return best;
   }
   harvest(a) {
-    const sp = a.sp, lb = Math.round((sp.lb[0] + Math.random() * (sp.lb[1] - sp.lb[0])) * a.scale * .45); // dressed meat is a bit under half the live weight
+    const sp = a.sp, lb = Math.round((sp.lb[0] + Math.random() * (sp.lb[1] - sp.lb[0])) * (a.scale / (a.size || 1)) * .45); // dressed meat is a bit under half the live weight
     a.gone = true; a.m.mesh.visible = false;
     return { kind: sp.name, label: sp.label, meat: sp.meat, lb: Math.max(1, lb) };
   }
