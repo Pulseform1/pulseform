@@ -137,7 +137,7 @@
   function matchCoins(P, Mx, won, extra = {}) {
     const rows = [], add = (label, n) => { if (n) rows.push([label, Math.round(n)]); };
     add('Match played', 60); add(`${P.stat.k} kill${P.stat.k === 1 ? '' : 's'}`, P.stat.k * 18); add(`${P.stat.hs} headshot${P.stat.hs === 1 ? '' : 's'}`, P.stat.hs * 8); add(`${Mx.wins[0]} round${Mx.wins[0] === 1 ? '' : 's'} won`, Mx.wins[0] * 12);
-    if (won) add('Victory', 120); add('Plants', (extra.plants || 0) * 20); add('Defuses', (extra.defuses || 0) * 30);
+    if (won) add('Victory', 120); { const pl = extra.plants || 0, df = extra.defuses || 0; add(`${pl} plant${pl === 1 ? '' : 's'}`, pl * 20); add(`${df} defuse${df === 1 ? '' : 's'}`, df * 30); }
     let sub = rows.reduce((a, r) => a + r[1], 0);
     const kd = P.stat.k / Math.max(1, P.stat.d), lvl = Mx.online ? 1.1 : [.6, .85, 1, 1.15][cl(extra.botLevel == null ? 1 : extra.botLevel, 0, 3)];
     if (kd >= 2 && P.stat.k >= 4) { rows.push(['Dominant (K/D ' + kd.toFixed(1) + ')', Math.round(sub * .25)]); sub = Math.round(sub * 1.25); }

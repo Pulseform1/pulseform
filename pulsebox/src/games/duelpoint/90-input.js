@@ -185,8 +185,10 @@
     return I;
   };
   function assist(f, I) {
-    const e = other(f), G = gun(f); TS.slow = 1;
-    if (!e.alive || !canSee(f, e)) { TS.onT = 0; return; }
+    // the rival to help with: of those you can see, the one nearest your crosshair (not just the nearest, who may be behind a wall)
+    const G = gun(f); TS.slow = 1; let e = null, eo = 1e9;
+    for (const q of M.fs) { if (q.team === f.team || !q.alive || q.gone) continue; const o = Math.abs(angDiff(yawTo(f.x, f.z, q.x, q.z), f.yaw)); if (o < eo && canSee(f, q)) { eo = o; e = q; } }
+    if (!e) { TS.onT = 0; return; }
     const d = Math.hypot(e.x - f.x, e.z - f.z), dy = angDiff(yawTo(f.x, f.z, e.x, e.z), f.yaw), dp = Math.atan2(e.y + lp(1.25, .85, e.crouch) - eyeY(f), d) - f.pitch, off = Math.hypot(dy, dp);
     if (CFG.assist) {
       if (off < .08) TS.slow = .55;

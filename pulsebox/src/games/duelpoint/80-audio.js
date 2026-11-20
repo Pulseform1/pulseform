@@ -4,6 +4,12 @@
      Everything goes through the kit's master gain, so the kit's mute switch and pause still work. */
   const canHear = () => typeof K !== 'undefined' && K.ac && K.master && !K.save.mute && !K.bot;
   let noiseBuf = null;
+  // every Duelpoint sound runs through one bus before the kit's master, so the volume setting (CFG.vol, 0 to 1) scales them all
+  let busN = null;
+  function bus() {
+    const ac = K.ac; if (!busN || busN.context !== ac) { busN = ac.createGain(); busN.connect(bus()); }
+    const v = CFG.vol == null ? 1 : cl(+CFG.vol, 0, 1); if (busN.gain.value !== v) busN.gain.value = v; return busN;
+  }
   // where to plug a sound in: returns an audio node that leads to the speakers, shaped for a source at fighter f (or your own)
   function outFor(f, vol = 1) {
     const ac = K.ac, g = ac.createGain(); let v = vol, pan = 0, muffle = false;
@@ -14,7 +20,7 @@
     }
     g.gain.value = v; let head = g;
     if (muffle) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 1100; lpf.connect(g); head = lpf; }
-    if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = pan; g.connect(p).connect(K.master); } else g.connect(K.master);
+    if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = pan; g.connect(p).connect(bus()); } else g.connect(bus());
     return head;
   }
   function tone(out, f, d, type = 'sine', v = .1, slide = 0, delay = 0) {
@@ -138,7 +144,7 @@
   cue('storm', on2 => { if (!on2) return; const o = outFor(null, .8); hiss(o, 3.5, .06, 'bandpass', 520, 0, .6); });
   // life: a sound every few seconds, from somewhere out past the walls
   const AMB = { t: 4 };
-  const ambOut = v => { const ac = K.ac, g = ac.createGain(); g.gain.value = v; if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = Math.random() * 1.6 - .8; g.connect(p).connect(K.master); } else g.connect(K.master); return g; };
+  const ambOut = v => { const ac = K.ac, g = ac.createGain(); g.gain.value = v; if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = Math.random() * 1.6 - .8; g.connect(p).connect(bus()); } else g.connect(bus()); return g; };
   const LIFE = {
     harbor: [o => { for (let k = 0; k < 2 + (Math.random() * 3 | 0); k++) tone(o, 1150 + Math.random() * 300, .22, 'sine', .05, -420, k * .26); },   // gulls
       o => tone(o, 110, 1.6, 'sawtooth', .025, -4),   // a ship's horn far off

@@ -16,31 +16,45 @@
     const u = uiScale(), h = tapH(44, 38), bw = Math.max(h, 42 * u), k = cl((val - min) / (max - min), 0, 1), x0 = x + w * .42, vw = 74 * u;
     const sx = x0 + bw + 14 * u, sw = Math.max(40, x + w - vw - bw - 14 * u - sx), nudge = d => { set(+cl(Math.round((val + d) / step) * step, min, max).toFixed(3)); saveAll(); };
     tx(g, label, x, y + h / 2, 17 * u, BONE, 'left');
+    if (sw < 90 * u) {   // too narrow for a usable track (two columns on a phone): just -, the value, +
+      btn(g, x + w - bw, y, bw, h, '+', () => nudge(step), { px: 22 * u }); tx(g, show(val), (x0 + x + w) / 2, y + h / 2, 17 * u, GOLD, 'center');
+      btn(g, x0, y, bw, h, '-', () => nudge(-step), { px: 22 * u }); return;
+    }
     btn(g, x0, y, bw, h, '-', () => nudge(-step), { px: 22 * u });
     zone(sx - 10 * u, y, sw + 20 * u, h, px => { set(+(Math.round((min + (max - min) * cl((px - sx) / sw, 0, 1)) / step) * step).toFixed(3)); saveAll(); }, true);
     rr(g, sx, y + h / 2 - 4 * u, sw, 8 * u, 4 * u, 'rgba(239,233,220,.18)'); rr(g, sx, y + h / 2 - 4 * u, sw * k, 8 * u, 4 * u, YOU);
     g.fillStyle = BONE; g.beginPath(); g.arc(sx + sw * k, y + h / 2, 11 * u, 0, TAU); g.fill();
     btn(g, sx + sw + 14 * u, y, bw, h, '+', () => nudge(step), { px: 22 * u }); tx(g, show(val), x + w, y + h / 2, 17 * u, GOLD, 'right');
   }
-  // the aim and control settings, shared by the menu's settings page and the in-match panel (O)
-  function controlRows(g, x, y, w, row) {
-    const u = uiScale(), h = tapH(44, 38);
+  // the aim, control and sound settings, shared by the menu's settings page and the in-match panel (O): a list of rows, each
+  // drawn by setRows' layout. `wide` is false when the rows are laid out in two columns, and the side notes are left out.
+  function controlRows(page) {
+    const R = [], u = uiScale(), h = tapH(44, 38);
     if (isTouch()) {
-      fine(g, x, y, w, 'Look speed', CFG.tsens, .3, 3, .05, v => { CFG.tsens = v; }, v => v.toFixed(2) + 'x'); y += row;
-      fine(g, x, y, w, 'Aiming / scoped', CFG.zsens, .3, 1.5, .05, v => { CFG.zsens = v; }, v => 'x' + v.toFixed(2)); y += row;
-      toggle(g, x, y, w, 'Aim assist', CFG.assist, v => { CFG.assist = v; }, 'slows and leans your aim near your rival'); y += row;
-      toggle(g, x, y, w, 'Auto-fire', CFG.autofire, v => { CFG.autofire = v; }, 'shoots when your crosshair is on them'); y += row;
+      R.push((g, x, y, w) => fine(g, x, y, w, 'Look speed', CFG.tsens, .3, 3, .05, v => { CFG.tsens = v; }, v => v.toFixed(2) + 'x'));
+      R.push((g, x, y, w) => fine(g, x, y, w, 'Aiming / scoped', CFG.zsens, .3, 1.5, .05, v => { CFG.zsens = v; }, v => 'x' + v.toFixed(2)));
+      R.push((g, x, y, w, wide) => toggle(g, x, y, w, 'Aim assist', CFG.assist, v => { CFG.assist = v; }, wide && 'slows and leans your aim near your rival'));
+      R.push((g, x, y, w, wide) => toggle(g, x, y, w, 'Auto-fire', CFG.autofire, v => { CFG.autofire = v; }, wide && 'shoots when your crosshair is on them'));
     } else {
-      tx(g, 'Aim with', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['mouse', 'MOUSE'], ['trackpad', 'TRACKPAD']], CFG.aim, v => { CFG.aim = v; CFG.aimSet = true; if (locked()) { releaseMouse(); grabMouse(); } }); y += row;
-      if (CFG.aim === 'trackpad') {
-        fine(g, x, y, w, 'Trackpad speed', CFG.tpsens, .2, 3, .05, v => { CFG.tpsens = v; }, v => v.toFixed(2)); y += row;
-      } else { fine(g, x, y, w, 'Mouse sensitivity', CFG.sens, .05, 3, .01, v => { CFG.sens = v; }, v => v.toFixed(2)); y += row; }
-      fine(g, x, y, w, 'Aiming / scoped', CFG.zsens, .3, 1.5, .05, v => { CFG.zsens = v; }, v => 'x' + v.toFixed(2)); y += row;
-      tx(g, 'Crouch (Ctrl or C)', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['hold', 'HOLD'], ['toggle', 'TOGGLE']], CFG.crouch, v => { CFG.crouch = v; keys.crouchT = false; }); y += row;
-      toggle(g, x, y, w, 'Full screen in play', CFG.full, v => { CFG.full = v; if (!v && document.fullscreenElement) try { document.exitFullscreen(); } catch (e) {} }, 'stops Ctrl+W closing the tab'); y += row;
+      R.push((g, x, y, w) => { tx(g, 'Aim with', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['mouse', 'MOUSE'], ['trackpad', 'TRACKPAD']], CFG.aim, v => { CFG.aim = v; CFG.aimSet = true; if (locked()) { releaseMouse(); grabMouse(); } }); });
+      R.push((g, x, y, w) => CFG.aim === 'trackpad' ? fine(g, x, y, w, 'Trackpad speed', CFG.tpsens, .2, 3, .05, v => { CFG.tpsens = v; }, v => v.toFixed(2)) : fine(g, x, y, w, 'Mouse sensitivity', CFG.sens, .05, 3, .01, v => { CFG.sens = v; }, v => v.toFixed(2)));
+      R.push((g, x, y, w) => fine(g, x, y, w, 'Aiming / scoped', CFG.zsens, .3, 1.5, .05, v => { CFG.zsens = v; }, v => 'x' + v.toFixed(2)));
+      R.push((g, x, y, w) => { tx(g, 'Crouch (Ctrl or C)', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['hold', 'HOLD'], ['toggle', 'TOGGLE']], CFG.crouch, v => { CFG.crouch = v; keys.crouchT = false; }); });
+      R.push((g, x, y, w, wide) => toggle(g, x, y, w, 'Full screen in play', CFG.full, v => { CFG.full = v; if (!v && document.fullscreenElement) try { document.exitFullscreen(); } catch (e) {} }, wide && 'stops Ctrl+W closing the tab'));
     }
-    toggle(g, x, y, w, 'Show frame rate', !!CFG.fps, v => { CFG.fps = v; }, 'frames a second, top right, while you play'); y += row;
-    return y;
+    R.push((g, x, y, w) => fine(g, x, y, w, 'Field of view', fovH(), 90, 115, 1, v => { CFG.fov = v; }, v => Math.round(v) + '\u00b0'));
+    R.push((g, x, y, w) => fine(g, x, y, w, 'Volume', CFG.vol == null ? 1 : CFG.vol, 0, 1, .05, v => { CFG.vol = v; }, v => Math.round(v * 100) + '%'));
+    R.push((g, x, y, w, wide) => toggle(g, x, y, w, 'Show frame rate', !!CFG.fps, v => { CFG.fps = v; }, wide && 'frames a second, top right, while you play'));
+    if (page) R.push((g, x, y, w) => { tx(g, 'Picture quality', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['auto', 'AUTO'], ['low', 'FAST'], ['high', 'SHARP']], CFG.quality, v => { if (v !== CFG.quality) toast('PICTURE QUALITY CHANGES ON THE NEXT LOAD'); CFG.quality = v; }); });
+    return R;
+  }
+  // lay the rows out from y down: one column if they fit above yMax, otherwise two side by side. Returns the y below them.
+  function setRows(g, x, y, w, rows, yMax) {
+    const u = uiScale(), row = tapH(44, 38) + 8 * u;
+    if (y + rows.length * row <= yMax) { for (const r of rows) { r(g, x, y, w, true); y += row; } return y; }
+    const gap = 36 * u, cw = (w - gap) / 2, n = Math.ceil(rows.length / 2);
+    rows.forEach((r, i) => r(g, x + (i < n ? 0 : cw + gap), y + (i % n) * row, cw, false));
+    return y + n * row;
   }
   const choice = (g, x, y, w, h, opts, cur, set) => opts.forEach(([v, label], i) => { const bw = (w - (opts.length - 1) * 8) / opts.length; btn(g, x + i * (bw + 8), y, bw, h, label, () => { set(v); saveAll(); }, { on: cur === v, fill: YOU, px: Math.min(h * .36, bw * 1.5 / Math.max(5, label.length)) }); });
 
@@ -57,7 +71,11 @@
       tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, Math.min(13 * u, tw / 7.5), on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
     tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); { const S = rankedOf(CFG.size), on = placed(S); tierBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, S.rv, on);
-    tx(g, (on ? rankLabel(S.rv).toUpperCase() + '  ' + rankOf(S.rv).rp + ' RP' : 'UNRANKED ' + S.n + '/' + PLACE_N) + '  ·  ' + vsLabel(CFG.size), px + 69 * u, V.y0 + 38 * u, 10 * u, on ? rankOf(S.rv).T.col : DIM, 'left', 800); }
+      // the rank line stops short of your coins (on a phone the card is narrow): the team size goes first, then it is cut
+      g.font = `800 ${fitPx(g, 17 * u)}px ${FONT}`; const room = V.x1 - 22 * u - g.measureText(String(STATS.coins)).width - 17 * u * 1.4 - (px + 69 * u);
+      const rl = on ? rankLabel(S.rv).toUpperCase() + '  ' + rankOf(S.rv).rp + ' RP' : 'UNRANKED ' + S.n + '/' + PLACE_N, full = rl + '  ·  ' + vsLabel(CFG.size);
+      g.font = `800 ${fitPx(g, 10 * u)}px ${FONT}`; const line = g.measureText(full).width <= room ? full : rl;
+      g.save(); g.beginPath(); g.rect(px + 60 * u, V.y0, Math.max(0, room + 9 * u), h); g.clip(); tx(g, line, px + 69 * u, V.y0 + 38 * u, 10 * u, on ? rankOf(S.rv).T.col : DIM, 'left', 800); g.restore(); }
     coinTag(g, V.x1 - 22 * u, V.y0 + h / 2, 17 * u, STATS.coins);
     return h;
   }
@@ -125,11 +143,9 @@
     if (!touch && roomy) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays · the arrow keys work here too', rx + pw / 2, pyy - 12 * u, 10 * u, DIM, 'center', 700);
   }
   function drawSettings(g, V, W, u) {
-    const w = Math.min(W - 80, 760 * u), x = 640 - w / 2, row = tapH(44, 38) + 8 * u; let y = V.y0 + 24 * u;
+    const w = Math.min(W - 80, 760 * u), x = 640 - w / 2; let y = V.y0 + 24 * u;
     tx(g, 'SETTINGS', x, y + 24 * u, 36 * u, BONE, 'left'); btn(g, x + w - 150 * u, y, 150 * u, tapH(46), 'BACK', () => { UI.panel = 'home'; }, { px: 17 * u }); y += tapH(46) + 22 * u;
-    y = controlRows(g, x, y, w, row);
-    tx(g, 'Picture quality', x, y + tapH(44, 38) / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, tapH(44, 38), [['auto', 'AUTO'], ['low', 'FAST'], ['high', 'SHARP']], CFG.quality, v => { CFG.quality = v; }); y += row;
-    tx(g, 'AUTO plays FAST on phones and slower computers (Chromebooks). Changes apply the next time you open the game.', x + w * .42, y + 8 * u, 11 * u, DIM, 'left'); y += 30 * u;
+    y = setRows(g, x, y, w, controlRows(true), V.y1 - tapH(46) - 24 * u);
     btn(g, x, y, Math.min(w, 260 * u), tapH(46), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 16 * u, sub: 'shape, colour, presets, codes' });
   }
   function drawOpts(g) {
@@ -138,7 +154,7 @@
     if (UI.opts === 'xh') return drawXhair(g, V, W, u);
     const w = Math.min(W - 80, 760 * u), x = 640 - w / 2, row = tapH(44, 38) + 8 * u; let y = V.y0 + 24 * u;
     tx(g, 'SETTINGS', x, y + 24 * u, 36 * u, BONE, 'left'); btn(g, x + w - 150 * u, y, 150 * u, tapH(46), 'CLOSE', () => openOpts(false), { on: true, fill: YOU, px: 17 * u, sub: isTouch() ? '' : 'or press O' }); y += tapH(46) + 22 * u;
-    y = controlRows(g, x, y, w, row);
+    y = setRows(g, x, y, w, controlRows(false), V.y1 - tapH(46) - 24 * u);
     btn(g, x, y, Math.min(w, 260 * u), tapH(46), 'CROSSHAIR', () => { UI.opts = 'xh'; }, { px: 16 * u });
   }
   // the crosshair designer: four sections on the left (shape, colour, dot and outline, outer lines), the live preview,
