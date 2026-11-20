@@ -179,8 +179,13 @@
       if (P.k === 'cover' && ((!P.path || !P.path.length) && (!A0 || A0.mag >= gun(f).mag * .6 || A0.res === 0) || M.time - P.t > 6)) { const b = P.back; P = B.plan = b && b.k !== 'cover' ? b : planHold(f, null); if (P.dest) goTo(P, f, P.dest[0], P.dest[1]); }
       if (P.k === 'cover' && A0 && !sees && A0.mag < gun(f).mag) reload(f);
     }
+    // --- the knife run: there is no sprint, so on a long quiet stretch (a rotation, a retake, the early push) a bot runs
+    // with its knife out like a player would, and draws again well before it gets where it is going or the moment it sees you
+    { const far0 = P.dest ? Math.hypot(P.dest[0] - f.x, P.dest[1] - f.z) : 0, calm = !sees && M.time - (B.engT || -9) > 2.5 && M.phase === 'live' && !f.plant && !f.defuse && P.k !== 'hold' && P.k !== 'cover';
+      if (!calm || far0 < 10) B.knifeRun = false; else if (far0 > 16 && (B.diff > 0 || M.t > roundT() - 15)) B.knifeRun = true; }
+    if (B.knifeRun) { if (f.slot !== 3) switchTo(f, 3); }
     // --- which weapon
-    if (f.slot !== 1 && hasAmmo(f, 1) && !(magOf(f, 1) === 0 && sees)) switchTo(f, 1);
+    else if (f.slot !== 1 && hasAmmo(f, 1) && !(magOf(f, 1) === 0 && sees)) switchTo(f, 1);
     else if (f.slot === 1 && magOf(f, 1) === 0 && sees && magOf(f, 2) > 0 && B.diff > 0) switchTo(f, 2);
     else if (f.slot !== 3 && !hasAmmo(f, 1) && !hasAmmo(f, 2)) switchTo(f, 3);
     else if (f.slot === 3 && hasAmmo(f, 2) && !hasAmmo(f, 1)) switchTo(f, 2);
@@ -301,10 +306,9 @@
     if (goal) {
       const da = angDiff(yawTo(f.x, f.z, goal[0], goal[1]), f.yaw); I.mz = Math.cos(da); I.mx = -Math.sin(da);
       I.walk = M.t > 30 && !fresh && ((P.k === 'hold') || (P.k === 'push' && B.diff > 0 && Math.hypot(siteOfPlan(P, f)[0] - f.x, siteOfPlan(P, f)[1] - f.z) < 15));
-      // sprint the long, quiet stretches (rotations, retakes, the early push); now and then a good bot slides into a fight it heard
+      // now and then a good bot running with its knife out slides into a fight it heard
       const far = P.dest ? Math.hypot(P.dest[0] - f.x, P.dest[1] - f.z) : 0;
-      I.sprint = !I.walk && !sees && !engaged && Math.abs(da) < .45 && M.time - (B.engT || -9) > 2 && far > 5 && (B.diff > 0 || M.t > roundT() - 15);
-      if (f.sprinting && B.diff > 1 && fresh && far < 9 && !B.slid) { B.slid = true; I.crouch = true; }
+      if (canSlide(f) && gun(f).melee && B.diff > 1 && fresh && far < 9 && !B.slid) { B.slid = true; I.crouch = true; }
     }
     // stuck against something: hop, then find the way again
     B.sT = (B.sT || 0) + dt;

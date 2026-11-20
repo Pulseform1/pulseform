@@ -35,7 +35,7 @@
 
   /* ---------- keyboard and mouse ---------- */
   let keys = {}; const mouse = { l: false, tap: false };   // tap: a press not yet seen by a tick (a quick click can start and end between two)
-  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'sprint', ShiftRight: 'sprint', KeyZ: 'walk', ControlLeft: 'crouch', ControlRight: 'crouch', KeyC: 'crouch', Space: 'jump', KeyF: 'use', KeyV: 'fire' };   // V fires too (handy on a trackpad)
+  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'walk', ShiftRight: 'walk', KeyZ: 'walk', ControlLeft: 'crouch', ControlRight: 'crouch', KeyC: 'crouch', Space: 'jump', KeyF: 'use', KeyV: 'fire' };   // V fires too (handy on a trackpad)
   // trackpad aiming: the system's pointer acceleration stays on (raw input feels dead on a trackpad), its own speed, and a light assist
   const trackpad = () => CFG.aim === 'trackpad' && !isTouch();
   const WHEEL = { acc: 0, t: 0, cd: 0, small: 0 };
@@ -60,8 +60,8 @@
   const vcursor = () => locked() && UI.armory && screen === 'play';
   function drawCursor(g) { if (!vcursor()) return; const x = ptr.x, y = ptr.y, s = uiScale(); g.save(); g.fillStyle = '#fff'; g.strokeStyle = 'rgba(10,12,16,.9)'; g.lineWidth = 2 * s; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 20 * s); g.lineTo(x + 5.5 * s, y + 15 * s); g.lineTo(x + 9.5 * s, y + 23 * s); g.lineTo(x + 13 * s, y + 21.5 * s); g.lineTo(x + 9 * s, y + 13.5 * s); g.lineTo(x + 15.5 * s, y + 13.5 * s); g.closePath(); g.stroke(); g.fill(); g.restore(); }
   function keyEvent(c, d) {
-    // crouch while sprinting is a slide (a short press, so toggle-crouch doesn't leave you ducked after it); otherwise toggle crouch flips on each fresh press
-    if (KM[c] === 'crouch' && d && !keys.crouch) { if (M && me().sprinting) keys.slideAt = performance.now(); else if (CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT; }
+    // crouch while running with the knife is a slide (a short press, so toggle-crouch doesn't leave you ducked after it); otherwise toggle crouch flips on each fresh press
+    if (KM[c] === 'crouch' && d && !keys.crouch) { if (M && canSlide(me())) keys.slideAt = performance.now(); else if (CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT; }
     if (KM[c] === 'fire' && d && !keys.fire) mouse.tap = true;   // a quick V tap fires even if it starts and ends between two frames, like a click
     if (KM[c]) keys[KM[c]] = d;
     if (!d) return;
@@ -117,7 +117,7 @@
       { k: 'fire', x: fx, y: fy, r: 62 * u, t: G.melee ? 'SLASH' : 'FIRE', show: P.alive },
       { k: 'alt', x: fx - 22 * u, y: fy - 116 * u, r: 38 * u, t: G.melee ? 'STAB' : G.scope ? 'SCOPE' : G.ads ? 'AIM' : 'BURST', show: P.alive && !!(G.melee || G.scope || G.ads || G.alt), on: !!P.scoped },
       { k: 'jump', x: fx + 104 * u, y: fy - 44 * u, r: 38 * u, t: 'JUMP', show: P.alive },
-      { k: 'crouch', x: fx + 100 * u, y: fy + 66 * u, r: 36 * u, t: P.sprinting ? 'SLIDE' : 'DUCK', show: P.alive, on: TS.crouch || !!P.slide },
+      { k: 'crouch', x: fx + 100 * u, y: fy + 66 * u, r: 36 * u, t: canSlide(P) ? 'SLIDE' : 'DUCK', show: P.alive, on: TS.crouch || !!P.slide },
       { k: 'reload', x: fx - 110 * u, y: fy + 56 * u, r: 36 * u, t: 'LOAD', show: P.alive && !G.melee },
       { k: 'swap', x: fx + 72 * u, y: fy - 128 * u, r: 36 * u, t: 'SWAP', show: P.alive },
       { k: 'q', x: fx - 118 * u, y: fy - 46 * u, r: 38 * u, t: op.q.n.toUpperCase() + (op.q.max > 1 ? ' ' + (P.ab.q | 0) : ''), show: P.alive && live, off: !P.ab.q, col: op.col },
@@ -132,7 +132,7 @@
     for (const b of touchButtons()) if (Math.hypot(x - b.x, y - b.y) < b.r + 8 * uiScale()) {
       const P = me(); click();
       if (b.k === 'fire') { TS.fire = id; TS.tap = true; TS.look = { id, x, y }; try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} }   // the fire thumb keeps aiming while it holds
-      else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (me().sprinting) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
+      else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (canSlide(me())) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
       else if (b.k === 'q' || b.k === 'e' || b.k === 'x') ability(P, b.k); else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);
       return;
     }
@@ -169,15 +169,13 @@
   readInput = f => {
     const now = performance.now(), sliding = now - (keys.slideAt || 0) < 260 || now - TS.slideAt < 260;
     if (sliding) { keys.crouchT = false; TS.crouch = false; }
-    const I = { mx: (keys.d ? 1 : 0) - (keys.a ? 1 : 0), mz: (keys.w ? 1 : 0) - (keys.s ? 1 : 0), walk: !!keys.walk, sprint: !!keys.sprint, crouch: sliding || (CFG.crouch === 'toggle' ? !!keys.crouchT : !!keys.crouch) || TS.crouch, jump: !!keys.jump, use: !!keys.use, fire: mouse.l || !!keys.fire, rapid: false };
+    const I = { mx: (keys.d ? 1 : 0) - (keys.a ? 1 : 0), mz: (keys.w ? 1 : 0) - (keys.s ? 1 : 0), walk: !!keys.walk, crouch: sliding || (CFG.crouch === 'toggle' ? !!keys.crouchT : !!keys.crouch) || TS.crouch, jump: !!keys.jump, use: !!keys.use, fire: mouse.l || !!keys.fire, rapid: false };
     if (keys.fire && !keys.fireSeen) { I.press = true; } keys.fireSeen = !!keys.fire;
     for (const k of TS.held.values()) { if (k === 'jump') I.jump = true; if (k === 'use') I.use = true; }
     if (TS.stick) {   // how far the thumb has pushed is how fast you go
       const u = uiScale(), dx = TS.stick.x - TS.stick.x0, dy = TS.stick.y - TS.stick.y0, L = Math.hypot(dx, dy), m = cl((L - 9 * u) / (56 * u), 0, 1);
       if (m > 0) { I.mx = dx / L * m; I.mz = -dy / L * m; }
-      // push the thumb out past the ring, mostly forward, and you sprint
-      TS.sprint = L > 84 * u && -dy > Math.abs(dx) * .8; if (TS.sprint) I.sprint = true;
-    } else TS.sprint = false;
+    }
     if (TS.fire != null || TS.tap) { I.fire = true; I.rapid = true; if (TS.tap) I.press = true; } TS.tap = false;
     if (mouse.tap) { I.fire = true; I.press = true; mouse.tap = false; }   // a fresh press: a new trigger pull, even if the last one has not been seen to let go
     if (isTouch() && f.alive && M.phase === 'live') assist(f, I); else TS.slow = 1;   // aim assist is for touch screens only: a trackpad aims unaided

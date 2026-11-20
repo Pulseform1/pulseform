@@ -13,9 +13,9 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
+  return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
-    hitboxes, headOf, castShot, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
+    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
 let failed = 0;
 const ok = (cond, name, extra = '') => { if (!cond) failed++; console.log((cond ? '  ok   ' : '  FAIL ') + name + (extra !== '' ? '  (' + extra + ')' : '')); };
@@ -124,22 +124,39 @@ function gunplayChecks() {
 
 // whole matches, bot against bot, watching for errors, fighters that stop moving, and rounds that never end
 function moveChecks() {
-  section('sprint, slide, adaptive bots');
+  section('no sprint: the knife is the quick way round; slides, adaptive bots');
   let I = idle(); T.setInput(() => I);
-  let [M, P] = lab(); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1 }; run(.8); const runV = Math.hypot(P.vx, P.vz);
-  [M, P] = lab(); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1, sprint: true }; run(.8); const sprV = Math.hypot(P.vx, P.vz);
-  ok(P.sprinting && sprV > runV * 1.25, 'sprinting is faster than running', `${runV.toFixed(1)} → ${sprV.toFixed(1)} m/s`);
-  I = { ...idle(), mz: 1, sprint: true, crouch: true }; T.tick(DT); T.tick(DT); const slV = Math.hypot(P.vx, P.vz);
-  ok(P.slide && slV > sprV, 'crouching mid-sprint starts a slide that is faster still', slV.toFixed(1) + ' m/s');
+  let [M, P] = lab('lancer'); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1 }; run(.8); const rifV = Math.hypot(P.vx, P.vz);
+  [M, P] = lab('lancer'); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1, sprint: true }; run(.8); const oldV = Math.hypot(P.vx, P.vz);
+  ok(!P.sprinting && Math.abs(oldV - rifV) < .05, 'there is no sprint: the old sprint key changes nothing', `${rifV.toFixed(2)} vs ${oldV.toFixed(2)} m/s`);
+  [M, P] = lab(); T.switchTo(P, 3); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1 }; run(.8); const knV = Math.hypot(P.vx, P.vz);
+  ok(T.GUNS[P.guns[3]].melee && knV > rifV * 1.22, 'with the knife out you move a good deal faster than with a rifle', `${rifV.toFixed(1)} → ${knV.toFixed(1)} m/s`);
+  I = { ...idle(), mz: 1, crouch: true }; T.tick(DT); T.tick(DT); const slV = Math.hypot(P.vx, P.vz);
+  ok(P.slide && slV > knV, 'crouching while running with the knife starts a slide that is faster still', slV.toFixed(1) + ' m/s');
   run(.4); ok(P.slide && Math.hypot(P.vx, P.vz) < slV, 'the slide bleeds off speed', Math.hypot(P.vx, P.vz).toFixed(1) + ' m/s');
   run(1); ok(!P.slide && P.crouch > .5, 'it ends in a crouch if you keep holding crouch');
-  [M, P] = lab(); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1, sprint: true }; run(.6); I = { ...idle(), mz: 1, sprint: true, crouch: true }; run(.15);
+  [M, P] = lab(); T.switchTo(P, 3); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1 }; run(.6); I = { ...idle(), mz: 1, crouch: true }; run(.15);
   I = { ...idle(), mz: 1, jump: true }; T.tick(DT); ok(!P.slide && P.vy > 0, 'you can jump out of a slide');
-  [M, P] = lab(); P.yaw = -Math.PI / 2; I = { ...idle(), mz: 1, sprint: true, fire: true }; run(.3); ok(!P.sprinting, 'shooting stops a sprint');
-  [M, P] = lab('lancer'); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1, sprint: true }; run(.5); ok(T.spreadOf(P) / T.D2R > 5, 'and you cannot shoot straight while sprinting', (T.spreadOf(P) / T.D2R).toFixed(1) + '°');
+  [M, P] = lab('lancer'); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1 }; run(.6); I = { ...idle(), mz: 1, crouch: true }; T.tick(DT); T.tick(DT); ok(!P.slide, 'running with a rifle is too slow to slide: you just crouch');
+  knifeWallChecks();
   const lv = [600, 900, 1100, 1400, 1700].map(r => T.diffFor(r)), keys = ['react', 'err', 'flick'];
   ok(lv.every((L, i) => !i || keys.every(k => L.D[k] <= lv[i - 1].D[k]) && L.D.turn >= lv[i - 1].D.turn), 'the bot gets sharper at every step up in rating', lv.map(L => L.D.n).join(' → '));
   T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto', map: 0 }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
+}
+// the knife against a breakable wall: a pace from it, facing it, a few swings and it gives way
+function knifeWallChecks() {
+  let mi = -1; for (let i = 0; i < T.MAPS.length && mi < 0; i++) { T.seed(5); T.startMatch({ mode: 'bot', diff: 0, map: i }); T.skipLoad(); if (T.BRKS.length) mi = i; }
+  if (mi < 0) { ok(false, 'a map with a breakable wall to test the knife on'); return; }
+  const M = T.M, P = T.me(), F = T.foe(); F.bot = { diff: 0, dummy: true, home: [F.x, F.z] }; M.phase = 'live'; M.t = 80; T.setInput(() => idle());
+  const B = T.BRKS[0]; let placed = false;
+  for (const q of B.cells) { const gx = q % T.GW, gz = Math.floor(q / T.GW); for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = T.idx(gx + dx, gz + dz); if (nk < 0 || T.BRKX[nk] >= 0) continue;
+    const x = (gx + dx + .5) * T.CS, z = (gz + dz + .5) * T.CS, wx = (gx + .5) * T.CS, wz = (gz + .5) * T.CS; Object.assign(P, { x, z, y: T.hAt(x, z), vx: 0, vz: 0, pitch: 0, yaw: T.yawTo(x, z, wx, wz) });
+    const S = T.castShot(P, T.viewDir(P.yaw, 0)), e = S.end, k = T.idx(Math.floor((e[0] + S.d[0] * .06) / T.CS), Math.floor((e[2] + S.d[2] * .06) / T.CS)); if (!S.hit && S.dist < 2 && k >= 0 && T.BRKX[k] === 0) { placed = true; break; } } if (placed) break; }
+  ok(placed, 'stood a pace from a breakable wall (' + T.MAPS[mi].n + '), facing it'); if (!placed) return;
+  T.switchTo(P, 3); const hp0 = B.hp; P.fireT = -1; T.fire(P);
+  ok(hp0 - B.hp >= 60, 'one knife swing takes a real chunk out of the wall', `${hp0} → ${B.hp}`);
+  let n = 1; while (B.hp > 0 && n < 30) { P.fireT = -1; T.fire(P); n++; }
+  ok(B.hp <= 0 && n <= 8, 'keep swinging and the wall gives way', n + ' swings');
 }
 // a 4v4 plays a spread of maps: one-site ones, two-site ones, the three-site one and the one where attackers start at both ends
 const FOUR_MAPS = ['saltworks', 'verdance', 'neonrow', 'sandgate', 'skyline', 'orbital', 'ironworks', 'frostline'];

@@ -553,10 +553,7 @@
     if (TS.stick) {
       const s = TS.stick, dx = s.x - s.x0, dy = s.y - s.y0, L = Math.min(96 * u, Math.hypot(dx, dy)), a = Math.atan2(dy, dx);
       g.strokeStyle = 'rgba(239,233,220,.4)'; g.lineWidth = 3 * u; g.beginPath(); g.arc(s.x0, s.y0, 65 * u, 0, TAU); g.stroke();
-      // the sprint zone: a short arc beyond the ring, straight ahead, that lights up while you're in it
-      g.strokeStyle = TS.sprint ? 'rgba(255,214,102,.95)' : 'rgba(239,233,220,.22)'; g.lineWidth = (TS.sprint ? 6 : 3) * u; g.beginPath(); g.arc(s.x0, s.y0, 92 * u, -Math.PI / 2 - .6, -Math.PI / 2 + .6); g.stroke();
-      g.fillStyle = TS.sprint ? 'rgba(255,214,102,.95)' : 'rgba(239,233,220,.4)'; g.font = `800 ${12 * u}px system-ui`; g.textAlign = 'center'; g.fillText('SPRINT', s.x0, s.y0 - 104 * u);
-      g.fillStyle = TS.sprint ? 'rgba(255,214,102,.75)' : 'rgba(239,233,220,.5)'; g.beginPath(); g.arc(s.x0 + Math.cos(a) * L, s.y0 + Math.sin(a) * L, 27 * u, 0, TAU); g.fill();
+      g.fillStyle = 'rgba(239,233,220,.5)'; g.beginPath(); g.arc(s.x0 + Math.cos(a) * L, s.y0 + Math.sin(a) * L, 27 * u, 0, TAU); g.fill();
     }
     else if (me().alive) { const x = V.x0 + 170 * u, y = V.y1 - 150 * u; g.setLineDash([6 * u, 8 * u]); g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 2 * u; g.beginPath(); g.arc(x, y, 62 * u, 0, TAU); g.stroke(); g.setLineDash([]); tx(g, 'MOVE', x, y, 13 * u, 'rgba(239,233,220,.45)'); tx(g, 'push far to sprint', x, y + 82 * u, 11 * u, 'rgba(239,233,220,.35)'); }
   }

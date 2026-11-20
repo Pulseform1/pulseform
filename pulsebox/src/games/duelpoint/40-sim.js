@@ -56,16 +56,18 @@
     if (f.y > top) { f.y = top; if (f.vy > 0) f.vy = 0; }
   }
   // one step of a fighter's body from its intent I: { mx, mz (-1..1, how hard and which way), walk, crouch, jump }
+  const canSlide = f => f.ground && Math.hypot(f.vx, f.vz) > SPD + .8;   // only a knife run is quick enough
   function stepBody(f, I, dt) {
     if (!f.alive) return;
     const G = gun(f), frozen = f.plant > 0 || f.defuse > 0;   // in the buy phase you move, but only inside your spawn (moveF)
-    // sprint: forward, standing, not aiming, reloading or just after a shot; slide: crouch while sprinting fast on the ground
+    // there is no sprint: the knife is how you move fast (it is the lightest thing you can hold). Slide: crouch while running
+    // that fast on the ground
     const hv = Math.hypot(f.vx, f.vz), crouchTap = I.crouch && !f.crouchHeld; f.crouchHeld = !!I.crouch;
     if (f.slideCD > 0) f.slideCD -= dt;
-    if (crouchTap && !f.slide && f.ground && !frozen && f.slideCD <= 0 && (f.sprinting || hv > SPD + .8)) {
+    if (crouchTap && !f.slide && f.ground && !frozen && f.slideCD <= 0 && canSlide(f)) {
       const k = SLIDE_V / Math.max(hv, .1); f.vx *= k; f.vz *= k; f.slide = { t: SLIDE_T }; f.sprinting = false; emit('slide', f);
     }
-    f.sprinting = !f.slide && !frozen && !!I.sprint && I.mz > .3 && f.crouch < .5 && !f.scoped && f.reloadT <= 0 && f.fireT < -.12 && !f.plant && !f.defuse;
+    f.sprinting = false;
     f.crouch = cl(f.crouch + (I.crouch || f.slide ? 1 : -1) * dt * 8, 0, 1);
     let sp = (f.sprinting ? SPRINT : f.crouch > .5 ? CSPD : I.walk ? WALK : SPD) * G.spd; if (f.scoped) sp *= G.scope ? .55 : .76;
     sp *= (f.surge > 0 ? 1.3 : 1) * (f.daze > 0 ? .6 : 1) * (f.snare > 0 ? .35 : 1);   // Surge, a Shockwave's daze, a Snare
@@ -210,6 +212,8 @@
     for (const [dy, dp] of [[0, 0], [.08, 0], [-.08, 0], [0, .07], [0, -.09], [.16, 0], [-.16, 0], [0, -.18]]) { const s2 = castShot(f, viewDir(f.yaw + dy, f.pitch + dp)); if (s2.hit && s2.dist <= range) { S = s2; break; } }
     emit('melee', f, heavy, S);
     if (S && !f.net) { const e = S.hit.f, back = Math.abs(angDiff(e.yaw, f.yaw)) < 1.05; damage(e, heavy ? (back ? 150 : 75) : (S.hit.head ? 75 : 50), f, S.hit.head || (heavy && back), 'knife'); }
+    else if (!S && !f.net && BRKS.length) {   // a breakable wall in reach takes the blade: a few swings and it is through
+      const W = castShot(f, viewDir(f.yaw, f.pitch)); if (!W.hit && !W.sentry && W.dist <= range + .3) { const e = W.end, k = idx(Math.floor((e[0] + W.d[0] * .06) / CS), Math.floor((e[2] + W.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], heavy ? 120 : 70, f); } }
     if (!f.net) net({ t: 'kn', h: heavy ? 1 : 0, f: f.key });
     return true;
   }

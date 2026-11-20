@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'games', 'duelpoint');
 const outFile = path.join(dir, '29-maps.js');
-const SPD = 5.4;
+const SPD = 5.4, lp = (a, b, t) => a + (b - a) * t;
 
 // ---------- drawing ----------
 function sheet(W, H) {
@@ -509,7 +509,79 @@ function show(def) {
   return '     ' + Array.from({ length: g[0].length }, (_, i) => i % 10).join('') + '\n' + g.map((r, j) => String(j).padStart(3) + '  ' + r.join('')).join('\n');
 }
 
+// how straight each way in is: the farthest a fighter coming along it can see onto its site (a rifle lane is long, a
+// way that bends is short). node tools/duelpoint-maps.mjs --lanes
+function laneSight(def) {
+  load(def); const out = {};
+  for (const [name, pts] of Object.entries(def.routes)) {
+    const S = T.SITES[def.rsite ? def.rsite[name] : 0], cells = S.cells; let a = T.SPAWN.att[0];
+    if (def.split) { const p0 = [pts[0][0] * 2, pts[0][1] * 2]; a = T.SPAWN.att.reduce((b, p) => Math.hypot(p[0] - p0[0], p[1] - p0[1]) < Math.hypot(b[0] - p0[0], b[1] - p0[1]) ? p : b); }
+    const brk = def.rbrk && def.rbrk[name]; if (brk != null) T.setWall(brk, false);
+    let x = a[0], z = a[1], best = 0, from = null; const path = [];
+    for (const p of [...pts.map(q => [q[0] * 2, q[1] * 2]), S.c]) { const q = T.findPath(x, z, p[0], p[1]); for (const w of q) path.push(w); [x, z] = after(p); }
+    let to = null, far = 0; const dense = []; for (let k = 0; k + 1 < path.length; k++) { const a2 = path[k], c2 = path[k + 1], n = Math.max(1, Math.ceil(Math.hypot(c2[0] - a2[0], c2[1] - a2[1]))); for (let q = 0; q < n; q++) dense.push([lp(a2[0], c2[0], q / n), lp(a2[1], c2[1], q / n)]); }
+    const lines = []; for (const p of dense) { if (cells.some(c => Math.hypot(c[0] - p[0], c[1] - p[1]) < 1.5)) break; let seenFar = false; for (const c of cells) { const d = Math.hypot(c[0] - p[0], c[1] - p[1]); if (d > 14 && sees(p, c)) { if (!seenFar) far++; seenFar = true; lines.push([p, c]); } if (d > best && sees(p, c)) { best = d; from = p; to = c; } } }
+    if (brk != null) T.resetMech(); out[name] = { site: S.k, open: best, from, to, path, far, lines };
+  }
+  return out;
+}
+/* Bend the ways in: at every site reached by two or more long, straight ways, the straightest stays as it is (the rifle
+   lane) and each other one gets a chicane a few metres short of the site: two short runs of crates, one from each side,
+   that make you zig-zag through and cut the long look onto the site, so the fight there is close. A chicane is kept only
+   if the map stays fair (every check above), the lane's long look is gone, the rifle lane is untouched, and it stands on
+   plain floor (no doorway, roof, waypoint or special cell). Writes the crates into tools/dp-maps/<key>.mjs.
+   node tools/duelpoint-maps.mjs --bend [key] */
+function bend(def) {
+  const md = path.join(path.dirname(fileURLToPath(import.meta.url)), 'dp-maps'), file = path.join(md, def.k + '.mjs'); if (!fs.existsSync(file)) return [];
+  const raw = fs.readFileSync(file, 'utf8'), a0 = raw.indexOf('art(['), rowsAt = []; { const re = /'([^'\n]*)'/g; re.lastIndex = a0; let mm; while (rowsAt.length < def.src.length && (mm = re.exec(raw))) if (mm[1].length === def.src[0].length) rowsAt.push({ at: mm.index + 1, s: mm[1] }); }
+  if (rowsAt.length !== def.src.length) return ['rows not found'];
+  const art = rowsAt.map(r => r.s.split('')), log = [];
+  // a lane is a way onto the site: routes that arrive through the same doorway (their last stop within a few cells) are one lane
+  const L0 = laneSight(def), bySite = {};
+  for (const [n, v] of Object.entries(L0)) { const e = def.routes[n][def.routes[n].length - 1], lanes2 = bySite[v.site] = bySite[v.site] || []; let g = lanes2.find(q => Math.hypot(q.e[0] - e[0], q.e[1] - e[1]) < 3.5);
+    if (!g) lanes2.push(g = { e, names: [], v: null }); g.names.push(n); if (!g.v || v.open > g.v.open) { g.v = v; g.n = n; } }
+  for (const k of Object.keys(bySite)) bySite[k] = bySite[k].map(g => [g.n, g.v, g.names]);
+  const wp = new Set(); for (const pts of Object.values(def.routes)) for (const q of pts) wp.add(Math.floor(q[0]) + ',' + Math.floor(q[1]));
+  for (const [site, lanes] of Object.entries(bySite)) {
+    lanes.sort((x, y) => y[1].open - x[1].open); const keep = lanes[0];
+    if (lanes.length < 2) { log.push(`${site}: one way in, nothing to bend`); continue; }
+    for (const [name, v, group] of lanes.slice(1)) {
+      if (v.far === 0) { log.push(`${site} ${name}: already bends (${v.open.toFixed(0)} m)`); continue; }
+      // break the long looks: containers in the way, a few metres short of the site, until no step along the lane sees the
+      // site from more than 14 m (each one must lower that count, keep the map fair and leave the rifle lane's look alone)
+      let done = v.far === 0, cur = v; const why = { unfair: 0, keep: 0, none: 0 }, placed = [];
+      for (let it = 0; it < 8 && !done && placed.length + (v.placedBefore || 0) < 8; it++) {
+        load(def); const siteCells = new Set(T.SITES.flatMap(S2 => S2.cells).map(c => Math.floor(c[0] / 2) + ',' + Math.floor(c[1] / 2)));
+        // score the floor cells by how many of the lane's far looks cross them, just outside the site (1.5 to 12 m out)
+        const score = new Map();
+        for (const [f, t] of cur.lines) { const L = Math.hypot(t[0] - f[0], t[1] - f[1]); let u0 = 0, seenC = new Set();
+          for (let u = 0; u <= L; u += .5) { const x = lp(t[0], f[0], u / L), z = lp(t[1], f[1], u / L); if (siteCells.has(Math.floor(x / 2) + ',' + Math.floor(z / 2))) u0 = u + .5; }
+          for (let u = u0 + 1.5; u <= Math.min(L, u0 + 12); u += .5) { const x = lp(t[0], f[0], u / L), z = lp(t[1], f[1], u / L), ci = Math.floor(x / 2), cj = Math.floor(z / 2), key = ci + ',' + cj; if (seenC.has(key)) continue; seenC.add(key);
+            if (siteCells.has(key) || wp.has(key) || !art[cj] || !'._'.includes(art[cj][ci]) || def.src[cj][ci] !== '.') continue; score.set(key, (score.get(key) || 0) + 1); } }
+        const cand = [...score.entries()].sort((a2, b2) => b2[1] - a2[1]).slice(0, 10).map(([k2]) => k2.split(',').map(Number));
+        let bestC = null;
+        for (const [ci, cj] of cand) {
+          const keepSrc = def.src; def.src = keepSrc.map((r, jj) => jj === cj ? r.slice(0, ci) + 'X' + r.slice(ci + 1) : r);
+          const r = check(def), L1 = r.ok ? laneSight(def) : null; def.src = keepSrc;
+          if (!r.ok) { why.unfair++; continue; } if (L1[keep[0]].open < keep[1].open - 1) { why.keep++; continue; }
+          if (L1[name].lines.length < cur.lines.length * .93 && (!bestC || L1[name].lines.length < bestC.L.lines.length)) bestC = { ci, cj, L: L1[name] };   // each must cut a real share of the long looks
+        }
+        if (!bestC) { why.none++; break; }
+        def.src = def.src.map((r, jj) => jj === bestC.cj ? r.slice(0, bestC.ci) + 'X' + r.slice(bestC.ci + 1) : r); art[bestC.cj][bestC.ci] = 'X'; placed.push([bestC.ci, bestC.cj]); cur = bestC.L; if (cur.far === 0 || cur.lines.length <= v.lines.length * .15) done = true;
+      }
+      if (done) log.push(`${site} ${name}: ${placed.length} container(s) at ${placed.map(c => c.join(',')).join(' ')} (far looks ${v.far} -> 0, longest ${v.open.toFixed(0)} m -> ${cur.open.toFixed(0)} m), ${keep[0]} stays straight (${keep[1].open.toFixed(0)} m)`);
+      else if (placed.length) { log.push(`${site} ${name}: PARTLY ${placed.length} container(s) at ${placed.map(c => c.join(',')).join(' ')} (far looks ${v.far} -> ${cur.far}, longest ${v.open.toFixed(0)} m -> ${cur.open.toFixed(0)} m) ${JSON.stringify(why)}`); }
+      if (!done && !placed.length) log.push(`${site} ${name}: NOTHING PLACED (${v.open.toFixed(0)} m from ${v.from.map(q => (q / 2).toFixed(0))}) ${JSON.stringify(why)}`);
+    }
+  }
+  let out = raw; for (let j = rowsAt.length - 1; j >= 0; j--) { const r = rowsAt[j], ns = art[j].join(''); if (ns !== r.s) out = out.slice(0, r.at) + ns + out.slice(r.at + r.s.length); }
+  if (out !== raw) fs.writeFileSync(file, out);
+  return log;
+}
 const only = process.argv[2];
+if (only === '--bend') { for (const def of MAPS) { if (process.argv[3] && def.k !== process.argv[3]) continue; console.log(def.n); for (const l of bend(def)) console.log('   ' + l); } process.exit(0); }
+if (only === '--lanes') { for (const def of MAPS) { const L = laneSight(def), bySite = {}; for (const [n, v] of Object.entries(L)) (bySite[v.site] = bySite[v.site] || []).push(n + ' ' + v.open.toFixed(0) + 'm' + (v.from ? ' from (' + (v.from[0] / 2).toFixed(0) + ',' + (v.from[1] / 2).toFixed(0) + ')' : ''));
+  console.log(def.n.padEnd(14), Object.entries(bySite).map(([k, v]) => k + ': ' + v.join(' | ')).join('    ')); } process.exit(0); }
 let bad = 0;
 for (const def of MAPS) {
   if (only && def.k !== only) continue;
