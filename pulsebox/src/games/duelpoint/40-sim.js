@@ -272,6 +272,8 @@
     v.alive = false; v.plant = v.defuse = 0; v.scoped = 0; v.burst = null; v.chan = null; v.volley = null; v.stat.d++; by.stat.k++; if (head) by.stat.hs++;
     ultGain(v, 1); if (by.team !== v.team) ultGain(by, 1);
     if (!by.net && by.team !== v.team) by.credits = Math.min(CASH.cap, by.credits + CASH.kill);
+    // Nova lives on momentum: every kill hands back one Surge (up to the most she can carry)
+    if (!by.net && by.team !== v.team && by.op === 'nova' && M.mode !== 'range' && (by.ab.q | 0) < OPS.nova.q.max) { by.ab.q = (by.ab.q | 0) + 1; emit('novaRefund', by); }
     M.feed.unshift({ a: by.name, b: v.name, w: GUNS[wk] ? GUNS[wk].n : wk, head, t: 0, mine: by === me() });
     if (v === me()) M.deathInfo = { by: by.name, key: by.key, op: by.op, w: GUNS[wk] ? GUNS[wk].n : wk, head, hp: Math.ceil(by.hp), sh: by.sh, yaw: yawTo(v.x, v.z, by.x, by.z), at: [v.x, v.y, v.z], kat: [by.x, by.y, by.z], t: 0 };
     emit('kill', v, by, head, wk);
@@ -291,6 +293,8 @@
     if (smoke && mechOf() === 'grass') for (let q = 1.4; q < t - 1.4; q += .45) { const y = ay + d[1] * q, k = idx(Math.floor((ax + d[0] * q) / CS), Math.floor((az + d[2] * q) / CS)); if (k >= 0 && GRASS[k] && y < GRASS_H) { t = q; break; } }   // tall grass hides; bullets go through
     return t;
   }
+  // a clear line from a fighter's eye to a point (no smoke or cloak rules: for markers, not for spotting)
+  function canSeePt(a, x, y, z) { const ey = eyeY(a), dx = x - a.x, dy = y - ey, dz = z - a.z, L = Math.hypot(dx, dy, dz); return L < .3 || rayGrid(a.x, ey, a.z, dx / L, dy / L, dz / L, L) >= L - .3; }
   function canSee(a, b) {
     if (a.flash > .5) return false; const ea = eyeY(a), d = Math.hypot(b.x - a.x, b.z - a.z);
     if (b.phase > 0 && !(b.kick > 0)) return false;   // Phase: unseen even up close
@@ -450,7 +454,7 @@
      The charge: one attacker carries it (chosen in the buy phase, and passed on in the armory or by dropping it with H).
      A carrier who dies drops it; an attacker who walks over it picks it up; only the carrier can plant.
      Online, the device that runs a fighter decides what it drops and picks up, and tells the others. */
-  const LOOT_R = 1.15;
+  const LOOT_R = 1.15, LOOK_R = 2.4;   // walk over a gun to take it into an empty slot; look at one in reach and press F to take it
   const carries = f => !!(M && M.charge && M.charge.k === f.key);
   const carrier = () => M && M.charge && M.charge.k ? M.byKey[M.charge.k] || null : null;
   function addLoot(d) { M.loot = M.loot || []; if (M.loot.some(q => q.id === d.id)) return null; d.y = hAt(d.x, d.z); d.at = M.time; M.loot.push(d); emit('loot', d); return d; }
@@ -483,6 +487,7 @@
   // (by: the fighter on this device that made it happen, named in the message so the others know who sent it)
   function setCharge(f, x, z, remote, by) {
     M.charge = f ? { k: f.key, at: M.time } : { k: '', x, z, y: hAt(x, z), at: M.time };
+    if (!f && M.phase === 'live') M.chargePing = { t0: M.time, x, z };
     emit('charge', f, remote); if (!remote) net({ t: 'cc', k: f ? f.key : '', x: r2(x || 0), z: r2(z || 0), f: (by || f || me()).key });
   }
   // H: put the charge down for a teammate (a step ahead of you)
@@ -498,15 +503,19 @@
     setCharge(to, 0, 0, false, from); return true;
   }
   // each tick, for a fighter this device runs: the charge and any gun underfoot
+  // the gun you are next to would go into an empty slot (pick it up), not take the place of one (swap)
+  const lootFree = f => { const d = f.nearLoot, G = d && GUNS[d.k]; if (!G) return false; const have = f.guns[G.slot]; return !have || (G.slot === 2 && have === 'pip'); };
   function stepLoot(f, I, press) {
     if (!f.alive || M.mode === 'range' || M.phase === 'end') { f.nearLoot = null; return false; }
     const C = M.charge;
     if (C && !C.k && !M.planted && sideOf(f) === 'att' && !(f.noCharge > M.time) && Math.hypot(C.x - f.x, C.z - f.z) < LOOT_R && Math.abs(C.y - f.y) < 1.4) setCharge(f);
     f.nearLoot = null; if (!M.loot || !M.loot.length) return false;
-    let best = null, bd = LOOT_R; for (const d of M.loot) { const dd = Math.hypot(d.x - f.x, d.z - f.z); if (dd < bd && Math.abs(d.y - f.y) < 1.4 && !(d.by === f.key && M.time - d.at < 1.2) && !(d.fo && d.fo !== f.key && M.time - d.at < 6) && !(f.bot && M.phase === 'buy' && d.fo !== f.key)) { bd = dd; best = d; } }
-    if (!best) return false; const G = GUNS[best.k], have = f.guns[G.slot], free = !have || (G.slot === 2 && have === 'pip');
+    // underfoot (the nearest within a step) or, failing that, the one you are looking at within reach
+    let best = null, bd = LOOT_R, look = null, la = .75; for (const d of M.loot) { const dd = Math.hypot(d.x - f.x, d.z - f.z); if (Math.abs(d.y - f.y) < 1.4 && !(d.by === f.key && M.time - d.at < 1.2) && !(d.fo && d.fo !== f.key && M.time - d.at < 6) && !(f.bot && M.phase === 'buy' && d.fo !== f.key)) {
+      if (dd < bd) { bd = dd; best = d; } else if (!f.bot && dd < LOOK_R) { const a = Math.abs(angDiff(yawTo(f.x, f.z, d.x, d.z), f.yaw)); if (a < la) { la = a; look = d; } } } }
+    const under = !!best; best = best || look; if (!best) return false; const G = GUNS[best.k], have = f.guns[G.slot], free = !have || (G.slot === 2 && have === 'pip');
     if (f.bot) { if (free || (GUNS[have].cost || 0) < G.cost) takeLoot(f, best); return false; }
-    if (free) { takeLoot(f, best); return false; }
+    if (free && under) { takeLoot(f, best); return false; }
     f.nearLoot = best; if (press) { takeLoot(f, best); return true; } return false;
   }
 

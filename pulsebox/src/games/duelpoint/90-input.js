@@ -124,7 +124,7 @@
       { k: 'x', x: fx - 290 * u, y: fy + 30 * u, r: 36 * u, t: P.ult >= ultCost(P) ? op.x.n.toUpperCase() : `ULT ${P.ult | 0}/${ultCost(P)}`, show: P.alive && live, off: P.ult < ultCost(P), col: op.col },
       { k: 'e', x: fx - 204 * u, y: fy + 4 * u, r: 38 * u, t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, col: op.col },
       { k: 'nade', x: fx - 196 * u, y: fy - 104 * u, r: 34 * u, t: 'SMOKE ' + (P.smokes || 0), show: P.alive && live && P.smokes > 0, off: !(P.smokes > 0), col: NADE.col },
-      { k: 'use', x: 640, y: B - 200 * u, r: 58 * u, t: P.nearLoot ? 'SWAP GUN' : orbNear ? 'TAKE ORB' : canUse ? (sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE') : 'DOOR', show: canUse || (P.alive && !!P.nearLoot) || (live && P.alive && (orbNear || doorNear)), col: P.nearLoot ? BONE : orbNear ? op.col : FOE },
+      { k: 'use', x: 640, y: B - 200 * u, r: 58 * u, t: P.nearLoot ? (lootFree(P) ? 'PICK UP' : 'SWAP GUN') : orbNear ? 'TAKE ORB' : canUse ? (sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE') : 'DOOR', show: canUse || (P.alive && !!P.nearLoot) || (live && P.alive && (orbNear || doorNear)), col: P.nearLoot ? BONE : orbNear ? op.col : FOE },
       { k: 'drop', x: fx - 300 * u, y: fy - 150 * u, r: 32 * u, t: carries(P) && !M.planted ? 'DROP ◆' : 'DROP', show: P.alive && M.mode !== 'range' && M.phase !== 'end' && ((carries(P) && !M.planted) || (M.phase === 'buy' && !!(P.guns[1] || P.guns[2] !== 'pip'))), col: carries(P) ? GOLD : BONE },
     ].filter(b => b.show);
   }

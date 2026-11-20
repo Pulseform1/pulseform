@@ -15,7 +15,7 @@ const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name:
 const T = new Function('K', 'MP', code + `
   return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
-    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
+    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
 let failed = 0;
 const ok = (cond, name, extra = '') => { if (!cond) failed++; console.log((cond ? '  ok   ' : '  FAIL ') + name + (extra !== '' ? '  (' + extra + ')' : '')); };
@@ -139,6 +139,7 @@ function moveChecks() {
   I = { ...idle(), mz: 1, jump: true }; T.tick(DT); ok(!P.slide && P.vy > 0, 'you can jump out of a slide');
   [M, P] = lab('lancer'); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1 }; run(.6); I = { ...idle(), mz: 1, crouch: true }; T.tick(DT); T.tick(DT); ok(!P.slide, 'running with a rifle is too slow to slide: you just crouch');
   knifeWallChecks();
+  pickupPingNovaChecks();
   const lv = [600, 900, 1100, 1400, 1700].map(r => T.diffFor(r)), keys = ['react', 'err', 'flick'];
   ok(lv.every((L, i) => !i || keys.every(k => L.D[k] <= lv[i - 1].D[k]) && L.D.turn >= lv[i - 1].D.turn), 'the bot gets sharper at every step up in rating', lv.map(L => L.D.n).join(' → '));
   T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto', map: 0 }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
@@ -157,6 +158,25 @@ function knifeWallChecks() {
   ok(hp0 - B.hp >= 60, 'one knife swing takes a real chunk out of the wall', `${hp0} → ${B.hp}`);
   let n = 1; while (B.hp > 0 && n < 30) { P.fireT = -1; T.fire(P); n++; }
   ok(B.hp <= 0 && n <= 8, 'keep swinging and the wall gives way', n + ' swings');
+}
+// a rifle on the floor: look at it in reach and press F; the charge going down pings the attackers; Nova's kills give a Surge back
+function pickupPingNovaChecks() {
+  let I = idle(); T.setInput(() => I);
+  let [M, P, F] = lab('lancer'); P.yaw = -Math.PI / 2; I = idle(); T.tick(DT);
+  const d = T.lootAt(F, 'vesper', P.x + 2, P.z, 30, 60); T.tick(DT);
+  ok(d && P.nearLoot && P.nearLoot.id === d.id && P.guns[1] === 'lancer', 'look at a rifle on the floor two metres off: it is offered (not taken)', d ? d.k : 'none');
+  I = { ...idle(), use: true }; T.tick(DT); I = idle(); T.tick(DT);
+  ok(P.guns[1] === 'vesper' && !M.loot.some(q => q.id === d.id), 'press F and it is yours (your old one goes on the floor)', P.guns[1]);
+  P.yaw = Math.PI / 2; const d2 = T.lootAt(F, 'mako', P.x + 2, P.z, 24, 48); T.tick(DT); ok(!P.nearLoot, 'a gun behind you is not offered', String(!!P.nearLoot));
+  [M, P, F] = lab(); P.yaw = -Math.PI / 2; I = idle(); const d3 = T.lootAt(F, 'vesper', P.x, P.z, 30, 60); T.tick(DT); T.tick(DT);
+  ok(P.guns[1] === 'vesper', 'walk over a rifle with your main slot empty and you just take it', String(P.guns[1]));
+  [M, P, F] = lab(); M.chargePing = null; T.setCharge(null, P.x + 5, P.z, false, P);
+  ok(M.chargePing && Math.abs(M.chargePing.x - (P.x + 5)) < .01, 'the charge going down mid-round pings where it lies');
+  [M, P, F] = lab('lancer'); P.op = 'nova'; P.ab.q = 0; F.hp = 1; F.sh = 0; T.applyDamage(F, 50, P, false, 'lancer');
+  ok(!F.alive && P.ab.q === 1, 'Nova gets a Surge back for a kill', `q ${P.ab.q}`);
+  [M, P, F] = lab('lancer'); P.op = 'nova'; P.ab.q = T.OPS.nova.q.max; F.hp = 1; F.sh = 0; T.applyDamage(F, 50, P, false, 'lancer');
+  ok(P.ab.q === T.OPS.nova.q.max, 'but never more than she can carry', `q ${P.ab.q}`);
+  [M, P, F] = lab('lancer'); P.op = 'vex'; P.ab.q = 0; F.hp = 1; F.sh = 0; T.applyDamage(F, 50, P, false, 'lancer'); ok(P.ab.q === 0, 'other operatives get no free charge');
 }
 // a 4v4 plays a spread of maps: one-site ones, two-site ones, the three-site one and the one where attackers start at both ends
 const FOUR_MAPS = ['saltworks', 'verdance', 'neonrow', 'sandgate', 'skyline', 'orbital', 'ironworks', 'frostline'];

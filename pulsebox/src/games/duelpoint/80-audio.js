@@ -174,6 +174,9 @@
   }
 
   // the ultimates
+  // the charge hits the floor mid-round: a bright ping for the attackers so they go and get it
+  cue('charge', f => { if (f || !M || M.mode === 'demo' || M.phase !== 'live' || sideOf(me()) !== 'att') return; const o = outFor(null); [1175, 1568, 1175].forEach((q, i) => tone(o, q, .16, 'square', .045, 0, i * .11)); });
+  cue('novaRefund', f => { if (f !== me()) return; const o = outFor(null); [740, 1110].forEach((q, i) => tone(o, q, .14, 'triangle', .07, 0, i * .07)); });
   cue('ultReady', f => { if (f !== me()) return; const o = outFor(null); [660, 880, 1320].forEach((q, i) => tone(o, q, .3, 'triangle', .08, 0, i * .09)); });
   cue('ultUsed', f => { const o = outFor(f, 1.3); tone(o, 110, .9, 'sawtooth', .07, 220); tone(o, 440, .6, 'triangle', .05, 440, .1); hiss(o, .6, .08, 'bandpass', 1800, .05); });
   cue('orb', (o, f) => { const out = atPos(o.x, o.z); [990, 1320, 1760].forEach((q, i) => tone(out, q, .25, 'sine', .07, 0, i * .07)); });

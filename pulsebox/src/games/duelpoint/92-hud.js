@@ -9,7 +9,8 @@
   // how far in from the right edge the kit's round sound button reaches (in HUD units), or 0 when it is hidden
   const muteGap = () => { try { const b = document.getElementById('bMute'); if (!b || b.style.display === 'none') return 0; const r = b.getBoundingClientRect(); return (innerWidth - r.left) / pxPer(); } catch (e) { return 0; } };
   let TOAST = null; const toast = s => { TOAST = { s, at: performance.now() }; };
-  on('charge', f => { if (!M || M.mode === 'demo' || M.phase === 'end') return; const P = me(); if (f === P) toast(isTouch() ? 'YOU HAVE THE CHARGE' : 'YOU HAVE THE CHARGE  ·  H TO DROP IT'); else if (f && f.team === P.team && M.round && M.time - (M.chargeToastT || -9) > .5) toast(f.name.toUpperCase() + ' HAS THE CHARGE'); else if (!f && sideOf(P) === 'att') toast('THE CHARGE IS ON THE FLOOR'); M.chargeToastT = M.time; });
+  on('novaRefund', f => { if (f === me() && M && M.mode !== 'demo') say('+1 SURGE', OPS.nova.col); });
+  on('charge', f => { if (!M || M.mode === 'demo' || M.phase === 'end') return; const P = me(); if (f === P) toast(isTouch() ? 'YOU HAVE THE CHARGE' : 'YOU HAVE THE CHARGE  ·  H TO DROP IT'); else if (f && f.team === P.team && M.round && M.time - (M.chargeToastT || -9) > .5) toast(f.name.toUpperCase() + ' HAS THE CHARGE'); else if (!f && sideOf(P) === 'att') { const ar = M.charge && areaAt(M.charge.x, M.charge.z); toast('THE CHARGE IS DOWN' + (ar ? '  ·  ' + ar.n.toUpperCase() : '')); } M.chargeToastT = M.time; });
   function tx(g, s, x, y, px, col = BONE, align = 'center', weight = 700) { px = fitPx(g, px); g.font = `${weight} ${px}px ${FONT}`; g.fillStyle = col; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); }
   function rr(g, x, y, w, h, r, fill, stroke, lw = 2) {
     g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
@@ -374,6 +375,15 @@
     // --- markers in the world: a pinged rival, the planted charge
     // teammates: a name and a marker over each, and their health
     for (const q of M.fs) if (q !== P && q.team === P.team && q.alive) { const s = toScreen(q.x, q.y + 2.05, q.z); if (s) { g.fillStyle = YOU; g.beginPath(); g.moveTo(s[0] - 7, s[1] - 10); g.lineTo(s[0] + 7, s[1] - 10); g.lineTo(s[0], s[1]); g.closePath(); g.fill(); tx(g, `${carries(q) ? '◆ ' : ''}${q.name.toUpperCase()} ${Math.ceil(q.hp)}`, s[0], s[1] - 20, 13, carries(q) ? GOLD : YOU, 'center', 800); } }
+    if (M.loot && M.loot.length && P.alive && M.phase !== 'end') for (const d of M.loot) { const G2 = GUNS[d.k], dd = Math.hypot(d.x - P.x, d.z - P.z); if (!G2 || dd > 9 || Math.abs(d.y - P.y) > 2.5) continue;
+      const s = toScreen(d.x, d.y + .45, d.z); if (!s || !canSeePt(P, d.x, d.y + .3, d.z)) continue; const on = P.nearLoot === d, a = on ? 1 : cl(1.25 - dd / 8, .35, .9);
+      g.globalAlpha = a; const w2 = (on ? 150 : 104) * u, h2 = (on ? 34 : 24) * u; rr(g, s[0] - w2 / 2, s[1] - h2, w2, h2, 6 * u, 'rgba(12,16,22,.78)', on ? GOLD : 'rgba(239,233,220,.35)', on ? 2 : 1);
+      if (on) { rr(g, s[0] - w2 / 2 + 6 * u, s[1] - h2 + 6 * u, 22 * u, 22 * u, 4 * u, GOLD); tx(g, touch ? '◉' : 'F', s[0] - w2 / 2 + 17 * u, s[1] - h2 + 17 * u, 14 * u, '#0c1016', 'center', 900); }
+      tx(g, G2.n.toUpperCase(), s[0] + (on ? 12 * u : 0), s[1] - h2 / 2 - (on ? 4 : 0) * u, (on ? 14 : 11) * u, on ? BONE : 'rgba(239,233,220,.85)', 'center', 900);
+      if (on) tx(g, lootFree(P) ? 'PICK UP' : 'SWAP', s[0] + 12 * u, s[1] - 8 * u, 9 * u, GOLD, 'center', 800); g.globalAlpha = 1; }
+    { const CP = M.chargePing; if (CP && side === 'att' && M.charge && !M.charge.k && !M.planted && M.time - CP.t0 < 3) { const s = toScreen(CP.x, hAt(CP.x, CP.z) + .3, CP.z), q = (M.time - CP.t0) / 3;
+      if (s) for (let i = 0; i < 3; i++) { const r = ((q * 3 + i / 3) % 1); g.strokeStyle = `rgba(255,210,90,${(1 - r) * .9})`; g.lineWidth = 3 * u; g.beginPath(); g.arc(s[0], s[1], (14 + r * 60) * u, 0, TAU); g.stroke(); }
+    } }
     if (M.charge && !M.charge.k && !M.planted && side === 'att' && M.phase !== 'end') { const C = M.charge, s = toScreen(C.x, C.y + .8, C.z); if (s) { const p = 1 + Math.sin(M.time * 6) * .12; g.strokeStyle = GOLD; g.lineWidth = 2.5; g.beginPath(); g.moveTo(s[0], s[1] - 11 * p); g.lineTo(s[0] + 9 * p, s[1]); g.lineTo(s[0], s[1] + 11 * p); g.lineTo(s[0] - 9 * p, s[1]); g.closePath(); g.stroke(); tx(g, 'CHARGE  ' + Math.hypot(P.x - C.x, P.z - C.z).toFixed(0) + ' m', s[0], s[1] + 22, 12, GOLD, 'center', 800); } }
     for (const E of M.fs) if (E.alive && E.team !== me().team && E.reveal > 0) { const s = toScreen(E.x, E.y + 1.1, E.z); if (s) { g.strokeStyle = FOE; g.lineWidth = 3; g.beginPath(); g.moveTo(s[0], s[1] - 30); g.lineTo(s[0] + 20, s[1]); g.lineTo(s[0], s[1] + 30); g.lineTo(s[0] - 20, s[1]); g.closePath(); g.stroke(); } }   // everyone revealed, not just the nearest
     // the death cam: whoever killed you, marked where they stand
@@ -432,6 +442,7 @@
       for (const S of SITES) siteLabel(g, S, mx, my, k, 14 * u);
       if (M.planted) { g.fillStyle = WARN; g.beginPath(); g.arc(mx + M.planted.x * k, my + M.planted.z * k, 4.5 * u, 0, TAU); g.fill(); }
       if (M.charge && !M.planted && side === 'att') { const c = carrier(), cx2 = c ? c.x : M.charge.x, cz2 = c ? c.z : M.charge.z; if (!c || c.alive) { g.strokeStyle = GOLD; g.lineWidth = 2; g.beginPath(); g.arc(mx + cx2 * k, my + cz2 * k, (c ? 6 : 4.5) * u, 0, TAU); g.stroke(); if (!c) { g.fillStyle = GOLD; g.fill(); } } }
+      { const CP = M.chargePing; if (CP && side === 'att' && M.charge && !M.charge.k && !M.planted && M.time - CP.t0 < 3) { const q = (M.time - CP.t0) / 3; for (let i = 0; i < 2; i++) { const r = (q * 3 + i / 2) % 1; g.strokeStyle = `rgba(255,210,90,${1 - r})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + CP.x * k, my + CP.z * k, (5 + r * 16) * u, 0, TAU); g.stroke(); } } }
       if (heard && (heard.t -= 1 / 60) > 0) { g.strokeStyle = `rgba(255,138,61,${heard.t / 1.6})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + heard.x * k, my + heard.z * k, (8 + (1.6 - heard.t) * 8) * u, 0, TAU); g.stroke(); }
       for (const q of M.fs) if (q !== P && q.alive && !q.gone) { const ours = q.team === P.team; if (!ours && !(q.reveal > 0 || canSee(P, q))) continue; g.fillStyle = ours ? YOU : FOE; g.beginPath(); g.arc(mx + q.x * k, my + q.z * k, (ours ? 3.2 : 4) * u, 0, TAU); g.fill(); }   // your teammates, and every rival in sight
       g.save(); g.translate(mx + P.x * k, my + P.z * k); g.rotate(-P.yaw); g.fillStyle = 'rgba(53,224,200,.22)'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 30 * u, -Math.PI / 2 - .6, -Math.PI / 2 + .6); g.fill(); g.fillStyle = YOU; g.beginPath(); g.moveTo(0, -7 * u); g.lineTo(5 * u, 5 * u); g.lineTo(-5 * u, 5 * u); g.fill(); g.restore();
@@ -465,7 +476,7 @@
       g.restore();
     }
     if (touch && canBuy()) tx(g, `◈ ${P.credits}`, 640, V.y1 - 66 * u, 17 * u, GOLD);
-    if (M.phase === 'buy' && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'Tap SWAP' : 'Press F'} to swap for the ${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
+    if (M.phase === 'buy' && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'Tap PICK UP' : 'Press F'} to ${lootFree(P) ? 'pick up' : 'swap for'} the ${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
     // --- the charge: what to do, and how far along
     const ring = (frac, label, col) => { const y = 470; g.strokeStyle = 'rgba(12,16,22,.7)'; g.lineWidth = 12 * u; g.beginPath(); g.arc(640, y, 34 * u, 0, TAU); g.stroke(); g.strokeStyle = col; g.lineWidth = 7 * u; g.beginPath(); g.arc(640, y, 34 * u, -Math.PI / 2, -Math.PI / 2 + TAU * frac); g.stroke(); tx(g, label, 640, y + 60 * u, 15 * u, col); };
     if (P.reloadT > 0) tx(g, 'RELOADING', 640, 420, 15 * u, GOLD);
@@ -481,7 +492,7 @@
       else if (side === 'def' && M.planted) hint(g, near ? key + ' to defuse' : 'Defuse the charge', V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
       else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold ' + siteWords('and') + ': stop them planting' : 'Stop them planting on the site', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
       if (M.fs.some(q => q.team !== P.team && q.alive && q.defuse > 0)) tx(g, M.fs.length > 2 ? 'THEY ARE DEFUSING' : 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);   // any of them, not just the nearest
-      if (P.nearLoot && GUNS[P.nearLoot.k]) hint(g, `${touch ? 'Tap SWAP' : 'Press F'} to swap for the ${GUNS[P.nearLoot.k].n}`, V.y0 + 172 * u, 15 * u, BONE);
+      if (P.nearLoot && GUNS[P.nearLoot.k]) hint(g, `${touch ? 'Tap PICK UP' : 'Press F'} to ${lootFree(P) ? 'pick up' : 'swap for'} the ${GUNS[P.nearLoot.k].n}`, V.y0 + 172 * u, 15 * u, GOLD);
       if (GATES.length && P.plant <= 0 && P.defuse <= 0) { const gi = gateNear(P); if (gi >= 0) hint(g, (touch ? 'Tap the button' : 'Press F') + (GATES[gi].open ? ' to shut the blast door' : ' to open the blast door'), V.y0 + 140 * u, 16 * u, GOLD); }
     }
     // --- banners
