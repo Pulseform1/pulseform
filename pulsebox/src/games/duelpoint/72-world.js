@@ -446,7 +446,7 @@
       if (wall && hash(i, j, 30) < .06) { const [di, dj] = wall;   // a grate lying along the wall, its long side with it
         if (dj) quad('grate', cx, y, cz + dj * .62, 1, 0, 0, 0, 1, .9, .42); else quad('grate', cx + di * .62, y, cz, 0, 1, 1, 0, 0, .9, .42); }
       else if (!wall && hash(i, j, 31) < .025 && !roofed[idx(i, j)]) quad('manhole', cx, y, cz, 1, 0, 0, 0, 1, 1.05, 1.05);
-      else if (hash(i, j, 32) < .07) { const s = 1.2 + hash(i, j, 33) * 1.2; quad('stain', cx + (hash(i, j, 34) - .5), y, cz + (hash(i, j, 35) - .5), 1, 0, 0, 0, 1, s, s); }
+      else if (hash(i, j, 32) < .018) { const s = 1.2 + hash(i, j, 33) * 1.2; quad('stain', cx + (hash(i, j, 34) - .5), y, cz + (hash(i, j, 35) - .5), 1, 0, 0, 0, 1, s, s); }
     }
     // the merged meshes
     bake(G, sh); G.traverse(o => { if (o.isMesh) o.receiveShadow = sh; });
