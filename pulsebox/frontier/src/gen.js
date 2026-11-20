@@ -83,7 +83,7 @@ export function flora(world, cx, cz, C) {
     if (f > 0.35 && r < 0.02 + 0.11 * f && q < 0.25) { props.push(x, s.h - .05, z, rot, .7 + sz * .5, q < 0.12 ? 6 : 7); continue; }
     if (f > 0.3 && q < 0.55 * f) { props.push(x, s.h - .05, z, rot, .55 + sz * .7, 2); continue; }
     if (q < 0.04 + 0.22 * edge) { props.push(x, s.h - .08, z, rot, .6 + sz * .8, q < 0.12 * edge ? 1 : 0); continue; }
-    if (f < 0.3 && q < 0.2 * (1 - f) && s.h > 2.0 && hash2(gx, gz, seed + 17) < 0.5) props.push(x, s.h, z, rot, .6 + sz * .5, 3);
+    // (no wildflowers in the meadows: at a distance their petals read as glitter in the grass)
   }
   return { trees: new Float32Array(trees), props: new Float32Array(props) };
 }

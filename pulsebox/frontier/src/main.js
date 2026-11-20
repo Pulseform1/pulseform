@@ -20,6 +20,7 @@ import { Weapons, GUNS, ORDER, AMMO } from './weapons.js';
 import { Fishing } from './fishing.js';
 import { Post } from './post.js';
 import { Drone } from './drone.js';
+import { SPECIES, makeAnimal } from './animals.js';
 import { CampLife } from './camplife.js';
 import { UI } from './ui.js';
 import { SurveyMap } from './map.js';
@@ -27,9 +28,9 @@ import { SurveyMap } from './map.js';
 const $ = s => document.querySelector(s);
 const params = new URLSearchParams(location.search);
 const QUALITY = {
-  low: { pr: 1, shadow: 1024, span: 40, nearR: 300, farR: 2400, veg: { vegR: 600, nearR: 38, midR: 100, propR: 45 }, grass: 'low' },
-  medium: { pr: 1.25, shadow: 2048, span: 55, nearR: 380, farR: 3200, veg: { vegR: 800, nearR: 50, midR: 130, propR: 62 }, grass: 'medium' },
-  high: { pr: 1.6, shadow: 4096, span: 65, nearR: 440, farR: 3800, veg: { vegR: 950, nearR: 62, midR: 165, propR: 80 }, grass: 'high' },
+  low: { pr: 1, shadow: 1024, span: 40, nearR: 300, farR: 2400, veg: { vegR: 600, nearR: 38, midR: 100, propR: 45 }, grass: 'low', fur: 0 },
+  medium: { pr: 1.25, shadow: 2048, span: 55, nearR: 380, farR: 3200, veg: { vegR: 800, nearR: 50, midR: 130, propR: 62 }, grass: 'medium', fur: 3 },
+  high: { pr: 1.6, shadow: 4096, span: 65, nearR: 440, farR: 3800, veg: { vegR: 950, nearR: 62, midR: 165, propR: 80 }, grass: 'high', fur: 7 },
 };
 const SPAWNS = { forest: 'Deep Forest', valley: 'Mountain Valley', lake: 'Wilderness Lake' };
 // what a kill pays, in coins
@@ -37,8 +38,17 @@ const BOUNTY = { rabbit: 2, duck: 3, turkey: 4, deer: 12, goat: 20, elk: 22, wol
 
 const G = { settings: loadSettings(), state: 'menu' };
 // a sensible first guess at graphics quality: phones and tablets low, small laptops medium
-function defaultQuality() { const touch = matchMedia('(pointer: coarse)').matches, cores = navigator.hardwareConcurrency || 4; return touch ? 'low' : cores <= 4 ? 'medium' : 'high'; }
-function loadSettings() { const d = { quality: defaultQuality(), sens: 1, vol: .8 }; try { return { ...d, ...JSON.parse(localStorage.getItem('fh-settings') || '{}') }; } catch { return d; } }
+// The starting graphics: Chromebooks, phones and tablets, and laptops on basic built-in graphics start on Low; Macs and
+// laptops with better built-in graphics on Medium; only a strong graphics card gets High. The game then steps down by
+// itself if frames still run slow (until the player picks a setting by hand).
+function gpuName() { try { const c = document.createElement('canvas'), gl = c.getContext('webgl2') || c.getContext('webgl'), e = gl && gl.getExtension('WEBGL_debug_renderer_info'); return e ? String(gl.getParameter(e.UNMASKED_RENDERER_WEBGL)) : ''; } catch { return ''; } }
+function defaultQuality() {
+  const touch = matchMedia('(pointer: coarse)').matches, cores = navigator.hardwareConcurrency || 4, ua = navigator.userAgent, gpu = gpuName().toLowerCase();
+  if (touch || /CrOS/.test(ua) || cores <= 2 || /mali|adreno|powervr|swiftshader|llvmpipe|software|intel\(r\) (hd|uhd) graphics( [0-9]{3,4})?\b|intel hd|uhd graphics/.test(gpu)) return 'low';
+  if (/Macintosh/.test(ua) || /intel|iris|apple|radeon\(tm\) graphics|vega [0-9] graphics/.test(gpu) || cores <= 4) return 'medium';
+  return 'high';
+}
+function loadSettings() { const d = { quality: defaultQuality(), sens: 1, vol: .8, qualityAuto: true }; try { const st = { ...d, ...JSON.parse(localStorage.getItem('fh-settings') || '{}') }; if (st.qualityAuto !== false) { st.quality = d.quality; st.qualityAuto = true; } return st; } catch { return d; } }
 function saveSettings() { try { localStorage.setItem('fh-settings', JSON.stringify(G.settings)); } catch { } }
 if (params.get('q')) G.settings.quality = params.get('q');
 
@@ -103,7 +113,7 @@ async function start(opts) {
   wildlife.panOf = p => { const r = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion), d = p.clone().sub(camera.position).normalize(); return Math.max(-1, Math.min(1, r.dot(d))); };
   wildlife.onBump = a => { const d = player.pos.clone().sub(a.pos).setY(0).normalize(); player.vel.addScaledVector(d, 9); G.shake = .6; toast('The bear bowls you over, then wheels away into the timber.'); };
   wildlife.onAttack = (a, dmg) => hurt(dmg, a);
-  wildlife.region = opts.spawn; wildlife.home = world.camp;
+  wildlife.region = opts.spawn; wildlife.home = world.camp; wildlife.furN = (QUALITY[G.settings.quality] || QUALITY.medium).fur;
   player.onStep = kind => audio.step(surfaceAt(kind), kind === 'run');
   // stand in the tent doorway looking out at the fire
   const door = camp.toWorld(0, TENT.cz + TENT.L / 2 + 0.9);
@@ -112,7 +122,7 @@ async function start(opts) {
   Object.assign(G, { world, jobs, sky, terrain, flora, grass, water, camp, player, weather, wildlife, stats: { taken: {} }, timeScale: 1, gameHours: 0, seed, spawn: opts.spawn, gameTime: 0, day: 0, envT: 0, env: { waterDist: 99, riverDist: 99, forest: 0 }, coins: 40, health: 100, breath: 4, dead: false });
   if (!G.weapons) { G.weapons = new Weapons(camera, TEX, TEX.glow); }
   G.fishing = new Fishing(G, scene, camera, audio);
-  G.drone = G.drone || new Drone(G, camera, renderer); G.drone.reset();
+  G.drone = G.drone || new Drone(G, camera, renderer, scene); G.drone.reset();
   G.tex = TEX; G.life = new CampLife(G, G.ui);
   G.map = G.map || new SurveyMap(G); G.map.explored.clear(); G.map.markers = []; G.map.guide = true; G.map.trail = [];
   if (opts.restore) restore(opts.restore);
@@ -129,7 +139,10 @@ async function start(opts) {
   }
   flora.rebuild(camera.position);
   sky.update(0, camera.position, 0);
-  renderer.compile(scene, camera);
+  // compile every animal's shaders (fur too) while the loading screen is up, so the first bear or elk to walk into view
+  // does not freeze the game for a moment
+  { const tmp = []; for (const k of Object.keys(SPECIES)) { try { const a = makeAnimal(k, .5); a.mesh.position.set(camera.position.x, camera.position.y - 40, camera.position.z); for (const sh of a.shells || []) sh.visible = true; scene.add(a.mesh); tmp.push(a.mesh); } catch (e) { } }
+    renderer.compile(scene, camera); for (const m of tmp) scene.remove(m); }
   $('#loading').hidden = true; $('#hud').hidden = false; G.state = 'play'; G.saveT = 20;
   $('#touch').hidden = !input.isTouch; document.body.classList.toggle('touch', input.isTouch);
   setTimeout(() => toast(opts.restore ? `Back at camp. Day ${G.day + 1}.` : input.isTouch ? 'Drag left to walk, right to look. Tap ? for all the controls.' : 'Press Tab any time to see all the controls.'), 1500);
@@ -151,12 +164,12 @@ function drawSlots() {
   // hidden while the drone flies: its own screen lists its keys
   const el = $('#slots'), show = (G.state === 'play' || G.state === 'ui') && !G.drone.on; if (el.hidden === show) { el.hidden = !show; if (show) G._slotLit = performance.now(); } if (!show) return;
   const W = G.weapons, D = G.drone, touch = input.isTouch, now = performance.now();
-  const key = touch + '|' + W.want + '|' + ORDER.map(k => GUNS[k].rod ? '' : (W.ammo[k] + W.reserve[GUNS[k].ammo] > 0 ? 1 : 0)).join('') + '|' + (D.battery < .2);
+  const key = touch + '|' + W.want + '|' + ORDER.map(k => GUNS[k].rod ? '' : (W.ammo[k] + W.reserve[GUNS[k].ammo] > 0 ? 1 : 0)).join('') + '|' + (D.battery < .2) + '|' + !!D.landed;
   if (key !== G._slotKey) {   // something changed: show it brightly for a few seconds
     if ((G._slotKey || '').split('|')[1] !== String(W.want)) G._slotLit = now;
     G._slotKey = key; el.querySelector('.cap').textContent = touch ? 'Tap to switch' : '1–5 or scroll to switch · G drone';
     for (const b of el.querySelectorAll('[data-slot]')) { const k = b.dataset.slot;
-      if (k === 'drone') { b.classList.toggle('low', D.battery < .2); continue; }
+      if (k === 'drone') { b.classList.toggle('low', D.battery < .2); b.classList.toggle('out', !!D.landed); b.title = D.landed ? 'The drone is landed out there: G flies it from where it sits, E packs it when you reach it' : ''; continue; }
       const g = GUNS[k]; b.classList.toggle('on', W.want === k); b.classList.toggle('empty', !g.rod && W.ammo[k] + W.reserve[g.ammo] === 0); }
   }
   el.classList.toggle('idle', now - (G._slotLit || 0) > 4500);
@@ -245,7 +258,7 @@ function step(dt) {
     if (input.hit('KeyH')) Wp.select(null);
     if (input.wheel && !(Wp.scoped > .5) && !(G.fishing && G.fishing.busy)) Wp.cycle(input.wheel > 0 ? 1 : -1);
     if (input.hit('KeyF') && G.health < 100) eat();
-    if (input.hit('KeyE')) { const it = nearestInteract(), carcass = !it && G.carcass; if (player.seated && (!it || it.id === 'seat')) { player.seated = null; player.frozen = false; toast('You stand up.'); } else if (it) doInteract(it); else if (carcass) harvest(carcass); else if (G.wood) G.life.gather(G.wood); }
+    if (input.hit('KeyE') && G.drone.nearLanded && !nearestInteract()) G.drone.pickUp(); else if (input.hit('KeyE')) { const it = nearestInteract(), carcass = !it && G.carcass; if (player.seated && (!it || it.id === 'seat')) { player.seated = null; player.frozen = false; toast('You stand up.'); } else if (it) doInteract(it); else if (carcass) harvest(carcass); else if (G.wood) G.life.gather(G.wood); }
     G.timeScale = player.seated && input.down('Space') ? 30 : 1;
     // through the scope the crosshair drifts with your breathing and heartbeat; Shift holds your breath for a few seconds
     { const sc = Wp.scoped > .5, hold = sc && (input.down('ShiftLeft') || input.down('ShiftRight')) && G.breath > 0;
@@ -297,7 +310,7 @@ function step(dt) {
   G.carcass = !it && onFoot ? G.wildlife.carcassNear(player.pos, look) : null;
   G.woodT = (G.woodT || 0) - dt; if (G.woodT < 0) { G.woodT = .25; G.wood = !it && !G.carcass && onFoot ? G.life.gatherSpot(player.pos, look) : null; }
   if (player.seated && G.timeScale > 1) { pr.textContent = 'Time passes by the fire...'; pr.classList.add('on'); }
-  else if (it) { pr.textContent = 'E  ' + it.label(); pr.classList.add('on'); } else if (G.carcass) { pr.textContent = 'E  Dress the ' + G.carcass.sp.label.toLowerCase(); pr.classList.add('on'); } else if (G.wood) { pr.textContent = 'E  Gather dry wood' + (G.wood.kind === 6 ? ' from the fallen log' : G.wood.kind === 7 ? ' from the old stump' : ' from the dead tree'); pr.classList.add('on'); } else pr.classList.remove('on');
+  else if (it) { pr.textContent = 'E  ' + it.label(); pr.classList.add('on'); } else if (onFoot && G.drone.nearLanded) { pr.textContent = 'E  Pack the drone away'; pr.classList.add('on'); } else if (G.carcass) { pr.textContent = 'E  Dress the ' + G.carcass.sp.label.toLowerCase(); pr.classList.add('on'); } else if (G.wood) { pr.textContent = 'E  Gather dry wood' + (G.wood.kind === 6 ? ' from the fallen log' : G.wood.kind === 7 ? ' from the old stump' : ' from the dead tree'); pr.classList.add('on'); } else pr.classList.remove('on');
   $('#cross').style.opacity = W.ads > .5 || W.scoped > .5 || G.drone.on ? 0 : 1; G.drone.draw(); drawSlots();
   $('#ammo').textContent = W.label; $('#hit').classList.toggle('on', G.hitT > 0); G.hitT -= dt; updateHud(); G.fishing.tick(dt);
   G.ui.tick(dt);
@@ -318,7 +331,9 @@ function adaptResolution(dt) {
   if (G.noRender || G.hold) return;
   frameAvg += (dt * 1000 - frameAvg) * .05; resT += dt; if (resT < 2) return; resT = 0;
   const q = QUALITY[G.settings.quality] || QUALITY.high, base = Math.min(devicePixelRatio || 1, q.pr);
-  if (frameAvg > 24 && resScale > .6) resScale = Math.max(.6, resScale - .1);
+  // still slow at the lowest resolution: drop a graphics level (only while the game is choosing for the player)
+  if (frameAvg > 30 && resScale <= .61 && G.settings.qualityAuto && G.settings.quality !== 'low') { G.slowN = (G.slowN || 0) + 1; if (G.slowN >= 2) { G.slowN = 0; const nq = G.settings.quality === 'high' ? 'medium' : 'low'; G.settings.quality = nq; saveSettings(); drawSettings(); applyQuality(); resScale = 1; frameAvg = 16; toast(`Graphics set to ${nq === 'low' ? 'Low' : 'Medium'} to keep the game smooth.`); return; } } else G.slowN = 0;
+  if (frameAvg > 22 && resScale > .6) resScale = Math.max(.6, resScale - .1);
   else if (frameAvg < 14 && resScale < 1) resScale = Math.min(1, resScale + .05);
   else return;
   renderer.setPixelRatio(base * resScale); renderer.setSize(innerWidth, innerHeight, false); G.post.resize();
@@ -471,7 +486,7 @@ function drawContinue() {
 {
   const D = $('#drone .dtouch');
   D.addEventListener('touchstart', e => { const b = e.target.closest('button'); if (!b) return; e.preventDefault(); const d = b.dataset.d;
-    if (d === 'up') G.drone.up = 1; else if (d === 'down') G.drone.up = -1; else if (d === 'nv') G.drone.setVision(!G.drone.nv); else if (d === 'pin') input.touchFire = true; else if (d === 'back') input.press('KeyG'); }, { passive: false });
+    if (d === 'land') G.drone.landReq = true; else if (d === 'up') G.drone.up = 1; else if (d === 'down') G.drone.up = -1; else if (d === 'nv') G.drone.setVision(!G.drone.nv); else if (d === 'pin') input.touchFire = true; else if (d === 'back') input.press('KeyG'); }, { passive: false });
   const stop = e => { const b = e.target.closest('button'); if (b && (b.dataset.d === 'up' || b.dataset.d === 'down')) G.drone.up = 0; };
   D.addEventListener('touchend', stop); D.addEventListener('touchcancel', stop);
 }
@@ -499,7 +514,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act;
   if (a === 'spawn') start({ spawn: b.dataset.spawn });
   if (a === 'resume') pause(false);
-  if (a === 'quality') { G.settings.quality = b.dataset.q; saveSettings(); drawSettings(); applyQuality(); }
+  if (a === 'quality') { G.settings.quality = b.dataset.q; G.settings.qualityAuto = false; saveSettings(); drawSettings(); applyQuality(); }
   if (a === 'quit') { saveGame(); location.href = location.pathname + location.hash; }
   if (a === 'continue') { const d = loadSave(); if (d) start({ spawn: d.spawn, seed: d.seed, camp: d.camp, player: d.player, hours: d.hours, restore: d }); }
 });
@@ -507,7 +522,7 @@ canvas.addEventListener('click', () => { if (G.state === 'play' && !input.locked
 function drawSettings() { for (const b of document.querySelectorAll('[data-act=quality]')) b.classList.toggle('on', b.dataset.q === G.settings.quality); }
 function applyQuality() {
   resize(); G.post.setQuality(G.settings.quality); if (!G.terrain) return; const q = QUALITY[G.settings.quality];
-  G.terrain.setRadius(q.nearR, q.farR); G.flora.set(q.veg); G.grass.build(q.grass); G.sky.setShadowQuality(q.shadow, q.span);
+  G.terrain.setRadius(q.nearR, q.farR); G.flora.set(q.veg); G.grass.build(q.grass); G.sky.setShadowQuality(q.shadow, q.span); G.wildlife.furN = q.fur;
 }
 drawSettings(); drawContinue();
 

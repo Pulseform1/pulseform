@@ -268,7 +268,8 @@ class Animal {
     if (camDist < 260 || this.state === 'fly') pose(this.m, { gait: this.gait || 'stand', phase: this.phase, headDown: this.headDown, alert: this.alertK, lie: this.lie, fall: this.fall, look: this.look, t: this.t, flap: this.flap, display: this.display, flag: this.state === 'flee' && this.kind === 'deer' ? 1 : 0, jaw: this.jawK * (.75 + .25 * Math.sin(this.t * 9)), crouch: this.crouchK, swipe: this.swipe });
     // fur shells close up (or through the scope)
     const fur = camDist < this.W.furR && this.state !== 'down' || (camDist < this.W.furR && this.state === 'dead');
-    for (const s of this.m.shells) s.visible = fur;
+    const fn = this.W.furN ?? 7, every = fn >= 7 ? 1 : fn > 0 ? Math.ceil(7 / fn) : 0;   // fewer shells on lower graphics, none on Low
+    this.m.shells.forEach((s, i) => { s.visible = fur && every > 0 && i % every === every - 1; });
     // eyes that throw back the lantern (and a little moonlight): brightest looking straight at you
     if (this.m.shine.length) { const L = this.W.lightK; let o = 0; if (L > .02 && this.state !== 'dead' && this.state !== 'down' && camDist < 140) { const c = this.W.camPos, dx = c.x - this.pos.x, dz = c.z - this.pos.z, dl = Math.hypot(dx, dz) || 1, f = (Math.sin(this.yaw) * dx + Math.cos(this.yaw) * dz) / dl; o = L * smooth(.2, .85, f) * (1 - smooth(60, 140, camDist)) * (this.sp.predator ? 1 : .7); } for (const s of this.m.shine) s.material.opacity = o; }
   }

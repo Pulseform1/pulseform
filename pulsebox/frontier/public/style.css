@@ -173,3 +173,4 @@ body.touch #slots button kbd{display:none}
 @media (max-width:760px){#slots button{padding:2px 5px;font-size:10.5px}#slots .cap{display:none}}
 #toast{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 70px)}
 #slots[hidden]{display:none}
+#slots button.drone.out{opacity:.6;border-style:dashed}

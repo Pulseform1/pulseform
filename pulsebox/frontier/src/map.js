@@ -79,6 +79,8 @@ export class SurveyMap {
       const d = Math.hypot(c.x - P.x, c.z - P.z); if (d > 40) { g.fillStyle = 'rgba(244,232,204,.85)'; const mx = (ax + bx) / 2, my = (ay + by) / 2, txt = `camp ${d > 1000 ? (d / 1000).toFixed(1) + ' km' : Math.round(d) + ' m'} ${this.dirWord(c.x - P.x, c.z - P.z)}`; g.font = `italic ${12 * k}px Georgia, serif`; const tw = g.measureText(txt).width; g.fillRect(mx - tw / 2 - 5 * k, my - 13 * k, tw + 10 * k, 18 * k); g.fillStyle = '#2a1a0c'; g.textAlign = 'center'; g.fillText(txt, mx, my); g.textAlign = 'left'; } }
     // markers
     for (const m of this.markers) { const [sx, sy] = this.toScreen(m.x, m.z); this.flag(g, sx, sy, k, '#8a2a1a', String(m.n)); }
+    // the drone, where it was landed
+    { const L = this.G.drone && this.G.drone.landed; if (L) { const [sx, sy] = this.toScreen(L.x, L.z); this.flag(g, sx, sy, k, '#4a9a3a', 'Drone'); } }
     // animals pinned from the drone
     if (this.G.drone) for (const p of this.G.drone.pins) { const [sx, sy] = this.toScreen(p.x, p.z); this.flag(g, sx, sy, k, p.down ? '#8a8070' : '#e8781e', `${p.label}`); }
     // camp: a big tent, pinned to the edge when off the chart
@@ -122,6 +124,7 @@ export class SurveyMap {
     const mark = (x, z, col, txt) => { const a = Math.atan2(x - P.pos.x, -(z - P.pos.z)), sx = at((a + Math.PI * 2) % (Math.PI * 2)); if (sx === null) return; g.fillStyle = col; g.beginPath(); g.moveTo(sx, H * .82); g.lineTo(sx - 5 * k, H); g.lineTo(sx + 5 * k, H); g.fill(); if (txt) { g.font = `${10.5 * k}px Georgia, serif`; g.fillText(txt, sx, H * .2 + 2 * k); } };
     const c = this.G.world.camp, cd = Math.hypot(c.x - P.pos.x, c.z - P.pos.z); if (this.guide && cd > 18) mark(c.x, c.z, '#ffb24a', `camp ${cd > 1000 ? (cd / 1000).toFixed(1) + ' km' : Math.round(cd) + ' m'}`);
     for (const m of this.markers) mark(m.x, m.z, '#e06a4a', '');
+    { const L = this.G.drone && !this.G.drone.on && this.G.drone.landed; if (L) { const d = Math.hypot(L.x - P.pos.x, L.z - P.pos.z); if (d > 6) mark(L.x, L.z, '#8af07a', `drone ${d > 1000 ? (d / 1000).toFixed(1) + ' km' : Math.round(d) + ' m'}`); } }
     if (this.G.drone) for (const p of this.G.drone.pins) { const d = Math.hypot(p.x - P.pos.x, p.z - P.pos.z); mark(p.x, p.z, '#ff9a3a', `${p.label.toLowerCase()} ${d > 1000 ? (d / 1000).toFixed(1) + ' km' : Math.round(d) + ' m'}`); }
   }
   save() { return { explored: [...this.explored].slice(-6000), markers: this.markers, guide: this.guide, trail: this.trail.slice(-1500) }; }

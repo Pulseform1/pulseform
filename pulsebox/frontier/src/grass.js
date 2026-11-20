@@ -59,7 +59,7 @@ transformed.y += y * hgt * ( 1.0 - 0.25 * dot( bend, bend ) );
 vec3 green = mix( vec3( 0.16, 0.24, 0.06 ), vec3( 0.32, 0.36, 0.12 ), aOff.w );
 vec3 dry = vec3( 0.46, 0.41, 0.2 );
 vec3 tip = mix( green, dry, smoothstep( 0.4, 0.85, fd.b + aOff.w * 0.25 - 0.1 ) );
-vGCol = mix( tip * 0.68, tip * 1.1, y );
+vGCol = mix( tip * 0.68, tip * 0.98, y );
 vGAo = mix( 0.62, 1.0, y ) * ( 1.0 - 0.4 * fd.a );`;
 
 export class Grass {
@@ -75,7 +75,8 @@ export class Grass {
     for (const r of this.rings) { this.group.remove(r.mesh); r.mesh.geometry.dispose(); r.mesh.material.dispose(); }
     this.rings = [];
     // [inner, outer, blade width, spacing, fade]
-    const conf = { high: [[0, 16, .042, .1, [-1, 0, 13, 16]], [13, 38, .085, .22, [13, 16, 29, 38]]], medium: [[0, 13, .048, .125, [-1, 0, 10, 13]], [10, 28, .1, .27, [10, 13, 21, 28]]], low: [[0, 16, .065, .2, [-1, 0, 11, 16]]] }[q] || [];
+    // the far blades are wider than they look thin, so they cover a pixel or more and never shimmer as you move
+    const conf = { high: [[0, 16, .046, .1, [-1, 0, 13, 16]], [13, 34, .13, .25, [13, 16, 25, 34]]], medium: [[0, 13, .052, .125, [-1, 0, 10, 13]], [10, 24, .15, .3, [10, 13, 18, 24]]], low: [[0, 14, .075, .22, [-1, 0, 9, 14]]] }[q] || [];
     conf.forEach(([r0, r1, w, sp, fade], k) => this.rings.push(this.ring(r0, r1, w, sp, k, fade)));
     this.quality = q;
   }
@@ -87,7 +88,7 @@ export class Grass {
       rnd[i * 4] = R() * .98; rnd[i * 4 + 1] = R(); rnd[i * 4 + 2] = R(); rnd[i * 4 + 3] = R();
     }
     const g = bladeGeometry(); g.setAttribute('aOff', new THREE.InstancedBufferAttribute(off, 4)); g.setAttribute('aRnd', new THREE.InstancedBufferAttribute(rnd, 4)); g.instanceCount = count;
-    const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .82, metalness: 0, side: THREE.DoubleSide });
+    const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0, side: THREE.DoubleSide });
     const uRing = { value: new THREE.Vector4(r0, r1, width, T) }, uH = { value: .55 }, uFade = { value: new THREE.Vector4(...fade) };
     patch(mat, 'grass', sh => {
       Object.assign(sh.uniforms, { uField: { value: this.field.tex }, uFieldO: this.field.o, uRing, uFade, uTime: U.uTime, uWind: U.uWind, uPlayer: this.uPlayer, uH, uSunCol: U.uSunCol, uSunDirF: U.uSunDirW });
@@ -98,8 +99,8 @@ export class Grass {
         .replace('float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;', 'float faceDirection = 1.0;')
         .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
 reflectedLight.indirectDiffuse *= vGAo;
-{ vec3 sv = normalize( ( viewMatrix * vec4( uSunDirF, 0.0 ) ).xyz ); float bl = pow( max( dot( - geometryViewDir, sv ), 0.0 ), 4.0 );
-  reflectedLight.directDiffuse += diffuseColor.rgb * uSunCol * 0.4 * bl * vGAo; }`);
+{ vec3 sv = normalize( ( viewMatrix * vec4( uSunDirF, 0.0 ) ).xyz ); float bl = pow( max( dot( - geometryViewDir, sv ), 0.0 ), 2.0 );
+  reflectedLight.directDiffuse += diffuseColor.rgb * uSunCol * 0.12 * bl * vGAo; }   // a soft glow through the blades against the sun, not glints`);
     });
     const mesh = new THREE.Mesh(g, mat); mesh.frustumCulled = false; mesh.receiveShadow = true; mesh.castShadow = false; mesh.renderOrder = 1;
     this.group.add(mesh);

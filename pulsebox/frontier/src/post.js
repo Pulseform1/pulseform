@@ -18,11 +18,11 @@ const SHAFTS = {
     vec4 base = texture2D( tDiffuse, vUv );
     if ( uK < 0.003 ) { gl_FragColor = base; return; }
     vec2 d = ( uSun - vUv ); float dist = length( d * vec2( uAspect, 1.0 ) );
-    vec2 stp = d / 22.0; vec2 p = vUv; float acc = 0.0, w = 1.0;
+    vec2 stp = d / float( SAMPLES ); vec2 p = vUv; float acc = 0.0, w = 1.0;
     float j = fract( sin( dot( vUv, vec2( 12.9898, 78.233 ) ) ) * 43758.5453 );
     p += stp * j;
-    for ( int i = 0; i < 22; i++ ) { acc += bright( p ) * w; w *= 0.93; p += stp; }
-    acc /= 9.0;
+    for ( int i = 0; i < SAMPLES; i++ ) { acc += bright( p ) * w; w *= 0.93; p += stp; }
+    acc /= 9.0 * float( SAMPLES ) / 22.0;
     float fall = exp( - dist * 2.2 );
     gl_FragColor = vec4( base.rgb + uCol * acc * fall * uK, base.a );
   }`,
@@ -59,13 +59,14 @@ export class Post {
     if (this.comp) this.comp.dispose();
     const c = this.comp = new EffectComposer(this.r, rt);
     c.addPass(new RenderPass(this.scene, this.cam));
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), q === 'high' ? .42 : .32, .55, .86); c.addPass(this.bloom);
-    this.shafts = new ShaderPass(SHAFTS); c.addPass(this.shafts);
+    // Medium: the glow worked at half size and fewer steps for the sun's rays, which is most of the cost on built-in graphics
+    const half = this.half = q === 'high' ? 1 : .5; this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x * half, size.y * half), q === 'high' ? .42 : .32, .55, .88); c.addPass(this.bloom);
+    this.shafts = new ShaderPass({ ...SHAFTS, defines: { SAMPLES: q === 'high' ? 22 : 12 } }); c.addPass(this.shafts);
     c.addPass(new OutputPass());
     this.grade = new ShaderPass(GRADE); c.addPass(this.grade);
     this.resize();
   }
-  resize() { if (!this.comp) return; const s = this.r.getSize(new THREE.Vector2()); this.comp.setPixelRatio(this.r.getPixelRatio()); this.comp.setSize(s.x, s.y); if (this.shafts) this.shafts.uniforms.uAspect.value = s.x / Math.max(1, s.y); }
+  resize() { if (!this.comp) return; const s = this.r.getSize(new THREE.Vector2()); this.comp.setPixelRatio(this.r.getPixelRatio()); this.comp.setSize(s.x, s.y); if (this.bloom && this.half < 1) { const pr = this.r.getPixelRatio(); this.bloom.setSize(Math.round(s.x * pr * this.half), Math.round(s.y * pr * this.half)); } if (this.shafts) this.shafts.uniforms.uAspect.value = s.x / Math.max(1, s.y); }
   // sunDir: toward the sun (world); k: how strong the shafts may be (daylight, clear sky)
   render(dt, sunDir, k, night) {
     if (!this.on || !this.comp) { this.r.render(this.scene, this.cam); return; }

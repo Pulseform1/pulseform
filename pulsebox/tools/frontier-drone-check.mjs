@@ -52,5 +52,15 @@ ok(!bat.on, 'a flat battery brings the drone home', bat);
 // attacked while flying
 const atk = await p.evaluate(() => { const G = __fh.G; G.drone.batt = 150; __fh.input.press('KeyG'); __fh.tick(1, 1/30); const a = G.wildlife.animals[0]; G.wildlife.onAttack(a, 5); __fh.tick(1, 1/30); return { on: G.drone.on }; });
 ok(!atk.on, 'hurt while flying: the drone drops back and you can fight', atk);
+// landing: X sets it down; the view comes back to you; G flies it again from where it sits; E beside it packs it
+const land = await p.evaluate(() => { const G = __fh.G, D = G.drone, P = G.player; D.batt = 150; if (D.on) D.recall(); __fh.tick(1, 1/30);
+  __fh.input.press('KeyG'); __fh.tick(1, 1/30); __fh.input.move = () => ({ x: 0, y: 1 }); for (let i = 0; i < 60; i++) __fh.tick(1, 1/30); __fh.input.move = () => ({ x: 0, y: 0 });
+  __fh.input.press('KeyX'); let n = 0; while (D.on && n < 400) { __fh.tick(1, 1/30); n++; }
+  const L = D.landed; return { on: D.on, landed: !!L, frames: n, model: !!(D.model && D.model.visible), away: L ? +Math.hypot(L.x - P.pos.x, L.z - P.pos.z).toFixed(1) : -1, frozen: P.frozen }; });
+ok(!land.on && land.landed && land.model && land.away > 5 && !land.frozen, 'X lands the drone out there; the view comes back to you', land);
+const again = await p.evaluate(() => { const G = __fh.G, D = G.drone, L = { ...D.landed }; __fh.input.press('KeyG'); __fh.tick(2, 1/30); const r = { on: D.on, fromSpot: +Math.hypot(D.pos.x - L.x, D.pos.z - L.z).toFixed(2), model: D.model.visible }; __fh.input.press('KeyX'); let n = 0; while (D.on && n < 400) { __fh.tick(1, 1/30); n++; } return r; });
+ok(again.on && again.fromSpot < 1 && !again.model, 'G flies it again from where it sat', again);
+const pack = await p.evaluate(() => { const G = __fh.G, D = G.drone, L = D.landed, P = G.player; P.place(L.x + 1.2, L.z + .5, 0); __fh.tick(2, 1/30); const prompt = document.querySelector('#prompt').textContent; __fh.input.press('KeyE'); __fh.tick(2, 1/30); return { prompt, landed: !!D.landed, model: D.model.visible }; });
+ok(/Pack the drone/.test(pack.prompt) && !pack.landed && !pack.model, 'walk up to it: E packs it away', pack);
 console.log('ERRORS', JSON.stringify(errs.filter(e => !/Pointer Lock/.test(e)).slice(0, 5)));
 await b.close();
