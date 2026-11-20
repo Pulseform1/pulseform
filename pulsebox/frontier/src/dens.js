@@ -13,7 +13,7 @@ export class Dens {
     this.scene = scene; this.world = world; this.sites = new Map(); this.cleared = new Set(); this.onFound = null; this.t = 0;
     this.rockM = new THREE.MeshStandardMaterial({ map: tex.rock, normalMap: tex.rockN, roughness: .95, metalness: 0, vertexColors: true });
     this.voidM = new THREE.MeshBasicMaterial({ color: 0x020202 });
-    this.boneM = new THREE.MeshStandardMaterial({ color: 0xcfc4a6, roughness: .8 });
+    this.boneM = new THREE.MeshStandardMaterial({ color: 0xa99f86, roughness: .85 });
   }
   // the den in a 520 m square, if there is one (what has happened there is kept here)
   siteIn(i, j) {

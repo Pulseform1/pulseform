@@ -48,7 +48,7 @@ export function flora(world, cx, cz, C) {
     const gx = cx * nc + i, gz = cz * nc + j, r1 = hash2(gx, gz, seed + 1), r2 = hash2(gx, gz, seed + 2), r3 = hash2(gx, gz, seed + 3);
     const x = x0 + (i + .15 + r1 * .7) * C / nc, z = z0 + (j + .15 + r2 * .7) * C / nc, s = at(x, z);
     if (s.h < 1.0) continue;
-    const f = world.forest(x, z, s), dp = smooth(.72, .95, f);   // dp: deep timber, where the forest closes up
+    const f = world.forest(x, z, s), dp = world.deep(x, z, f);   // dp: the deep forest, where the woods close up
     // deep in the timber, young spruce fill the gaps between the big trees
     if (dp > .3 && hash2(gx, gz, seed + 21) < .3 * dp) { const yx = x + (hash2(gx, gz, seed + 22) - .5) * cell * .9, yz = z + (hash2(gx, gz, seed + 23) - .5) * cell * .9, ys = at(yx, yz); if (ys.h > 1 && world.denClear(yx, yz) > .9) { world.normal(yx, yz, nrm, 1); if (nrm[1] > .78) trees.push(yx, ys.h - .1, yz, hash2(gx, gz, seed + 24) * 6.283, .3 + hash2(gx, gz, seed + 25) * .35, 11); } s.h = at(x, z).h; }
     if (r3 > f * (0.66 + 0.24 * dp)) { // the odd young spruce at forest edges
@@ -86,7 +86,7 @@ export function flora(world, cx, cz, C) {
     if (s.h < 1.3) { if (r <= 0.42 && q < 0.25 && nrm[1] > .85) props.push(x, s.h, z, rot, .7 + sz * .6, 8); continue; }
     if (nrm[1] < 0.7) continue;
     // deep timber: a thick, mixed understory of ferns, leafy bushes, junipers, tufts of tall grass, stumps and deadfall
-    const dp = smooth(.72, .95, f);
+    const dp = world.deep(x, z, f);
     if (dp > .25 && r < .72 * dp) {
       if (q < .3) props.push(x, s.h - .05, z, rot, .6 + sz * .8, 2);
       else if (q < .46) props.push(x, s.h - .08, z, rot, .7 + sz * .9, 0);

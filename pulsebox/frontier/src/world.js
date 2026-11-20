@@ -62,6 +62,9 @@ export class World {
     if (this.camp) { const d = Math.hypot(x - this.camp.x, z - this.camp.z); f *= smooth(21, 34, d); }
     return f * this.denClear(x, z);
   }
+  // 0..1: the deep forest, pockets of old timber inside the thickest woods (about a third of them): the trees close up,
+  // the understory thickens, the light fails, and the bears den there
+  deep(x, z, f) { if (f < .8) return 0; return smooth(.82, .97, f) * smooth(-.05, .3, this.k.n2(x * .0016 + 41, z * .0016 - 73)); }
   // Bear dens: one at most in each 520 m square, set into a wooded hillside deep in thick timber, well away from camp.
   // Known to the world itself (here and in the workers alike), so no tree grows out of the rock or across the mouth.
   // The cave faces downhill; its rock dome sits back into the slope, the mouth at the foot of it.
@@ -73,10 +76,10 @@ export class World {
     // a few tries in the square for a wooded hillside
     for (let t = 0; t < 5 && !site && hs(3) < .8; t++) {
       const px = (i + .15 + hs(10 + t) * .7) * CELL, pz = (j + .15 + hs(20 + t) * .7) * CELL; if (!far0([px, pz])) continue;
-      const s = this.sample(px, pz, {}); if (s.h < 4 || this.forestRaw(px, pz, s) < .6) continue;
+      const s = this.sample(px, pz, {}), f0 = this.forestRaw(px, pz, s); if (s.h < 4 || this.deep(px, pz, f0) < .7) continue;   // (only in the deep forest)
       const n = this.normal(px, pz, [0, 1, 0], 5); if (n[1] > .93 || n[1] < .7) continue;   // a hillside, not the flat and not a cliff
-      let around = 0; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2, qx = px + Math.cos(a) * 55, qz = pz + Math.sin(a) * 55; around += this.forestRaw(qx, qz, this.sample(qx, qz, {})); } around /= 6;
-      if (around < .5) continue;
+      let around = 0; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2, qx = px + Math.cos(a) * 55, qz = pz + Math.sin(a) * 55; around += this.deep(qx, qz, this.forestRaw(qx, qz, this.sample(qx, qz, {}))); } around /= 6;
+      if (around < .55) continue;
       const L = Math.hypot(n[0], n[2]), fx = n[0] / L, fz = n[2] / L, yaw = Math.atan2(fx, fz);   // facing downhill
       const x = px - fx * 3, z = pz - fz * 3, hf = this.height(x + fx * R * .8, z + fz * R * .8);   // the dome sits back into the hill
       site = { key, id: Math.abs(i * 7919 + j * 104729), x, z, yaw, fx, fz, h: hf - .4, R: 70, door: { x: x + fx * (R + 4), z: z + fz * (R + 4) } };
@@ -104,7 +107,7 @@ export class World {
   grass(x, z, s, f, ny) {
     let g = 1 - 0.8 * f;
     // deep in the timber the floor is not bare: patches of grass come up between the trunks
-    if (f > .7) g = Math.max(g, .55 * smooth(.7, .95, f) * smooth(.1, .45, this.k.n2(x * .09 - 7, z * .09 + 4)));
+    if (f > .8) g = Math.max(g, .55 * this.deep(x, z, f) * smooth(.1, .45, this.k.n2(x * .09 - 7, z * .09 + 4)));
     g *= smooth(0.55, 1.4, s.h);
     g *= smooth(0.72, 0.86, ny);
     g *= 1 - smooth(150, 185, s.h);

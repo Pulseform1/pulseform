@@ -298,8 +298,8 @@ function step(dt) {
   // how deep in the timber you are: thick forest all round dims the light, thickens the fog and mist, quiets the birds
   // (camp stays a clearing you can see across)
   G.gloomT = (G.gloomT || 0) - dt;
-  if (G.gloomT <= 0) { G.gloomT = .4; let f = 0; for (let k = 0; k < 9; k++) { const a = k / 8 * Math.PI * 2, r = k ? 38 : 0; f += G.world.forest(player.pos.x + Math.cos(a) * r, player.pos.z + Math.sin(a) * r); }
-    const cp = G.world.camp, dc = cp ? Math.hypot(player.pos.x - cp.x, player.pos.z - cp.z) : 1e9; G.gloomTgt = THREE.MathUtils.smoothstep(f / 9, .55, .85) * THREE.MathUtils.smoothstep(dc, 60, 170); }
+  if (G.gloomT <= 0) { G.gloomT = .4; let f = 0; for (let k = 0; k < 9; k++) { const a = k / 8 * Math.PI * 2, r = k ? 38 : 0, x = player.pos.x + Math.cos(a) * r, z = player.pos.z + Math.sin(a) * r; f += G.world.deep(x, z, G.world.forestRaw(x, z, G.world.sample(x, z, {}))); }
+    const cp = G.world.camp, dc = cp ? Math.hypot(player.pos.x - cp.x, player.pos.z - cp.z) : 1e9; G.gloomTgt = THREE.MathUtils.smoothstep(f / 9, .25, .7) * THREE.MathUtils.smoothstep(dc, 60, 170); }
   G.gloom = (G.gloom || 0) + ((G.gloomTgt || 0) - (G.gloom || 0)) * Math.min(1, dt * .25); sky.gloom = G.gloom;
   sky.update(dt, camera.position, gameDt);
   if (sky.hours < before) G.day++;

@@ -60,8 +60,9 @@ class Animal {
     if (this.sp.swim) return h < -.2; // ducks keep to the water
     if (h < (this.sp.water ? -1.1 : -.25)) return false;
     // steers by about its real footprint, so the bigger look does not wedge it in the trees
-    let blocked = false; this.W.flora.near(x, z, .42 * this.scale / this.size, () => { blocked = true; }); if (blocked) return false;
-    const n = w.normal(x, z, this._n || (this._n = [0, 1, 0]), 1.5); if (n[1] < (this.sp.climber ? .3 : this.sp.predator === 'cougar' ? .55 : .72)) return false;
+    // (a den bear on the attack shoulders through the saplings and up its own hillside: nothing on its ground stops it)
+    let blocked = false; if (!this.mad) this.W.flora.near(x, z, .42 * this.scale / this.size, () => { blocked = true; }); if (blocked) return false;
+    const n = w.normal(x, z, this._n || (this._n = [0, 1, 0]), 1.5); if (n[1] < (this.sp.climber ? .3 : this.den ? .45 : this.sp.predator === 'cougar' ? .55 : .72)) return false;
     const c = this.W.camp; if (c && Math.hypot(x - c.c.x, z - c.c.z) < 12) return false;
     return true;
   }
