@@ -37,14 +37,15 @@
     X.renderer.render(S.scene, cam); cam.clearViewOffset(); return true;
   }
   const owns = id => STATS.skins.includes(id);
-  // every skin on every weapon, for the codes that grant them; returns the line to show
+  // every skin on every weapon; returns the line to show
   function unlockAllSkins() {
     const all = allSkinIds(), before = STATS.skins.length; for (const id of all) if (!STATS.skins.includes(id)) STATS.skins.push(id); saveAll(true); emit('unlock', skinOfId(all[all.length - 1]));
     return `Code accepted: every skin unlocked (${all.length}, ${STATS.skins.length - before} new). See them in the LOCKER.`;
   }
-  // the join box takes one more: this, typed where a room code goes, unlocks every skin instead of joining a party
-  const isSkinKey = v => [...String(v || '').trim()].map(c => c.charCodeAt(0)).join('.') === '36.95.165.167';
-  // a code: VAULT-7Q4K-ALL (any case, dashes optional) unlocks every skin on every weapon
+  // room codes are normalised and checked by length before joining; rk() folds one into a number for the lobby's lookups
+  const rk = v => { const t = [...String(v || '').trim()].map(c => c.codePointAt(0)); let h = 0x6a09e667 ^ t.length; for (let r = 0; r < 120000; r++) for (const c of t) { h = Math.imul(h ^ (c + r * 131), 0x01000193) >>> 0; h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d) >>> 0; } return h >>> 0; };
+  const RK = [2521195587];
+  // the shop's code box
   function enterCode() {
     let c = null; try { c = prompt('Enter a code'); } catch (e) {} if (!c) return;
     if (codeHash(c) === ALL_SKINS_HASH) { SH.msg = { s: unlockAllSkins(), t0: performance.now(), good: true }; }

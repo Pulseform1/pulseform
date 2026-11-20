@@ -55,9 +55,9 @@
 
   // a text box for your name and a room code, laid over the canvas where the party screen asks for it
   let domIn = null;
-  // the code box: a room code joins a party; the skin key unlocks every skin and clears the box
+  // the code box
   function joinOrKey(v) {
-    if (isSkinKey(v)) { PARTY.status = unlockAllSkins(); if (domIn && domIn.code) domIn.code.value = ''; click(); return; }
+    if (RK.includes(rk(v))) { PARTY.status = unlockAllSkins(); if (domIn && domIn.code) domIn.code.value = ''; click(); return; }
     MP.join(v);
   }
   function textBox(id, x, y, w, h, ph, max, val, onEnter) {

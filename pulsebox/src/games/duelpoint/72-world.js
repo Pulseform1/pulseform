@@ -59,7 +59,7 @@
     // containers that touch share a colour
     const group = new Int16Array(NC).fill(-1); let groups = 0;
     for (let k = 0; k < NC; k++) if (SRC[Math.floor(k / GW)][k % GW] === 'X' && group[k] < 0) { const st = [k]; group[k] = groups; while (st.length) { const q = st.pop(), qi = q % GW, qj = Math.floor(q / GW); for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(qi + di, qj + dj); if (nk >= 0 && group[nk] < 0 && chAt(qi + di, qj + dj) === 'X') { group[nk] = groups; st.push(nk); } } } groups++; }
-    const uvWall = (u, y) => [u / 8, y / WALL_H], uvBox = (u, y) => [u / CS, y / BOX_H], uvCrate = (u, y) => [u / CS, y / CRATE_H], uvDock = (u, y) => [u / CS, y / DOCK_H], uvPlain = (u, y) => [u / 4, y / 4];
+    const uvWall = (u, y) => [u / 16, y / WALL_H], uvBox = (u, y) => [u / CS, y / BOX_H], uvCrate = (u, y) => [u / CS, y / CRATE_H], uvDock = (u, y) => [u / CS, y / DOCK_H], uvPlain = (u, y) => [u / 4, y / 4];
 
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
       const c = SRC[j][i], k = j * GW + i, x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS, area = AREA[k] >= 0 ? AREAS[AREA[k]] : null, dim = roofed[k] ? .62 : 1;
@@ -134,14 +134,14 @@
     // textures
     const T = {
       // Walls and floors, painted clean and bold: big shapes, soft light, little noise, so a fighter reads at a glance.
-      // A wall (8 m across, its full 6 m up): smooth plaster lit from above, panel seams every 2 m, a concrete coping
+      // A wall (16 m across, its full 6 m up): smooth plaster lit from above, panel seams every 2 m, a concrete coping
       // along the top and a skirting along the floor, and here and there the plaster broken away to show the brick
       // behind. Light enough that each map's tint carries its colour.
-      wall: canvasTex(1024, 512, (g, w, h) => {
+      wall: canvasTex(2048, 512, (g, w, h) => {
         const sk = Math.round(h * .075), cop = Math.round(h * .045);
         const base = g.createLinearGradient(0, 0, 0, h); base.addColorStop(0, '#ece4d2'); base.addColorStop(.6, '#ddd3bd'); base.addColorStop(1, '#cdc1a8'); g.fillStyle = base; g.fillRect(0, 0, w, h);
         // soft painted mottling: wide, faint washes rather than speckle
-        for (let i = 0; i < 130; i++) { const lt = Math.random() < .55; g.fillStyle = lt ? `rgba(255,250,236,${.04 + Math.random() * .07})` : `rgba(120,104,80,${.03 + Math.random() * .05})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 30 + Math.random() * 120, 14 + Math.random() * 60, Math.random() * 3, 0, 7); g.fill(); }
+        for (let i = 0; i < 260; i++) { const lt = Math.random() < .55; g.fillStyle = lt ? `rgba(255,250,236,${.04 + Math.random() * .07})` : `rgba(120,104,80,${.03 + Math.random() * .05})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 30 + Math.random() * 120, 14 + Math.random() * 60, Math.random() * 3, 0, 7); g.fill(); }
         // brick showing through where the plaster has broken away (two or three patches, never on the skirting)
         const patch = (cx, cy, rx, ry) => {
           const pts = []; for (let a = 0; a < 14; a++) { const t = a / 14 * Math.PI * 2, r = .72 + Math.random() * .38; pts.push([cx + Math.cos(t) * rx * r, cy + Math.sin(t) * ry * r]); }
@@ -153,20 +153,20 @@
           const sh = g.createLinearGradient(0, cy - ry, 0, cy - ry * .4); sh.addColorStop(0, 'rgba(60,40,24,.3)'); sh.addColorStop(1, 'rgba(40,24,14,0)'); g.fillStyle = sh; g.fillRect(cx - rx * 1.2, cy - ry * 1.2, rx * 2.4, ry * .9);
           g.restore(); path(); g.lineWidth = 3; g.strokeStyle = 'rgba(110,94,72,.35)'; g.stroke(); g.lineWidth = 2; g.strokeStyle = 'rgba(255,250,236,.6)'; g.save(); g.translate(0, 2.5); path(); g.stroke(); g.restore();
         };
-        for (let n = 0, tries = 0; n < 1 + (Math.random() < .5 ? 1 : 0) && tries < 20; tries++) { const cx = 80 + (n ? w / 2 : 0) + Math.random() * (w / 2 - 160), cy = cop + 50 + Math.random() * (h - sk - cop - 210); if (cy > h * .62) continue; patch(cx, cy, 34 + Math.random() * 36, 22 + Math.random() * 22); n++; }
+        for (let n = 0, tries = 0; n < 1 && tries < 20; tries++) { const cx = 120 + Math.random() * (w - 240), cy = cop + 50 + Math.random() * (h - sk - cop - 210); if (cy > h * .62) continue; patch(cx, cy, 34 + Math.random() * 36, 22 + Math.random() * 22); n++; }
         // panel seams every 2 m: a fine recessed line with a lit lip
-        for (const x of [0, 256, 512, 768]) { g.fillStyle = 'rgba(80,68,50,.38)'; g.fillRect(x, cop, 3, h - sk - cop); g.fillStyle = 'rgba(255,250,236,.45)'; g.fillRect(x + 3, cop, 2, h - sk - cop); }
+        for (let x = 0; x < w; x += 256) { g.fillStyle = 'rgba(80,68,50,.38)'; g.fillRect(x, cop, 3, h - sk - cop); g.fillStyle = 'rgba(255,250,236,.45)'; g.fillRect(x + 3, cop, 2, h - sk - cop); }
         // a fine horizontal reveal two-thirds of the way up
         { const y = Math.round(h * .3); g.fillStyle = 'rgba(80,68,50,.32)'; g.fillRect(0, y, w, 3); g.fillStyle = 'rgba(255,250,236,.4)'; g.fillRect(0, y + 3, w, 2); }
         // rain streaks below the coping and a little grime above the skirting
-        for (let i = 0; i < 22; i++) { const x = Math.random() * w, l = 40 + Math.random() * 150, gr = g.createLinearGradient(0, cop, 0, cop + l); gr.addColorStop(0, 'rgba(100,88,66,.22)'); gr.addColorStop(1, 'rgba(100,88,66,0)'); g.fillStyle = gr; g.fillRect(x, cop, 3 + Math.random() * 10, l); }
+        for (let i = 0; i < 44; i++) { const x = Math.random() * w, l = 40 + Math.random() * 150, gr = g.createLinearGradient(0, cop, 0, cop + l); gr.addColorStop(0, 'rgba(100,88,66,.22)'); gr.addColorStop(1, 'rgba(100,88,66,0)'); g.fillStyle = gr; g.fillRect(x, cop, 3 + Math.random() * 10, l); }
         { const gr = g.createLinearGradient(0, h - sk - 70, 0, h - sk); gr.addColorStop(0, 'rgba(110,96,72,0)'); gr.addColorStop(1, 'rgba(110,96,72,.32)'); g.fillStyle = gr; g.fillRect(0, h - sk - 70, w, 70); }
         // the coping along the top
         g.fillStyle = '#a89d88'; g.fillRect(0, 0, w, cop); g.fillStyle = 'rgba(255,250,236,.35)'; g.fillRect(0, 0, w, 3); g.fillStyle = 'rgba(50,40,28,.45)'; g.fillRect(0, cop, w, 4); g.fillStyle = 'rgba(50,40,28,.15)'; g.fillRect(0, cop + 4, w, 6);
         for (let x = 0; x < w; x += 64) { g.fillStyle = 'rgba(60,50,36,.3)'; g.fillRect(x, 0, 2, cop); }
         // the skirting along the floor: darker concrete with a bevelled top edge
         g.fillStyle = '#9c917c'; g.fillRect(0, h - sk, w, sk); g.fillStyle = 'rgba(255,250,236,.5)'; g.fillRect(0, h - sk, w, 3); g.fillStyle = 'rgba(50,40,28,.35)'; g.fillRect(0, h - sk - 4, w, 4);
-        for (let i = 0; i < 80; i++) { g.fillStyle = `rgba(60,50,36,${.05 + Math.random() * .1})`; g.fillRect(Math.random() * w, h - sk + 4 + Math.random() * (sk - 6), 6 + Math.random() * 30, 2 + Math.random() * 4); }
+        for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(60,50,36,${.05 + Math.random() * .1})`; g.fillRect(Math.random() * w, h - sk + 4 + Math.random() * (sk - 6), 6 + Math.random() * 30, 2 + Math.random() * 4); }
         for (let x = 0; x < w; x += 128) { g.fillStyle = 'rgba(60,50,36,.35)'; g.fillRect(x, h - sk, 2, sk); }
       }),
       // A floor (4 m square): stone slabs a metre deep and two long, laid in running bond, each a touch different in tone,
@@ -369,8 +369,7 @@
      a shot. Everything here hugs a wall (a hand-breadth proud at most) or lies flat on the ground, and keeps clear of the
      lane bands, the door signs and the site letters. Placed from a hash of the map and the cell, so every player on
      every device sees the same walls.
-       on the walls: pipe runs with brackets, downpipes, lamps throwing a pool of light (neon tubes on the city and
-         station maps), electrical boxes, vent grilles; and by theme icicles, vines, life rings or cloth banners
+       on the walls: pipe runs with brackets, downpipes, wall lamps (neon tubes on the city and station maps), electrical boxes, vent grilles; and by theme icicles, vines, life rings or cloth banners
        on the floor: drain grates along the walls, manhole covers, and stains */
   function detail(W, TH, sh, roofed, signs) {
     const t = MAP.theme, seed = [...MAP.k].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
@@ -378,8 +377,8 @@
     const G = new THREE.Group(); W.add(G);
     const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o || {})), bas = c => new THREE.MeshBasicMaterial({ color: LC(c) });
     const PAL = { harbor: ['#6f7780', '#b8452e'], neon: ['#3a3f58', '#ff3ea5'], snow: ['#7d8a96', '#c0392b'], desert: ['#8a6a48', '#c9862e'], jungle: ['#5a6448', '#8a6a40'], lava: ['#5a4a44', '#ff6a1a'], space: ['#9aa6ba', '#38e8ff'] }[t] || ['#6f7780', '#b8452e'];
-    const pipeM = lam(PAL[0]), bracketM = lam('#2e3136'), boxM = lam('#8f9690'), boxDoorM = lam('#a9b0aa'), lampM = lam('#30343a'), bulbM = bas(t === 'lava' ? '#ffb070' : '#fff1c8');
-    const neon = t === 'neon' || t === 'space', NEON = t === 'space' ? ['#38e8ff', '#9ad8ff', '#ff8a3d'] : ['#ff3ea5', '#3df2ff', '#ffd23f', '#9a7cff'], neonM = NEON.map(bas);
+    const pipeM = lam(PAL[0]), bracketM = lam('#2e3136'), boxM = lam('#8f9690'), boxDoorM = lam('#a9b0aa'), lampM = lam('#30343a'), bulbM = lam(t === 'lava' ? '#e8b48a' : '#f2e8cc');
+    const neon = t === 'neon' || t === 'space', NEON = t === 'space' ? ['#38e8ff', '#9ad8ff', '#ff8a3d'] : ['#ff3ea5', '#3df2ff', '#ffd23f', '#9a7cff'], neonM = NEON.map(c => lam(c));
     const put = (geo, m, x, y, z, ry = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.y = ry; G.add(o); return o; };
     // decals and glows: flat quads in one mesh per texture
     const quads = {}, quad = (key, cx, cy, cz, ux, uz, vx, vy, vz, w, h) => { const q = quads[key] || (quads[key] = { P: [], U: [], I: [] }), n = q.P.length / 3, hw = w / 2, hh = h / 2;
@@ -389,7 +388,6 @@
       const m = new THREE.Mesh(g, mat); m.renderOrder = order || 1; W.add(m); };
     const decal = (map, o) => Object.assign(new THREE.MeshLambertMaterial({ map, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, side: THREE.DoubleSide }), o || {});
     if (!X.detailT) X.detailT = {
-      glow: canvasTex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.35, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }),
       grate: canvasTex(128, 64, (g, w, h) => { g.fillStyle = '#3a3c40'; g.fillRect(0, 0, w, h); g.fillStyle = '#121315'; for (let x = 10; x < w - 8; x += 12) g.fillRect(x, 8, 6, h - 16); g.strokeStyle = '#6a6e74'; g.lineWidth = 4; g.strokeRect(2, 2, w - 4, h - 4); }),
       vent: canvasTex(128, 80, (g, w, h) => { g.fillStyle = '#7d8288'; g.fillRect(0, 0, w, h); for (let y = 10; y < h - 8; y += 9) { g.fillStyle = '#2a2c30'; g.fillRect(8, y, w - 16, 5); g.fillStyle = 'rgba(255,255,255,.3)'; g.fillRect(8, y + 5, w - 16, 1.5); } g.strokeStyle = '#4a4e54'; g.lineWidth = 4; g.strokeRect(2, 2, w - 4, h - 4); g.fillStyle = '#2a2c30'; for (const [x, y] of [[7, 7], [w - 7, 7], [7, h - 7], [w - 7, h - 7]]) { g.beginPath(); g.arc(x, y, 2.5, 0, 7); g.fill(); } }),
       manhole: canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = '#4a4c50'; g.beginPath(); g.arc(64, 64, 62, 0, 7); g.fill(); g.strokeStyle = '#2a2b2e'; g.lineWidth = 5; g.beginPath(); g.arc(64, 64, 56, 0, 7); g.stroke(); g.lineWidth = 3; for (let r = 14; r < 52; r += 12) { g.beginPath(); g.arc(64, 64, r, 0, 7); g.stroke(); } for (let a = 0; a < 8; a++) { g.beginPath(); g.moveTo(64, 64); g.lineTo(64 + Math.cos(a * Math.PI / 4) * 52, 64 + Math.sin(a * Math.PI / 4) * 52); g.stroke(); } g.fillStyle = 'rgba(255,255,255,.12)'; g.beginPath(); g.arc(56, 56, 30, 0, 7); g.fill(); }),
@@ -425,10 +423,9 @@
         // lamps every few cells, or neon on the city and the station
         if (along % 3 === 1 && hash(i, j, e, 5) < .6 && !nearMark(fx, fz, 2.9, 3.9)) {
           if (neon) { const m = neonM[Math.floor(hash(line, e, 6) * neonM.length)], [x, z] = at(0, .05); put(new THREE.BoxGeometry(1.5, .06, .06), m, x, 3.35, z, ry); const [bx, bz] = at(0, .03); put(new THREE.BoxGeometry(1.6, .14, .04), bracketM, bx, 3.35, bz, ry);
-            const [gx, gz] = at(0, .015); quad('glow:' + neonM.indexOf(m), gx, 3.35, gz, ux, uz, 0, 1, 0, 3.2, 1.1); }
+          }
           else { const [px, pz] = at(0, .04); put(new THREE.BoxGeometry(.22, .3, .08), lampM, px, 3.4, pz, ry); const [ax, az] = at(0, .16); put(new THREE.BoxGeometry(.06, .06, .24), lampM, ax, 3.42, az, ry);
-            const [hx, hz] = at(0, .28); put(new THREE.CylinderGeometry(.1, .2, .16, 10, 1, true), lampM, hx, 3.38, hz); put(new THREE.SphereGeometry(.075, 8, 6), bulbM, hx, 3.31, hz);
-            const [gx, gz] = at(0, .015); quad('glow:lamp', gx, 3.1, gz, ux, uz, 0, 1, 0, 2.4, 2.2); const [fx2, fz2] = at(0, 1.1); quad('pool', fx2, .025, fz2, 1, 0, 0, 0, 1, 3.2, 3.2); }
+            const [hx, hz] = at(0, .28); put(new THREE.CylinderGeometry(.1, .2, .16, 10, 1, true), lampM, hx, 3.38, hz); put(new THREE.SphereGeometry(.075, 8, 6), bulbM, hx, 3.31, hz); }
         }
         // an electrical box with its conduit
         if (hash(i, j, e, 7) < .07 && !site && !nearMark(fx, fz, 1.8, 4.3)) { const u = (hash(i, j, e, 8) - .5) * .8, [x, z] = at(u, .07); put(new THREE.BoxGeometry(.52, .7, .14), boxM, x, 2.25, z, ry); const [dx, dz] = at(u, .145); put(new THREE.BoxGeometry(.44, .6, .02), boxDoorM, dx, 2.25, dz, ry);
@@ -453,9 +450,6 @@
     }
     // the merged meshes
     bake(G, sh); G.traverse(o => { if (o.isMesh) o.receiveShadow = sh; });
-    const glow = c => new THREE.MeshBasicMaterial({ map: DT.glow, color: c, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
-    quadMesh('glow:lamp', glow(LC(t === 'lava' ? '#ff9a50' : '#ffd79a')), 3); NEON.forEach((c, n) => quadMesh('glow:' + n, glow(LC(c)), 3));
-    quadMesh('pool', new THREE.MeshBasicMaterial({ map: DT.glow, color: LC(t === 'lava' ? '#ff8a40' : '#ffcf8a'), transparent: true, opacity: .2, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }), 2);
     quadMesh('vent', decal(DT.vent, { transparent: false }), 1); quadMesh('grate', decal(DT.grate, { transparent: false }), 1); quadMesh('manhole', decal(DT.manhole, { alphaTest: .5 }), 1); quadMesh('stain', decal(DT.stain, { opacity: .8 }), 1);
     quadMesh('vine', new THREE.MeshLambertMaterial({ map: DT.vine, alphaTest: .4, side: THREE.DoubleSide }), 1); quadMesh('banner', new THREE.MeshLambertMaterial({ map: DT.banner, alphaTest: .4, side: THREE.DoubleSide }), 1);
   }
