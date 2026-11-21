@@ -73,7 +73,7 @@
     pip: { s: .6, p: [200, 75, .06, .8], c: [2700, .055, .75, .9], m: [3600, .016, .22], t: [1600, .26, .2], v: .85 },
     stub: { s: .5, p: [120, 38, .16, 1.1], c: [1100, .14, .8, .6], m: [2200, .02, .15], t: [900, .55, .3], v: 1.2 },
     wasp: { s: .6, p: [230, 95, .045, .7], c: [3000, .045, .7, .9], m: [4000, .012, .2], t: [1800, .18, .16], v: .8 },
-    quill: { sup: 1, s: .24, p: [130, 46, .16, 4.5], c: [1100, .035, .16, 1.1], pf: [2600, 560, .055, .3], sl: [.016, .5], t: [750, .22, .2], v: .85 },   // a deep tap, a short puff of air, and the slide's two clean clicks
+    quill: { sup: 1, s: .08, p: [130, 46, .16, 4.5], c: [1100, .035, .16, 1.1], pf: [2600, 560, .055, .3], sl: [.016, .5], t: [750, .22, .2], v: .6 },   // a deep tap, a short puff of air, and the slide's two clean clicks
     hammer: { s: .7, p: [130, 42, .14, 1.15], c: [1700, .1, .9, .7], r: [880, .35, .12], m: [2600, .02, .25], t: [1200, .7, .3], v: 1.15 },
     gnat: { s: .65, p: [240, 100, .04, .65], c: [3100, .04, .65, 1], m: [4200, .012, .25], t: [1900, .16, .15], v: .78 },
     hornet: { sup: 1, s: .3, p: [170, 70, .045, .55], c: [1300, .035, .35, 1.2], m: [3500, .011, .32], t: [1100, .12, .08], v: .75 },
@@ -104,7 +104,7 @@
     comp.threshold.value = -16; comp.ratio.value = 6; comp.attack.value = .001; comp.release.value = .1; comp.knee.value = 6;
     mix.gain.value = R ? .3 : .7; mix.connect(sh).connect(comp).connect(oc.destination);   // (with a recording, the made-up layers sit underneath it)
     // the recording: straight into the compressor (not the clipper: it is real, it needs no drive), each bake a few percent faster or slower
-    if (R) { const r = oc.createBufferSource(), a = oc.createGain(), hp = oc.createBiquadFilter(); r.buffer = R; r.playbackRate.value = rate; hp.type = 'highpass'; hp.frequency.value = 45; a.gain.value = .95 * fit.g; r.connect(hp).connect(a).connect(comp); r.start(0); }
+    if (R) { const r = oc.createBufferSource(), a = oc.createGain(), hp = oc.createBiquadFilter(); r.buffer = R; r.playbackRate.value = rate; hp.type = 'highpass'; hp.frequency.value = 45; a.gain.value = .95 * fit.g; let tail = r.connect(hp); if (fit.lp) { const lo = oc.createBiquadFilter(); lo.type = 'lowpass'; lo.frequency.value = fit.lp; lo.Q.value = .5; tail = tail.connect(lo); } tail.connect(a).connect(comp); r.start(0); }   // (lp: a recording dulled, a suppressor's muffle)
     const noise = (t0, d, v, type, f, q, att = .0012) => { const n = oc.createBufferSource(), fl = oc.createBiquadFilter(), a = oc.createGain(); n.buffer = nb; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
       a.gain.setValueAtTime(0, t0); a.gain.linearRampToValueAtTime(v, t0 + att); a.gain.exponentialRampToValueAtTime(.0001, t0 + d); n.connect(fl).connect(a).connect(mix); n.start(t0, Math.random() * .4); n.stop(t0 + d + .02); };
     const osc = (t0, type, f0, f1, d, v) => { const o = oc.createOscillator(), a = oc.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + d);
