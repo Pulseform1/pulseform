@@ -15,7 +15,7 @@ const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name:
 const T = new Function('K', 'MP', code + `
   return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
-    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
+    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, gunStats, dmgAt, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
 let failed = 0;
 const ok = (cond, name, extra = '') => { if (!cond) failed++; console.log((cond ? '  ok   ' : '  FAIL ') + name + (extra !== '' ? '  (' + extra + ')' : '')); };
@@ -142,6 +142,7 @@ function moveChecks() {
   pickupPingNovaChecks();
   tagDefusePingChecks();
   firstToNovaSlideChecks();
+  armoryStatChecks();
   const lv = [600, 900, 1100, 1400, 1700].map(r => T.diffFor(r)), keys = ['react', 'err', 'flick'];
   ok(lv.every((L, i) => !i || keys.every(k => L.D[k] <= lv[i - 1].D[k]) && L.D.turn >= lv[i - 1].D.turn), 'the bot gets sharper at every step up in rating', lv.map(L => L.D.n).join(' → '));
   T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto', map: 0 }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
@@ -222,6 +223,21 @@ function firstToNovaSlideChecks() {
   // a slide: steadier than running, not as steady as walking
   [M, P, F] = lab('lancer'); const G = T.GUNS.lancer; Object.assign(P, { vx: 9, vz: 0, ground: true, slide: null }); const run = T.moveErr(P, G); P.slide = { t: .3 }; const sl = T.moveErr(P, G);
   ok(sl < run * .7 && sl > G.acc.walk, 'sliding throws your aim less than running does', `run ${run.toFixed(2)}°, slide ${sl.toFixed(2)}°`);
+}
+// the armory's numbers: every gun has six bars between 0 and 1 and a damage table that agrees with the damage rules; and a
+// teammate's credits and loadout arrive from their device, for the team panel
+function armoryStatChecks() {
+  let bad = [], order = [];
+  for (const k of Object.keys(T.GUNS)) { const G = T.GUNS[k]; if (G.melee) continue; const S = T.gunStats(G);
+    if (S.bars.length !== 6 || S.bars.some(b => !(b[1] > 0 && b[1] <= 1) || !b[2])) bad.push(k + ' bars');
+    if (S.bands.length !== G.dmg.length || S.bands.some((b, i) => b.body !== T.dmgAt(G, G.dmg[i][0] - .1, 2) || b.head < b.body || b.legs > b.body)) bad.push(k + ' table'); }
+  ok(!bad.length, 'every gun has six stat bars and a damage table that matches what it really does', bad.join(', ') || Object.keys(T.GUNS).length - 1 + ' guns');
+  const bar = (k, n) => T.gunStats(T.GUNS[k]).bars.find(b => b[0] === n)[1];
+  ok(bar('longbow', 'DAMAGE') > bar('lancer', 'DAMAGE') && bar('gnat', 'FIRE RATE') > bar('lancer', 'FIRE RATE') && bar('lancer', 'RANGE') > bar('breaker', 'RANGE') && bar('vesper', 'CONTROL') > bar('lancer', 'CONTROL') && bar('pip', 'MOBILITY') > bar('torrent', 'MOBILITY'),
+    'the bars rank the guns the way they play (the Longbow hits hardest, the Gnat fires fastest, a rifle outranges a shotgun, the Vesper is steadier than the Lancer)');
+  let [M, P, F] = lab(); M.online = true; F.net = true; F.credits = 800; T.netMsg({ t: 's', f: F.key, x: F.x, y: 0, z: F.z, yw: 0, pt: 0, vx: 0, vz: 0, cr: 0, sl: 1, g: 'vesper', hp: 100, sh: 50, al: 1, c: 1350, g1: 'vesper', g2: 'quill', sm: 2, aq: 1 }); M.online = false; F.net = false;
+  ok(F.credits === 1350 && F.guns[1] === 'vesper' && F.guns[2] === 'quill' && F.smokes === 2 && F.ab.q === 1 && F.sh === 50, 'online: a fighter\'s credits and loadout arrive from their device (for their team\'s armory)', `◈ ${F.credits} ${F.guns[1]}+${F.guns[2]} smokes ${F.smokes}`);
+  T.startRound(2); ok(P.inv0 && P.inv0.g2 === 'pip' && F.inv0, 'what everyone starts a round with is noted, so the armory can pick out what was bought since');
 }
 // a 4v4 plays a spread of maps: one-site ones, two-site ones, the three-site one and the one where attackers start at both ends
 const FOUR_MAPS = ['saltworks', 'verdance', 'neonrow', 'sandgate', 'skyline', 'orbital', 'ironworks', 'frostline'];

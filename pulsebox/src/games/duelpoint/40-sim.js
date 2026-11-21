@@ -592,6 +592,7 @@
     M.orbs = ORBS.map((p, i) => ({ i, x: p[0], z: p[1], taken: false }));
     M.loot = []; { const att = M.fs.filter(f => sideOf(f) === 'att' && !f.gone).sort((a, b) => ((a.bot || a.isBot ? 1 : 0) - (b.bot || b.isBot ? 1 : 0)) || (a.key < b.key ? -1 : 1)); M.charge = att.length && M.mode !== 'range' ? { k: att[0].key, at: -9 } : null; }
     if ((n === HALF() + 1 || decider) && M.mode === 'demo') say(decider ? (suddenDeath(n) ? 'SUDDEN DEATH' : 'OVERTIME') : 'SIDES SWAPPED');   // players get the switching-sides band instead
+    for (const f of M.fs) f.inv0 = { g1: f.guns[1] || '', g2: f.guns[2] || '', sh: f.sh | 0, sm: f.smokes | 0, q: f.ab.q | 0 };
     emit('round', n);
   }
   // the loss bonus: what losing this round would pay you next round (it grows with each round lost in a row), for the armory

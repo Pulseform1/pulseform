@@ -32,6 +32,19 @@
   // round money: pistol rounds (1 and 5) start everyone on 800; winning, losing streaks, kills and plants pay for the next round's buys
   // damage is the body damage at that range times where it landed: G.head for the head, G.legs for the legs (1 head, 2 body, 3 legs)
   const dmgAt = (G, dist, part) => { const row = G.dmg.find(r => dist <= r[0]) || G.dmg[G.dmg.length - 1]; return Math.round(row[1] * (part === 1 ? G.head : part === 3 ? G.legs : 1)); };
+  /* A gun's stats for the armory: six bars (each 0..1, with its words) and the damage table by range.
+     DAMAGE is a body hit up close (all pellets); ACCURACY the first shot standing still (scoped, for a sniper);
+     CONTROL how little a spray climbs, sways and spreads (for a single-shot gun, how little it kicks); RANGE how much of
+     its damage is left at 45 m, less what its spread throws away; MOBILITY how fast you move with it out. */
+  const gunStats = G => {
+    const A = G.acc, P = G.pat || {}, pel = G.pel || 1, d0 = G.dmg[0][1] * pel, far = dmgAt(G, 45, 2) * pel, fs = G.scope ? A.sfs : A.fs, spr = fs + (G.pspr || 0);
+    const rec = P.vmax ? P.vmax + (P.hk || 0) + A.max * .5 : (G.punch || .5) * 1.3 + A.inc;
+    return {
+      bars: [['DAMAGE', cl(d0 / 160, .05, 1), G.dmg[0][1] + (pel > 1 ? ' ×' + pel : '')], ['FIRE RATE', cl(G.rpm / 60 / 16, .05, 1), (G.rpm / 60).toFixed(1) + ' /s'], ['ACCURACY', cl(1 - spr / 3, .05, 1), fs + '°' + (G.scope ? ' scoped' : '')],
+        ['CONTROL', cl(1 - rec / 9, .05, 1), P.vmax ? '+' + P.vmax + '° climb' : 'single shot'], ['RANGE', cl(far / d0 * (1 - Math.min(.9, spr / 3)), .05, 1), Math.round(100 * far / d0) + '% at 45 m'], ['MOBILITY', cl((G.spd - .8) / .3, .05, 1), Math.round(G.spd * 100) + '% speed']],
+      bands: G.dmg.map((r, i) => ({ label: (i ? G.dmg[i - 1][0] : 0) + (r[0] >= 99 ? ' m +' : ' – ' + r[0] + ' m'), head: dmgAt(G, r[0] - .1, 1), body: dmgAt(G, r[0] - .1, 2), legs: dmgAt(G, r[0] - .1, 3) })), pel,
+    };
+  };
   const zoomOf = f => { const G = GUNS[f.guns[f.slot]] || GUNS.pip; return !f.scoped ? 1 : G.scope ? G.scope[Math.min(G.scope.length, +f.scoped) - 1] : G.ads || 1; };
   // the smoke grenade: bought with round money, up to `per` at a time; G throws one
   const NADE = { k: 'smoke', n: 'Smoke grenade', short: 'Smoke', cat: 'Utility', cost: 200, per: 2, col: '#c3cad4', R: 4.2, T: 15, fuse: 1.5,
