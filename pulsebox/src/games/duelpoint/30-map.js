@@ -14,7 +14,7 @@
      the roofed Tunnel along the south. Everything else (rays, movement, bot paths, the world mesh) reads these cells. */
   // the grid's size is the map's own: the one-site maps are 32 by 22, the two-site maps bigger (loadMap sets these)
   const CS = 2, MAXNC = 72 * 52; let GW = 32, GH = 22, MW = GW * CS, MH = GH * CS, NC = GW * GH;
-  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.1, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7, HIGH_H = 3.2, GRASS_H = 1.75, GATE_H = 3.6, BRK_HP = 320;
+  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.45, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7, HIGH_H = 3.2, GRASS_H = 1.75, GATE_H = 3.6, BRK_HP = 320;
   const WALKABLE = '.oqrADP78HJTigLVG<>^v', BELTS = '>v<^';   // belt directions: east, south, west, north
   /* Every map is one of these: rows of cells (all 32 by 22), roofs and doorways as rectangles [col0, row0, col1, row1],
      named areas, the attacker's routes and the defender's holds in cell units, and a theme for the look (72-world).

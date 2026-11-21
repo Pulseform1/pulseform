@@ -166,7 +166,7 @@
       { k: 'crouch', ...at('crouch'), t: canSlide(P) ? 'SLIDE' : 'DUCK', show: P.alive, on: TS.crouch || !!P.slide },
       { k: 'reload', ...at('reload'), t: 'LOAD', show: P.alive && !G.melee },
       { k: 'swap', ...at('swap'), t: 'SWAP', show: P.alive },
-      { k: 'c', ...at('c'), t: op.c.n.toUpperCase() + (op.c.max > 1 ? ' ' + (P.ab.c | 0) : ''), show: P.alive && live, off: !P.ab.c && !P.tether, on: P.rdy === 'c', col: op.col },
+      { k: 'c', ...at('c'), t: op.c.n.toUpperCase() + (op.c.max > 1 ? ' ' + (P.ab.c | 0) : ''), show: P.alive && live, off: !P.ab.c && !P.tether && !irisEye(P), on: P.rdy === 'c', col: op.col },
       { k: 'q', ...at('q'), t: op.q.n.toUpperCase() + (op.q.max > 1 ? ' ' + (P.ab.q | 0) : ''), show: P.alive && live, off: !P.ab.q, on: P.rdy === 'q', col: op.col },
       { k: 'x', ...at('x'), t: P.ult >= ultCost(P) ? op.x.n.toUpperCase() : `ULT ${P.ult | 0}/${ultCost(P)}`, show: P.alive && live, off: P.ult < ultCost(P), on: P.rdy === 'x', col: op.col },
       { k: 'e', ...at('e'), t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, on: P.rdy === 'e', col: op.col },

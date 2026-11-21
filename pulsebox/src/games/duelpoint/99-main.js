@@ -1,6 +1,7 @@
   /* ---------- 99 main: the kit's hooks, moving between screens, demo and cover-art modes, the test handle ---------- */
   let booted = false, acc = 0, lastDraw = 0;
-  function toMenu() { if (M && M.ranked && !M.over && M.mode !== 'demo' && M.round > 0) rankedLeft(); UI.trying = null; M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
+  function toMenu() { if (M && M.ranked && !M.over && M.mode !== 'demo' && M.round > 0) rankedLeft(); if (M && M.fromQueue && MP.online()) MP.leave();   // (strangers from the queue: the room closes behind you, it never becomes a party)
+    UI.trying = null; M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
   function play(o) { resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
   // a bot match from the menu: agent select first (the tests can skip it)
   const soloOpts = () => { const size = teamSize(CFG.size), ranked = CFG.queue === 'ranked'; return { mode: 'bot', diff: ranked && CFG.diff === 'auto' ? botLevelFor(rankStrength(size)) : CFG.diff, size, sites: CFG.sites, ranked }; };

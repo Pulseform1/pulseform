@@ -204,7 +204,7 @@
     let ch = Math.min(470 * u, cy1 - cy0), cw = ch * .45; const gap = 16 * u, maxW = fx - 20 * u - L; if (n * cw + (n - 1) * gap > maxW) { cw = (maxW - (n - 1) * gap) / n; ch = Math.min(ch, cw / .45); }
     const cy = cy0 + (cy1 - cy0 - ch) / 2, order = [0, 1, -1, 2, -2].slice(0, n), art = menuHero(), mc = myCard(), diffN = CFG.diff === 'auto' ? (ranked ? DIFF[botLevelFor(rankStrength(CFG.size))].n : rankName(STATS.rating)) : DIFF[CFG.diff].n;
     order.forEach((slot, i) => { const x = mid - cw / 2 + slot * (cw + gap);
-      if (i === 0) lobbyCard(g, x, cy, cw, ch, u, { me: true, op: CFG.op, art, name: (MP.name || 'You').toUpperCase(), title: mc.title, lv: mc.lv, banner: mc.banner, hover: 'CHANGE OPERATIVE', fn: () => openSelect(null) }, t);
+      if (i === 0) lobbyCard(g, x, cy, cw, ch, u, { me: true, op: CFG.op, art, name: (MP.name || 'You').toUpperCase(), title: mc.title, lv: mc.lv, banner: mc.banner, hover: 'CHANGE AGENT', fn: () => openSelect(null) }, t);
       else if (online) lobbyCard(g, x, cy, cw, ch, u, { empty: true, searching: !!QUE.mode, name: QUE.mode ? 'SEARCHING' + '.'.repeat(1 + Math.floor(t * 2) % 3) : 'TEAMMATE', label: 'from the queue', fn: () => {} }, t);
       else { lobbyCard(g, x, cy, cw, ch, u, { empty: true, name: 'BOT', label: diffN.toUpperCase() + ' BOT', lv: 0, banner: 'plain', hover: '+  PLAY WITH A FRIEND', fn: () => openParty() }, t); } });
     // the settings this mode has

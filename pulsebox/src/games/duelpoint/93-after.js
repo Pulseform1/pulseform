@@ -146,6 +146,6 @@
         mv.slice().sort((a, b) => (b.at >= b.n) - (a.at >= a.n)).slice(0, n).forEach((c, i) => challengeRow(g, c, x + 10 * u, y + i * (rh + 5 * u), cw - 20 * u, rh, u, lp(c.from, c.at, e))); }
       else if (!R.got.length && !mv.length) para(g, 'Challenges and pass rewards are on the PASS page.', x + 14 * u, y + 14 * u, cw - 28 * u, 11 * u, DIM); }
     const bw = Math.min(210 * u, (W - 60 * u) / 3 - 10 * u), by = V.y1 - bh - 12 * u;
-    btn(g, 640 - bw * 1.5 - 10 * u, by, bw, bh, M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); openParty(); } else play(soloOpts()); }, { on: true, fill: FOE, px: 16 * u });
+    btn(g, 640 - bw * 1.5 - 10 * u, by, bw, bh, M.fromQueue ? 'FIND ANOTHER' : M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.fromQueue) { const n = M.fromQueue; toMenu(); queueStart(n); } else if (M.online) { toMenu(); openParty(); } else play(soloOpts()); }, { on: true, fill: FOE, px: 16 * u });
     btn(g, 640 - bw / 2, by, bw, bh, 'SCOREBOARD', overNext, { px: 16 * u }); btn(g, 640 + bw / 2 + 10 * u, by, bw, bh, 'MENU', toMenu, { px: 16 * u });
   }

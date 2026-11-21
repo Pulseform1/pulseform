@@ -59,7 +59,7 @@
   }
   // Mirage popped by whoever shot it (or a bot that fell for it): they are blinded and marked; decided where they are run
   function decoyPop(D, v, fromNet) { if (!D || D.popped) return; D.popped = true; D.t = 0; emit('decoyPop', D, v);
-    if (v && !v.net) { v.flash = Math.max(v.flash, 1.8); v.reveal = Math.max(v.reveal, 2.5); if (v === me()) say('IT WAS A MIRAGE', OPS.wraith.col); }
+    if (v && !v.net) { v.flash = Math.max(v.flash, 1.8); v.reveal = Math.max(v.reveal, 2.5); }   // (no message: the flash says it)
     if (!fromNet) net({ t: 'dk', id: D.id, v: v ? v.key : '' }); }
   // a shot at the copy: a box the size of a fighter where it stands
   function decoyShot(f, S) { const K2 = M.kit; if (!K2 || !K2.decoys.length) return false;

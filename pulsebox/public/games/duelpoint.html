@@ -355,19 +355,19 @@ const GAME = {
     talon: { n: 'TALON', role: 'Tracker', col: '#7bd65a', bio: 'A ranger who reads a room like tracks in snow.', q: { n: 'Recon Dart', d: 'A dart that sticks where it lands and pulses twice, revealing rivals in its sight.' }, e: { n: 'Snare', d: 'A trap on the floor ahead: the first rival over it is slowed and revealed.' } },
     ember: { n: 'EMBER', role: 'Pyre', col: '#ff7a2f', bio: 'Foundry-born. Thinks every problem is a fuel problem.', q: { n: 'Ignite', d: 'Lob a firebomb: its pool burns rivals for 30 a second, 5 s.' }, e: { n: 'Heat Haze', d: 'A wall of amber haze across your view that blocks sight for 10 s.' } },
     axiom: { n: 'AXIOM', role: 'Engineer', col: '#5aa0ff', bio: 'Builds the thing that holds the angle, then goes for coffee.', q: { n: 'Sentry', d: 'A turret that fires on rivals in front of it until it is shot down.' }, e: { n: 'Tripmine', d: 'A mine at your feet. Armed, it bursts for up to 75 when a rival comes near.' } },
-    vanta: { n: 'VANTA', role: 'Duelist', col: '#e25cff', bio: 'A fixer who settles things one on one. Nobody asks for a second meeting.', q: { n: 'Sunder', d: 'A bolt that passes through walls: rivals it touches are Exposed, taking 25% more damage for 4 s.' }, e: { n: 'Overcharge', d: 'For 12 s, a rival you kill leaves a charge: shoot it for a ward that stops the next hit. Back after 2 kills.' } },
+    vanta: { n: 'VANTA', role: 'Duelist', col: '#e25cff', bio: 'A fixer who settles things one on one. Nobody asks for a second meeting.', q: { n: 'Sunder', d: 'A bolt that strikes instantly down your aim: a headshot kills, any hit Exposes (25% more damage for 4 s). It goes on through walls, Exposing rivals behind them.' }, e: { n: 'Overcharge', d: 'For 12 s, a rival you kill leaves a charge: shoot it for a ward that stops the next hit. Back after 2 kills.' } },
   };
   /* C: the second bought ability (cheaper, a smaller trick), one per operative */
   const ABC_KIT = {
     vex: [{ n: 'Gloom', d: 'Lob an orb that bursts into dark: rivals caught can see only 5 m for 3.5 s.' }, 200, 1],
-    iris: [{ n: 'Watcher', d: 'Fix an eye where you aim. For 20 s it marks rivals who walk into its view.' }, 200, 1],
+    iris: [{ n: 'Watcher', d: 'Fix an eye where you aim: it stays all round, asleep and unseen. Press C again to wake it for 6 s: it marks rivals in its view, and they can see it and shoot it out.' }, 200, 1],
     bastion: [{ n: 'Ward Beacon', d: 'Set a beacon: you and teammates within 6 m gain 30 shield, up to 50.' }, 200, 1],
     nova: [{ n: 'Updraft', d: 'Launch straight up, high enough to reach a ledge.' }, 100, 2],
     wraith: [{ n: 'Tether', d: 'Leave an anchor at your feet; press again later to step back to it.' }, 200, 1],
     talon: [{ n: 'Shock Bolt', d: 'A bolt that bounces once, then bursts for up to 45.' }, 150, 2],
     ember: [{ n: 'Flashpoint', d: 'A flash that bends round a corner: left click bends it left, right click right.' }, 200, 2],
     axiom: [{ n: 'Slow Field', d: 'Lob a canister: a 5 m field that slows rivals inside for 6 s.' }, 200, 1],
-    vanta: [{ n: 'Phase Front', d: 'A wall of light rolls out ahead of you, stopping bullets and sight. Anyone can walk through it.' }, 200, 1],
+    vanta: [{ n: 'Phase Front', d: 'A wall of light rolls 14 m ahead of you, straight through walls, stopping bullets and sight. Anyone can walk through it.' }, 200, 1],
   };
   for (const k in ABC_KIT) { const [c, cost, max] = ABC_KIT[k]; OPS[k].c = Object.assign({}, c, { cost, max }); }
   // signatures (E) that come back during a round: after some seconds, or after some kills
@@ -386,7 +386,7 @@ const GAME = {
     talon: { n: 'Piercer', d: 'Three bolts along your aim, a second apart, that go straight through walls for 75 each.', pts: 7 },
     ember: { n: 'Inferno', d: 'Lob a great firebomb: a 5.5 m blaze that burns rivals for 40 a second, 8 s.', pts: 6 },
     axiom: { n: 'Lockdown', d: 'Plant a device; 2.5 s later every rival within 14 m is held: slowed, and unable to fire or use abilities, for 4 s.', pts: 7 },
-    vanta: { n: 'Duel Field', d: 'A beam: the first rival it hits is sealed in a dome with you for up to 12 s. Nobody else sees in, shoots in or gets in.', pts: 7 },
+    vanta: { n: 'Duel Field', d: 'Point at a spot: the rival nearest it, within 5 m, is pulled into a dome with you for up to 12 s. Nobody else sees in, shoots in or gets in.', pts: 7 },
   };
   for (const k in OPS) { OPS[k].q.cost = ABQ[k][0]; OPS[k].q.max = ABQ[k][1]; OPS[k].x = ULTS[k]; }
   const ultCost = f => OPS[f.op] ? OPS[f.op].x.pts : 6;
@@ -788,7 +788,7 @@ const GAME = {
      the roofed Tunnel along the south. Everything else (rays, movement, bot paths, the world mesh) reads these cells. */
   // the grid's size is the map's own: the one-site maps are 32 by 22, the two-site maps bigger (loadMap sets these)
   const CS = 2, MAXNC = 72 * 52; let GW = 32, GH = 22, MW = GW * CS, MH = GH * CS, NC = GW * GH;
-  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.1, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7, HIGH_H = 3.2, GRASS_H = 1.75, GATE_H = 3.6, BRK_HP = 320;
+  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.45, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7, HIGH_H = 3.2, GRASS_H = 1.75, GATE_H = 3.6, BRK_HP = 320;
   const WALKABLE = '.oqrADP78HJTigLVG<>^v', BELTS = '>v<^';   // belt directions: east, south, west, north
   /* Every map is one of these: rows of cells (all 32 by 22), roofs and doorways as rectangles [col0, row0, col1, row1],
      named areas, the attacker's routes and the defender's holds in cell units, and a theme for the look (72-world).
@@ -1219,13 +1219,14 @@ const GAME = {
   function castShot(f, d) {
     const o = [f.x, eyeY(f), f.z]; let dist = rayGrid(o[0], o[1], o[2], d[0], d[1], d[2], 140), hit = null; const n = [rayN[0], rayN[1], rayN[2]];
     for (const w of M.walls) { const t = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (t > 0 && t < dist) { dist = t; n[0] = -Math.sign(d[0]) * (w.x1 - w.x0 < 1 ? 1 : 0); n[1] = 0; n[2] = -Math.sign(d[2]) * (w.x1 - w.x0 < 1 ? 0 : 1); } }
-    let sentry = null; for (const b of sentryBoxes(f)) { const t = rayBox(o, d, b.mn, b.mx); if (t > 0 && t < dist) { dist = t; sentry = b.s; } }   // an enemy sentry is in the way
+    let sentry = null, eye = null; for (const b of sentryBoxes(f)) { const t = rayBox(o, d, b.mn, b.mx); if (t > 0 && t < dist) { dist = t; sentry = b.s; } }   // an enemy sentry is in the way
+    if (M.kit) for (const W of M.kit.eyes) if (W.act > 0 && enemyOf(W.by, f)) { const t = raySphere(o, d, [W.x, W.y, W.z], .3); if (t > 0 && t < dist) { dist = t; sentry = null; eye = W; } }   // an enemy Watcher, awake
     for (const v of M.fs) if (v.team !== f.team && v.alive && duelOk(f, v)) {   // whichever part of them the bullet meets first (a Duel Field keeps its two to themselves)
       const hb = hitboxes(v), th = raySphere(o, d, hb.head, hb.hr), tb = rayFrame(o, d, hb, hb.body), ta = rayFrame(o, d, hb, hb.arms);
       const tbody = tb > 0 && (ta <= 0 || tb <= ta) ? tb : ta, near = th > 0 && (tbody <= 0 || th <= tbody) ? th : tbody;
-      if (near > 0 && near < dist) { dist = near; sentry = null; hit = near === th ? { f: v, head: true } : { f: v, head: false, leg: near === tb && o[1] + d[1] * tb < hb.leg }; }
+      if (near > 0 && near < dist) { dist = near; sentry = null; eye = null; hit = near === th ? { f: v, head: true } : { f: v, head: false, leg: near === tb && o[1] + d[1] * tb < hb.leg }; }
     }
-    return { o, d, dist, hit, sentry, n, end: [o[0] + d[0] * dist, o[1] + d[1] * dist, o[2] + d[2] * dist] };
+    return { o, d, dist, hit, sentry, eye, n, end: [o[0] + d[0] * dist, o[1] + d[1] * dist, o[2] + d[2] * dist] };
   }
   // pull the trigger: one shot, a burst (the Pip's alternate fire, the Mako aimed down sights), or a knife swing
   function fire(f, alt) {
@@ -1255,6 +1256,7 @@ const GAME = {
       emit('shot', f, S, p === 0);
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k, S.hit.leg); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);
+      else if (S.eye && !f.net) breakEye(S.eye, false);   // one hit puts a Watcher out
       else if (!S.hit && !f.net && BRKS.length) { const e = S.end, k = idx(Math.floor((e[0] + S.d[0] * .06) / CS), Math.floor((e[2] + S.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], dmgAt(G, S.dist, 2), f); }   // a breakable wall
     }
     if (landed) f.stat.hits++;
@@ -1388,12 +1390,16 @@ const GAME = {
      right); the key again, a gun key or a reload puts it away. A few are used the moment the key is pressed (a dash, a heal,
      a burst of speed). Bots and the other players' devices use them straight away. */
   const AB_NOW = new Set(['vexq', 'irisq', 'bastione', 'novaq', 'novac', 'wraithq', 'irisx', 'bastionx', 'novax', 'wraithx', 'talonx', 'vantae']);
-  const tetherBack = (f, k) => f.op === 'wraith' && k === 'c' && !!f.tether;   // Tether laid: the key steps you back, free
+  // the C key again, for what C left behind: Tether steps you back to it; Iris's eye wakes (both free)
+  const tetherBack = (f, k) => k === 'c' && ((f.op === 'wraith' && !!f.tether) || (f.op === 'iris' && !!irisEye(f)));
   const abInstant = (f, k) => AB_NOW.has(f.op + k) || tetherBack(f, k);
   const hasAb = (f, k) => k === 'x' ? f.ult >= ultCost(f) : (f.ab[k] | 0) > 0;
   function spendAb(f, k) { if (k === 'x') { f.ult = 0; emit('ultUsed', f); } else { f.ab[k] = Math.max(0, (f.ab[k] | 0) - 1); if (k === 'e') { f.eT = 0; f.eK = 0; } } }
   function ultGain(f, n) { if (!M || M.mode === 'range' || !f || !OPS[f.op]) return; const c = ultCost(f), was = f.ult | 0; f.ult = Math.min(c, was + n); if (was < c && f.ult >= c) emit('ultReady', f); }
-  const abBlocked = f => !f.alive || !M || M.phase !== 'live' || f.plant > 0 || f.defuse > 0 || f.lock > 0 || !!f.chan;
+  // in the buy phase you can set up: move, wall off, place a trap, a turret, a smoke or an eye (no ultimates, nothing that
+  // harms, blinds or scouts); what is placed at a spot must be on your side of the barrier
+  const BUY_AB = new Set(['vexq', 'vexe', 'irisc', 'bastionq', 'bastione', 'bastionc', 'novac', 'novaq', 'wraithc', 'wraithq', 'talone', 'embere', 'axiomq', 'axiome', 'vantac', 'vantae']);
+  const abBlocked = (f, k) => !f.alive || !M || (M.phase !== 'live' && !(k && M.phase === 'buy' && M.mode !== 'range' && M.mode !== 'demo' && !loadingNow() && BUY_AB.has(f.op + k))) || f.plant > 0 || f.defuse > 0 || f.lock > 0 || !!f.chan;
   // where it goes, worked out on the user's device (the same sum the preview shows)
   function abData(f, k, alt) {
     const d = viewDir(f.yaw, f.pitch), key = f.op + k, S = castShot(f, d); let data = {};
@@ -1402,13 +1408,15 @@ const GAME = {
     if (key === 'irise') { const dd = Math.max(.5, Math.min((S.hit ? 12 : S.dist) - .6, 12)); data = { x: f.x + d[0] * dd, y: eyeY(f) + d[1] * dd, z: f.z + d[2] * dd }; }
     if (key === 'bastionq') { const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw); data = { x: f.x + fx * 2.6, z: f.z + fz * 2.6, ax: (Math.abs(fx) > Math.abs(fz) ? 1 : 0) ^ (alt ? 1 : 0) }; }   // the other click: along your view
     if (k === 'x' || k === 'c' || !['vex', 'iris', 'bastion'].includes(f.op)) data = kitAim(f, key, d, S, alt);
-    if (tetherBack(f, k)) data = { back: 1, free: 1 };
+    if (tetherBack(f, k)) { const W = f.op === 'iris' ? irisEye(f) : null; data = !W ? { back: 1, free: 1 } : W.act > 0 || W.cd > 0 ? { fail: 1 } : { act: 1, free: 1 }; }   // (an eye already awake, or resting, will not wake)
     return data;
   }
   function ability(f, k, alt) {
-    if (abBlocked(f)) return false;
+    if (abBlocked(f, k)) return false;
     if (!tetherBack(f, k) && !hasAb(f, k)) return false;
     const data = abData(f, k, alt); if (!data) return false;
+    if (data.fail) { emit('abNo', f, k); return false; }   // (aimed where it can do nothing: not spent)
+    if (M.phase === 'buy' && data.x != null && data.vx == null && f.op + k !== 'vantac' && sideOf(f) && !inZone(sideOf(f), data.x, data.z)) { emit('abNo', f, k); if (f === me()) say('NOT PAST THE BARRIER', WARN); return false; }
     if (!data.free) spendAb(f, k); if (M.mode === 'range') f.abT = 4;
     applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key });
     return true;
@@ -1417,7 +1425,7 @@ const GAME = {
   function readyAb(f, k) {
     if (f.rdy === k) { f.rdy = null; emit('abReady', f, null); return true; }
     if (abInstant(f, k)) { if (f.rdy) { f.rdy = null; emit('abReady', f, null); } return ability(f, k, false); }
-    if (abBlocked(f) || !hasAb(f, k)) { emit('abNo', f, k); return false; }
+    if (abBlocked(f, k) || !hasAb(f, k)) { emit('abNo', f, k); return false; }
     f.rdy = k; f.scoped = 0; f.burst = null; f.reloadT = 0; f.autoReload = 0; emit('abReady', f, k); return true;
   }
   function unready(f) { if (f && f.rdy) { f.rdy = null; emit('abReady', f, null); } }
@@ -1566,7 +1574,7 @@ const GAME = {
      The charge: one attacker carries it (chosen in the buy phase, and passed on in the armory or by dropping it with H).
      A carrier who dies drops it; an attacker who walks over it picks it up; only the carrier can plant.
      Online, the device that runs a fighter decides what it drops and picks up, and tells the others. */
-  const LOOT_R = 1.15, LOOK_R = 2.4;   // walk over a gun to take it into an empty slot; look at one in reach and press F to take it
+  const LOOT_R = 1.5, LOOK_R = 2.6;   // walk over a gun to take it into an empty slot; look at one in reach and press F to take it
   const carries = f => !!(M && M.charge && M.charge.k === f.key);
   const carrier = () => M && M.charge && M.charge.k ? M.byKey[M.charge.k] || null : null;
   function addLoot(d) { M.loot = M.loot || []; if (M.loot.some(q => q.id === d.id)) return null; d.y = hAt(d.x, d.z); d.at = M.time; M.loot.push(d); emit('loot', d); return d; }
@@ -1574,8 +1582,8 @@ const GAME = {
   // (fo: the teammate it was bought for, who alone may take it for the first few seconds)
   function lootAt(f, k, x, z, mag, res, fo) {
     const G = GUNS[k]; if (!G || G.melee) return null; if (solidAt(x, z, f.y + .5)) { x = f.x; z = f.z; }
-    M.lootN = (M.lootN || 0) + 1; const d = addLoot({ id: f.key + '.' + M.round + '.' + M.lootN, k, x, z, m: mag != null ? mag : G.mag, r: res != null ? res : G.res, by: f.key, fo: fo || '' });
-    if (d && !f.net) net({ t: 'dp', id: d.id, k, x: r2(d.x), z: r2(d.z), m: d.m, r: d.r, fo: d.fo || undefined, f: f.key }); return d;
+    M.lootN = (M.lootN || 0) + 1; const d = addLoot({ id: f.key + '.' + M.round + '.' + M.lootN, k, x, z, m: mag != null ? mag : G.mag, r: res != null ? res : G.res, by: f.key, fo: fo || '', sk: skinFor(f, k) || '' });   // (it keeps the skin it had)
+    if (d && !f.net) net({ t: 'dp', id: d.id, k, x: r2(d.x), z: r2(d.z), m: d.m, r: d.r, fo: d.fo || undefined, sk: d.sk || undefined, f: f.key }); return d;
   }
   // drop the gun in a slot (the Pip and the knife stay with you): thrown a step ahead, or where you fall
   function dropGun(f, slot, dead, at) {   // (at: where it goes instead, e.g. the spot of the gun you swapped it for)
@@ -1591,7 +1599,7 @@ const GAME = {
   function takeLoot(f, d, remote) {
     const G = GUNS[d.k]; if (!G || !M.loot) return; M.loot = M.loot.filter(q => q.id !== d.id); const s = G.slot;
     if (!remote) { const have = f.guns[s]; if (have && !(s === 2 && have === 'pip')) dropGun(f, s, false, d); }   // a swap: the one you had goes down where this one lay
-    f.guns[s] = d.k; f.ammo[d.k] = { mag: d.m, res: d.r }; delete f.spent[s];
+    f.guns[s] = d.k; f.ammo[d.k] = { mag: d.m, res: d.r }; delete f.spent[s]; f.skins = f.skins || {}; f.skins[d.k] = d.sk || null;   // (held in the skin it lay in)
     if (!remote) { f.slot = s; f.reloadT = 0; f.scoped = 0; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, G.equip * .7); }
     emit('pickup', f, d); if (!remote) net({ t: 'pk', id: d.id, f: f.key });
   }
@@ -1625,7 +1633,7 @@ const GAME = {
     f.nearLoot = null; if (!M.loot || !M.loot.length) return false;
     // underfoot (the nearest within a step) or, failing that, the one you are looking at within reach
     let best = null, bd = LOOT_R, look = null, la = .75; for (const d of M.loot) { const dd = Math.hypot(d.x - f.x, d.z - f.z); if (Math.abs(d.y - f.y) < 1.4 && !(d.by === f.key && M.time - d.at < 1.2) && !(d.fo && d.fo !== f.key && M.time - d.at < 6) && !(f.bot && M.phase === 'buy' && d.fo !== f.key)) {
-      if (dd < bd) { bd = dd; best = d; } else if (!f.bot && dd < LOOK_R) { const a = Math.abs(angDiff(yawTo(f.x, f.z, d.x, d.z), f.yaw)); if (a < la) { la = a; look = d; } } } }
+      if (dd < bd) { bd = dd; best = d; } else if (!f.bot && dd < LOOK_R) { const a = Math.abs(angDiff(yawTo(f.x, f.z, d.x, d.z), f.yaw)) - (dd < 1.9 ? .6 : 0); if (a < la) { la = a; look = d; } } } }   // (close by, it need hardly be in front of you)
     const under = !!best; best = best || look; if (!best) return false; const G = GUNS[best.k], have = f.guns[G.slot], free = !have || (G.slot === 2 && have === 'pip');
     if (f.bot) { if (free || (GUNS[have].cost || 0) < G.cost) takeLoot(f, best); return false; }
     if (free && under) { takeLoot(f, best); return false; }
@@ -1704,7 +1712,7 @@ const GAME = {
         if (prev && prev.k === k) { f.credits += G.cost; f.guns[s] = prev.was; if (prev.was) giveAmmo(f, prev.was); delete sp[s]; f.slot = f.guns[1] ? 1 : 2; ok = true; }
         else if (resale(k) && !f.bot) { f.credits = Math.min(CASH.cap, f.credits + resale(k)); f.guns[s] = s === 2 ? 'pip' : null; if (s === 2) giveAmmo(f, 'pip'); f.slot = f.guns[1] ? 1 : 2; f.scoped = 0; f.reloadT = 0; ok = true; }   // a gun kept from an earlier round sells for half
       }
-      else { const refund = prev ? GUNS[prev.k].cost : 0; if (f.credits + refund >= G.cost) { f.credits += refund - G.cost; sp[s] = { k, was: prev ? prev.was : f.guns[s] }; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = 0; f.reloadT = 0; ok = true; } }
+      else { const refund = prev ? GUNS[prev.k].cost : 0; if (f.credits + refund >= G.cost) { f.credits += refund - G.cost; if (f.ownSkins && f.skins) f.skins[k] = f.ownSkins[k] || null; sp[s] = { k, was: prev ? prev.was : f.guns[s] }; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = 0; f.reloadT = 0; ok = true; } }
     } else if (A) {
       if (f.sh >= A.sh) { if (sp.sh && sp.sh.k === A.k) { f.credits += A.cost; f.sh = sp.sh.was; delete sp.sh; ok = true; } }
       else { const refund = sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0; if (f.credits + refund >= A.cost) { f.credits += refund - A.cost; sp.sh = { k: A.k, was: sp.sh ? sp.sh.was : f.sh }; f.sh = A.sh; ok = true; } }
@@ -1755,7 +1763,7 @@ const GAME = {
       planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], pings: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0, ranked, botDiff: o.botDiff != null ? o.botDiff : o.diff };
     M.size = teamSize(Math.max(fs.filter(f => f.team === 0).length, fs.filter(f => f.team === 1).length)); if (ranked) { A.rk = rankStrength(M.size); A.rkp = placed(rankedOf(M.size)) ? 1 : 0; }
     M.loadT = mode === 'bot' || online ? LOAD_T : 0; M.loading = M.loadT > 0;
-    for (const f of fs) { f.rating = f === A ? STATS.rating : f.bot ? botRating(f, M) : f.rating || 0; f.skins = f === A ? Object.assign({}, STATS.equip) : f.bot || f.isBot ? botSkins() : {}; }
+    for (const f of fs) { f.rating = f === A ? STATS.rating : f.bot ? botRating(f, M) : f.rating || 0; f.skins = f === A ? Object.assign({}, STATS.equip) : f.bot || f.isBot ? botSkins() : {}; f.ownSkins = Object.assign({}, f.skins); }
     startRound(1);
     if (mode === 'range') { M.phase = 'live'; M.t = 0; A.credits = CASH.cap; Object.assign(A, { x: 9, z: 5, yaw: yawTo(9, 5, 30, 5) }); placeDummy(fs[1]); }
     if (mode === 'demo') { M.t = 1.5; A.credits = fs[1].credits = 4500; }
@@ -1873,7 +1881,7 @@ const GAME = {
   }
   // Mirage popped by whoever shot it (or a bot that fell for it): they are blinded and marked; decided where they are run
   function decoyPop(D, v, fromNet) { if (!D || D.popped) return; D.popped = true; D.t = 0; emit('decoyPop', D, v);
-    if (v && !v.net) { v.flash = Math.max(v.flash, 1.8); v.reveal = Math.max(v.reveal, 2.5); if (v === me()) say('IT WAS A MIRAGE', OPS.wraith.col); }
+    if (v && !v.net) { v.flash = Math.max(v.flash, 1.8); v.reveal = Math.max(v.reveal, 2.5); }   // (no message: the flash says it)
     if (!fromNet) net({ t: 'dk', id: D.id, v: v ? v.key : '' }); }
   // a shot at the copy: a box the size of a fighter where it stands
   function decoyShot(f, S) { const K2 = M.kit; if (!K2 || !K2.decoys.length) return false;
@@ -1996,7 +2004,7 @@ const GAME = {
      VANTA (Duelist)
              C Phase Front: a wall of light rolls 14 m out ahead along the nearest straight line, stopping bullets and sight
                (anyone can walk through it); it holds 5 s where it stops.
-             Q Sunder: a bolt straight through walls; rivals it touches are Exposed (25% more damage taken) for 4 s.
+             Q Sunder: an instant bolt down the aim (a head it meets in the open: dead); it goes on through walls, Exposing (25% more damage taken, 4 s).
              E Overcharge: for 12 s, a rival you kill leaves a charge where they fell; shoot it within 3 s for a ward that
                stops the next hit (20 s). Comes back after two kills.
              X Duel Field: a beam; the first rival it meets is sealed in a dome with you for up to 12 s: nobody else sees
@@ -2018,10 +2026,18 @@ const GAME = {
       return { ax, az, x: ax + sx * b, y: e + .3, z: az + sz * b }; }
     if (key === 'vantac') { const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw), ax = Math.abs(fx) >= Math.abs(fz) ? 1 : 0, dir = ax ? Math.sign(fx) : Math.sign(fz); return { x: f.x + (ax ? dir * 1.2 : 0), z: f.z + (ax ? 0 : dir * 1.2), ax, dir }; }
     if (key === 'vantaq') return { x: f.x + d[0] * .6, y: e + d[1] * .6, z: f.z + d[2] * .6, dx: d[0], dy: d[1], dz: d[2] };
-    if (key === 'vantax') { const t = duelTarget(f, d); return { t: t ? t.key : '', ex: t ? t.x : S.end[0], ey: t ? eyeY(t) - .3 : S.end[1], ez: t ? t.z : S.end[2] }; }
+    if (key === 'vantax') { const Z = duelZone(f, d); return { t: Z.t ? Z.t.key : '', px: r2(Z.p[0]), py: r2(Z.p[1]), pz: r2(Z.p[2]), fail: !Z.t }; }   // (nobody in the circle: it is not spent)
     return undefined;
   }
-  // Duel Field's beam: the rival it meets (straight on, or within a hair of the aim, with nothing in the way), up to 40 m
+  /* Duel Field: you point at a spot (where your aim meets the world, up to 40 m, brought down to the floor) and a circle of
+     DUEL_R metres opens there; the rival standing nearest its middle is taken into the dome with you. */
+  const DUEL_R = 5;
+  function duelZone(f, d) {
+    const S = castShot(f, d), o = [f.x, eyeY(f), f.z], L = Math.min(40, S.dist || 40), px = o[0] + d[0] * L, pz = o[2] + d[2] * L, p = [px, hAt(px, pz), pz];
+    let t = null, bd = DUEL_R; for (const v of M.fs) { if (!v.alive || v.team === f.team || v.duel || !duelOk(f, v)) continue; const dd = Math.hypot(v.x - p[0], v.z - p[2]); if (dd < bd && Math.abs(v.y - p[1]) < 3) { bd = dd; t = v; } }
+    return { t, p };
+  }
+  // (kept for the bots: the rival straight down the aim)
   function duelTarget(f, d) {
     const S = castShot(f, d); if (S.hit && S.dist <= 40 && !S.hit.f.duel) return S.hit.f;
     let best = null, bd = .045; const o = [f.x, eyeY(f), f.z];
@@ -2034,25 +2050,46 @@ const GAME = {
   function kitApply2(f, key, d) {
     const K2 = M.kit;
     if (key === 'vexc' || key === 'talonc' || key === 'axiomc') { K2.lobs.push({ k: key, x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, bounce: key === 'talonc' ? 1 : 0 }); return true; }
-    if (key === 'irisc') { K2.eyes.push({ x: d.x, y: d.y, z: d.z, yaw: d.yaw, t: 20, tick: .6, by: f, seen: 0 }); return true; }
+    if (key === 'irisc') { if (d.act) { const W = irisEye(f); if (W) { W.act = EYE_ON; W.tick = .15; emit('eyeWake', W); } return true; }
+      K2.eyes = K2.eyes.filter(W => W.by !== f); K2.eyes.push({ id: kitId(f, 'c') + ':' + (K2.eyeN = (K2.eyeN || 0) + 1), x: d.x, y: d.y, z: d.z, yaw: d.yaw, act: 0, cd: 0, tick: 0, by: f, seen: 0 }); return true; }   // (it stays, asleep, until woken or shot)
     if (key === 'bastionc') { K2.beacons.push({ x: d.x, y: hAt(d.x, d.z), z: d.z, t: .8, by: f }); return true; }
-    if (key === 'novac') { if (!f.net) { f.vy = 9.6; f.ground = false; } emit('updraft', f); return true; }
+    // (Updraft: high enough to land on a shipping container, 3 m)
+    if (key === 'novac') { if (!f.net) { f.vy = 11; f.ground = false; } emit('updraft', f); return true; }
     if (key === 'wraithc') {
       if (d.back) { const T = f.tether; f.tether = null; if (T) { const from = [f.x, f.z]; if (!f.net) { f.x = T.x; f.z = T.z; f.y = hAt(T.x, T.z); f.vx = f.vz = f.vy = 0; } emit('tetherBack', f, from, [T.x, T.z]); } return true; }
       f.tether = { x: d.x, z: d.z, y: hAt(d.x, d.z) }; emit('tetherSet', f); return true; }
     if (key === 'emberc') { const fl = { x: d.x, y: d.y, z: d.z, t: .55, by: f }; M.flares.push(fl); emit('flare', fl); emit('curveFlash', f, d); return true; }
     if (key === 'vantac') {   // the wall: a thin slab across the way it rolls, 6 m wide and 3 m tall
       const w = { x0: 0, x1: 0, z0: 0, z1: 0, t: 99, grow: 0, soft: true, front: { x: d.x, z: d.z, ax: d.ax, dir: d.dir, s: 0, hold: 0, by: f } }; placeFront(w); M.walls.push(w); emit('front', w); return true; }
-    if (key === 'vantaq') { K2.sunders.push({ x: d.x, y: d.y, z: d.z, dx: d.dx, dy: d.dy, dz: d.dz, s: 0, by: f, hit: [] }); emit('sunder', f, d); return true; }
+    if (key === 'vantaq') { sunderNow(f, d); K2.sunders.push({ x: d.x, y: d.y, z: d.z, dx: d.dx, dy: d.dy, dz: d.dz, s: 35, by: f, hit: [], t: .3 }); emit('sunder', f, d); return true; }
     if (key === 'vantae') { f.over = 12; emit('overcharge', f); return true; }
     if (key === 'vantax') {
-      const v = d.t && M.byKey[d.t]; emit('duelBeam', f, d);
-      if (v && v.alive && f.alive && !v.duel && !f.duel) { const mx = (f.x + v.x) / 2, mz = (f.z + v.z) / 2, r = Math.max(7.5, Math.hypot(f.x - v.x, f.z - v.z) / 2 + 3), D = { id: f.key + '>' + v.key + ':' + M.round, x: mx, z: mz, r, until: M.time + 12, a: f, b: v };
+      const v = d.t && M.byKey[d.t]; emit('duelZone', f, d);
+      if (v && v.alive && f.alive && !v.duel && !f.duel && (d.px == null || Math.hypot(v.x - d.px, v.z - d.pz) < DUEL_R + 3)) { const mx = (f.x + v.x) / 2, mz = (f.z + v.z) / 2, r = Math.max(7.5, Math.hypot(f.x - v.x, f.z - v.z) / 2 + 3), D = { id: f.key + '>' + v.key + ':' + M.round, x: mx, z: mz, r, until: M.time + 12, a: f, b: v };
         f.duel = v.duel = D; f.scoped = v.scoped = 0; emit('duelStart', D); if (f === me() || v === me()) say('DUEL FIELD', OPS.vanta.col); }
       else if (f === me()) say('THE BEAM MET NOBODY', DIM);
       return true; }
     return false;
   }
+  /* Sunder, all at once: the bolt runs 35 m down the aim in an instant. The first rival it meets in the open takes it
+     (a head: dead; the body 45, the legs 30) and is Exposed; it goes on through walls, and every rival it passes there is
+     Exposed (no harm through a wall). Each device does this for its own fighters, as with every ability's harm. */
+  function sunderNow(f, d) {
+    const L0 = .6, o = [d.x - d.dx * L0, d.y - d.dy * L0, d.z - d.dz * L0], dir = [d.dx, d.dy, d.dz];
+    let wall = rayGrid(o[0], o[1], o[2], dir[0], dir[1], dir[2], 40); for (const w of M.walls) { if (w.soft) continue; const t = rayBox(o, dir, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (t > 0 && t < wall) wall = t; }
+    let first = null, fd = wall; for (const v of M.fs) { if (!enemyOf(f, v) || !duelOk(f, v)) continue; const hb = hitboxes(v), th = raySphere(o, dir, hb.head, hb.hr), tb = rayFrame(o, dir, hb, hb.body), ta = rayFrame(o, dir, hb, hb.arms), tbody = tb > 0 && (ta <= 0 || tb <= ta) ? tb : ta, near = th > 0 && (tbody <= 0 || th <= tbody) ? th : tbody;
+      if (near > 0 && near < fd) { fd = near; first = { v, head: near === th, leg: near === tb && o[1] + dir[1] * tb < hb.leg }; } }
+    for (const v of localFs()) { if (!enemyOf(f, v) || !duelOk(f, v)) continue; let on = first && first.v === v;
+      if (!on) for (const hy of [eyeY(v) - .1, v.y + 1, v.y + .4]) { const px = v.x - o[0], py = hy - o[1], pz = v.z - o[2], along = px * dir[0] + py * dir[1] + pz * dir[2]; if (along < 0 || along > 35) continue; if (Math.hypot(px - dir[0] * along, py - dir[1] * along, pz - dir[2] * along) < .7) { on = true; break; } }
+      if (!on) continue; v.exposed = 4; emit('sundered', v, { by: f }); if (v === me()) say('EXPOSED', WARN);
+      if (first && first.v === v) applyDamage(v, first.head ? 200 : first.leg ? 30 : 45, f, first.head, 'sunder', first.leg); }
+  }
+  /* Iris's Watcher: fixed where she aims, it stays the whole round, asleep and unseen by rivals. The C key again wakes it
+     for EYE_ON seconds: it looks out (marking rivals in its view every second), glows, and can be shot out with one hit;
+     then it rests EYE_REST seconds before it can wake again. */
+  const EYE_ON = 6, EYE_REST = 6;
+  function irisEye(f) { return M && M.kit ? M.kit.eyes.find(W => W.by === f && !W.down) : null; }
+  function breakEye(W, fromNet) { const K2 = M.kit; if (!K2 || W.down) return; W.down = true; K2.eyes = K2.eyes.filter(q => q !== W); emit('eyeDown', W); if (!fromNet) net({ t: 'ed', id: W.id }); }
   const placeFront = w => { const F = w.front, cx = F.x + (F.ax ? F.dir * F.s : 0), cz = F.z + (F.ax ? 0 : F.dir * F.s), half = 3, th = .16;
     if (F.ax) { w.x0 = cx - th; w.x1 = cx + th; w.z0 = cz - half; w.z1 = cz + half; } else { w.x0 = cx - half; w.x1 = cx + half; w.z0 = cz - th; w.z1 = cz + th; } };
   // Overcharge's charge, shot: the shooter's own device decides, and tells the others
@@ -2089,24 +2126,20 @@ const GAME = {
     for (const F of K2.fields) { F.t -= dt; for (const v of localFs()) if (enemyOf(F.by, v) && Math.hypot(v.x - F.x, v.z - F.z) < F.r && Math.abs(v.y - F.y) < 2) { if (!(v.slowF > 0) && v === me()) say('SLOWED', WARN); v.slowF = .2; } }
     K2.fields = K2.fields.filter(F => F.t > 0);
     // Watcher: a look every 1.6 s; rivals in its view are marked
-    for (const W of K2.eyes) { W.t -= dt; if ((W.tick -= dt) > 0) continue; W.tick = 1.6; let n = 0;
+    for (const W of K2.eyes) { if (!(W.act > 0)) { W.cd = Math.max(0, (W.cd || 0) - dt); continue; } W.act -= dt; if (W.act <= 0) { W.act = 0; W.cd = EYE_REST; emit('eyeSleep', W); continue; } if ((W.tick -= dt) > 0) continue; W.tick = 1; let n = 0;
       for (const v of M.fs) { if (!v.alive || !enemyOf(W.by, v) || !duelOk(W.by, v)) continue; const dd = Math.hypot(v.x - W.x, v.z - W.z); if (dd > 25 || Math.abs(angDiff(yawTo(W.x, W.z, v.x, v.z), W.yaw)) > .9) continue;
         if (los(W.x, W.y, W.z, v.x, eyeY(v) - .1, v.z) < Math.hypot(dd, eyeY(v) - .1 - W.y) - .4) continue; v.reveal = Math.max(v.reveal, 1.4); n++; if (v === me()) say('A WATCHER SEES YOU', WARN); }
       W.seen = n; if (n) emit('eyeSpot', W); }
-    K2.eyes = K2.eyes.filter(W => W.t > 0);
+    K2.eyes = K2.eyes.filter(W => !W.down);
     // Ward Beacon: a beat, then shields for the team round it (each device for its own)
     for (const B of K2.beacons) if ((B.t -= dt) <= 0) { for (const v of localFs()) if (v.team === B.by.team && Math.hypot(v.x - B.x, v.z - B.z) < 6 && Math.abs(v.y - B.y) < 2.5) { v.sh = Math.min(50, (v.sh | 0) + 30); if (v === me()) say('+30 SHIELD', OPS.bastion.col); } B.done = true; emit('beaconPop', B); }
     K2.beacons = K2.beacons.filter(B => !B.done);
-    // Phase Front: rolls out until 14 m or a wall, then holds
+    // Phase Front: rolls out 14 m, through walls and all, then holds
     for (const w of M.walls) { const F = w.front; if (!F) continue;
-      if (F.s < 14 && !F.stop) { const was = F.s, step = dt * 4.4; F.s = Math.min(14, F.s + step); const cx = F.x + (F.ax ? F.dir * F.s : 0), cz = F.z + (F.ax ? 0 : F.dir * F.s); if (hAt(cx, cz) > hAt(F.x, F.z) + 1.4) { F.s = was; F.stop = true; } placeFront(w); }
+      if (F.s < 14 && !F.stop) { const was = F.s, step = dt * 4.4; F.s = Math.min(14, F.s + step); const cx = F.x + (F.ax ? F.dir * F.s : 0), cz = F.z + (F.ax ? 0 : F.dir * F.s); placeFront(w); }   // (it rolls through walls)
       else { F.hold += dt; if (F.hold >= 5) w.t = 0; } }
     // Sunder: flies 40 m/s for 35 m through anything; rivals it passes are Exposed
-    for (const B of K2.sunders) { const s0 = B.s; B.s = Math.min(35, B.s + 40 * dt);
-      for (const v of localFs()) { if (!enemyOf(B.by, v) || B.hit.includes(v.key) || !duelOk(B.by, v)) continue;
-        for (const hy of [eyeY(v) - .1, v.y + 1, v.y + .4]) { const px = v.x - B.x, py = hy - B.y, pz = v.z - B.z, along = px * B.dx + py * B.dy + pz * B.dz; if (along < s0 - .6 || along > B.s + .6) continue;
-          if (Math.hypot(px - B.dx * along, py - B.dy * along, pz - B.dz * along) < .7) { B.hit.push(v.key); v.exposed = 4; emit('sundered', v, B); if (v === me()) say('EXPOSED', WARN); break; } } }
-      if (B.s >= 35) B.done = true; }
+    for (const B of K2.sunders) if ((B.t -= dt) <= 0) B.done = true;   // (the bolt is instant: this is only how long it shows)
     K2.sunders = K2.sunders.filter(B => !B.done);
     for (const h of K2.hexes) h.t -= dt; K2.hexes = K2.hexes.filter(h => h.t > 0);
     // a bot with Overcharge takes its charge a moment after the kill
@@ -2243,6 +2276,7 @@ const GAME = {
   }
   // every operative's C, and Vanta's kit
   function kitBot2(f, B, P, side, sees, engaged, fresh, near, dE, e, dt) {
+    if (f.op === 'iris') { const W = irisEye(f); if (W && !W.act && !W.cd && !sees && R() < dt * .3) ability(f, 'c'); }   // (wakes its Watcher now and then, to look)
     const ey = eyeY(f), there = P.path && !P.path.length, holdLook = P.look || (B.last ? [B.last.x, B.last.z] : null), last = fresh && B.last ? B.last : null, roll = R() < dt * 1.2;
     const lob = (k, tx, tz) => { const dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 13, .45, 1.1), y0 = ey - .1, ty = hAt(tx, tz) + .1; botCast(f, k, { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + LOB_G / 2 * T * T) / T, vz: dz / T }); };
     if (f.ab.c) {
@@ -2273,7 +2307,7 @@ const GAME = {
     else if ((op === 'nova' || op === 'wraith') && !sees && chance && (push && near < 26 || retake)) botCast(f, 'x', {});
     else if (op === 'talon' && fresh && !sees && dE < 40 && Math.abs(angDiff(yawTo(f.x, f.z, B.last.x, B.last.z), f.yaw)) < .1) botCast(f, 'x', {});
     else if (op === 'ember' && fresh && !sees && dE > 6 && dE < 24 && chance) { const tx = B.last.x, tz = B.last.z, dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 14, .5, 1.2), y0 = eyeY(f) - .1, ty = hAt(tx, tz) + .1; botCast(f, 'x', { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + 7 * T * T) / T, vz: dz / T }); }
-    else if (op === 'vanta' && sees && e && e.alive && !e.duel && dE < 30 && R() < dt * 2) botCast(f, 'x', { t: e.key, ex: e.x, ey: eyeY(e) - .3, ez: e.z });
+    else if (op === 'vanta' && sees && e && e.alive && !e.duel && dE < 30 && R() < dt * 2) botCast(f, 'x', { t: e.key, px: e.x, py: e.y, pz: e.z });
     else if (op === 'axiom' && ((side === 'def' && fresh && dE < 13) || (retake && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 12))) botCast(f, 'x', { x: f.x, z: f.z });
   }
   const magOf = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return A ? A.mag : 0; };
@@ -2560,6 +2594,7 @@ const GAME = {
       case 'ab': if (!(m.d && m.d.free)) spendAb(F, m.k); applyAbility(F, m.k, m.d || {}); break;
       case 'orb': takeOrb(m.i | 0, F); break;   // someone took an ultimate orb
       case 'kx': kitTrip(m.id, m.v, true); break;   // a snare or mine went off on the victim's device
+      case 'ed': { const W = M.kit && M.kit.eyes.find(q => q.id === m.id); if (W) breakEye(W, true); break; }   // someone shot out a Watcher
       case 'kd': { const s2 = M.kit && M.kit.sentries.find(q => q.id === m.id); if (s2) hurtSentry(s2, m.d, true); break; }   // someone shot a sentry
       case 'nd': F.smokes = Math.max(0, (F.smokes || 0) - 1); F.throwT = .6; addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); emit('throw', F); break;
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;
@@ -2567,7 +2602,7 @@ const GAME = {
       case 'dh': if (M.planted) M.planted.half = true; break;   // a defuse got halfway
       case 'pg': if (F.team === me().team) ping(F, true, { x: +m.x, y: +m.y, z: +m.z }); break;   // a teammate's ping
       case 'rdy': F.ready = true; break;
-      case 'dp': if (GUNS[m.k]) addLoot({ id: String(m.id), k: m.k, x: +m.x, z: +m.z, m: m.m | 0, r: m.r | 0, by: F.key, fo: m.fo ? String(m.fo) : '' }); break;   // a gun put on the floor
+      case 'dp': if (GUNS[m.k]) addLoot({ id: String(m.id), k: m.k, x: +m.x, z: +m.z, m: m.m | 0, r: m.r | 0, by: F.key, fo: m.fo ? String(m.fo) : '', sk: typeof m.sk === 'string' && skinOfId(m.sk) ? m.sk : '' }); break;   // a gun put on the floor
       case 'pk': { const d = M.loot && M.loot.find(q => q.id === String(m.id)); if (d) takeLoot(F, d, true); break; }   // and picked up
       case 'cc': {   // the charge changed hands. Two people grabbing it at once: the lower key keeps it, the same on every device
         const nk = String(m.k || ''), c = M.charge, mine = c && c.k && M.byKey[c.k] && !M.byKey[c.k].net && M.time - c.at < 1;
@@ -4171,7 +4206,8 @@ const GAME = {
         const fa = new THREE.Vector3(Hn[0] - E[0], Hn[1] - E[1], Hn[2] - E[2]).normalize(), mid = [lp(E[0], Hn[0], .58), lp(E[1], Hn[1], .58), lp(E[2], Hn[2], .58)];
         const br = add(cyl(.052, .058, .12, 10), M.plate, mid[0], mid[1], mid[2]); br.quaternion.setFromUnitVectors(UP, fa); add(sph(.03, 8, 6), M.acc, mid[0] - fa.y * .0 + px * .0, mid[1] + .05, mid[2]).scale.set(1, .4, 1.4);   // bracer with a light on it
         // the hand: a palm in line with the forearm, four fingers closed round the grip (or cupped under the handguard), a thumb
-        const hand = new THREE.Group(); hand.position.set(Hn[0], Hn[1], Hn[2]); hand.lookAt(Hn[0] + fa.x, Hn[1] + fa.y, Hn[2] + fa.z); if (px < 0 && !gd.pistolHold && !knife && !gd.dead) hand.rotateZ(-1.2); armMesh.add(hand); const was = T; T = hand;
+        // (on a vertical foregrip the support fist turns upright round it)
+        const hand = new THREE.Group(); hand.position.set(Hn[0], Hn[1], Hn[2]); hand.lookAt(Hn[0] + fa.x, Hn[1] + fa.y, Hn[2] + fa.z); if (px < 0 && !gd.pistolHold && !knife && !gd.dead) hand.rotateZ(gd.vgrip ? -Math.PI / 2 : -1.2); armMesh.add(hand); const was = T; T = hand;
         add(cyl(.044, .048, .03, 10), M.dark, 0, 0, -.005, Math.PI / 2); add(rb(.074, .034, .078, .012), M.dark, 0, 0, .042);   // cuff, palm
         add(rb(.07, .03, .05, .012), M.dark, -px * .012, -.02, .09, .9); add(rb(.066, .028, .04, .012), M.dark, -px * .014, -.05, .092, 1.9);   // fingers, curled
         add(rb(.024, .026, .055, .01), M.dark, px * .03, .012, .06, -.3, px * .5); add(rb(.07, .02, .03, .006), M.plate, 0, .024, .05);   // thumb, knuckle guard
@@ -4712,7 +4748,7 @@ const GAME = {
   function gunModel(k, opts = {}) {
     const sk = skinOfId(opts.skin), line = sk && sk.k === k ? sk.line : null;
     const W = GUNS[k], m = gmats(k, line), G = new THREE.Group(), cast = !!opts.cast, parts = {};
-    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null, ACC = 0;
+    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null, ACC = 0, vgrip = false;
     // where the body is (a top line's form is fitted to it), and which parts are fittings rather than body: sights, rails,
     // grips, lights and bipods, which a form leaves standing where they are
     const A = { by: .03 }, accy = f => { ACC = 1; f(); ACC = 0; };
@@ -4852,7 +4888,7 @@ const GAME = {
       else if (o.stock === 'heavy') { side([[sb, .05], [sb + .27, .062], [sb + .29, .054], [sb + .29, -.074], [sb + .27, -.08], [sb + .2, -.07], ['q', sb + .1, -.05, sb, -.03]], .05, m.poly, 0, .01); rbox(.054, .14, .016, m.rubber, 0, -.008, sb + .297, .006); rbox(.02, .01, .1, m.steel, 0, .07, sb + .16, .004); }
       // what the support hand holds
       ACC = 1;
-      if (o.fore === 'vgrip') { const z = lp(hz, rf, .42); vtube(.0155, hb - .09, hb + .004, m.poly, 0, z, .019); vtube(.0195, hb - .098, hb - .084, m.acc, 0, z); for (let i = 0; i < 3; i++) ring(.0172, .0016, z, m.rubber, hb - .03 - i * .018).rotation.x = Math.PI / 2; sup = [0, hb - .05, z]; }
+      if (o.fore === 'vgrip') { const z = lp(hz, rf, .42); vtube(.0155, hb - .09, hb + .004, m.poly, 0, z, .019); vtube(.0195, hb - .098, hb - .084, m.acc, 0, z); for (let i = 0; i < 3; i++) ring(.0172, .0016, z, m.rubber, hb - .03 - i * .018).rotation.x = Math.PI / 2; sup = [0, hb - .05, z]; vgrip = true; }
       else if (o.fore === 'angled') { const z = lp(hz, rf, .45); side([[z - .05, hb + .004], [z + .04, hb + .004], [z + .01, hb - .034], [z - .022, hb - .034]], .03, m.poly, 0, .006); sup = [0, hb - .028, z - .005]; }
       else sup = [0, hb - .012, lp(hz, rf, .45)];
       // sight
@@ -5053,7 +5089,9 @@ const GAME = {
         T = parts.lhand = group(sup[0], sup[1], sup[2], pistolHold ? .3 : 0);
         // a left hand, palm up under the gun: the thumb up the near (left) side, the fingers wrapped up the far side, set
         // wide enough to clear a handguard or a pump; its forearm reaches in from your left side
-        rbox(.064, .018, .08, HM.glove, 0, 0, 0, .007); rbox(.014, .044, .07, HM.glove, .037, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, HM.glove, .039, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, HM.glove, -.037, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
+        if (vgrip) {   // a vertical foregrip: a fist round the post, palm on the near side, the four fingers stacked down it and curled round the far side, the thumb over the top
+          rbox(.018, .078, .058, HM.glove, -.03, -.004, .004, .007); for (let i = 0; i < 4; i++) { const fy = .026 - i * .019; rbox(.05, .016, .018, HM.glove, -.004, fy, -.026, .006); rbox(.018, .016, .036, HM.glove, .024, fy, -.008, .006); } rbox(.034, .014, .016, HM.glove, -.012, .046, -.004, .005); rbox(.004, .05, .04, m.rubber, -.0395, -.004, .004, .002); }
+        else { rbox(.064, .018, .08, HM.glove, 0, 0, 0, .007); rbox(.014, .044, .07, HM.glove, .037, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, HM.glove, .039, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, HM.glove, -.037, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002); }
         parts.larm = arm(T, -.046, -.04, .024, .42, -.75, .55);   // (set low and to the left, so the cuff stays clear of what the hand holds and of the gun behind it)
         if (k === 'breaker') { const sh = vtube(.0095, -.021, .021, m.shell, 0, 0); sh.rotation.x = Math.PI / 2; sh.position.set(-.012, .03, 0); sh.userData.live = true; sh.visible = false; parts.hshell = sh; }
         if (k === 'stub') { const sl = new THREE.Group(); sl.position.set(-.004, .034, -.01); T.add(sl); const was = T; T = sl; for (const sx of [-.011, .011]) { const sh = vtube(.0095, -.021, .021, gmats('breaker').shell, 0, 0); sh.rotation.x = Math.PI / 2; sh.position.set(sx, 0, 0); sh.userData.live = true; } T = was; sl.visible = false; parts.hshell = sl; }
@@ -5063,7 +5101,7 @@ const GAME = {
     bake(G, cast);
     if (parts.mag) { G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(parts.mag); parts.mag.userData.bot = bb.min.y - parts.mag.position.y; parts.mag.userData.hw = (bb.max.x - bb.min.x) / 2; }
     if (parts.bolt && A.fam === 'long' && !parts.boltL) parts.bolt.userData.grab = A.sideHandle ? [-(A.hw || .022) - .012, .032, -.006, .058] : [0, (A.top || .06) + .003, (A.rb || .1), (A.hw || .022) + .054];
-    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.line = line; G.userData.bore = bore;
+    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.vgrip = vgrip; G.userData.line = line; G.userData.bore = bore;
     if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, bore ? bore.y : .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
     return G;
   }
@@ -6995,10 +7033,10 @@ const GAME = {
   function lootFx(dt) {
     const L = (M && M.loot) || [], seen = new Set();
     // in the buy phase, get a floor copy of each gun people are carrying ready, one a frame, so a gun dropped mid-fight costs nothing to show
-    if (M && M.phase === 'buy') for (const f of M.fs) { const k = f.guns[1] || (f.guns[2] !== 'pip' && f.guns[2]); if (k && GUNS[k] && !X.lootProto.has(k)) { X.lootProto.set(k, gunModel(k, {})); break; } }
+    if (M && M.phase === 'buy') for (const f of M.fs) { const k = f.guns[1] || (f.guns[2] !== 'pip' && f.guns[2]); const sk = (k && skinFor(f, k)) || '', pk = k + '|' + sk; if (k && GUNS[k] && !X.lootProto.has(pk)) { X.lootProto.set(pk, gunModel(k, { skin: sk })); break; } }
     for (const d of L) {
       seen.add(d.id); let o = X.lootObjs.get(d.id);
-      if (!o) { let pr = X.lootProto.get(d.k); if (!pr) { pr = gunModel(d.k, {}); X.lootProto.set(d.k, pr); }
+      if (!o) { const pk = d.k + '|' + (d.sk || ''); let pr = X.lootProto.get(pk); if (!pr) { pr = gunModel(d.k, { skin: d.sk || '' }); X.lootProto.set(pk, pr); }   // (in the skin it was dropped in)
         o = new THREE.Group(); const gm = pr.clone(); gm.rotation.set(0, 0, Math.PI / 2); gm.position.y = .07; o.add(gm); const ring = new THREE.Mesh(X.lootRing.g, X.lootRing.m); ring.rotation.x = -Math.PI / 2; ring.position.y = .02; o.add(ring);
         o.rotation.y = (d.x * 7.3 + d.z * 3.1) % TAU; X.scene.add(o); X.lootObjs.set(d.id, o); }
       o.visible = true; o.position.set(d.x, d.y, d.z);
@@ -7716,7 +7754,7 @@ const GAME = {
   function burst(kind, x, y, z, col, r, T, h) { const K = X && X.kf2; if (!K) return; K.bursts.push({ kind, x, y, z, col, r, T, t: 0, h: h || 3 }); }
   // the preview for a readied ability: what kind, and where (from the same sums the ability uses)
   const PV = { vexe: 'spot', irise: 'mark', vexx: 'spot', axiomx: 'self', bastionq: 'wall', embere: 'haze', talone: 'floor', axiomq: 'floor', axiome: 'floor', bastionc: 'floor', wraithc: 'floor',
-    emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'beam', wraithe: 'run' };
+    emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'zone', wraithe: 'run' };
   const PV_R = { vexe: 3.8, vexx: 1, axiomx: 14, emberq: 3.2, emberx: 5.5, vexc: 6, talonc: 3.5, axiomc: 5, wraithe: 1.2, talone: 1.3, axiomq: .6, axiome: 2.2, bastionc: 6, wraithc: .5, novae: 4.5 };
   function previewFrame(P) {
     const K = X.kf2; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false;
@@ -7742,8 +7780,9 @@ const GAME = {
       if (kind === 'front') { const L = 14, ex = cx + (d.ax ? d.dir * L : 0), ez = cz + (d.ax ? 0 : d.dir * L); K.pvBeam.visible = true; K.pvBeam.position.set(cx, hAt(cx, cz) + .05, cz); K.pvBeam.lookAt(ex, hAt(cx, cz) + .05, ez); K.pvBeam.scale.set(3, 3, L); K.pvBeam.material.color.set(col); K.pvBeam.material.opacity = .45; } }
     else if (kind === 'curve') { const pos = K.pvArc.geometry.attributes.position, e = eyeY(P); for (let i = 0; i < 40; i++) { const q = i / 39, a = Math.min(1, q * 2), b = Math.max(0, q * 2 - 1); pos.setXYZ(i, lp(P.x, d.ax, a) + (d.x - d.ax) * b, e + .3 * q, lp(P.z, d.az, a) + (d.z - d.az) * b); } pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); K.pvMark.visible = true; K.pvMark.position.set(d.x, d.y, d.z); K.pvMark.material.color.set('#fff6d6'); }
     else if (kind === 'run') { const pos = K.pvArc.geometry.attributes.position, e = P.y + .08; let x = d.x, z = d.z, n = 0; for (let s = 0; s < 40; s++) { const nx = x + d.dx * .55, nz = z + d.dz * .55; if (blocked(nx, nz, P.y)) break; x = nx; z = nz; pos.setXYZ(n++, x, hAt(x, z) + .08, z); } for (let i = n; i < 40; i++) pos.setXYZ(i, x, hAt(x, z) + .08, z); pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); ring(x, hAt(x, z), z, .6); }   // Mirage: where the copy will run
-    else if (kind === 'beam') { const e = eyeY(P), v = viewDir(P.yaw, P.pitch), L = key === 'vantax' ? 40 : 35, ex = key === 'vantax' ? d.ex : P.x + v[0] * L, ey = key === 'vantax' ? d.ey : e + v[1] * L, ez = key === 'vantax' ? d.ez : P.z + v[2] * L;
-      K.pvBeam.visible = true; K.pvBeam.position.set(P.x + v[0] * .8, e - .25, P.z + v[2] * .8); K.pvBeam.lookAt(ex, ey, ez); K.pvBeam.scale.set(key === 'vantax' && d.t ? 2.2 : 1, key === 'vantax' && d.t ? 2.2 : 1, Math.hypot(ex - P.x, ey - e, ez - P.z)); K.pvBeam.material.color.set(key === 'vantax' && !d.t ? DIM : col); K.pvBeam.material.opacity = .55 * pulse;
+    else if (kind === 'zone') { ring(d.px, d.py, d.pz, 5, !d.t); if (d.t && M.byKey[d.t]) { const v = M.byKey[d.t]; K.pvMark.visible = true; K.pvMark.position.set(ipos(v, 'x'), ipos(v, 'y') + 2.3, ipos(v, 'z')); K.pvMark.material.color.set(col); K.pvMark.scale.setScalar(.45 * pulse + .25); } }   // (Duel Field: the circle it opens, and whoever it would take)
+    else if (kind === 'beam') { const c = X.camera.position, v = viewDir(P.yaw, P.pitch), L = 35, sx = c.x + v[0] * .8, sy = c.y - .25 + v[1] * .8, sz = c.z + v[2] * .8;   // (from the camera itself, so it never swims against the view)
+      K.pvBeam.visible = true; K.pvBeam.position.set(sx, sy, sz); K.pvBeam.lookAt(c.x + v[0] * L, c.y + v[1] * L, c.z + v[2] * L); K.pvBeam.scale.set(1, 1, L); K.pvBeam.material.color.set(col); K.pvBeam.material.opacity = .55 * pulse;
       if (key === 'vantax' && d.t) { K.pvMark.visible = true; K.pvMark.position.set(ex, ey, ez); K.pvMark.material.color.set(col); K.pvMark.scale.setScalar(1.1 * pulse); } }
   }
   function kitFx2(dt) {
@@ -7765,10 +7804,11 @@ const GAME = {
     list(K.glooms, K2.glooms, (g, G2) => { const k = Math.min(1, (3.5 - G2.t) / .25) * Math.min(1, G2.t / .8); g.position.set(G2.x, G2.y + 1, G2.z); g.userData.puffs.forEach((s, i) => { const a = i * 2.4 + X.t * (.3 + i * .03), r = 1.2 + (i % 3) * 1.3; s.position.set(Math.cos(a) * r, Math.sin(i * 1.7 + X.t) * .6, Math.sin(a) * r); s.scale.setScalar((2.6 + (i % 4)) * k); s.material.opacity = .85 * k; s.material.rotation = X.t * .2 + i; });
       g.userData.glow.material.opacity = .5 * k; g.userData.glow.scale.setScalar(4 * k); });
     // (big and glowing enough to find: a rival sees it, through the walls' gaps, from 45 m, swelling and fading so it catches the eye)
-    list(K.eyes, K2.eyes.filter(W => W.by.team === P.team || Math.hypot(W.x - P.x, W.z - P.z) < 45), (g, W) => { const mine = W.by.team === P.team, beat = .5 + .5 * Math.sin(X.t * 5), sc = mine ? 1.5 : 2 + .25 * beat; g.position.set(W.x, W.y, W.z); g.rotation.y = W.yaw; g.scale.setScalar(sc); const spot = (W.flashT || 0) > X.t;
-      g.userData.cone.visible = mine; g.userData.cone.scale.setScalar(1 / sc); g.userData.cone.position.z = -3 / sc; g.userData.cone.material.uniforms.op.value = spot ? 1 : .35 + .1 * Math.sin(X.t * 3); g.userData.halo.material.opacity = spot ? 1 : mine ? .6 : .55 + .4 * beat; g.userData.halo.scale.setScalar((mine ? .9 : 1.1 + .35 * beat) * .7); g.userData.iris.rotation.z = X.t * 2; });
+    list(K.eyes, K2.eyes.filter(W => W.by.team === P.team || (W.act > 0 && Math.hypot(W.x - P.x, W.z - P.z) < 45)), (g, W) => { const mine = W.by.team === P.team, awake = W.act > 0, beat = .5 + .5 * Math.sin(X.t * 5), sc = mine ? (awake ? 1.5 : 1.1) : 2 + .25 * beat; g.position.set(W.x, W.y, W.z); g.rotation.y = W.yaw; g.scale.setScalar(sc); const spot = (W.flashT || 0) > X.t;   // (asleep: only Iris's side sees it, small and dim)
+      g.userData.cone.visible = mine && awake; g.userData.cone.scale.setScalar(1 / sc); g.userData.cone.position.z = -3 / sc; g.userData.cone.material.uniforms.op.value = spot ? 1 : .35 + .1 * Math.sin(X.t * 3); g.userData.halo.material.opacity = spot ? 1 : mine ? (awake ? .6 : .15) : .55 + .4 * beat; g.userData.halo.scale.setScalar((mine ? .9 : 1.1 + .35 * beat) * .7); g.userData.iris.rotation.z = X.t * 2; });
     list(K.anchors, M.fs.filter(f => f.tether && (f.team === P.team)).map(f => f.tether), (g, T) => { g.position.set(T.x, T.y, T.z); g.userData.ring.rotation.z = X.t; g.userData.ring2.rotation.z = -X.t * 1.6; g.userData.beam.material.uniforms.op.value = .6 + .2 * Math.sin(X.t * 4); });
-    list(K.sunders, K2.sunders, (g, B) => { g.position.set(B.x + B.dx * B.s, B.y + B.dy * B.s, B.z + B.dz * B.s); g.lookAt(g.position.x + B.dx, g.position.y + B.dy, g.position.z + B.dz); if (Math.random() < .8) spark([g.position.x, g.position.y, g.position.z], [rnd(-.5, .5), rnd(-.5, .5), rnd(-.5, .5)], OPS.vanta.col, .3); });
+    // (Sunder is instant now: its streak is drawn by on('sunder'), and the old flying bolt shows nothing)
+    list(K.sunders, [], (g, B) => { g.position.set(B.x + B.dx * B.s, B.y + B.dy * B.s, B.z + B.dz * B.s); g.lookAt(g.position.x + B.dx, g.position.y + B.dy, g.position.z + B.dz); if (Math.random() < .8) spark([g.position.x, g.position.y, g.position.z], [rnd(-.5, .5), rnd(-.5, .5), rnd(-.5, .5)], OPS.vanta.col, .3); });
     for (const m of K.beams) { const u = m.userData; u.t += dt; m.visible = u.t < .45; if (m.visible) { m.material.opacity = 1 - u.t / .45; m.scale.x = m.scale.y = 1 + u.t * 4; } }
     for (const s of K.flights) { const u = s.userData; u.t += dt; s.visible = u.t < .55; if (s.visible && u.d) { const q = u.t / .55, a = Math.min(1, q * 2), b = Math.max(0, q * 2 - 1); s.position.set(lp(u.x0, u.d.ax, a) + (u.d.x - u.d.ax) * b, lp(u.y0, u.d.y, q), lp(u.z0, u.d.az, a) + (u.d.z - u.d.az) * b); s.scale.setScalar(.5 + .2 * Math.sin(X.t * 30)); if (Math.random() < .8) spark([s.position.x, s.position.y, s.position.z], [0, 0, 0], '#ffd27a', .25); } }
     // bursts
@@ -7818,10 +7858,16 @@ const GAME = {
   on('hex', h => { if (!fxOk()) return; burst('shell', h.x, h.y, h.z, OPS.vanta.col, .9, .35); });
   on('wardOn', (f, h) => { if (!fxOk()) return; burst('shell', f.x, f.y + 1, f.z, OPS.vanta.col, 1.2, .5); if (h) for (let i = 0; i < 14; i++) spark([h.x, h.y, h.z], [rnd(-3, 3), rnd(-1, 3), rnd(-3, 3)], '#ffffff', .4); });
   on('wardBreak', f => { if (!fxOk()) return; burst('shell', f.x, f.y + 1.05, f.z, '#ffffff', 1.4, .35); for (let i = 0; i < 18; i++) spark([f.x, f.y + 1.1, f.z], [rnd(-4, 4), rnd(-1, 4), rnd(-4, 4)], OPS.vanta.col, .5); });
+  // Sunder: a streak the length of the bolt, there and gone
+  on('sunder', (f, d) => { if (!fxOk()) return; const m = X.kf2.beams.find(q => q.userData.t > .45) || X.kf2.beams[0]; m.userData.t = .15; const sx = d.x, sy = d.y, sz = d.z; m.position.set(sx, sy, sz); m.lookAt(sx + d.dx, sy + d.dy, sz + d.dz); m.scale.set(.8, .8, 35); });
+  // Duel Field: the circle opening where it was pointed, and the dome rising round whoever it took
+  on('duelZone', (f, d) => { if (!fxOk() || d.px == null) return; burst('ring', d.px, d.py + .05, d.pz, OPS.vanta.col, 5, .6); burst('shell', d.px, d.py + 1, d.pz, OPS.vanta.col, 2.2, .45); for (let i = 0; i < 24; i++) { const a = i / 24 * TAU; spark([d.px + Math.cos(a) * 5, d.py + .2, d.pz + Math.sin(a) * 5], [-Math.cos(a) * 3, rnd(1, 3), -Math.sin(a) * 3], OPS.vanta.col, .6); } });
   on('duelBeam', (f, d) => { if (!fxOk()) return; const m = X.kf2.beams.find(q => q.userData.t > .45) || X.kf2.beams[0], e = eyeY(f); m.userData.t = 0; m.position.set(f.x, e - .2, f.z); m.lookAt(d.ex, d.ey, d.ez); m.scale.set(1, 1, Math.hypot(d.ex - f.x, d.ey - e, d.ez - f.z)); });
   on('duelStart', D => { if (!fxOk()) return; const y = hAt(D.x, D.z); burst('ring', D.x, y, D.z, OPS.vanta.col, D.r * 1.05, .6); burst('pillar', D.a.x, D.a.y, D.a.z, OPS.vanta.col, .8, .6, 4); burst('pillar', D.b.x, D.b.y, D.b.z, OPS.vanta.col, .8, .6, 4); X.shake = Math.max(X.shake || 0, .3); });
   on('duelEnd', D => { if (!fxOk()) return; burst('shell', D.x, hAt(D.x, D.z), D.z, OPS.vanta.col, D.r * 1.1, .5); });
   on('eyeSpot', W => { W.flashT = X ? X.t + .5 : 0; });
+  on('eyeWake', W => { W.flashT = X ? X.t + .4 : 0; if (fxOk()) burst('ring', W.x, W.y, W.z, OPS.iris.col, 1.2, .4); });
+  on('eyeDown', W => { if (!fxOk()) return; burst('shell', W.x, W.y, W.z, OPS.iris.col, .8, .3); for (let i = 0; i < 14; i++) spark([W.x, W.y, W.z], [rnd(-3, 3), rnd(-1, 3), rnd(-3, 3)], i % 2 ? '#ffffff' : OPS.iris.col, .5); });
   on('front', w => { if (!fxOk()) return; const F = w.front; burst('ring', F.x, hAt(F.x, F.z), F.z, OPS.vanta.col, 3, .4); });
   on('flarePop', fl => { if (fxOk()) burst('shell', fl.x, fl.y, fl.z, '#fff6d6', 2.2, .3); });
   // a bullet into Phase Front: the wall ripples
@@ -8425,7 +8471,7 @@ const GAME = {
       { k: 'crouch', ...at('crouch'), t: canSlide(P) ? 'SLIDE' : 'DUCK', show: P.alive, on: TS.crouch || !!P.slide },
       { k: 'reload', ...at('reload'), t: 'LOAD', show: P.alive && !G.melee },
       { k: 'swap', ...at('swap'), t: 'SWAP', show: P.alive },
-      { k: 'c', ...at('c'), t: op.c.n.toUpperCase() + (op.c.max > 1 ? ' ' + (P.ab.c | 0) : ''), show: P.alive && live, off: !P.ab.c && !P.tether, on: P.rdy === 'c', col: op.col },
+      { k: 'c', ...at('c'), t: op.c.n.toUpperCase() + (op.c.max > 1 ? ' ' + (P.ab.c | 0) : ''), show: P.alive && live, off: !P.ab.c && !P.tether && !irisEye(P), on: P.rdy === 'c', col: op.col },
       { k: 'q', ...at('q'), t: op.q.n.toUpperCase() + (op.q.max > 1 ? ' ' + (P.ab.q | 0) : ''), show: P.alive && live, off: !P.ab.q, on: P.rdy === 'q', col: op.col },
       { k: 'x', ...at('x'), t: P.ult >= ultCost(P) ? op.x.n.toUpperCase() : `ULT ${P.ult | 0}/${ultCost(P)}`, show: P.alive && live, off: P.ult < ultCost(P), on: P.rdy === 'x', col: op.col },
       { k: 'e', ...at('e'), t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, on: P.rdy === 'e', col: op.col },
@@ -8674,7 +8720,7 @@ const GAME = {
   function emblemLight(col) { const key = 'L' + col; if (EMB[key]) return EMB[key]; const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, '#ffffff'); gr.addColorStop(.18, col); gr.addColorStop(.5, col + '55'); gr.addColorStop(1, col + '00'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return EMB[key] = c; }
   /* ---- ability icons: a small line drawing for each, in the bar and the armory */
   const ABICON = { vexc: 'orb', vexq: 'dash', vexe: 'smoke', vexx: 'portal', irisc: 'eye', irisq: 'wave', irise: 'flash', irisx: 'eye', bastionc: 'beacon', bastionq: 'wall', bastione: 'heart', bastionx: 'shield',
-    novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'ghost', wraithe: 'ghost', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
+    novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'shroud', wraithe: 'twin', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
     emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'mine', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel' };
   // what the other click does, for the hint under the bar
   const ABALT = { vexc: 'A SHORT LOB', talonc: 'A SHORT LOB', axiomc: 'A SHORT LOB', emberq: 'A SHORT LOB', emberx: 'A SHORT LOB', emberc: 'BENT RIGHT', bastionq: 'TURNED ALONG YOUR VIEW' };
@@ -8695,6 +8741,10 @@ const GAME = {
     else if (kind === 'bolt') { P2([[.15, -.9], [-.45, .1], [0, .1], [-.15, .9], [.45, -.15], [0, -.15]], true); g.fill(); }
     else if (kind === 'anchor') { C(0, -.6, .2); g.stroke(); P2([[0, -.4], [0, .8]]); g.stroke(); C(0, .2, .6, .2, Math.PI - .2); g.stroke(); P2([[-.35, -.15], [.35, -.15]]); g.stroke(); }
     else if (kind === 'ghost') { g.beginPath(); g.arc(0, -.15 * r, .6 * r, Math.PI, 0); g.lineTo(.6 * r, .8 * r); for (let i = 0; i < 3; i++) { g.lineTo((.4 - i * .4) * r, .55 * r); g.lineTo((.2 - i * .4) * r, .8 * r); } g.closePath(); g.fill(); g.fillStyle = INK; C(-.22, -.15, .12); g.fill(); C(.22, -.15, .12); g.fill(); }
+    else if (kind === 'shroud') { g.save(); g.globalAlpha *= .45; g.beginPath(); g.arc(0, -.35 * r, .3 * r, 0, TAU); g.fill(); g.beginPath(); g.moveTo(-.55 * r, .9 * r); g.quadraticCurveTo(0, -.25 * r, .55 * r, .9 * r); g.fill(); g.restore();   // Shroud: a figure fading out, an eye struck through
+      g.beginPath(); g.moveTo(-.9 * r, -.35 * r); g.quadraticCurveTo(0, -.95 * r, .9 * r, -.35 * r); g.quadraticCurveTo(0, .25 * r, -.9 * r, -.35 * r); g.stroke(); P2([[-.8, .35], [.8, -1]]); g.stroke(); }
+    else if (kind === 'twin') { const fig = (x, dashed) => { g.save(); g.translate(x * r, 0); if (dashed) g.setLineDash([.18 * r, .14 * r]); g.beginPath(); g.arc(0, -.55 * r, .22 * r, 0, TAU); dashed ? g.stroke() : g.fill(); g.beginPath(); g.moveTo(-.3 * r, .9 * r); g.lineTo(-.05 * r, -.2 * r); g.lineTo(.3 * r, .9 * r); g.moveTo(-.4 * r, .15 * r); g.lineTo(.35 * r, -.05 * r); g.stroke(); g.restore(); };   // Mirage: you, and the copy that runs
+      fig(-.42, false); fig(.42, true); }
     else if (kind === 'steps') { for (const [x, y] of [[-.4, .45], [.35, -.35]]) { g.save(); g.translate(x * r, y * r); g.rotate(-.3); g.beginPath(); g.ellipse(0, 0, .2 * r, .34 * r, 0, 0, TAU); g.fill(); g.restore(); } }
     else if (kind === 'arrow' || kind === 'pierce') { P2([[-.85, .85], [.75, -.75]]); g.stroke(); P2([[.85, -.85], [.25, -.75], [.75, -.25]], true); g.fill(); if (kind === 'pierce') { g.strokeStyle = acc; P2([[-.2, -.75], [.75, .2]]); g.stroke(); } }
     else if (kind === 'trap') { P2([[-.85, .5], [.85, .5]]); g.stroke(); for (let i = 0; i < 4; i++) { P2([[-.65 + i * .43, .5], [-.45 + i * .43, -.3], [-.25 + i * .43, .5]]); g.stroke(); } }
@@ -9137,7 +9187,7 @@ const GAME = {
       if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(104, -22, 128 * P.sh / 50, 6); tx(g, String(P.sh), 104 + 128 * P.sh / 50 + 6, -19, 11, '#7fc8ff', 'left'); }
       // the abilities, the way the genre lays them out: C and Q (bought, their charges as pips), E (the signature, free each
       // round; some come back, the wait shown round it), X (the ultimate, its points round a ring). The readied one lifts and glows.
-      const op = OPS[P.op], slot = (key, k, x, w) => { const ult = k === 'x', n = ult ? 0 : P.ab[k] | 0, c2 = ultCost(P), pts = Math.min(c2, P.ult | 0), have = ult ? pts >= c2 : n > 0 || (k === 'c' && !!P.tether), on = have && M.mode !== 'demo', rdy = P.rdy === k, lift = rdy ? -7 : 0, A = ult ? op.x : op[k];
+      const op = OPS[P.op], slot = (key, k, x, w) => { const ult = k === 'x', n = ult ? 0 : P.ab[k] | 0, c2 = ultCost(P), pts = Math.min(c2, P.ult | 0), have = ult ? pts >= c2 : n > 0 || (k === 'c' && (!!P.tether || !!irisEye(P))), on = have && M.mode !== 'demo', rdy = P.rdy === k, lift = rdy ? -7 : 0, A = ult ? op.x : op[k];
         const pulse = (ult && have) || rdy ? .55 + .45 * Math.sin(K.t * (rdy ? 9 : 5)) : 0;
         g.save(); g.translate(0, lift); rr(g, x, -62, w, 62, 8, rdy ? 'rgba(20,24,34,.92)' : on ? GLASS : 'rgba(12,16,22,.4)', on ? op.col : 'rgba(255,255,255,.12)', rdy ? 2.5 + pulse * 1.5 : ult && have ? 2 + pulse * 2 : 1.5);
         if (rdy) { const gr = g.createLinearGradient(0, -62, 0, 0); gr.addColorStop(0, op.col + '00'); gr.addColorStop(1, op.col + '55'); g.fillStyle = gr; g.fillRect(x + 2, -60, w - 4, 58); }
@@ -9403,7 +9453,7 @@ const GAME = {
         mv.slice().sort((a, b) => (b.at >= b.n) - (a.at >= a.n)).slice(0, n).forEach((c, i) => challengeRow(g, c, x + 10 * u, y + i * (rh + 5 * u), cw - 20 * u, rh, u, lp(c.from, c.at, e))); }
       else if (!R.got.length && !mv.length) para(g, 'Challenges and pass rewards are on the PASS page.', x + 14 * u, y + 14 * u, cw - 28 * u, 11 * u, DIM); }
     const bw = Math.min(210 * u, (W - 60 * u) / 3 - 10 * u), by = V.y1 - bh - 12 * u;
-    btn(g, 640 - bw * 1.5 - 10 * u, by, bw, bh, M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); openParty(); } else play(soloOpts()); }, { on: true, fill: FOE, px: 16 * u });
+    btn(g, 640 - bw * 1.5 - 10 * u, by, bw, bh, M.fromQueue ? 'FIND ANOTHER' : M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.fromQueue) { const n = M.fromQueue; toMenu(); queueStart(n); } else if (M.online) { toMenu(); openParty(); } else play(soloOpts()); }, { on: true, fill: FOE, px: 16 * u });
     btn(g, 640 - bw / 2, by, bw, bh, 'SCOREBOARD', overNext, { px: 16 * u }); btn(g, 640 + bw / 2 + 10 * u, by, bw, bh, 'MENU', toMenu, { px: 16 * u });
   }
   /* ---------- 93 ranked on screen: tier emblems, the queue on the play screen, the career page, the result after a match ---------- */
@@ -9724,7 +9774,7 @@ const GAME = {
     let ch = Math.min(470 * u, cy1 - cy0), cw = ch * .45; const gap = 16 * u, maxW = fx - 20 * u - L; if (n * cw + (n - 1) * gap > maxW) { cw = (maxW - (n - 1) * gap) / n; ch = Math.min(ch, cw / .45); }
     const cy = cy0 + (cy1 - cy0 - ch) / 2, order = [0, 1, -1, 2, -2].slice(0, n), art = menuHero(), mc = myCard(), diffN = CFG.diff === 'auto' ? (ranked ? DIFF[botLevelFor(rankStrength(CFG.size))].n : rankName(STATS.rating)) : DIFF[CFG.diff].n;
     order.forEach((slot, i) => { const x = mid - cw / 2 + slot * (cw + gap);
-      if (i === 0) lobbyCard(g, x, cy, cw, ch, u, { me: true, op: CFG.op, art, name: (MP.name || 'You').toUpperCase(), title: mc.title, lv: mc.lv, banner: mc.banner, hover: 'CHANGE OPERATIVE', fn: () => openSelect(null) }, t);
+      if (i === 0) lobbyCard(g, x, cy, cw, ch, u, { me: true, op: CFG.op, art, name: (MP.name || 'You').toUpperCase(), title: mc.title, lv: mc.lv, banner: mc.banner, hover: 'CHANGE AGENT', fn: () => openSelect(null) }, t);
       else if (online) lobbyCard(g, x, cy, cw, ch, u, { empty: true, searching: !!QUE.mode, name: QUE.mode ? 'SEARCHING' + '.'.repeat(1 + Math.floor(t * 2) % 3) : 'TEAMMATE', label: 'from the queue', fn: () => {} }, t);
       else { lobbyCard(g, x, cy, cw, ch, u, { empty: true, name: 'BOT', label: diffN.toUpperCase() + ' BOT', lv: 0, banner: 'plain', hover: '+  PLAY WITH A FRIEND', fn: () => openParty() }, t); } });
     // the settings this mode has
@@ -10307,7 +10357,7 @@ const GAME = {
     gr = g.createLinearGradient(0, V.y1 - 200 * u, 0, V.y1); gr.addColorStop(0, 'rgba(8,10,14,0)'); gr.addColorStop(1, 'rgba(8,10,14,.95)'); g.fillStyle = gr; g.fillRect(V.x0, V.y1 - 200 * u, W, 200 * u);
     g.fillStyle = 'rgba(8,10,14,.7)'; g.fillRect(V.x0, V.y0, W, 54 * u);
     const x0 = V.x0 + 50 / pxPer() + 20 * u;
-    tx(g, S.o ? 'AGENT SELECT' : 'CHOOSE YOUR OPERATIVE', x0, V.y0 + 27 * u, 18 * u, BONE, 'left', 900);
+    tx(g, S.o ? 'AGENT SELECT' : 'CHOOSE YOUR AGENT', x0, V.y0 + 27 * u, 18 * u, BONE, 'left', 900);
     if (S.o) { const mp = MAPS[S.map]; tx(g, `${mp.n.toUpperCase()}  ·  ${(mp.sites || 1) > 1 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S.o.size || 1)}`, 640, V.y0 + 27 * u, 14 * u, '#c9cfd8', 'center', 800);
       const left = Math.max(0, Math.ceil(S.T - el)), k = cl(el / S.T, 0, 1), rx = V.x1 - 46 * u, ry = V.y0 + 27 * u; g.strokeStyle = 'rgba(239,233,220,.15)'; g.lineWidth = 4 * u; g.beginPath(); g.arc(rx, ry, 18 * u, 0, TAU); g.stroke();
       g.strokeStyle = left <= 5 ? WARN : BONE; g.beginPath(); g.arc(rx, ry, 18 * u, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - k)); g.stroke(); tx(g, String(left), rx, ry + 1, 16 * u, left <= 5 ? WARN : BONE, 'center', 900); }
@@ -10889,7 +10939,7 @@ const GAME = {
     S.classList.add('dp-start'); S.innerHTML = '';
     const ops = Object.values(OPS).map(O => `<span style="color:${O.col}">${O.n}<em>${String(O.role || '').toUpperCase()}</em></span>`).join('');
     S.insertAdjacentHTML('beforeend', `<div class="dp-wrap"><div class="dp-eyebrow">Tactical shooter · 1v1 to 5v5</div><h1 class="dp-title">Duel<span>point</span></h1>
-      <p class="dp-tag">${nOps} operatives, ${nMaps} maps, one charge. Buy your guns, plant on the site or hold it, and win the round.</p>
+      <p class="dp-tag">${nOps} agents, ${nMaps} maps, one charge. Buy your guns, plant on the site or hold it, and win the round.</p>
       <div class="dp-act"><span id="dpPlaySlot"></span><div class="dp-side"><div class="dp-status" id="dpStatus">Loading the world</div><div class="dp-bar" id="dpBar"><i></i></div></div></div>
       <div class="dp-modes"><span>STANDARD</span><span>SWIFT</span><span>RANKED</span><span>ONLINE</span><span>PRACTICE</span></div></div>
       <div class="dp-ops"><div>${ops}${ops}</div></div><div id="dpKeep" hidden></div>`);
@@ -10996,7 +11046,7 @@ const GAME = {
       if (QUE.ws && QUE.me && QUE.host === QUE.me && performance.now() >= QUE.mT) { QUE.mT = performance.now() + 1000; qMatch(); }
     }
     const F = QUE.found; if (!F) return;
-    if (screen === 'play' && M && M.online) { QUE.found = null; return; }   // the match is on
+    if (screen === 'play' && M && M.online) { M.fromQueue = QUE.found.mode || 1; QUE.found = null; return; }   // the match is on (and it came from the queue: no party is left behind after it)
     const age = performance.now() - F.at;
     if (!MP.online()) { if (age > 20000) { QUE.found = null; PARTY.status = 'Match failed: search again'; } return; }
     PARTY.ready = true;
@@ -11036,7 +11086,8 @@ const GAME = {
   }
   /* ---------- 99 main: the kit's hooks, moving between screens, demo and cover-art modes, the test handle ---------- */
   let booted = false, acc = 0, lastDraw = 0;
-  function toMenu() { if (M && M.ranked && !M.over && M.mode !== 'demo' && M.round > 0) rankedLeft(); UI.trying = null; M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
+  function toMenu() { if (M && M.ranked && !M.over && M.mode !== 'demo' && M.round > 0) rankedLeft(); if (M && M.fromQueue && MP.online()) MP.leave();   // (strangers from the queue: the room closes behind you, it never becomes a party)
+    UI.trying = null; M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
   function play(o) { resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
   // a bot match from the menu: agent select first (the tests can skip it)
   const soloOpts = () => { const size = teamSize(CFG.size), ranked = CFG.queue === 'ranked'; return { mode: 'bot', diff: ranked && CFG.diff === 'auto' ? botLevelFor(rankStrength(size)) : CFG.diff, size, sites: CFG.sites, ranked }; };

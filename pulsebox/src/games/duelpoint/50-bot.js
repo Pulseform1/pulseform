@@ -116,6 +116,7 @@
   }
   // every operative's C, and Vanta's kit
   function kitBot2(f, B, P, side, sees, engaged, fresh, near, dE, e, dt) {
+    if (f.op === 'iris') { const W = irisEye(f); if (W && !W.act && !W.cd && !sees && R() < dt * .3) ability(f, 'c'); }   // (wakes its Watcher now and then, to look)
     const ey = eyeY(f), there = P.path && !P.path.length, holdLook = P.look || (B.last ? [B.last.x, B.last.z] : null), last = fresh && B.last ? B.last : null, roll = R() < dt * 1.2;
     const lob = (k, tx, tz) => { const dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 13, .45, 1.1), y0 = ey - .1, ty = hAt(tx, tz) + .1; botCast(f, k, { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + LOB_G / 2 * T * T) / T, vz: dz / T }); };
     if (f.ab.c) {
@@ -146,7 +147,7 @@
     else if ((op === 'nova' || op === 'wraith') && !sees && chance && (push && near < 26 || retake)) botCast(f, 'x', {});
     else if (op === 'talon' && fresh && !sees && dE < 40 && Math.abs(angDiff(yawTo(f.x, f.z, B.last.x, B.last.z), f.yaw)) < .1) botCast(f, 'x', {});
     else if (op === 'ember' && fresh && !sees && dE > 6 && dE < 24 && chance) { const tx = B.last.x, tz = B.last.z, dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 14, .5, 1.2), y0 = eyeY(f) - .1, ty = hAt(tx, tz) + .1; botCast(f, 'x', { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + 7 * T * T) / T, vz: dz / T }); }
-    else if (op === 'vanta' && sees && e && e.alive && !e.duel && dE < 30 && R() < dt * 2) botCast(f, 'x', { t: e.key, ex: e.x, ey: eyeY(e) - .3, ez: e.z });
+    else if (op === 'vanta' && sees && e && e.alive && !e.duel && dE < 30 && R() < dt * 2) botCast(f, 'x', { t: e.key, px: e.x, py: e.y, pz: e.z });
     else if (op === 'axiom' && ((side === 'def' && fresh && dE < 13) || (retake && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 12))) botCast(f, 'x', { x: f.x, z: f.z });
   }
   const magOf = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return A ? A.mag : 0; };

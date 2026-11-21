@@ -130,7 +130,7 @@
     gr = g.createLinearGradient(0, V.y1 - 200 * u, 0, V.y1); gr.addColorStop(0, 'rgba(8,10,14,0)'); gr.addColorStop(1, 'rgba(8,10,14,.95)'); g.fillStyle = gr; g.fillRect(V.x0, V.y1 - 200 * u, W, 200 * u);
     g.fillStyle = 'rgba(8,10,14,.7)'; g.fillRect(V.x0, V.y0, W, 54 * u);
     const x0 = V.x0 + 50 / pxPer() + 20 * u;
-    tx(g, S.o ? 'AGENT SELECT' : 'CHOOSE YOUR OPERATIVE', x0, V.y0 + 27 * u, 18 * u, BONE, 'left', 900);
+    tx(g, S.o ? 'AGENT SELECT' : 'CHOOSE YOUR AGENT', x0, V.y0 + 27 * u, 18 * u, BONE, 'left', 900);
     if (S.o) { const mp = MAPS[S.map]; tx(g, `${mp.n.toUpperCase()}  ·  ${(mp.sites || 1) > 1 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S.o.size || 1)}`, 640, V.y0 + 27 * u, 14 * u, '#c9cfd8', 'center', 800);
       const left = Math.max(0, Math.ceil(S.T - el)), k = cl(el / S.T, 0, 1), rx = V.x1 - 46 * u, ry = V.y0 + 27 * u; g.strokeStyle = 'rgba(239,233,220,.15)'; g.lineWidth = 4 * u; g.beginPath(); g.arc(rx, ry, 18 * u, 0, TAU); g.stroke();
       g.strokeStyle = left <= 5 ? WARN : BONE; g.beginPath(); g.arc(rx, ry, 18 * u, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - k)); g.stroke(); tx(g, String(left), rx, ry + 1, 16 * u, left <= 5 ? WARN : BONE, 'center', 900); }

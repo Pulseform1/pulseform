@@ -61,19 +61,19 @@
     talon: { n: 'TALON', role: 'Tracker', col: '#7bd65a', bio: 'A ranger who reads a room like tracks in snow.', q: { n: 'Recon Dart', d: 'A dart that sticks where it lands and pulses twice, revealing rivals in its sight.' }, e: { n: 'Snare', d: 'A trap on the floor ahead: the first rival over it is slowed and revealed.' } },
     ember: { n: 'EMBER', role: 'Pyre', col: '#ff7a2f', bio: 'Foundry-born. Thinks every problem is a fuel problem.', q: { n: 'Ignite', d: 'Lob a firebomb: its pool burns rivals for 30 a second, 5 s.' }, e: { n: 'Heat Haze', d: 'A wall of amber haze across your view that blocks sight for 10 s.' } },
     axiom: { n: 'AXIOM', role: 'Engineer', col: '#5aa0ff', bio: 'Builds the thing that holds the angle, then goes for coffee.', q: { n: 'Sentry', d: 'A turret that fires on rivals in front of it until it is shot down.' }, e: { n: 'Tripmine', d: 'A mine at your feet. Armed, it bursts for up to 75 when a rival comes near.' } },
-    vanta: { n: 'VANTA', role: 'Duelist', col: '#e25cff', bio: 'A fixer who settles things one on one. Nobody asks for a second meeting.', q: { n: 'Sunder', d: 'A bolt that passes through walls: rivals it touches are Exposed, taking 25% more damage for 4 s.' }, e: { n: 'Overcharge', d: 'For 12 s, a rival you kill leaves a charge: shoot it for a ward that stops the next hit. Back after 2 kills.' } },
+    vanta: { n: 'VANTA', role: 'Duelist', col: '#e25cff', bio: 'A fixer who settles things one on one. Nobody asks for a second meeting.', q: { n: 'Sunder', d: 'A bolt that strikes instantly down your aim: a headshot kills, any hit Exposes (25% more damage for 4 s). It goes on through walls, Exposing rivals behind them.' }, e: { n: 'Overcharge', d: 'For 12 s, a rival you kill leaves a charge: shoot it for a ward that stops the next hit. Back after 2 kills.' } },
   };
   /* C: the second bought ability (cheaper, a smaller trick), one per operative */
   const ABC_KIT = {
     vex: [{ n: 'Gloom', d: 'Lob an orb that bursts into dark: rivals caught can see only 5 m for 3.5 s.' }, 200, 1],
-    iris: [{ n: 'Watcher', d: 'Fix an eye where you aim. For 20 s it marks rivals who walk into its view.' }, 200, 1],
+    iris: [{ n: 'Watcher', d: 'Fix an eye where you aim: it stays all round, asleep and unseen. Press C again to wake it for 6 s: it marks rivals in its view, and they can see it and shoot it out.' }, 200, 1],
     bastion: [{ n: 'Ward Beacon', d: 'Set a beacon: you and teammates within 6 m gain 30 shield, up to 50.' }, 200, 1],
     nova: [{ n: 'Updraft', d: 'Launch straight up, high enough to reach a ledge.' }, 100, 2],
     wraith: [{ n: 'Tether', d: 'Leave an anchor at your feet; press again later to step back to it.' }, 200, 1],
     talon: [{ n: 'Shock Bolt', d: 'A bolt that bounces once, then bursts for up to 45.' }, 150, 2],
     ember: [{ n: 'Flashpoint', d: 'A flash that bends round a corner: left click bends it left, right click right.' }, 200, 2],
     axiom: [{ n: 'Slow Field', d: 'Lob a canister: a 5 m field that slows rivals inside for 6 s.' }, 200, 1],
-    vanta: [{ n: 'Phase Front', d: 'A wall of light rolls out ahead of you, stopping bullets and sight. Anyone can walk through it.' }, 200, 1],
+    vanta: [{ n: 'Phase Front', d: 'A wall of light rolls 14 m ahead of you, straight through walls, stopping bullets and sight. Anyone can walk through it.' }, 200, 1],
   };
   for (const k in ABC_KIT) { const [c, cost, max] = ABC_KIT[k]; OPS[k].c = Object.assign({}, c, { cost, max }); }
   // signatures (E) that come back during a round: after some seconds, or after some kills
@@ -92,7 +92,7 @@
     talon: { n: 'Piercer', d: 'Three bolts along your aim, a second apart, that go straight through walls for 75 each.', pts: 7 },
     ember: { n: 'Inferno', d: 'Lob a great firebomb: a 5.5 m blaze that burns rivals for 40 a second, 8 s.', pts: 6 },
     axiom: { n: 'Lockdown', d: 'Plant a device; 2.5 s later every rival within 14 m is held: slowed, and unable to fire or use abilities, for 4 s.', pts: 7 },
-    vanta: { n: 'Duel Field', d: 'A beam: the first rival it hits is sealed in a dome with you for up to 12 s. Nobody else sees in, shoots in or gets in.', pts: 7 },
+    vanta: { n: 'Duel Field', d: 'Point at a spot: the rival nearest it, within 5 m, is pulled into a dome with you for up to 12 s. Nobody else sees in, shoots in or gets in.', pts: 7 },
   };
   for (const k in OPS) { OPS[k].q.cost = ABQ[k][0]; OPS[k].q.max = ABQ[k][1]; OPS[k].x = ULTS[k]; }
   const ultCost = f => OPS[f.op] ? OPS[f.op].x.pts : 6;

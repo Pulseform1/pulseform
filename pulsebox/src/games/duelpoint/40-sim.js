@@ -167,13 +167,14 @@
   function castShot(f, d) {
     const o = [f.x, eyeY(f), f.z]; let dist = rayGrid(o[0], o[1], o[2], d[0], d[1], d[2], 140), hit = null; const n = [rayN[0], rayN[1], rayN[2]];
     for (const w of M.walls) { const t = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (t > 0 && t < dist) { dist = t; n[0] = -Math.sign(d[0]) * (w.x1 - w.x0 < 1 ? 1 : 0); n[1] = 0; n[2] = -Math.sign(d[2]) * (w.x1 - w.x0 < 1 ? 0 : 1); } }
-    let sentry = null; for (const b of sentryBoxes(f)) { const t = rayBox(o, d, b.mn, b.mx); if (t > 0 && t < dist) { dist = t; sentry = b.s; } }   // an enemy sentry is in the way
+    let sentry = null, eye = null; for (const b of sentryBoxes(f)) { const t = rayBox(o, d, b.mn, b.mx); if (t > 0 && t < dist) { dist = t; sentry = b.s; } }   // an enemy sentry is in the way
+    if (M.kit) for (const W of M.kit.eyes) if (W.act > 0 && enemyOf(W.by, f)) { const t = raySphere(o, d, [W.x, W.y, W.z], .3); if (t > 0 && t < dist) { dist = t; sentry = null; eye = W; } }   // an enemy Watcher, awake
     for (const v of M.fs) if (v.team !== f.team && v.alive && duelOk(f, v)) {   // whichever part of them the bullet meets first (a Duel Field keeps its two to themselves)
       const hb = hitboxes(v), th = raySphere(o, d, hb.head, hb.hr), tb = rayFrame(o, d, hb, hb.body), ta = rayFrame(o, d, hb, hb.arms);
       const tbody = tb > 0 && (ta <= 0 || tb <= ta) ? tb : ta, near = th > 0 && (tbody <= 0 || th <= tbody) ? th : tbody;
-      if (near > 0 && near < dist) { dist = near; sentry = null; hit = near === th ? { f: v, head: true } : { f: v, head: false, leg: near === tb && o[1] + d[1] * tb < hb.leg }; }
+      if (near > 0 && near < dist) { dist = near; sentry = null; eye = null; hit = near === th ? { f: v, head: true } : { f: v, head: false, leg: near === tb && o[1] + d[1] * tb < hb.leg }; }
     }
-    return { o, d, dist, hit, sentry, n, end: [o[0] + d[0] * dist, o[1] + d[1] * dist, o[2] + d[2] * dist] };
+    return { o, d, dist, hit, sentry, eye, n, end: [o[0] + d[0] * dist, o[1] + d[1] * dist, o[2] + d[2] * dist] };
   }
   // pull the trigger: one shot, a burst (the Pip's alternate fire, the Mako aimed down sights), or a knife swing
   function fire(f, alt) {
@@ -203,6 +204,7 @@
       emit('shot', f, S, p === 0);
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k, S.hit.leg); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);
+      else if (S.eye && !f.net) breakEye(S.eye, false);   // one hit puts a Watcher out
       else if (!S.hit && !f.net && BRKS.length) { const e = S.end, k = idx(Math.floor((e[0] + S.d[0] * .06) / CS), Math.floor((e[2] + S.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], dmgAt(G, S.dist, 2), f); }   // a breakable wall
     }
     if (landed) f.stat.hits++;
@@ -336,12 +338,16 @@
      right); the key again, a gun key or a reload puts it away. A few are used the moment the key is pressed (a dash, a heal,
      a burst of speed). Bots and the other players' devices use them straight away. */
   const AB_NOW = new Set(['vexq', 'irisq', 'bastione', 'novaq', 'novac', 'wraithq', 'irisx', 'bastionx', 'novax', 'wraithx', 'talonx', 'vantae']);
-  const tetherBack = (f, k) => f.op === 'wraith' && k === 'c' && !!f.tether;   // Tether laid: the key steps you back, free
+  // the C key again, for what C left behind: Tether steps you back to it; Iris's eye wakes (both free)
+  const tetherBack = (f, k) => k === 'c' && ((f.op === 'wraith' && !!f.tether) || (f.op === 'iris' && !!irisEye(f)));
   const abInstant = (f, k) => AB_NOW.has(f.op + k) || tetherBack(f, k);
   const hasAb = (f, k) => k === 'x' ? f.ult >= ultCost(f) : (f.ab[k] | 0) > 0;
   function spendAb(f, k) { if (k === 'x') { f.ult = 0; emit('ultUsed', f); } else { f.ab[k] = Math.max(0, (f.ab[k] | 0) - 1); if (k === 'e') { f.eT = 0; f.eK = 0; } } }
   function ultGain(f, n) { if (!M || M.mode === 'range' || !f || !OPS[f.op]) return; const c = ultCost(f), was = f.ult | 0; f.ult = Math.min(c, was + n); if (was < c && f.ult >= c) emit('ultReady', f); }
-  const abBlocked = f => !f.alive || !M || M.phase !== 'live' || f.plant > 0 || f.defuse > 0 || f.lock > 0 || !!f.chan;
+  // in the buy phase you can set up: move, wall off, place a trap, a turret, a smoke or an eye (no ultimates, nothing that
+  // harms, blinds or scouts); what is placed at a spot must be on your side of the barrier
+  const BUY_AB = new Set(['vexq', 'vexe', 'irisc', 'bastionq', 'bastione', 'bastionc', 'novac', 'novaq', 'wraithc', 'wraithq', 'talone', 'embere', 'axiomq', 'axiome', 'vantac', 'vantae']);
+  const abBlocked = (f, k) => !f.alive || !M || (M.phase !== 'live' && !(k && M.phase === 'buy' && M.mode !== 'range' && M.mode !== 'demo' && !loadingNow() && BUY_AB.has(f.op + k))) || f.plant > 0 || f.defuse > 0 || f.lock > 0 || !!f.chan;
   // where it goes, worked out on the user's device (the same sum the preview shows)
   function abData(f, k, alt) {
     const d = viewDir(f.yaw, f.pitch), key = f.op + k, S = castShot(f, d); let data = {};
@@ -350,13 +356,15 @@
     if (key === 'irise') { const dd = Math.max(.5, Math.min((S.hit ? 12 : S.dist) - .6, 12)); data = { x: f.x + d[0] * dd, y: eyeY(f) + d[1] * dd, z: f.z + d[2] * dd }; }
     if (key === 'bastionq') { const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw); data = { x: f.x + fx * 2.6, z: f.z + fz * 2.6, ax: (Math.abs(fx) > Math.abs(fz) ? 1 : 0) ^ (alt ? 1 : 0) }; }   // the other click: along your view
     if (k === 'x' || k === 'c' || !['vex', 'iris', 'bastion'].includes(f.op)) data = kitAim(f, key, d, S, alt);
-    if (tetherBack(f, k)) data = { back: 1, free: 1 };
+    if (tetherBack(f, k)) { const W = f.op === 'iris' ? irisEye(f) : null; data = !W ? { back: 1, free: 1 } : W.act > 0 || W.cd > 0 ? { fail: 1 } : { act: 1, free: 1 }; }   // (an eye already awake, or resting, will not wake)
     return data;
   }
   function ability(f, k, alt) {
-    if (abBlocked(f)) return false;
+    if (abBlocked(f, k)) return false;
     if (!tetherBack(f, k) && !hasAb(f, k)) return false;
     const data = abData(f, k, alt); if (!data) return false;
+    if (data.fail) { emit('abNo', f, k); return false; }   // (aimed where it can do nothing: not spent)
+    if (M.phase === 'buy' && data.x != null && data.vx == null && f.op + k !== 'vantac' && sideOf(f) && !inZone(sideOf(f), data.x, data.z)) { emit('abNo', f, k); if (f === me()) say('NOT PAST THE BARRIER', WARN); return false; }
     if (!data.free) spendAb(f, k); if (M.mode === 'range') f.abT = 4;
     applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key });
     return true;
@@ -365,7 +373,7 @@
   function readyAb(f, k) {
     if (f.rdy === k) { f.rdy = null; emit('abReady', f, null); return true; }
     if (abInstant(f, k)) { if (f.rdy) { f.rdy = null; emit('abReady', f, null); } return ability(f, k, false); }
-    if (abBlocked(f) || !hasAb(f, k)) { emit('abNo', f, k); return false; }
+    if (abBlocked(f, k) || !hasAb(f, k)) { emit('abNo', f, k); return false; }
     f.rdy = k; f.scoped = 0; f.burst = null; f.reloadT = 0; f.autoReload = 0; emit('abReady', f, k); return true;
   }
   function unready(f) { if (f && f.rdy) { f.rdy = null; emit('abReady', f, null); } }
@@ -514,7 +522,7 @@
      The charge: one attacker carries it (chosen in the buy phase, and passed on in the armory or by dropping it with H).
      A carrier who dies drops it; an attacker who walks over it picks it up; only the carrier can plant.
      Online, the device that runs a fighter decides what it drops and picks up, and tells the others. */
-  const LOOT_R = 1.15, LOOK_R = 2.4;   // walk over a gun to take it into an empty slot; look at one in reach and press F to take it
+  const LOOT_R = 1.5, LOOK_R = 2.6;   // walk over a gun to take it into an empty slot; look at one in reach and press F to take it
   const carries = f => !!(M && M.charge && M.charge.k === f.key);
   const carrier = () => M && M.charge && M.charge.k ? M.byKey[M.charge.k] || null : null;
   function addLoot(d) { M.loot = M.loot || []; if (M.loot.some(q => q.id === d.id)) return null; d.y = hAt(d.x, d.z); d.at = M.time; M.loot.push(d); emit('loot', d); return d; }
@@ -522,8 +530,8 @@
   // (fo: the teammate it was bought for, who alone may take it for the first few seconds)
   function lootAt(f, k, x, z, mag, res, fo) {
     const G = GUNS[k]; if (!G || G.melee) return null; if (solidAt(x, z, f.y + .5)) { x = f.x; z = f.z; }
-    M.lootN = (M.lootN || 0) + 1; const d = addLoot({ id: f.key + '.' + M.round + '.' + M.lootN, k, x, z, m: mag != null ? mag : G.mag, r: res != null ? res : G.res, by: f.key, fo: fo || '' });
-    if (d && !f.net) net({ t: 'dp', id: d.id, k, x: r2(d.x), z: r2(d.z), m: d.m, r: d.r, fo: d.fo || undefined, f: f.key }); return d;
+    M.lootN = (M.lootN || 0) + 1; const d = addLoot({ id: f.key + '.' + M.round + '.' + M.lootN, k, x, z, m: mag != null ? mag : G.mag, r: res != null ? res : G.res, by: f.key, fo: fo || '', sk: skinFor(f, k) || '' });   // (it keeps the skin it had)
+    if (d && !f.net) net({ t: 'dp', id: d.id, k, x: r2(d.x), z: r2(d.z), m: d.m, r: d.r, fo: d.fo || undefined, sk: d.sk || undefined, f: f.key }); return d;
   }
   // drop the gun in a slot (the Pip and the knife stay with you): thrown a step ahead, or where you fall
   function dropGun(f, slot, dead, at) {   // (at: where it goes instead, e.g. the spot of the gun you swapped it for)
@@ -539,7 +547,7 @@
   function takeLoot(f, d, remote) {
     const G = GUNS[d.k]; if (!G || !M.loot) return; M.loot = M.loot.filter(q => q.id !== d.id); const s = G.slot;
     if (!remote) { const have = f.guns[s]; if (have && !(s === 2 && have === 'pip')) dropGun(f, s, false, d); }   // a swap: the one you had goes down where this one lay
-    f.guns[s] = d.k; f.ammo[d.k] = { mag: d.m, res: d.r }; delete f.spent[s];
+    f.guns[s] = d.k; f.ammo[d.k] = { mag: d.m, res: d.r }; delete f.spent[s]; f.skins = f.skins || {}; f.skins[d.k] = d.sk || null;   // (held in the skin it lay in)
     if (!remote) { f.slot = s; f.reloadT = 0; f.scoped = 0; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, G.equip * .7); }
     emit('pickup', f, d); if (!remote) net({ t: 'pk', id: d.id, f: f.key });
   }
@@ -573,7 +581,7 @@
     f.nearLoot = null; if (!M.loot || !M.loot.length) return false;
     // underfoot (the nearest within a step) or, failing that, the one you are looking at within reach
     let best = null, bd = LOOT_R, look = null, la = .75; for (const d of M.loot) { const dd = Math.hypot(d.x - f.x, d.z - f.z); if (Math.abs(d.y - f.y) < 1.4 && !(d.by === f.key && M.time - d.at < 1.2) && !(d.fo && d.fo !== f.key && M.time - d.at < 6) && !(f.bot && M.phase === 'buy' && d.fo !== f.key)) {
-      if (dd < bd) { bd = dd; best = d; } else if (!f.bot && dd < LOOK_R) { const a = Math.abs(angDiff(yawTo(f.x, f.z, d.x, d.z), f.yaw)); if (a < la) { la = a; look = d; } } } }
+      if (dd < bd) { bd = dd; best = d; } else if (!f.bot && dd < LOOK_R) { const a = Math.abs(angDiff(yawTo(f.x, f.z, d.x, d.z), f.yaw)) - (dd < 1.9 ? .6 : 0); if (a < la) { la = a; look = d; } } } }   // (close by, it need hardly be in front of you)
     const under = !!best; best = best || look; if (!best) return false; const G = GUNS[best.k], have = f.guns[G.slot], free = !have || (G.slot === 2 && have === 'pip');
     if (f.bot) { if (free || (GUNS[have].cost || 0) < G.cost) takeLoot(f, best); return false; }
     if (free && under) { takeLoot(f, best); return false; }
@@ -652,7 +660,7 @@
         if (prev && prev.k === k) { f.credits += G.cost; f.guns[s] = prev.was; if (prev.was) giveAmmo(f, prev.was); delete sp[s]; f.slot = f.guns[1] ? 1 : 2; ok = true; }
         else if (resale(k) && !f.bot) { f.credits = Math.min(CASH.cap, f.credits + resale(k)); f.guns[s] = s === 2 ? 'pip' : null; if (s === 2) giveAmmo(f, 'pip'); f.slot = f.guns[1] ? 1 : 2; f.scoped = 0; f.reloadT = 0; ok = true; }   // a gun kept from an earlier round sells for half
       }
-      else { const refund = prev ? GUNS[prev.k].cost : 0; if (f.credits + refund >= G.cost) { f.credits += refund - G.cost; sp[s] = { k, was: prev ? prev.was : f.guns[s] }; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = 0; f.reloadT = 0; ok = true; } }
+      else { const refund = prev ? GUNS[prev.k].cost : 0; if (f.credits + refund >= G.cost) { f.credits += refund - G.cost; if (f.ownSkins && f.skins) f.skins[k] = f.ownSkins[k] || null; sp[s] = { k, was: prev ? prev.was : f.guns[s] }; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = 0; f.reloadT = 0; ok = true; } }
     } else if (A) {
       if (f.sh >= A.sh) { if (sp.sh && sp.sh.k === A.k) { f.credits += A.cost; f.sh = sp.sh.was; delete sp.sh; ok = true; } }
       else { const refund = sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0; if (f.credits + refund >= A.cost) { f.credits += refund - A.cost; sp.sh = { k: A.k, was: sp.sh ? sp.sh.was : f.sh }; f.sh = A.sh; ok = true; } }
@@ -703,7 +711,7 @@
       planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], pings: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0, ranked, botDiff: o.botDiff != null ? o.botDiff : o.diff };
     M.size = teamSize(Math.max(fs.filter(f => f.team === 0).length, fs.filter(f => f.team === 1).length)); if (ranked) { A.rk = rankStrength(M.size); A.rkp = placed(rankedOf(M.size)) ? 1 : 0; }
     M.loadT = mode === 'bot' || online ? LOAD_T : 0; M.loading = M.loadT > 0;
-    for (const f of fs) { f.rating = f === A ? STATS.rating : f.bot ? botRating(f, M) : f.rating || 0; f.skins = f === A ? Object.assign({}, STATS.equip) : f.bot || f.isBot ? botSkins() : {}; }
+    for (const f of fs) { f.rating = f === A ? STATS.rating : f.bot ? botRating(f, M) : f.rating || 0; f.skins = f === A ? Object.assign({}, STATS.equip) : f.bot || f.isBot ? botSkins() : {}; f.ownSkins = Object.assign({}, f.skins); }
     startRound(1);
     if (mode === 'range') { M.phase = 'live'; M.t = 0; A.credits = CASH.cap; Object.assign(A, { x: 9, z: 5, yaw: yawTo(9, 5, 30, 5) }); placeDummy(fs[1]); }
     if (mode === 'demo') { M.t = 1.5; A.credits = fs[1].credits = 4500; }

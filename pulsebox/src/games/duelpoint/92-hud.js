@@ -167,7 +167,7 @@
   function emblemLight(col) { const key = 'L' + col; if (EMB[key]) return EMB[key]; const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, '#ffffff'); gr.addColorStop(.18, col); gr.addColorStop(.5, col + '55'); gr.addColorStop(1, col + '00'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return EMB[key] = c; }
   /* ---- ability icons: a small line drawing for each, in the bar and the armory */
   const ABICON = { vexc: 'orb', vexq: 'dash', vexe: 'smoke', vexx: 'portal', irisc: 'eye', irisq: 'wave', irise: 'flash', irisx: 'eye', bastionc: 'beacon', bastionq: 'wall', bastione: 'heart', bastionx: 'shield',
-    novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'ghost', wraithe: 'ghost', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
+    novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'shroud', wraithe: 'twin', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
     emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'mine', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel' };
   // what the other click does, for the hint under the bar
   const ABALT = { vexc: 'A SHORT LOB', talonc: 'A SHORT LOB', axiomc: 'A SHORT LOB', emberq: 'A SHORT LOB', emberx: 'A SHORT LOB', emberc: 'BENT RIGHT', bastionq: 'TURNED ALONG YOUR VIEW' };
@@ -188,6 +188,10 @@
     else if (kind === 'bolt') { P2([[.15, -.9], [-.45, .1], [0, .1], [-.15, .9], [.45, -.15], [0, -.15]], true); g.fill(); }
     else if (kind === 'anchor') { C(0, -.6, .2); g.stroke(); P2([[0, -.4], [0, .8]]); g.stroke(); C(0, .2, .6, .2, Math.PI - .2); g.stroke(); P2([[-.35, -.15], [.35, -.15]]); g.stroke(); }
     else if (kind === 'ghost') { g.beginPath(); g.arc(0, -.15 * r, .6 * r, Math.PI, 0); g.lineTo(.6 * r, .8 * r); for (let i = 0; i < 3; i++) { g.lineTo((.4 - i * .4) * r, .55 * r); g.lineTo((.2 - i * .4) * r, .8 * r); } g.closePath(); g.fill(); g.fillStyle = INK; C(-.22, -.15, .12); g.fill(); C(.22, -.15, .12); g.fill(); }
+    else if (kind === 'shroud') { g.save(); g.globalAlpha *= .45; g.beginPath(); g.arc(0, -.35 * r, .3 * r, 0, TAU); g.fill(); g.beginPath(); g.moveTo(-.55 * r, .9 * r); g.quadraticCurveTo(0, -.25 * r, .55 * r, .9 * r); g.fill(); g.restore();   // Shroud: a figure fading out, an eye struck through
+      g.beginPath(); g.moveTo(-.9 * r, -.35 * r); g.quadraticCurveTo(0, -.95 * r, .9 * r, -.35 * r); g.quadraticCurveTo(0, .25 * r, -.9 * r, -.35 * r); g.stroke(); P2([[-.8, .35], [.8, -1]]); g.stroke(); }
+    else if (kind === 'twin') { const fig = (x, dashed) => { g.save(); g.translate(x * r, 0); if (dashed) g.setLineDash([.18 * r, .14 * r]); g.beginPath(); g.arc(0, -.55 * r, .22 * r, 0, TAU); dashed ? g.stroke() : g.fill(); g.beginPath(); g.moveTo(-.3 * r, .9 * r); g.lineTo(-.05 * r, -.2 * r); g.lineTo(.3 * r, .9 * r); g.moveTo(-.4 * r, .15 * r); g.lineTo(.35 * r, -.05 * r); g.stroke(); g.restore(); };   // Mirage: you, and the copy that runs
+      fig(-.42, false); fig(.42, true); }
     else if (kind === 'steps') { for (const [x, y] of [[-.4, .45], [.35, -.35]]) { g.save(); g.translate(x * r, y * r); g.rotate(-.3); g.beginPath(); g.ellipse(0, 0, .2 * r, .34 * r, 0, 0, TAU); g.fill(); g.restore(); } }
     else if (kind === 'arrow' || kind === 'pierce') { P2([[-.85, .85], [.75, -.75]]); g.stroke(); P2([[.85, -.85], [.25, -.75], [.75, -.25]], true); g.fill(); if (kind === 'pierce') { g.strokeStyle = acc; P2([[-.2, -.75], [.75, .2]]); g.stroke(); } }
     else if (kind === 'trap') { P2([[-.85, .5], [.85, .5]]); g.stroke(); for (let i = 0; i < 4; i++) { P2([[-.65 + i * .43, .5], [-.45 + i * .43, -.3], [-.25 + i * .43, .5]]); g.stroke(); } }
@@ -630,7 +634,7 @@
       if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(104, -22, 128 * P.sh / 50, 6); tx(g, String(P.sh), 104 + 128 * P.sh / 50 + 6, -19, 11, '#7fc8ff', 'left'); }
       // the abilities, the way the genre lays them out: C and Q (bought, their charges as pips), E (the signature, free each
       // round; some come back, the wait shown round it), X (the ultimate, its points round a ring). The readied one lifts and glows.
-      const op = OPS[P.op], slot = (key, k, x, w) => { const ult = k === 'x', n = ult ? 0 : P.ab[k] | 0, c2 = ultCost(P), pts = Math.min(c2, P.ult | 0), have = ult ? pts >= c2 : n > 0 || (k === 'c' && !!P.tether), on = have && M.mode !== 'demo', rdy = P.rdy === k, lift = rdy ? -7 : 0, A = ult ? op.x : op[k];
+      const op = OPS[P.op], slot = (key, k, x, w) => { const ult = k === 'x', n = ult ? 0 : P.ab[k] | 0, c2 = ultCost(P), pts = Math.min(c2, P.ult | 0), have = ult ? pts >= c2 : n > 0 || (k === 'c' && (!!P.tether || !!irisEye(P))), on = have && M.mode !== 'demo', rdy = P.rdy === k, lift = rdy ? -7 : 0, A = ult ? op.x : op[k];
         const pulse = (ult && have) || rdy ? .55 + .45 * Math.sin(K.t * (rdy ? 9 : 5)) : 0;
         g.save(); g.translate(0, lift); rr(g, x, -62, w, 62, 8, rdy ? 'rgba(20,24,34,.92)' : on ? GLASS : 'rgba(12,16,22,.4)', on ? op.col : 'rgba(255,255,255,.12)', rdy ? 2.5 + pulse * 1.5 : ult && have ? 2 + pulse * 2 : 1.5);
         if (rdy) { const gr = g.createLinearGradient(0, -62, 0, 0); gr.addColorStop(0, op.col + '00'); gr.addColorStop(1, op.col + '55'); g.fillStyle = gr; g.fillRect(x + 2, -60, w - 4, 58); }

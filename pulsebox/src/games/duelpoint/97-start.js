@@ -46,7 +46,7 @@
     S.classList.add('dp-start'); S.innerHTML = '';
     const ops = Object.values(OPS).map(O => `<span style="color:${O.col}">${O.n}<em>${String(O.role || '').toUpperCase()}</em></span>`).join('');
     S.insertAdjacentHTML('beforeend', `<div class="dp-wrap"><div class="dp-eyebrow">Tactical shooter · 1v1 to 5v5</div><h1 class="dp-title">Duel<span>point</span></h1>
-      <p class="dp-tag">${nOps} operatives, ${nMaps} maps, one charge. Buy your guns, plant on the site or hold it, and win the round.</p>
+      <p class="dp-tag">${nOps} agents, ${nMaps} maps, one charge. Buy your guns, plant on the site or hold it, and win the round.</p>
       <div class="dp-act"><span id="dpPlaySlot"></span><div class="dp-side"><div class="dp-status" id="dpStatus">Loading the world</div><div class="dp-bar" id="dpBar"><i></i></div></div></div>
       <div class="dp-modes"><span>STANDARD</span><span>SWIFT</span><span>RANKED</span><span>ONLINE</span><span>PRACTICE</span></div></div>
       <div class="dp-ops"><div>${ops}${ops}</div></div><div id="dpKeep" hidden></div>`);

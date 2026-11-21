@@ -93,7 +93,7 @@
       if (QUE.ws && QUE.me && QUE.host === QUE.me && performance.now() >= QUE.mT) { QUE.mT = performance.now() + 1000; qMatch(); }
     }
     const F = QUE.found; if (!F) return;
-    if (screen === 'play' && M && M.online) { QUE.found = null; return; }   // the match is on
+    if (screen === 'play' && M && M.online) { M.fromQueue = QUE.found.mode || 1; QUE.found = null; return; }   // the match is on (and it came from the queue: no party is left behind after it)
     const age = performance.now() - F.at;
     if (!MP.online()) { if (age > 20000) { QUE.found = null; PARTY.status = 'Match failed: search again'; } return; }
     PARTY.ready = true;

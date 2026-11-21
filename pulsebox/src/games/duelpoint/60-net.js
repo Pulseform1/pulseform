@@ -73,6 +73,7 @@
       case 'ab': if (!(m.d && m.d.free)) spendAb(F, m.k); applyAbility(F, m.k, m.d || {}); break;
       case 'orb': takeOrb(m.i | 0, F); break;   // someone took an ultimate orb
       case 'kx': kitTrip(m.id, m.v, true); break;   // a snare or mine went off on the victim's device
+      case 'ed': { const W = M.kit && M.kit.eyes.find(q => q.id === m.id); if (W) breakEye(W, true); break; }   // someone shot out a Watcher
       case 'kd': { const s2 = M.kit && M.kit.sentries.find(q => q.id === m.id); if (s2) hurtSentry(s2, m.d, true); break; }   // someone shot a sentry
       case 'nd': F.smokes = Math.max(0, (F.smokes || 0) - 1); F.throwT = .6; addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); emit('throw', F); break;
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;
@@ -80,7 +81,7 @@
       case 'dh': if (M.planted) M.planted.half = true; break;   // a defuse got halfway
       case 'pg': if (F.team === me().team) ping(F, true, { x: +m.x, y: +m.y, z: +m.z }); break;   // a teammate's ping
       case 'rdy': F.ready = true; break;
-      case 'dp': if (GUNS[m.k]) addLoot({ id: String(m.id), k: m.k, x: +m.x, z: +m.z, m: m.m | 0, r: m.r | 0, by: F.key, fo: m.fo ? String(m.fo) : '' }); break;   // a gun put on the floor
+      case 'dp': if (GUNS[m.k]) addLoot({ id: String(m.id), k: m.k, x: +m.x, z: +m.z, m: m.m | 0, r: m.r | 0, by: F.key, fo: m.fo ? String(m.fo) : '', sk: typeof m.sk === 'string' && skinOfId(m.sk) ? m.sk : '' }); break;   // a gun put on the floor
       case 'pk': { const d = M.loot && M.loot.find(q => q.id === String(m.id)); if (d) takeLoot(F, d, true); break; }   // and picked up
       case 'cc': {   // the charge changed hands. Two people grabbing it at once: the lower key keeps it, the same on every device
         const nk = String(m.k || ''), c = M.charge, mine = c && c.k && M.byKey[c.k] && !M.byKey[c.k].net && M.time - c.at < 1;

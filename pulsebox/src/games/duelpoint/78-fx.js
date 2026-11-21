@@ -392,10 +392,10 @@
   function lootFx(dt) {
     const L = (M && M.loot) || [], seen = new Set();
     // in the buy phase, get a floor copy of each gun people are carrying ready, one a frame, so a gun dropped mid-fight costs nothing to show
-    if (M && M.phase === 'buy') for (const f of M.fs) { const k = f.guns[1] || (f.guns[2] !== 'pip' && f.guns[2]); if (k && GUNS[k] && !X.lootProto.has(k)) { X.lootProto.set(k, gunModel(k, {})); break; } }
+    if (M && M.phase === 'buy') for (const f of M.fs) { const k = f.guns[1] || (f.guns[2] !== 'pip' && f.guns[2]); const sk = (k && skinFor(f, k)) || '', pk = k + '|' + sk; if (k && GUNS[k] && !X.lootProto.has(pk)) { X.lootProto.set(pk, gunModel(k, { skin: sk })); break; } }
     for (const d of L) {
       seen.add(d.id); let o = X.lootObjs.get(d.id);
-      if (!o) { let pr = X.lootProto.get(d.k); if (!pr) { pr = gunModel(d.k, {}); X.lootProto.set(d.k, pr); }
+      if (!o) { const pk = d.k + '|' + (d.sk || ''); let pr = X.lootProto.get(pk); if (!pr) { pr = gunModel(d.k, { skin: d.sk || '' }); X.lootProto.set(pk, pr); }   // (in the skin it was dropped in)
         o = new THREE.Group(); const gm = pr.clone(); gm.rotation.set(0, 0, Math.PI / 2); gm.position.y = .07; o.add(gm); const ring = new THREE.Mesh(X.lootRing.g, X.lootRing.m); ring.rotation.x = -Math.PI / 2; ring.position.y = .02; o.add(ring);
         o.rotation.y = (d.x * 7.3 + d.z * 3.1) % TAU; X.scene.add(o); X.lootObjs.set(d.id, o); }
       o.visible = true; o.position.set(d.x, d.y, d.z);

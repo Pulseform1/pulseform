@@ -509,8 +509,12 @@ function kit2Checks() {
   const runLob = (s, F) => { landAt = null; for (let i = 0; i < Math.round(s * 60); i++) { if (landAt) pin(F, landAt[0] + .8, landAt[1]); else pin(F, 20, 40); T.tick(DT); } };
   [M, P, F] = setup('vex'); P.pitch = .1; T.ability(P, 'c', false); T.on('gloomPop', g => { if (T.M === M) pin(F, g.x + .8, g.z); }); runLob(2, F);
   ok(F.murk > 0, 'Gloom: a rival where it bursts sees only 5 m', 'murk ' + F.murk.toFixed(1));
-  [M, P, F] = setup('iris'); pin(F, 50, 3); P.pitch = -.7; T.ability(P, 'c', false); P.pitch = 0; const eye = M.kit.eyes[0]; if (eye) { eye.x = 40; eye.z = 3; eye.y = 1.5; eye.yaw = -Math.PI / 2; } runPinned(1, F, 50, 3);
-  ok(eye && F.reveal > 0, 'Watcher: a rival walking into its view is marked', eye ? 'reveal ' + F.reveal.toFixed(1) : 'no eye placed');
+  [M, P, F] = setup('iris'); pin(F, 50, 3); P.pitch = -.7; T.ability(P, 'c', false); P.pitch = 0; const eye = M.kit.eyes[0]; if (eye) { eye.x = 40; eye.z = 3; eye.y = 1.5; eye.yaw = -Math.PI / 2; } runPinned(1.5, F, 50, 3);
+  ok(eye && !(F.reveal > 0), 'Watcher: placed, it sleeps (unseen, marking nobody)', eye ? 'reveal ' + (F.reveal || 0).toFixed(1) : 'no eye placed');
+  ok(T.ability(P, 'c', false) && eye && eye.act > 0, 'the C key again wakes it, free', eye ? 'awake ' + (eye.act || 0).toFixed(1) + ' s' : '');
+  runPinned(1, F, 50, 3); ok(eye && F.reveal > 0, 'awake, a rival in its view is marked', eye ? 'reveal ' + F.reveal.toFixed(1) : '');
+  { P.z += 6; const dx = eye.x - F.x, dy = eye.y - T.eyeY(F), dz = eye.z - F.z, L = Math.hypot(dx, dy, dz), S = T.castShot(F, [dx / L, dy / L, dz / L]); P.z -= 6; ok(S.eye === eye, 'awake, a rival can shoot it', S.eye ? 'hit' : 'missed at ' + S.dist.toFixed(1)); }
+  runPinned(20, F, 50, 3); ok(M.kit.eyes.includes(eye), 'it lasts past the old 20 s limit', M.kit.eyes.length + ' eyes');
   [M, P, F] = setup('bastion'); P.sh = 0; T.ability(P, 'c', false); runPinned(1, null); ok(P.sh === 30, 'Ward Beacon: 30 shield a moment after it is set', 'shield ' + P.sh);
   [M, P, F] = setup('nova'); const y0 = P.y; T.ability(P, 'c', false); let top = y0; for (let i = 0; i < 40; i++) { T.tick(DT); top = Math.max(top, P.y); } ok(top - y0 > 2, 'Updraft: up more than 2 m', (top - y0).toFixed(1) + ' m');
   [M, P, F] = setup('wraith'); T.ability(P, 'c', false); ok(P.tether && P.ab.c === 1, 'Tether: an anchor where you stand'); Object.assign(P, { x: 46, z: 3 }); T.readyAb(P, 'c'); ok(Math.abs(P.x - 40) < .5 && !P.tether && P.ab.c === 1, 'the key again steps you back to it, free', P.x.toFixed(1));
@@ -518,8 +522,10 @@ function kit2Checks() {
   [M, P, F] = setup('ember'); T.ability(P, 'c', false); ok(M.flares.length === 1, 'Flashpoint: a flash bent round a corner'); const dL = T.abData(P, 'c', false), dR = T.abData(P, 'c', true); ok(dL.z < dL.az - .3 && dR.z > dR.az + .3, 'left click bends it left, right click right', `${dL.z.toFixed(1)} / ${dR.z.toFixed(1)}`);
   [M, P, F] = setup('axiom'); T.ability(P, 'c', false); runLob(2, F); ok(F.slowF > 0, 'Slow Field: a rival inside is slowed', 'slow ' + (F.slowF || 0).toFixed(2));
   // Vanta
-  [M, P, F] = setup('vanta'); pin(F, 48, 3); T.ability(P, 'q', false); runPinned(.6, F, 48, 3); const hpa = F.hp; T.applyDamage(F, 20, P, false, 'pip');
-  ok(F.exposed > 0 && Math.round(hpa - F.hp) === 25, 'Sunder: through walls; a rival it touches is Exposed and takes 25% more', `${(hpa - F.hp).toFixed(0)} from 20`);
+  [M, P, F] = setup('vanta'); pin(F, 48, 3); { const aimAt = (q, hy) => { const o = [P.x, T.eyeY(P), P.z], dx = q.x - o[0], dy = hy - o[1], dz = q.z - o[2], L = Math.hypot(dx, dy, dz); P.yaw = Math.atan2(-dx, -dz); P.pitch = Math.asin(dy / L); };
+    aimAt(F, F.y + 1); const hp00 = F.hp; T.ability(P, 'q', false); ok(F.exposed > 0 && F.hp < hp00 && F.alive, 'Sunder: instant; the rival it meets is hit and Exposed at once', `${hp00} → ${F.hp}`);
+    runPinned(.6, F, 48, 3); const hpa = F.hp; T.applyDamage(F, 20, P, false, 'pip'); ok(F.exposed > 0 && Math.round(hpa - F.hp) === 25, 'an Exposed rival takes 25% more', `${(hpa - F.hp).toFixed(0)} from 20`);
+    [M, P, F] = setup('vanta'); pin(F, 48, 3); const hb = T.hitboxes(F); aimAt(F, hb.head[1]); P.ab.q = 2; T.ability(P, 'q', false); ok(!F.alive, 'a Sunder to the head kills', F.alive ? 'hp ' + F.hp : 'dead'); }
   [M, P, F] = setup('vanta'); T.ability(P, 'c', false); const fw = M.walls.find(w => w.front); runPinned(1.5, null);
   ok(fw && fw.soft && fw.front.s > 4 && !T.blocked((fw.x0 + fw.x1) / 2, (fw.z0 + fw.z1) / 2, P.y), 'Phase Front: a wall that rolls out ahead, and you can walk through it', fw && 'rolled ' + fw.front.s.toFixed(1) + ' m');
   { pin(F, 56, 3); const S = T.castShot(P, T.viewDir(-Math.PI / 2, 0)); ok(!S.hit && S.dist < 15, 'it stops bullets', 'a shot stops at ' + S.dist.toFixed(1) + ' m'); }
@@ -529,7 +535,7 @@ function kit2Checks() {
   // the Duel Field, in a 2v2
   [M, P, F] = setup('vanta', 2); const foes = M.fs.filter(f => f.team !== P.team), mate = M.fs.find(f => f !== P && f.team === P.team), tgt = foes[0], other = foes[1];
   pin(tgt, 47, 3); P.pitch = Math.atan2(tgt.y + 1.1 - T.eyeY(P), 7); T.ability(P, 'x', false);
-  ok(P.duel && tgt.duel === P.duel, 'Duel Field: the beam seals you and the rival it meets in a dome', P.duel ? 'radius ' + P.duel.r.toFixed(1) : 'no duel');
+  ok(P.duel && tgt.duel === P.duel, 'Duel Field: pointed at a rival, it seals you both in a dome', P.duel ? 'radius ' + P.duel.r.toFixed(1) : 'no duel');
   if (P.duel) { pin(other, 44, 3); pin(mate, 43, 3.5); const hp1 = tgt.hp, hp2 = P.hp;
     T.applyDamage(tgt, 30, mate, false, 'pip'); T.applyDamage(P, 30, other, false, 'pip'); ok(tgt.hp === hp1 && P.hp === hp2, 'nobody outside can hurt the two inside');
     ok(!T.canSee(other, P) && !T.canSee(P, other) && !T.duelOk(mate, tgt), 'nor see them, nor be seen');

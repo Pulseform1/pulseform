@@ -203,7 +203,7 @@
   function gunModel(k, opts = {}) {
     const sk = skinOfId(opts.skin), line = sk && sk.k === k ? sk.line : null;
     const W = GUNS[k], m = gmats(k, line), G = new THREE.Group(), cast = !!opts.cast, parts = {};
-    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null, ACC = 0;
+    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null, ACC = 0, vgrip = false;
     // where the body is (a top line's form is fitted to it), and which parts are fittings rather than body: sights, rails,
     // grips, lights and bipods, which a form leaves standing where they are
     const A = { by: .03 }, accy = f => { ACC = 1; f(); ACC = 0; };
@@ -343,7 +343,7 @@
       else if (o.stock === 'heavy') { side([[sb, .05], [sb + .27, .062], [sb + .29, .054], [sb + .29, -.074], [sb + .27, -.08], [sb + .2, -.07], ['q', sb + .1, -.05, sb, -.03]], .05, m.poly, 0, .01); rbox(.054, .14, .016, m.rubber, 0, -.008, sb + .297, .006); rbox(.02, .01, .1, m.steel, 0, .07, sb + .16, .004); }
       // what the support hand holds
       ACC = 1;
-      if (o.fore === 'vgrip') { const z = lp(hz, rf, .42); vtube(.0155, hb - .09, hb + .004, m.poly, 0, z, .019); vtube(.0195, hb - .098, hb - .084, m.acc, 0, z); for (let i = 0; i < 3; i++) ring(.0172, .0016, z, m.rubber, hb - .03 - i * .018).rotation.x = Math.PI / 2; sup = [0, hb - .05, z]; }
+      if (o.fore === 'vgrip') { const z = lp(hz, rf, .42); vtube(.0155, hb - .09, hb + .004, m.poly, 0, z, .019); vtube(.0195, hb - .098, hb - .084, m.acc, 0, z); for (let i = 0; i < 3; i++) ring(.0172, .0016, z, m.rubber, hb - .03 - i * .018).rotation.x = Math.PI / 2; sup = [0, hb - .05, z]; vgrip = true; }
       else if (o.fore === 'angled') { const z = lp(hz, rf, .45); side([[z - .05, hb + .004], [z + .04, hb + .004], [z + .01, hb - .034], [z - .022, hb - .034]], .03, m.poly, 0, .006); sup = [0, hb - .028, z - .005]; }
       else sup = [0, hb - .012, lp(hz, rf, .45)];
       // sight
@@ -544,7 +544,9 @@
         T = parts.lhand = group(sup[0], sup[1], sup[2], pistolHold ? .3 : 0);
         // a left hand, palm up under the gun: the thumb up the near (left) side, the fingers wrapped up the far side, set
         // wide enough to clear a handguard or a pump; its forearm reaches in from your left side
-        rbox(.064, .018, .08, HM.glove, 0, 0, 0, .007); rbox(.014, .044, .07, HM.glove, .037, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, HM.glove, .039, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, HM.glove, -.037, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
+        if (vgrip) {   // a vertical foregrip: a fist round the post, palm on the near side, the four fingers stacked down it and curled round the far side, the thumb over the top
+          rbox(.018, .078, .058, HM.glove, -.03, -.004, .004, .007); for (let i = 0; i < 4; i++) { const fy = .026 - i * .019; rbox(.05, .016, .018, HM.glove, -.004, fy, -.026, .006); rbox(.018, .016, .036, HM.glove, .024, fy, -.008, .006); } rbox(.034, .014, .016, HM.glove, -.012, .046, -.004, .005); rbox(.004, .05, .04, m.rubber, -.0395, -.004, .004, .002); }
+        else { rbox(.064, .018, .08, HM.glove, 0, 0, 0, .007); rbox(.014, .044, .07, HM.glove, .037, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, HM.glove, .039, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, HM.glove, -.037, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002); }
         parts.larm = arm(T, -.046, -.04, .024, .42, -.75, .55);   // (set low and to the left, so the cuff stays clear of what the hand holds and of the gun behind it)
         if (k === 'breaker') { const sh = vtube(.0095, -.021, .021, m.shell, 0, 0); sh.rotation.x = Math.PI / 2; sh.position.set(-.012, .03, 0); sh.userData.live = true; sh.visible = false; parts.hshell = sh; }
         if (k === 'stub') { const sl = new THREE.Group(); sl.position.set(-.004, .034, -.01); T.add(sl); const was = T; T = sl; for (const sx of [-.011, .011]) { const sh = vtube(.0095, -.021, .021, gmats('breaker').shell, 0, 0); sh.rotation.x = Math.PI / 2; sh.position.set(sx, 0, 0); sh.userData.live = true; } T = was; sl.visible = false; parts.hshell = sl; }
@@ -554,7 +556,7 @@
     bake(G, cast);
     if (parts.mag) { G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(parts.mag); parts.mag.userData.bot = bb.min.y - parts.mag.position.y; parts.mag.userData.hw = (bb.max.x - bb.min.x) / 2; }
     if (parts.bolt && A.fam === 'long' && !parts.boltL) parts.bolt.userData.grab = A.sideHandle ? [-(A.hw || .022) - .012, .032, -.006, .058] : [0, (A.top || .06) + .003, (A.rb || .1), (A.hw || .022) + .054];
-    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.line = line; G.userData.bore = bore;
+    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.vgrip = vgrip; G.userData.line = line; G.userData.bore = bore;
     if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, bore ? bore.y : .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
     return G;
   }
