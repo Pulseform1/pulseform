@@ -18,6 +18,8 @@
   }
   // a button: draws it, registers its press zone, returns whether the mouse is over it. o: { px, fill, col, edge, sub, on, off }
   function btn(g, x, y, w, h, label, fn, o = {}) {
+    if (label) { const p0 = o.px || h * .42; g.font = `700 ${p0}px ${FONT}`; const lw = g.measureText(label).width, room = w - Math.min(16, w * .12); if (lw > room) o = Object.assign({}, o, { px: p0 * room / lw }); }
+    if (o.sub) { g.font = `700 ${fitPx(g, (o.px || h * .42) * .5)}px ${FONT}`; if (g.measureText(o.sub).width > w - 10) o = Object.assign({}, o, { sub: null }); }   // (small print that cannot fit is left off)
     const hot = zone(x, y, w, h, () => { click(!o.off); if (!o.off) fn(); }) && !o.off;
     rr(g, x, y, w, h, Math.min(10, h / 4), o.on ? (o.fill || FOE) : hot ? 'rgba(239,233,220,.16)' : o.fill && !o.on && o.solid ? o.fill : 'rgba(12,16,22,.72)', o.on ? null : hot ? BONE : o.edge || 'rgba(239,233,220,.28)');
     tx(g, label, x + w / 2, y + h / 2 - (o.sub ? h * .13 : 0), o.px || h * .42, o.off ? '#5a6272' : o.on ? INK : o.col || BONE);
@@ -232,7 +234,7 @@
   }
   // standing on a site with the charge: say so, which site, and the key that plants it
   function onSiteHint(g, letter, key, y, u) {
-    const a = 'ON SITE' + (SITES.length > 1 ? ' ' + letter : ''), b = key.toUpperCase() + ' TO PLANT', p1 = fitPx(g, 19 * u), p2 = fitPx(g, 15 * u);
+    const a = 'ON SITE' + (SITES.length > 1 ? ' ' + letter : ''), b = key.toUpperCase() + ': PLANT', p1 = fitPx(g, 19 * u), p2 = fitPx(g, 15 * u);
     g.font = `900 ${p1}px ${FONT}`; const w1 = g.measureText(a).width; g.font = `800 ${p2}px ${FONT}`; const w2 = g.measureText(b).width;
     const d = 8 * u, gap = 16 * u, w = 20 * u + d * 2 + 12 * u + w1 + gap + w2 + 22 * u, h = 40 * u, x0 = 640 - w / 2, pulse = .5 + .5 * Math.sin(K.t * 5);
     rr(g, x0, y - h / 2, w, h, h / 2, 'rgba(12,16,22,.82)', `rgba(255,138,61,${.55 + .45 * pulse})`, 2 * u);
@@ -278,8 +280,8 @@
     // the mode, the team size and the target ride on the NOW ENTERING line (lower down they sat under the map's tip)
     g.font = `800 ${fitPx(g, 14 * u)}px ${FONT}`; let cx = x0 + 26 * u + g.measureText('NOW ENTERING').width + 18 * u;
     for (const c of chips) { const px = fitPx(g, 12 * u); g.font = `800 ${px}px ${FONT}`; const w = g.measureText(c).width + px * 1.8, h = Math.max(26 * u, px * 1.9); rr(g, cx, V.y0 + 86 * u - h / 2, w, h, 4, 'rgba(239,233,220,.1)', 'rgba(239,233,220,.25)', 1); tx(g, c, cx + w / 2, V.y0 + 86 * u, 12 * u, BONE, 'center', 800); cx += w + 8 * u; }
-    tx(g, side === 'att' ? 'YOU ATTACK FIRST' : 'YOU DEFEND FIRST', x0 + 26 * u, V.y0 + 282 * u, 22 * u, side === 'att' ? FOE : YOU, 'left', 900);
-    tx(g, side === 'att' ? (two ? 'Plant the charge on site ' + siteWords() : 'Plant the charge on the site') : (two ? 'Hold ' + (SITES.length > 2 ? 'all three' : 'both') + ' sites. Stop the plant, or defuse it' : 'Stop the plant, or defuse it'), x0 + 26 * u, V.y0 + 308 * u, 14 * u, '#c9cfd8', 'left', 600);
+    tx(g, side === 'att' ? 'ATTACK' : 'DEFEND', x0 + 26 * u, V.y0 + 282 * u, 22 * u, side === 'att' ? FOE : YOU, 'left', 900);
+    tx(g, side === 'att' ? (two ? 'Plant on ' + siteWords() : 'Plant the charge') : (two ? 'Hold ' + siteWords('and') : 'Stop the plant'), x0 + 26 * u, V.y0 + 308 * u, 14 * u, '#c9cfd8', 'left', 600);
     // the plan of the map, with the sites marked
     { const mw = Math.min(230 * u, (V.y1 - 136 * u - (V.y0 + 332 * u)) * GW / GH), mh = mw * GH / GW, mx = x0 + 26 * u, my = V.y0 + 332 * u, kk = mw / MW; /* a tall map's plan stops short of the player cards */ g.globalAlpha = ease * .92; g.drawImage(miniMap(), mx, my, mw, mh); g.globalAlpha = ease; g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 1.5; g.strokeRect(mx, my, mw, mh);
       for (const S of SITES) siteLabel(g, S, mx, my, kk, 16 * u);
@@ -339,9 +341,9 @@
     const V = K.view, u = uiScale(), W = V.x1 - V.x0, a = t < .25 ? smooth(t / .25) : t > 2.8 ? 1 - (t - 2.8) / .4 : 1, col = S.side === 'att' ? FOE : YOU, cy = 330;
     g.save(); g.globalAlpha = a; g.fillStyle = 'rgba(8,10,14,.86)'; g.fillRect(V.x0, cy - 78 * u, W, 156 * u); g.fillStyle = col; g.fillRect(V.x0, cy - 78 * u, W, 4 * u); g.fillRect(V.x0, cy + 74 * u, W, 4 * u);
     const sw = (t * 260 * u) % (80 * u); for (let i = -2; i < W / (80 * u) + 2; i++) { const x = V.x0 + i * 80 * u + sw; g.fillStyle = 'rgba(239,233,220,.05)'; g.beginPath(); g.moveTo(x, cy - 74 * u); g.lineTo(x + 30 * u, cy - 74 * u); g.lineTo(x + 70 * u, cy); g.lineTo(x + 30 * u, cy + 74 * u); g.lineTo(x, cy + 74 * u); g.lineTo(x + 40 * u, cy); g.closePath(); g.fill(); }
-    tx(g, S.sd ? 'SUDDEN DEATH  ·  NEXT ROUND WINS' : S.decider ? (S.first ? 'OVERTIME  ·  WIN BY TWO' : 'OVERTIME  ·  SIDES SWAP EVERY ROUND') : 'SWITCHING SIDES', 640, cy - 34 * u, 20 * u, S.decider ? GOLD : DIM, 'center', 900);
-    tx(g, S.side === 'att' ? 'YOU NOW ATTACK' : 'YOU NOW DEFEND', 640, cy + 12 * u, 54 * u, col, 'center', 900);
-    tx(g, S.side === 'att' ? (SITES.length > 1 ? 'Take the charge to ' + siteWords() : 'Take the charge to the site') : 'Hold them off, or defuse the charge', 640, cy + 52 * u, 15 * u, BONE, 'center', 700);
+    tx(g, S.sd ? 'SUDDEN DEATH  ·  NEXT ROUND WINS' : S.decider ? (S.first ? 'OVERTIME  ·  WIN BY TWO' : 'OVERTIME  ·  SWAP EVERY ROUND') : 'SIDE SWAP', 640, cy - 34 * u, 20 * u, S.decider ? GOLD : DIM, 'center', 900);
+    tx(g, S.side === 'att' ? 'ATTACK' : 'DEFEND', 640, cy + 12 * u, 54 * u, col, 'center', 900);
+    tx(g, S.side === 'att' ? (SITES.length > 1 ? 'Plant on ' + siteWords() : 'Plant the charge') : 'Stop the plant', 640, cy + 52 * u, 15 * u, BONE, 'center', 700);
     g.restore();
   }
   // ---- the scoreboard mid-match: hold Tab (on a phone, tap the clock) for everyone's kills, deaths, headshots and damage,
@@ -487,24 +489,24 @@
       g.restore();
     }
     if (touch && canBuy()) tx(g, `◈ ${P.credits}`, 640, V.y1 - 66 * u, 17 * u, GOLD);
-    if ((M.phase === 'buy' || (M.phase === 'end' && !M.over)) && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'Tap PICK UP' : 'Press F'} to ${lootFree(P) ? 'pick up' : 'swap for'} the ${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
+    if ((M.phase === 'buy' || (M.phase === 'end' && !M.over)) && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'PICK UP' : 'F'}: ${lootFree(P) ? '' : 'swap for '}${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
     // --- the charge: what to do, and how far along
     const ring = (frac, label, col) => { const y = 470; g.strokeStyle = 'rgba(12,16,22,.7)'; g.lineWidth = 12 * u; g.beginPath(); g.arc(640, y, 34 * u, 0, TAU); g.stroke(); g.strokeStyle = col; g.lineWidth = 7 * u; g.beginPath(); g.arc(640, y, 34 * u, -Math.PI / 2, -Math.PI / 2 + TAU * frac); g.stroke(); tx(g, label, 640, y + 60 * u, 15 * u, col); };
     if (P.reloadT > 0) tx(g, 'RELOADING', 640, 420, 15 * u, GOLD);
     if (M.phase === 'live' && P.alive && !range && !demo) {
       const near = M.planted && Math.hypot(P.x - M.planted.x, P.z - M.planted.z) < 1.7, key = touch ? 'Hold the button' : 'Hold F';
       if (P.orbT > 0) ring(P.orbT / ORB.take, 'ULT ORB', OPS[P.op].col);
-      else if (M.orbs && M.orbs.some(o => !o.taken && Math.hypot(o.x - P.x, o.z - P.z) < ORB.r)) hint(g, (touch ? 'Hold the button' : 'Hold F') + ' to take the orb: an ultimate point', V.y0 + 140 * u, 16 * u, OPS[P.op].col);
+      else if (M.orbs && M.orbs.some(o => !o.taken && Math.hypot(o.x - P.x, o.z - P.z) < ORB.r)) hint(g, (touch ? 'Hold' : 'Hold F') + ': ult point', V.y0 + 140 * u, 16 * u, OPS[P.op].col);
       if (P.plant > 0) ring(P.plant / PLANT_T, 'PLANTING', FOE); else if (P.defuse > 0) ring(P.defuse / DEFUSE_T, P.defuse >= DEFUSE_T / 2 ? 'DEFUSING  ·  HALF SAVED' : 'DEFUSING', YOU);
       else if (side === 'att' && !M.planted && M.charge && !carries(P)) { const c = carrier();
-        if (c) { if (M.t > roundT() - 6 || onSite(P.x, P.z)) hint(g, c.name.toUpperCase() + ' HAS THE CHARGE' + (onSite(P.x, P.z) ? '  ·  COVER THE PLANT' : ''), V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
-        else hint(g, 'THE CHARGE IS ON THE FLOOR  ·  WALK OVER IT TO PICK IT UP', V.y0 + 104 * u, 16 * u, GOLD); }
-      else if (side === 'att' && !M.planted) { if (onSite(P.x, P.z)) onSiteHint(g, 'ABC'[siteAt(P.x, P.z)], key, V.y0 + 104 * u, u); else hint(g, M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site ' + siteWords() + ' and plant it' : 'Carry the charge to the site and plant it') : '', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
-      else if (side === 'def' && M.planted) hint(g, (near ? key + ' to defuse' : 'Defuse the charge') + (M.planted.half ? '  ·  HALF DONE' : ''), V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
-      else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold ' + siteWords('and') + ': stop them planting' : 'Stop them planting on the site', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
+        if (c) { if (M.t > roundT() - 6 || onSite(P.x, P.z)) hint(g, c.name.toUpperCase() + ' HAS THE CHARGE' + (onSite(P.x, P.z) ? '  ·  COVER' : ''), V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
+        else hint(g, 'CHARGE DROPPED  ·  WALK OVER IT', V.y0 + 104 * u, 16 * u, GOLD); }
+      else if (side === 'att' && !M.planted) { if (onSite(P.x, P.z)) onSiteHint(g, 'ABC'[siteAt(P.x, P.z)], key, V.y0 + 104 * u, u); else hint(g, M.t > roundT() - 6 ? (twoSites() ? 'Plant on ' + siteWords() : 'Plant on the site') : '', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
+      else if (side === 'def' && M.planted) hint(g, (near ? key + ': defuse' : 'Defuse') + (M.planted.half ? '  ·  HALF DONE' : ''), V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
+      else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold ' + siteWords('and') : 'Stop the plant', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
       if (M.fs.some(q => q.team !== P.team && q.alive && q.defuse > 0)) tx(g, M.fs.length > 2 ? 'THEY ARE DEFUSING' : 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);   // any of them, not just the nearest
-      if (P.nearLoot && GUNS[P.nearLoot.k]) hint(g, `${touch ? 'Tap PICK UP' : 'Press F'} to ${lootFree(P) ? 'pick up' : 'swap for'} the ${GUNS[P.nearLoot.k].n}`, V.y0 + 172 * u, 15 * u, GOLD);
-      if (GATES.length && P.plant <= 0 && P.defuse <= 0) { const gi = gateNear(P); if (gi >= 0) hint(g, (touch ? 'Tap the button' : 'Press F') + (GATES[gi].open ? ' to shut the blast door' : ' to open the blast door'), V.y0 + 140 * u, 16 * u, GOLD); }
+      if (P.nearLoot && GUNS[P.nearLoot.k]) hint(g, `${touch ? 'PICK UP' : 'F'}: ${lootFree(P) ? '' : 'swap for '}${GUNS[P.nearLoot.k].n}`, V.y0 + 172 * u, 15 * u, GOLD);
+      if (GATES.length && P.plant <= 0 && P.defuse <= 0) { const gi = gateNear(P); if (gi >= 0) hint(g, (touch ? 'Tap' : 'F') + (GATES[gi].open ? ': shut door' : ': open door'), V.y0 + 140 * u, 16 * u, GOLD); }
     }
     // --- banners
     if (TOAST) { const t = (performance.now() - TOAST.at) / 1000; if (t > 4) TOAST = null; else { g.globalAlpha = cl(Math.min(t * 4, (4 - t) * 2), 0, 1); rr(g, 640 - 230 * u, V.y0 + 64 * u, 460 * u, 34 * u, 8, 'rgba(12,16,22,.85)', GOLD, 1.5); tx(g, TOAST.s, 640, V.y0 + 81 * u, 15 * u, BONE); g.globalAlpha = 1; } }
@@ -513,7 +515,7 @@
     if (M.online && (M.dropped || MP.rejoining)) { const p = .6 + .4 * Math.sin(K.t * 6); rr(g, 640 - 170 * u, 118 * u, 340 * u, 34 * u, 8, 'rgba(12,16,22,.85)', GOLD, 1.5); tx(g, 'CONNECTION LOST · RECONNECTING', 640, 135 * u, 14 * u, GOLD, 'center', 900); g.globalAlpha = 1; void p; }
     else if (M.online) { const dc = M.fs.find(f => f.dc && !f.gone); if (dc) { const left = Math.max(0, Math.ceil(DC_WAIT - (M.time - dc.dc))); tx(g, `${dc.name.toUpperCase()} LOST CONNECTION · WAITING ${left} s`, 640, 135 * u, 14 * u, GOLD, 'center', 900); } }
     if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
-    if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { { const ot = otRound(M.round), mp = !ot && Math.max(...M.wins) === WIN_ROUNDS - 1; tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : suddenDeath(M.round) ? 'SUDDEN DEATH' : ot ? 'OVERTIME ' + ot : mp ? 'MATCH POINT' : 'ROUND ' + M.round, 640, 200, 34 * u, ot || mp ? GOLD : BONE); } tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on ' + siteWords() : 'You attack: plant the charge on the site') : (twoSites() ? 'You defend: hold ' + siteWords('and') : 'You defend: keep them off the site'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
+    if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { const ty = Math.max(200, V.y0 + 132 * u + tapH(46) + 34 * u); { const ot = otRound(M.round), mp = !ot && Math.max(...M.wins) === WIN_ROUNDS - 1; tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : suddenDeath(M.round) ? 'SUDDEN DEATH' : ot ? 'OVERTIME ' + ot : mp ? 'MATCH POINT' : 'ROUND ' + M.round, 640, ty, 34 * u, ot || mp ? GOLD : BONE); } tx(g, side === 'att' ? (twoSites() ? 'ATTACK  ·  ' + siteWords() : 'ATTACK') : (twoSites() ? 'DEFEND  ·  ' + siteWords('and') : 'DEFEND'), 640, ty + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
     if (P !== me()) {   // spectating a teammate: who, their health and shield, their gun, and the others you could switch to
       const w = 420 * u, y = V.y1 - 156 * u, mates = M.fs.filter(f => f !== me() && f.team === me().team && f.alive), G2 = gun(P);
       rr(g, 640 - w / 2, y, w, 58 * u, 8, 'rgba(10,13,18,.86)', YOU, 1.5); portraitTile(g, P.op, 640 - w / 2 + 6 * u, y + 6 * u, 46 * u, 46 * u, { r: 4 });
@@ -570,12 +572,12 @@
       const held = (b.k === 'fire' && TS.fire != null) || [...TS.held.values()].includes(b.k) || b.on, c = b.col || BONE;
       g.fillStyle = held ? 'rgba(255,138,61,.6)' : 'rgba(12,16,22,.55)'; g.beginPath(); g.arc(b.x, b.y, b.r, 0, TAU); g.fill();
       g.strokeStyle = b.off ? 'rgba(255,255,255,.18)' : b.k === 'fire' ? FOE : c; g.globalAlpha = b.off ? 1 : .8; g.lineWidth = 2.5 * u; g.stroke(); g.globalAlpha = 1;
-      tx(g, b.t, b.x, b.y, (b.k === 'fire' || b.k === 'use' ? 17 : b.t.length > 5 ? 10.5 : 12.5) * u, b.off ? '#5a6272' : BONE);
+      tx(g, b.t, b.x, b.y, Math.min((b.k === 'fire' || b.k === 'use' ? 17 : b.t.length > 5 ? 10.5 : 12.5) * u * Math.max(.75, Math.min(1.35, b.r / ((b.k === 'fire' ? 62 : b.k === 'use' ? 58 : 37) * u))), b.r * 2.6 / Math.max(3, b.t.length)), b.off ? '#5a6272' : BONE);
     }
     if (TS.stick) {
-      const s = TS.stick, dx = s.x - s.x0, dy = s.y - s.y0, L = Math.min(96 * u, Math.hypot(dx, dy)), a = Math.atan2(dy, dx);
-      g.strokeStyle = 'rgba(239,233,220,.4)'; g.lineWidth = 3 * u; g.beginPath(); g.arc(s.x0, s.y0, 65 * u, 0, TAU); g.stroke();
-      g.fillStyle = 'rgba(239,233,220,.5)'; g.beginPath(); g.arc(s.x0 + Math.cos(a) * L, s.y0 + Math.sin(a) * L, 27 * u, 0, TAU); g.fill();
+      const s = TS.stick, ss = touchSize('move'), dx = s.x - s.x0, dy = s.y - s.y0, L = Math.min(96 * u * ss, Math.hypot(dx, dy)), a = Math.atan2(dy, dx);
+      g.strokeStyle = 'rgba(239,233,220,.4)'; g.lineWidth = 3 * u; g.beginPath(); g.arc(s.x0, s.y0, 65 * u * ss, 0, TAU); g.stroke();
+      g.fillStyle = 'rgba(239,233,220,.5)'; g.beginPath(); g.arc(s.x0 + Math.cos(a) * L, s.y0 + Math.sin(a) * L, 27 * u * ss, 0, TAU); g.fill();
     }
-    else if (me().alive) { const x = V.x0 + 170 * u, y = V.y1 - 150 * u; g.setLineDash([6 * u, 8 * u]); g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 2 * u; g.beginPath(); g.arc(x, y, 62 * u, 0, TAU); g.stroke(); g.setLineDash([]); tx(g, 'MOVE', x, y, 13 * u, 'rgba(239,233,220,.45)'); tx(g, 'push far to sprint', x, y + 82 * u, 11 * u, 'rgba(239,233,220,.35)'); }
+    else if (me().alive) { const x = V.x0 + 170 * u, y = V.y1 - 150 * u, ss = touchSize('move'); g.setLineDash([6 * u, 8 * u]); g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 2 * u; g.beginPath(); g.arc(x, y, 62 * u * ss, 0, TAU); g.stroke(); g.setLineDash([]); tx(g, 'MOVE', x, y, 13 * u, 'rgba(239,233,220,.45)'); tx(g, 'push far to sprint', x, y + (20 + 62 * ss) * u, 11 * u, 'rgba(239,233,220,.35)'); }
   }

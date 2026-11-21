@@ -127,8 +127,11 @@
     // the edge: two strokes, the outer one turning through the colours
     { const n = 6; for (let i = 0; i < n; i++) { const a0 = i / n; g.strokeStyle = prism(t, i * 60); g.lineWidth = (hot ? 3 : 2.2) * u; g.beginPath(); const P = perim(x, y, w, h, a0, a0 + 1 / n); P.forEach(([px2, py], j) => j ? g.lineTo(px2, py) : g.moveTo(px2, py)); g.stroke(); } }
     rr(g, x + 5 * u, y + 5 * u, w - 10 * u, h - 10 * u, 7, null, 'rgba(255,255,255,.12)', 1);
-    tx(g, 'PARAGON', x + 18 * u, y + 24 * u, 13 * u, prism(t, 0, 70), 'left', 900); tx(g, '·  FEATURED', x + 92 * u, y + 24 * u, 11 * u, BONE, 'left', 800);
-    rr(g, x + w - 128 * u, y + 13 * u, 112 * u, 22 * u, 11, 'rgba(0,0,0,.45)', sk.R.col + '88', 1); tx(g, 'ONE IN EVERY SET', x + w - 72 * u, y + 24 * u, 9.5 * u, sk.R.col, 'center', 800);
+    // the tags along the top, each placed after the one before it; the pill only where there is room for it
+    { g.font = `900 ${fitPx(g, 13 * u)}px ${FONT}`; const a = g.measureText('PARAGON').width; g.font = `800 ${fitPx(g, 11 * u)}px ${FONT}`; const b = g.measureText('·  FEATURED').width;
+      tx(g, 'PARAGON', x + 18 * u, y + 24 * u, 13 * u, prism(t, 0, 70), 'left', 900); tx(g, '·  FEATURED', x + 18 * u + a + 8 * u, y + 24 * u, 11 * u, BONE, 'left', 800);
+      g.font = `800 ${fitPx(g, 9.5 * u)}px ${FONT}`; const pw = g.measureText('ONE IN EVERY SET').width + 20 * u;
+      if (x + 18 * u + a + 8 * u + b + 12 * u + pw < x + w - 16 * u) { rr(g, x + w - 16 * u - pw, y + 13 * u, pw, 22 * u, 11, 'rgba(0,0,0,.45)', sk.R.col + '88', 1); tx(g, 'ONE IN EVERY SET', x + w - 16 * u - pw / 2, y + 24 * u, 9.5 * u, sk.R.col, 'center', 800); } }
     // the words, laid out from the bottom up: on a short card (a phone) the blurb and the countdown give way
     const roomy = h * scrPx(g) > 330, by = roomy ? y + h * .72 : y + h - 72 * u; fitTx(g, L.n.toUpperCase(), x + 18 * u, by, 34 * u, BONE, 'left', 900, w - 36 * u); tx(g, sk.k === 'knife' ? 'BLADE' : GUNS[sk.k].n.toUpperCase() + '  ·  ' + GUNS[sk.k].cat.toUpperCase(), x + 18 * u, by + 30 * u, 13 * u, L.alt, 'left', 800);
     if (roomy) { para(g, L.blurb, x + 18 * u, by + 54 * u, w - 36 * u, 11.5 * u, '#c9cfd8');
@@ -144,7 +147,7 @@
     tx(g, 'NEXT SET IN', x + w / 2, y + h * .2, 11 * u, DIM, 'center', 800); tx(g, `${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`, x + w / 2, y + h * .34, 26 * u, BONE, 'center', 900);
     g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x + 16 * u, y + h * .46, w - 32 * u, 3 * u); g.fillStyle = YOU; g.fillRect(x + 16 * u, y + h * .46, (w - 32 * u) * (1 - left / STORE_PERIOD), 3 * u);
     tx(g, 'NEXT PARAGON', x + w / 2, y + h * .6, 10 * u, prism(t, 120, 70), 'center', 900); fitTx(g, skinName(nx.id).toUpperCase(), x + w / 2, y + h * .7, 14 * u, BONE, 'center', 900, w - 20 * u);
-    if (h * scrPx(g) > 200) para(g, 'Seven new skins and a new Paragon every three hours.', x + 14 * u, y + h * .82, w - 28 * u, 10 * u, DIM);
+    if (h * scrPx(g) > 200) para(g, 'New skins every 3 hours.', x + 14 * u, y + h * .82, w - 28 * u, 10 * u, DIM);
   }
   function drawShow(g, V, W, H, u) {   // the preview panel over the turning gun
     const id = SH.show, sk = skinOfId(id); if (!sk) { SH.show = null; return; } const own = owns(id), price = skinPrice(id), L = sk.L, px = V.x1 - 430 * u, py = V.y0 + 70 * u;
@@ -157,7 +160,7 @@
     for (const [a, b] of feats) { g.fillStyle = sk.R.col; g.fillRect(px, y - 5 * u, 4 * u, 10 * u); tx(g, a.toUpperCase(), px + 12 * u, y, 11 * u, DIM, 'left', 800); fitTx(g, b, px + 130 * u, y, 13 * u, BONE, 'left', 700, V.x1 - 12 * u - (px + 130 * u)); y += rowH; }
     if (L.rl && sk.k !== 'knife') { const playing = SH.demo && SH.demo.id === id; btn(g, px, Math.min(y + 6 * u, by - 50 * u), 185 * u, 38 * u, playing ? 'RELOADING…' : 'WATCH THE RELOAD', () => { SH.demo = { id, t0: performance.now() }; }, { px: 12 * u, edge: sk.R.col + 'aa', off: playing }); }
     if (own) { const on = STATS.equip[sk.k] === id; btn(g, bx, by, 380 * u, 60 * u, on ? 'EQUIPPED' : 'EQUIP', () => equipSkin(sk.k, on ? null : id), { on: !on, fill: YOU, solid: true, col: INK, px: 22 * u, sub: on ? 'press again to take it off' : '' }); }
-    else { const can = STATS.coins >= price; btn(g, bx, by, 380 * u, 60 * u, `BUY  ·  ${price}`, () => buySkin(id), { on: can, fill: sk.R.col, solid: can, col: can ? INK : BONE, px: 22 * u, sub: can ? `you have ${STATS.coins}` : `you have ${STATS.coins} · win matches to earn coins` }); }
+    else { const can = STATS.coins >= price; btn(g, bx, by, 380 * u, 60 * u, `BUY  ·  ${price}`, () => buySkin(id), { on: can, fill: sk.R.col, solid: can, col: can ? INK : BONE, px: 22 * u, sub: can ? `you have ${STATS.coins}` : `${STATS.coins} coins` }); }
     btn(g, bx, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; }, { px: 13 * u }); btn(g, bx + 195 * u, by + 70 * u, 185 * u, 40 * u, 'TRY IN THE RANGE', () => tryInRange(id), { px: 12 * u });
     if (SH.msg && performance.now() - SH.msg.t0 < 2200) tx(g, SH.msg.s, px + 190 * u, by - 18 * u, 14 * u, WARN, 'center', 800);
   }
@@ -182,7 +185,8 @@
     const tw = 168 * u, cols = 2, rows = Math.ceil(SKIN_GUNS.length / cols), th = cl((V.y1 - 8 * u - top) / rows - 6 * u, 30 * u, 46 * u), ty = th / (46 * u);   // the tiles close up to fit a short screen
     SKIN_GUNS.forEach((gk, i) => { const x = x0 + (i % cols) * (tw + 8 * u), y = top + Math.floor(i / cols) * (th + 6 * u), on = gk === k, eq = STATS.equip[gk], sk = skinOfId(eq), hot = zone(x, y, tw, th, () => { if (SH.locker !== gk) SH.lpage = 0; SH.locker = gk; click(); });
       rr(g, x, y, tw, th, 6, on ? 'rgba(24,30,42,.96)' : 'rgba(12,16,22,.82)', on ? YOU : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.12)', on ? 2 : 1); if (sk) { g.fillStyle = sk.R.col; g.fillRect(x, y + th - 3 * u, tw, 3 * u); }
-      const ic = gunIcon(gk, eq || null); if (ic) { const iw = tw * .5, ih = iw * ic.height / ic.width; g.drawImage(ic, x + tw - iw - 4 * u, y + (th - ih) / 2, iw, ih); }
+      const nm = gk === 'knife' ? 'KNIFE' : GUNS[gk].n.toUpperCase(); g.font = `800 ${fitPx(g, 12 * u)}px ${FONT}`; const nw = Math.max(g.measureText(nm).width, (g.font = `700 ${fitPx(g, 10 * u)}px ${FONT}`, g.measureText(sk ? sk.L.n : 'Standard').width));
+      const ic = gunIcon(gk, eq || null); if (ic) { const iw = Math.max(0, Math.min(tw * .5, tw - 10 * u - nw - 10 * u)), ih = Math.min(th - 6 * u, iw * ic.height / ic.width), iw2 = ih * ic.width / ic.height; if (iw2 > 8 * u) g.drawImage(ic, x + tw - iw2 - 4 * u, y + (th - ih) / 2, iw2, ih); }   // (the picture takes the room the name leaves)
       tx(g, gk === 'knife' ? 'KNIFE' : GUNS[gk].n.toUpperCase(), x + 10 * u, y + th / 2 - 7 * u * ty, 12 * u, BONE, 'left', 800); tx(g, sk ? sk.L.n : 'Standard', x + 10 * u, y + th / 2 + 9 * u * ty, 10 * u, sk ? sk.R.col : DIM, 'left', 700); });
     // its skins: standard, then each one you own, rarest first (Paragons at the top), a page at a time
     const mine = skinSort(STATS.skins.filter(id => skinOfId(id) && skinOfId(id).k === k)), rx = x0 + cols * (tw + 8 * u) + 20 * u, rw = Math.min(360 * u, V.x1 - rx - 30 * u), t = X ? X.t : 0;
@@ -194,7 +198,7 @@
       tx(g, sk ? sk.L.n : 'Standard', rx + 16 * u, y + 17 * u, 14 * u, BONE, 'left', 800); tx(g, sk ? sk.R.n : 'The factory finish', rx + 16 * u, y + 32 * u, 10 * u, par ? prism(t, 40, 70) : sk ? sk.R.col : DIM, 'left', 700); if (on) tx(g, 'EQUIPPED', rx + rw - 12 * u, y + h2 / 2, 11 * u, YOU, 'right', 900); y += h2 + 6 * u; }
     if (pages > 1) { const py = V.y1 - 62 * u; btn(g, rx, py, 44 * u, 34 * u, '‹', () => { SH.lpage = Math.max(0, SH.lpage - 1); }, { px: 18 * u, off: SH.lpage === 0 }); btn(g, rx + rw - 44 * u, py, 44 * u, 34 * u, '›', () => { SH.lpage = Math.min(pages - 1, SH.lpage + 1); }, { px: 18 * u, off: SH.lpage >= pages - 1 });
       tx(g, `PAGE ${SH.lpage + 1} OF ${pages}`, rx + rw / 2, py + 17 * u, 11 * u, DIM, 'center', 800); }
-    if (!mine.length) para(g, 'No skins for this one yet. The store has eight new ones every three hours, a Paragon among them.', rx, y + 16 * u, rw, 12 * u, DIM);
+    if (!mine.length) para(g, 'No skins yet. New ones every 3 hours.', rx, y + 16 * u, rw, 12 * u, DIM);
   }
   function drawShop(g, V, W, H, u) {
     if (SH.reveal) return drawReveal(g, V, W, H, u);

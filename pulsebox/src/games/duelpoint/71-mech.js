@@ -164,6 +164,102 @@
       const rocks = []; for (let k = 0; k < 8; k++) { const r = add(new THREE.Mesh(new THREE.DodecahedronGeometry(2 + Math.random() * 5, 0), lam('#6a6058'))); r.position.set(cx + (Math.random() - .5) * 400, 30 + Math.random() * 80, cz - 120 - Math.random() * 200); r.userData.s = [Math.random() * .3, Math.random() * .3]; rocks.push(r); }
       life(T => { ring.rotation.z = T * .02; lights.rotation.z = T * .02; const u = (T * .015) % 1; sh.position.set(lp(-300, MW + 300, u), 45 + Math.sin(u * 6) * 6, cz - 90); blink.visible = Math.sin(T * 6) > .6; for (const r of rocks) { r.rotation.x += r.userData.s[0] * .016; r.rotation.y += r.userData.s[1] * .016; } });
     }
+    farLife(W, TH, add, life, bas, lam, cx, cz);
+
+  }
+
+  /* ---------- life farther out: movement against the horizon, all of it well past the walls ----------
+     A flock or two in V formation (one instanced mesh each, every bird flapping), a high aircraft with blinking lights and,
+     by day, a contrail; and each theme's own: ships and a sail on the sea, a camel caravan over the dunes with dust devils,
+     a cable car between two pylons, a seaplane over the canopy, ore buckets on a cableway and drones over the works,
+     streams of hover-cars along the skyways and a blimp with a lit screen, freighters crossing the station's sky. It all
+     stays inside the theme's fog (farther would be lost in it), and the Low setting has fewer of each. */
+  function farLife(W, TH, add, life, bas, lam, cx, cz) {
+    const t = MAP.theme, low = X.low, F = TH.far || 300, ex = Math.max(0, MW / 2 - 32, (MH / 2 - 22) / .8), D = r => Math.min(r + ex, F * .72);
+    const rnd2 = (a, b) => a + Math.random() * (b - a), m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), e4 = new THREE.Euler(), p4 = new THREE.Vector3(), s4 = new THREE.Vector3();
+    const box = (w, h, d, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); return o; };
+    // boxes of one colour made one mesh (one draw): parts are [w, h, d, x, y, z]
+    const merged = (parts, m) => new THREE.Mesh(mergeGeos(parts.map(([w, h, d, x = 0, y = 0, z = 0]) => new THREE.BoxGeometry(w, h, d).translate(x, y, z))), m);
+    // a flock: a V of birds flying a wide loop round the map; local -z is a bird's nose, x its wings
+    const birdGeo = new THREE.BufferGeometry(); birdGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-.6, 0, .2, 0, 0, -.15, .6, 0, .2, 0, 0, -.15, 0, .05, .1, 0, 0, -.15]), 3));
+    const flock = (n, col, alt, dist, speed, size) => {
+      const im = add(new THREE.InstancedMesh(birdGeo, bas(col, { side: THREE.DoubleSide }), n)); im.frustumCulled = false;
+      const offs = []; for (let k = 0; k < n; k++) { const row = Math.ceil(k / 2), side = k % 2 ? 1 : -1; offs.push([k ? side * row * 1.7 * size : 0, row * 2 * size + rnd2(-.4, .4) * size, rnd2(-.5, .5) * size]); }
+      const ph = Math.random() * TAU, dir = Math.random() < .5 ? 1 : -1;
+      life(T => { const a = ph + T * speed / dist * dir, hx = cx + Math.cos(a) * dist, hz = cz + Math.sin(a) * dist * .8, dx = -Math.sin(a) * dir, dz = Math.cos(a) * .8 * dir, yaw = Math.atan2(-dx, -dz), c = Math.cos(yaw), sn = Math.sin(yaw);
+        for (let k = 0; k < n; k++) { const o = offs[k]; p4.set(hx + o[0] * c + o[1] * sn, alt + o[2] + Math.sin(T * .6 + k) * .5, hz - o[0] * sn + o[1] * c); e4.set(0, yaw, Math.sin(T * 1.3 + k) * .15); q4.setFromEuler(e4); const fl = 1 + Math.sin(T * 7 + k * 1.7) * .6; s4.set(size, size * fl, size); m4.compose(p4, q4, s4); im.setMatrixAt(k, m4); }
+        im.instanceMatrix.needsUpdate = true; });
+    };
+    // a high aircraft crossing the sky: a white body, red and green lights at the wing tips, a strobe; by day a contrail
+    const plane = (alt, dist, speed, day) => {
+      const g = add(new THREE.Group()); g.add(merged([[1.2, 1.2, 9], [11, .25, 2, 0, 0, .5], [3.6, .2, 1, 0, .2, 4], [.2, 1.8, 1.2, 0, 1, 4]], lam('#e8ecf0')));
+      const red = box(.4, .4, .4, bas('#ff3b3b'), -5.6, 0, .5), grn = box(.4, .4, .4, bas('#3bff6a'), 5.6, 0, .5), strobe = box(.5, .5, .5, bas('#ffffff'), 0, .8, 0); g.add(red, grn, strobe);
+      const ph = Math.random(), ang = Math.random() * TAU, ux = Math.cos(ang), uz = Math.sin(ang);
+      life(T => { const u = ((T * speed / (dist * 2.4) + ph) % 1) * 2 - 1; g.position.set(cx + ux * u * dist * 1.2 - uz * dist * .35, alt, cz + uz * u * dist * 1.2 + ux * dist * .35); g.rotation.y = Math.atan2(-ux, -uz); strobe.visible = Math.sin(T * 9) > .85; red.visible = grn.visible = Math.sin(T * 3) > -.6; });
+    };
+    const day = t !== 'neon' && t !== 'space' && t !== 'lava';
+    if (day) { flock(low ? 7 : 11, t === 'harbor' || t === 'snow' ? '#f4f4f0' : t === 'jungle' ? '#2b2520' : '#2a221c', 34, D(110), 9, 1.3); if (!low) flock(7, t === 'jungle' ? '#e04a2a' : '#3a3530', 46, D(150), 8, 1.1); plane(Math.min(110, F * .3), D(190), 70, t !== 'jungle'); }
+    if (t === 'harbor') {
+      // ships crossing the sea beyond the sea wall, and a sail; each rocks on the swell
+      const hullM = lam('#2f3d4f'), deck = lam('#e6e1d6'), redM = lam('#b5523f');
+      for (let k = 0; k < (low ? 2 : 3); k++) { const g = add(new THREE.Group()), L = 22 + k * 7; g.add(merged([[L, 3, 5, 0, .5, 0], [L * .8, 1, 4.4, L * .05, 2.2, 0]], k === 1 ? redM : hullM)); g.add(merged([[L * .3, 3.4, 4, -L * .3, 3.8, 0], [.8, 3.4, .8, -L * .3, 7, 0]], deck));
+        if (k !== 1) g.add(merged([0, 1, 2, 3].map(c => [L * .12, 2.2, 3.8, L * (.02 + c * .13), 3.3, 0]), lam(['#c0392b', '#2f8f8a', '#d6a23a'][k % 3])));
+        const z = -70 - k * 50, sp = (2.2 + k * .8) * (k % 2 ? -1 : 1), ph = Math.random() * 900, span = Math.min(F * 1.4, 700);
+        life(T => { const u = ((T * sp + ph) % span + span) % span; g.position.set(cx - span / 2 + u, -1.2 + Math.sin(T * .9 + k) * .25, z); g.rotation.set(Math.sin(T * .7 + k) * .03, sp > 0 ? 0 : Math.PI, Math.sin(T * .9 + k) * .05); }); }
+      const sail = add(new THREE.Group()); sail.add(box(5, 1, 1.6, lam('#f2efe8'), 0, .2, 0)); const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, .7, 0, 0, 7, 0, 3, .9, 0]), 3)); sg.computeVertexNormals(); sail.add(new THREE.Mesh(sg, new THREE.MeshLambertMaterial({ color: LC('#ffffff'), side: THREE.DoubleSide })));
+      life(T => { const a = T * .02; sail.position.set(cx + Math.cos(a) * 160, -1.1 + Math.sin(T * 1.1) * .2, -70 - Math.abs(Math.sin(a)) * 60); sail.rotation.set(0, -a, Math.sin(T * .8) * .08); });
+    } else if (t === 'desert') {
+      // a camel caravan walking the dunes: bodies sway, legs swing, two riders
+      const cm = lam('#a8784a'), rm = lam('#3a2a1e'), cloth = lam('#2f6f9a'), N = low ? 4 : 6, cams = [];
+      for (let k = 0; k < N; k++) { const g = add(new THREE.Group()); g.add(merged([[1, 1.1, 2.6, 0, 2.4, 0], [.8, .7, .9, 0, 3.2, .1], [.4, 1.4, .4, 0, 3.2, -1.4], [.45, .45, .9, 0, 3.9, -1.75], [.22, 2, .22, -.32, 1, -.9], [.22, 2, .22, .32, 1, -.9], [.22, 2, .22, -.32, 1, .9], [.22, 2, .22, .32, 1, .9]], cm));
+        if (k % 3 === 1) g.add(merged([[.6, .9, .5, 0, 3.9, .1], [.7, .3, .6, 0, 4.4, .1]], rm));
+        g.scale.setScalar(1.6); cams.push({ g, legs: [] }); }
+      const R0 = D(105), sp = .9 / R0, dir = Math.random() < .5 ? 1 : -1, ph = Math.random() * TAU;
+      life(T => { cams.forEach((c, k) => { const a = ph + T * sp * dir - k * 3.4 / R0 * dir, x = cx + Math.cos(a) * R0, z = cz + Math.sin(a) * R0 * .8; c.g.position.set(x, Math.abs(Math.sin(T * 2.4 + k)) * .12, z); c.g.rotation.set(Math.sin(T * 2.4 + k) * .04, Math.atan2(Math.sin(a) * dir, -Math.cos(a) * .8 * dir), Math.sin(T * 1.2 + k) * .05);
+        c.legs.forEach((l, j) => { l.rotation.x = Math.sin(T * 3 + k + (j === 0 || j === 3 ? 0 : Math.PI)) * .35; }); }); });
+      // dust devils: tall spinning funnels of sand that wander and fade
+      for (let k = 0; k < (low ? 1 : 2); k++) { const m = add(new THREE.Mesh(new THREE.CylinderGeometry(3, .6, 24, 10, 1, true), new THREE.MeshBasicMaterial({ color: LC('#e2c48e'), transparent: true, opacity: .22, depthWrite: false, side: THREE.DoubleSide }))), ph = Math.random() * TAU, R1 = D(80 + k * 50);
+        life(T => { const a = ph + T * .015; m.position.set(cx + Math.cos(a) * R1 + Math.sin(T * .3 + k) * 8, 12, cz + Math.sin(a) * R1 * .8); m.rotation.y = T * 3; m.material.opacity = .12 + .12 * (.5 + .5 * Math.sin(T * .2 + k * 2)); }); }
+    } else if (t === 'snow') {
+      // a cable car between two pylons across the valley
+      const a0 = Math.random() * TAU, R2 = D(150), A = [cx + Math.cos(a0) * R2, cz + Math.sin(a0) * R2 * .8], B = [cx + Math.cos(a0 + 1.1) * R2, cz + Math.sin(a0 + 1.1) * R2 * .8], pm = lam('#5a6470');
+      add(merged([A, B].flatMap(P => [[1.6, 34, 1.6, P[0], 17, P[1]], [5, 1, 1, P[0], 34, P[1]]]), pm));
+      const cab = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(A[0], 33.5, A[1]), new THREE.Vector3(B[0], 33.5, B[1])]); add(new THREE.Line(cab, new THREE.LineBasicMaterial({ color: LC('#20242a') })));
+      const car = add(new THREE.Group()); car.add(box(3, 2.4, 2.2, lam('#c0392b'), 0, -3.4, 0)); car.add(box(2.6, .8, 1.9, bas('#bfe4ff'), 0, -3, 0)); car.add(box(.15, 2.2, .15, pm, 0, -1.1, 0));
+      life(T => { const u = .5 - .5 * Math.cos(T * .05); car.position.set(lp(A[0], B[0], u), 33.5 - Math.sin(u * Math.PI) * 3, lp(A[1], B[1], u)); car.rotation.y = Math.atan2(B[0] - A[0], B[1] - A[1]); });
+    } else if (t === 'jungle') {
+      // a seaplane circling low over the canopy, its propeller a blur
+      const g = add(new THREE.Group()), body = lam('#d8d0b8'), trim = lam('#c0392b'); g.add(box(1.3, 1.3, 7, body)); g.add(box(10, .25, 1.6, trim, 0, .7, -.5)); g.add(box(.2, 1.6, 1, trim, 0, 1, 3.2)); g.add(box(3.4, .2, .9, body, 0, .3, 3.2));
+      for (const sx of [-1.6, 1.6]) g.add(box(.5, .5, 4.5, body, sx, -1.6, -.4));
+      const prop = box(.12, 2.6, .12, lam('#202020'), 0, 0, -3.6); g.add(prop); const R3 = D(95), ph = Math.random() * TAU;
+      life(T => { const a = ph + T * .09; g.position.set(cx + Math.cos(a) * R3, 42 + Math.sin(T * .3) * 4, cz + Math.sin(a) * R3 * .8); g.rotation.set(0, Math.atan2(Math.sin(a), -Math.cos(a) * .8), -.25); prop.rotation.z = T * 40; });
+    } else if (t === 'lava') {
+      // ore buckets on an endless cableway, and two drones with blinking lights
+      const a0 = Math.random() * TAU, R4 = D(120), A = [cx + Math.cos(a0) * R4, cz + Math.sin(a0) * R4 * .8], B = [cx + Math.cos(a0 + 1.4) * R4, cz + Math.sin(a0 + 1.4) * R4 * .8], pm = lam('#3a3230');
+      for (const P of [A, B]) add(box(2, 30, 2, pm, P[0], 15, P[1]));
+      for (const off of [-1.2, 1.2]) { const c = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(A[0], 29, A[1] + off), new THREE.Vector3(B[0], 29, B[1] + off)]); add(new THREE.Line(c, new THREE.LineBasicMaterial({ color: LC('#1a1412') }))); }
+      const bk = [], bm2 = lam('#5a4a40'), ore = bas('#ff7a2a'); for (let k = 0; k < (low ? 6 : 10); k++) { const g = add(new THREE.Group()); g.add(merged([[2.4, 2, 2.4, 0, -3.2, 0], [.16, 2.2, .16, 0, -1.1, 0]], bm2)); g.add(box(2, .3, 2, ore, 0, -2.1, 0)); bk.push(g); }
+      life(T => { bk.forEach((g, k) => { const u = (T * .012 + k / bk.length) % 1, back = u > .5, v = back ? (1 - u) * 2 : u * 2, off = back ? -1.2 : 1.2; g.position.set(lp(A[0], B[0], v), 29, lp(A[1], B[1], v) + off); g.children[1].visible = !back; }); });
+      for (let k = 0; k < (low ? 1 : 2); k++) { const g = add(new THREE.Group()); g.add(box(1.6, .5, 1.6, lam('#2a2a2e'))); const l = box(.4, .3, .4, bas('#ff2a2a'), 0, -.3, 0); g.add(l); const R5 = D(70 + k * 40), ph = Math.random() * TAU;
+        life(T => { const a = ph + T * (.12 + k * .05); g.position.set(cx + Math.cos(a) * R5, 26 + k * 8 + Math.sin(T * .8 + k) * 2, cz + Math.sin(a) * R5 * .8); l.visible = Math.sin(T * 6 + k) > .4; }); }
+    } else if (t === 'neon') {
+      // streams of hover-cars along three skyways, each way at its own height and speed; and a blimp with a lit screen
+      const cols = ['#3df2ff', '#ffd23f', '#ff3ea5', '#ffffff', '#ff7a2a'], carGeo = new THREE.BoxGeometry(3.6, 1, 1.6);
+      for (let w = 0; w < 3; w++) { const n = low ? 10 : 18, im = add(new THREE.InstancedMesh(carGeo, bas('#ffffff'), n)); im.frustumCulled = false; const cc = new THREE.Color();
+        for (let k = 0; k < n; k++) { cc.set(LC(cols[(k + w) % cols.length])); im.setColorAt(k, cc); }
+        const ang = w * 2.1 + Math.random() * .6, ux = Math.cos(ang), uz = Math.sin(ang), off = D(60 + w * 30), h = 34 + w * 18, span = 520, sp = 14 + w * 4;
+        life(T => { for (let k = 0; k < n; k++) { const lane = k % 2 ? 1 : -1, u = (((T * sp * lane + k * span / n) % span) + span) % span - span / 2; p4.set(cx + ux * u - uz * (off + lane * 2.5), h + lane * .8, cz + uz * u + ux * (off + lane * 2.5)); e4.set(0, Math.atan2(-ux * lane, -uz * lane) + Math.PI / 2, 0); q4.setFromEuler(e4); s4.set(1, 1, 1); m4.compose(p4, q4, s4); im.setMatrixAt(k, m4); } im.instanceMatrix.needsUpdate = true; }); }
+      const blimp = add(new THREE.Group()), bb = new THREE.Mesh(new THREE.SphereGeometry(4, 16, 10), lam('#3a3e4e')); bb.scale.set(3.4, 1, 1); blimp.add(bb);
+      const scrT = canvasTex(256, 64, (g, w, h) => { g.fillStyle = '#100820'; g.fillRect(0, 0, w, h); g.font = '900 40px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ff3ea5'; g.fillText('DUELPOINT', w / 2, h / 2 + 2); });
+      for (const sd of [-1, 1]) { const scr = new THREE.Mesh(new THREE.PlaneGeometry(12, 3), new THREE.MeshBasicMaterial({ map: scrT, side: THREE.DoubleSide })); scr.position.set(0, -.5, sd * 4.05); blimp.add(scr); }
+      blimp.scale.setScalar(1.6); const R6 = D(120), ph = Math.random() * TAU; life(T => { const a = ph + T * .03; blimp.position.set(cx + Math.cos(a) * R6, 105, cz + Math.sin(a) * R6 * .8); blimp.rotation.y = -a + Math.PI / 2; scrT.offset.x = (T * .1) % 1; });
+    } else if (t === 'space') {
+      // freighters crossing on long lanes, nav lights blinking; a satellite turning
+      for (let k = 0; k < (low ? 2 : 4); k++) { const g = add(new THREE.Group()), hm = lam(['#9aa6ba', '#c9d2e0', '#7a8496', '#b8a88a'][k]); g.add(merged([[14, 3, 4], [4, 5, 5, -6, 0, 0]], hm)); g.add(box(.6, 2, 2.4, bas('#7fd8ff'), -8.4, 0, 0)); const nl = box(.5, .5, .5, bas('#ff3b3b'), 7.2, 1.8, 0); g.add(nl);
+        const ang = Math.random() * TAU, ux = Math.cos(ang), uz = Math.sin(ang), off = D(150 + k * 40), h = 40 + k * 18, span = 700, sp = (6 + k * 2) * (k % 2 ? 1 : -1), ph = Math.random() * span;
+        life(T => { const u = (((T * sp + ph) % span) + span) % span - span / 2; g.position.set(cx + ux * u - uz * off, h, cz + uz * u + ux * off); g.rotation.y = Math.atan2(uz, ux) * -1 + (sp > 0 ? 0 : Math.PI); nl.visible = Math.sin(T * 4 + k) > .5; }); }
+      const sat = add(new THREE.Group()); sat.add(box(2, 2, 3, lam('#d4b46a'))); for (const sd of [-1, 1]) sat.add(box(7, .1, 2.4, lam('#2a4a8a'), sd * 4.6, 0, 0)); sat.position.set(cx + 60, 90, cz - D(140)); life(T => { sat.rotation.set(T * .1, T * .07, 0); });
+    }
   }
 
   // once a frame: pulse the pads, run the belts, move the gates, crack and drop the walls, and step the life

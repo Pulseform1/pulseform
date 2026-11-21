@@ -108,25 +108,41 @@
   }
 
   /* ---------- touch ---------- */
+  let PDN = 0;   // presses so far
   const TS = { stick: null, look: null, fire: null, held: new Map(), crouch: false, slow: 1, onT: 0, slideAt: 0, sprint: false };
-  // the buttons round the right thumb, in the HUD's units; `show` says whether each is offered right now
+  // where each touch button sits by default (round the right thumb, in the HUD's units) and how big. Settings > Button
+  // layout moves and sizes them (CFG.tlay: per button an offset from here, in the HUD's units, and a size), so a layout
+  // holds on any screen; it is saved with the other settings, which go to your account
+  const TOUCH_KEYS = ['fire', 'alt', 'jump', 'crouch', 'reload', 'swap', 'q', 'e', 'x', 'nade', 'use', 'drop'];
+  function touchHome(k) {
+    const V = K.view, u = uiScale(), fx = V.x1 - 150 * u, fy = V.y1 - 150 * u;
+    if (k === 'move') return [V.x0 + 170 * u, V.y1 - 150 * u, 62];
+    return { fire: [fx, fy, 62], alt: [fx - 22 * u, fy - 116 * u, 38], jump: [fx + 104 * u, fy - 44 * u, 38], crouch: [fx + 100 * u, fy + 66 * u, 36], reload: [fx - 110 * u, fy + 56 * u, 36], swap: [fx + 72 * u, fy - 128 * u, 36],
+      q: [fx - 118 * u, fy - 46 * u, 38], x: [fx - 290 * u, fy + 30 * u, 36], e: [fx - 204 * u, fy + 4 * u, 38], nade: [fx - 196 * u, fy - 104 * u, 34], use: [640, V.y1 - 200 * u, 58], drop: [fx - 300 * u, fy - 150 * u, 32] }[k];
+  }
+  const touchSize = k => (((CFG.tlay || {})[k] || {}).s) || 1;
+  function touchAt(k) {
+    const V = K.view, u = uiScale(), h = touchHome(k), o = (CFG.tlay || {})[k] || {}, r = h[2] * u * (o.s || 1);
+    return { x: cl(h[0] + (o.x || 0) * u, V.x0 + r, V.x1 - r), y: cl(h[1] + (o.y || 0) * u, V.y0 + r, V.y1 - r), r };
+  }
+  // the buttons as they are right now: where they sit, and `show` says whether each is offered
   function touchButtons() {
-    const V = K.view, u = uiScale(), R = V.x1, B = V.y1, P = me(), G = gun(P), fx = R - 150 * u, fy = B - 150 * u, live = M.phase === 'live', op = OPS[P.op];
+    const V = K.view, u = uiScale(), P = me(), G = gun(P), live = M.phase === 'live', op = OPS[P.op], at = touchAt;
     const orbNear = !!(M.orbs && M.orbs.some(o => !o.taken && Math.hypot(o.x - P.x, o.z - P.z) < ORB.r)), doorNear = GATES.length > 0 && gateNear(P) >= 0;
     const near = M.planted && Math.hypot(P.x - M.planted.x, P.z - M.planted.z) < 1.7, canUse = live && P.alive && M.mode !== 'range' && (sideOf(P) === 'att' ? !M.planted && onSite(P.x, P.z) && (carries(P) || !M.charge) : near && !M.defused);
     return [
-      { k: 'fire', x: fx, y: fy, r: 62 * u, t: G.melee ? 'SLASH' : 'FIRE', show: P.alive },
-      { k: 'alt', x: fx - 22 * u, y: fy - 116 * u, r: 38 * u, t: G.melee ? 'STAB' : G.scope ? 'SCOPE' : G.ads ? 'AIM' : 'BURST', show: P.alive && !!(G.melee || G.scope || G.ads || G.alt), on: !!P.scoped },
-      { k: 'jump', x: fx + 104 * u, y: fy - 44 * u, r: 38 * u, t: 'JUMP', show: P.alive },
-      { k: 'crouch', x: fx + 100 * u, y: fy + 66 * u, r: 36 * u, t: canSlide(P) ? 'SLIDE' : 'DUCK', show: P.alive, on: TS.crouch || !!P.slide },
-      { k: 'reload', x: fx - 110 * u, y: fy + 56 * u, r: 36 * u, t: 'LOAD', show: P.alive && !G.melee },
-      { k: 'swap', x: fx + 72 * u, y: fy - 128 * u, r: 36 * u, t: 'SWAP', show: P.alive },
-      { k: 'q', x: fx - 118 * u, y: fy - 46 * u, r: 38 * u, t: op.q.n.toUpperCase() + (op.q.max > 1 ? ' ' + (P.ab.q | 0) : ''), show: P.alive && live, off: !P.ab.q, col: op.col },
-      { k: 'x', x: fx - 290 * u, y: fy + 30 * u, r: 36 * u, t: P.ult >= ultCost(P) ? op.x.n.toUpperCase() : `ULT ${P.ult | 0}/${ultCost(P)}`, show: P.alive && live, off: P.ult < ultCost(P), col: op.col },
-      { k: 'e', x: fx - 204 * u, y: fy + 4 * u, r: 38 * u, t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, col: op.col },
-      { k: 'nade', x: fx - 196 * u, y: fy - 104 * u, r: 34 * u, t: 'SMOKE ' + (P.smokes || 0), show: P.alive && live && P.smokes > 0, off: !(P.smokes > 0), col: NADE.col },
-      { k: 'use', x: 640, y: B - 200 * u, r: 58 * u, t: P.nearLoot ? (lootFree(P) ? 'PICK UP' : 'SWAP GUN') : orbNear ? 'TAKE ORB' : canUse ? (sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE') : 'DOOR', show: canUse || (P.alive && !!P.nearLoot) || (live && P.alive && (orbNear || doorNear)), col: P.nearLoot ? BONE : orbNear ? op.col : FOE },
-      { k: 'drop', x: fx - 300 * u, y: fy - 150 * u, r: 32 * u, t: carries(P) && !M.planted ? 'DROP ◆' : 'DROP', show: P.alive && M.mode !== 'range' && M.phase !== 'end' && ((carries(P) && !M.planted) || (M.phase === 'buy' && !!(P.guns[1] || P.guns[2] !== 'pip'))), col: carries(P) ? GOLD : BONE },
+      { k: 'fire', ...at('fire'), t: G.melee ? 'SLASH' : 'FIRE', show: P.alive },
+      { k: 'alt', ...at('alt'), t: G.melee ? 'STAB' : G.scope ? 'SCOPE' : G.ads ? 'AIM' : 'BURST', show: P.alive && !!(G.melee || G.scope || G.ads || G.alt), on: !!P.scoped },
+      { k: 'jump', ...at('jump'), t: 'JUMP', show: P.alive },
+      { k: 'crouch', ...at('crouch'), t: canSlide(P) ? 'SLIDE' : 'DUCK', show: P.alive, on: TS.crouch || !!P.slide },
+      { k: 'reload', ...at('reload'), t: 'LOAD', show: P.alive && !G.melee },
+      { k: 'swap', ...at('swap'), t: 'SWAP', show: P.alive },
+      { k: 'q', ...at('q'), t: op.q.n.toUpperCase() + (op.q.max > 1 ? ' ' + (P.ab.q | 0) : ''), show: P.alive && live, off: !P.ab.q, col: op.col },
+      { k: 'x', ...at('x'), t: P.ult >= ultCost(P) ? op.x.n.toUpperCase() : `ULT ${P.ult | 0}/${ultCost(P)}`, show: P.alive && live, off: P.ult < ultCost(P), col: op.col },
+      { k: 'e', ...at('e'), t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, col: op.col },
+      { k: 'nade', ...at('nade'), t: 'SMOKE ' + (P.smokes || 0), show: P.alive && live && P.smokes > 0, off: !(P.smokes > 0), col: NADE.col },
+      { k: 'use', ...at('use'), t: P.nearLoot ? (lootFree(P) ? 'PICK UP' : 'SWAP GUN') : orbNear ? 'TAKE ORB' : canUse ? (sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE') : 'DOOR', show: canUse || (P.alive && !!P.nearLoot) || (live && P.alive && (orbNear || doorNear)), col: P.nearLoot ? BONE : orbNear ? op.col : FOE },
+      { k: 'drop', ...at('drop'), t: carries(P) && !M.planted ? 'DROP ◆' : 'DROP', show: P.alive && M.mode !== 'range' && M.phase !== 'end' && ((carries(P) && !M.planted) || (M.phase === 'buy' && !!(P.guns[1] || P.guns[2] !== 'pip'))), col: carries(P) ? GOLD : BONE },
     ].filter(b => b.show);
   }
   function touchDown(x, y, id) {
@@ -149,7 +165,7 @@
 
   // presses from the kit (mouse) and from our own touch listeners all arrive here, in HUD units
   function pointerDown(x, y, id, touch) {
-    ptr = { x, y }; const z = zoneAt(x, y);
+    ptr = { x, y }; PDN++; const z = zoneAt(x, y);
     if (z) { if (z.drag) dragZ = z; z.fn(x, y); return; }
     if (!playing() || UI.armory || UI.opts) return;
     if (touch) touchDown(x, y, id); else if (!locked()) { grabMouse(); if (M.phase !== 'buy') mouse.tap = true; }   // the click that takes the mouse back shoots too
@@ -175,7 +191,7 @@
     if (keys.fire && !keys.fireSeen) { I.press = true; } keys.fireSeen = !!keys.fire;
     for (const k of TS.held.values()) { if (k === 'jump') I.jump = true; if (k === 'use') I.use = true; }
     if (TS.stick) {   // how far the thumb has pushed is how fast you go
-      const u = uiScale(), dx = TS.stick.x - TS.stick.x0, dy = TS.stick.y - TS.stick.y0, L = Math.hypot(dx, dy), m = cl((L - 9 * u) / (56 * u), 0, 1);
+      const u = uiScale(), ss = touchSize('move'), dx = TS.stick.x - TS.stick.x0, dy = TS.stick.y - TS.stick.y0, L = Math.hypot(dx, dy), m = cl((L - 9 * u) / (56 * u * ss), 0, 1);
       if (m > 0) { I.mx = dx / L * m; I.mz = -dy / L * m; }
     }
     if (TS.fire != null || TS.tap) { I.fire = true; I.rapid = true; if (TS.tap) I.press = true; } TS.tap = false;

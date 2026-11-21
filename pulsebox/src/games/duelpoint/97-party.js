@@ -4,7 +4,7 @@
      mode (one site or two), the team size, whether bots fill empty seats and how good they are, moves players between
      teams, and starts once everyone is ready. Lobby messages ride the room relay: 'lprof' (my operative, rating, ready),
      'lteam' (the host's teams and settings), 'lswap' (please move me). */
-  const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null };   // want: who asked to switch sides; pick: the host's first pick of a trade
+  const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null, qs: null };   // qs: the host's world search, as the rest of the party sees it   // want: who asked to switch sides; pick: the host's first pick of a trade
   const myId = () => MP.id;
   function openParty() { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; }
   function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join(''), qt: QUE.found ? QUE.tok : undefined }; }
@@ -23,13 +23,16 @@
   MP.opts.custom = true;
   { const netOn = MP.opts.onMsg; MP.opts.onMsg = m => { if (!partyMsg(m)) netOn(m); }; }
   on('over', () => { if (M && M.online) PARTY.ready = false; });
-  MP.opts.onRoster = () => { if (!MP.online()) { PARTY.prof.clear(); PARTY.teams = {}; PARTY.ready = false; PARTY.sent = ''; return; } sendProfile(true); hostTeams(); };
+  MP.opts.onRoster = () => { if (!MP.online()) { PARTY.prof.clear(); PARTY.teams = {}; PARTY.ready = false; PARTY.sent = ''; PARTY.qs = null; if (QUE.party && QUE.mode) queueStop(); return; } sendProfile(true); hostTeams(); };
   MP.opts.onStatus = s => { PARTY.status = s; };
   // lobby messages; anything else is the match's
   function partyMsg(m) {
     if (m.t === 'lprof') { const rk = {}; if (m.rk && typeof m.rk === 'object') for (const k of RQ) rk[k] = cl(+m.rk[k] || 0, 0, 4000); PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd, rk, rkp: typeof m.rkp === 'string' ? m.rkp.slice(0, 5) : '', qt: typeof m.qt === 'string' ? m.qt.slice(0, 16) : '' }); return true; }
     if (m.t === 'lteam') { if (m.from === MP.hostId) { PARTY.teams = m.teams || {}; PARTY.set = Object.assign(PARTY.set, m.set || {}); if (Array.isArray(m.want)) PARTY.want = new Set(m.want.map(String).slice(0, 10)); } return true; }
     if (m.t === 'lswap') { if (MP.isHost()) { swapTeam(m.from, true); } return true; }
+    // the host searching the world for a match for the whole party, and the match it found
+    if (m.t === 'qstat') { if (m.from === MP.hostId) PARTY.qs = m.on ? { mode: cl(m.mode | 0, 1, 5), t0: performance.now() } : null; return true; }
+    if (m.t === 'qgo') { if (m.from === MP.hostId) qFollow(m); return true; }
     if (m.t === 'mp-rejoin' && MP.isHost() && PARTY.teams[m.old] != null) { PARTY.teams[m.from] = PARTY.teams[m.old]; delete PARTY.teams[m.old]; const pf = PARTY.prof.get(m.old); if (pf) PARTY.prof.set(m.from, pf); MP.send({ t: 'lteam', teams: PARTY.teams, set: PARTY.set, want: [...PARTY.want] }); }   // back after a drop: same team (the match hears it too)
     return false;
   }
@@ -61,8 +64,9 @@
   }
   const readyAll = () => MP.players().every(p => p.id === MP.hostId || (PARTY.prof.get(p.id) || {}).rd);
   function startParty() {
+    if (QUE.party) queueStop();   // (a match of our own instead of the world search)
     if (!MP.isHost() || !readyAll()) return; const ps = MP.players();
-    if (!ps.some(p => PARTY.teams[p.id] === 0) || (!PARTY.set.fill && !ps.some(p => PARTY.teams[p.id] === 1))) { PARTY.status = PARTY.set.fill ? '' : 'Each team needs someone, or let bots fill the seats'; if (!PARTY.set.fill) return; }
+    if (!ps.some(p => PARTY.teams[p.id] === 0) || (!PARTY.set.fill && !ps.some(p => PARTY.teams[p.id] === 1))) { PARTY.status = PARTY.set.fill ? '' : 'Each team needs a player, or bots'; if (!PARTY.set.fill) return; }
     CFG.sites = PARTY.set.sites; MP.start();
   }
   // the room tells the match who is where: teams, operatives and ratings from the lobby
@@ -93,14 +97,14 @@
     if (QUE.found) {   // a match from the queue: say so, and who is in yet
       const F = QUE.found, n = on ? F.toks.filter(tok => MP.players().some(p => (p.id === myId() ? QUE.tok : (PARTY.prof.get(p.id) || {}).qt) === tok)).length : 0, pulse = .75 + .25 * Math.sin(performance.now() / 160);
       rr(g, 640 - 260 * u, V.y0 + 90 * u, 520 * u, 64 * u, 10, 'rgba(255,214,102,.12)', GOLD, 2); g.globalAlpha = pulse; tx(g, `MATCH FOUND  ·  ${F.mode}V${F.mode}`, 640, V.y0 + 114 * u, 22 * u, GOLD, 'center', 900); g.globalAlpha = 1;
-      tx(g, on ? `${n} of ${F.toks.length} players in  ·  starting as soon as everyone is here` : 'Joining the match room...', 640, V.y0 + 140 * u, 12 * u, BONE, 'center', 700);
+      tx(g, on ? `${n}/${F.toks.length} in` : 'Joining the match room...', 640, V.y0 + 140 * u, 12 * u, BONE, 'center', 700);
       if (!on) { hideBoxes(); return; }
     }
     if (!on) {   // make a party or join one
       tx(g, 'YOUR NAME', 640, V.y0 + 150 * u, 12 * u, DIM, 'center', 900); const nm = textBox('name', 640 - 160 * u, V.y0 + 164 * u, 320 * u, 44 * u, 'Your name', 12, MP.name === 'You' ? '' : MP.name, v => MP.setName(v));
       const cw = 300 * u, ch = 190 * u, cy = V.y0 + 250 * u;
       { const x = 640 - cw - 12 * u, hot = zone(x, cy, cw, ch, () => { MP.setName(nm.value); MP.create(); }); rr(g, x, cy, cw, ch, 10, hot ? 'rgba(53,224,200,.16)' : 'rgba(20,26,36,.92)', hot ? YOU : 'rgba(239,233,220,.2)', 2); g.fillStyle = YOU; g.fillRect(x, cy, cw, 5 * u);
-        tx(g, 'CREATE A PARTY', x + cw / 2, cy + 70 * u, 24 * u, BONE, 'center', 900); para(g, 'You get a code to send. Up to ten of you, bots fill any gap.', x + 24 * u, cy + 112 * u, cw - 48 * u, 13 * u, '#c9cfd8'); }
+        tx(g, 'CREATE A PARTY', x + cw / 2, cy + 70 * u, 24 * u, BONE, 'center', 900); para(g, 'Up to 10 players. Bots fill gaps.', x + 24 * u, cy + 112 * u, cw - 48 * u, 13 * u, '#c9cfd8'); }
       { const x = 640 + 12 * u; rr(g, x, cy, cw, ch, 10, 'rgba(20,26,36,.92)', 'rgba(239,233,220,.2)', 2); g.fillStyle = FOE; g.fillRect(x, cy, cw, 5 * u); tx(g, 'JOIN WITH A CODE', x + cw / 2, cy + 50 * u, 24 * u, BONE, 'center', 900);
         const cd = textBox('code', x + 40 * u, cy + 80 * u, cw - 80 * u, 46 * u, 'CODE', 4, '', v => { MP.setName(nm.value); joinOrKey(v); });
         btn(g, x + 40 * u, cy + 136 * u, cw - 80 * u, 40 * u, 'JOIN', () => { MP.setName(nm.value); joinOrKey(cd.value); }, { on: true, fill: FOE, solid: true, col: INK, px: 16 * u }); }
@@ -145,6 +149,10 @@
     btn(g, 640 - bw / 2, by, bw, 46 * u, 'LOCKER', () => { UI.returnTo = 'party'; screen = 'menu'; UI.panel = 'locker'; }, { px: 15 * u, sub: 'skins' });
     if (!host) btn(g, 640 + bw / 2 + 12 * u, by, bw, 46 * u, PARTY.ready ? 'READY ✓' : 'READY', () => { PARTY.ready = !PARTY.ready; click(); }, { on: true, fill: YOU, solid: PARTY.ready, col: PARTY.ready ? INK : BONE, px: 16 * u });
     else btn(g, 640 + bw / 2 + 12 * u, by, bw, 46 * u, 'SWAP TEAMS', () => { const T2 = PARTY.teams; for (const p of ps) T2[p.id] = 1 - (T2[p.id] || 0); MP.send({ t: 'lteam', teams: T2, set: S2, want: [...PARTY.want] }); }, { px: 13 * u });
+    // a match against the world for the whole party, all on one team: the host searches, everyone sees it
+    { const per = cl(Math.max(S2.size, ps.length), 1, 5), mine = host && QUE.party && QUE.mode, theirs = !host && PARTY.qs, t0 = mine ? QUE.t0 : theirs ? PARTY.qs.t0 : 0, s = t0 ? Math.floor((performance.now() - t0) / 1000) : 0, clock = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+      if (host) btn(g, 640 + bw * 1.5 + 24 * u, by, bw, 46 * u, mine ? 'CANCEL' : 'WORLD MATCH', () => { if (mine) queueStop(); else if (ps.length <= 5) queueStart(per, UI.qshard || 0, true); click(); }, { on: true, fill: GOLD, solid: !!mine, col: mine ? INK : GOLD, px: 13 * u, sub: mine ? `SEARCHING ${per}V${per} · ${clock}` : ps.length > 5 ? 'five at most' : `${per}V${per} vs anyone` });
+      if (mine || theirs) tx(g, `SEARCHING THE WORLD  ·  ${(mine ? per : PARTY.qs.mode)}V${(mine ? per : PARTY.qs.mode)}  ·  ${clock}${mine && QUE.err ? '  ·  ' + QUE.err : ''}`, 640, by - 46 * u, 13 * u, GOLD, 'center', 900); }
     if (!host) { const mine = PARTY.teams[me2] || 0, waitSw = PARTY.want.has(String(me2)), full = ps.filter(q => (PARTY.teams[q.id] || 0) !== mine).length >= S2.size;
       btn(g, 640 - bw * 1.5 - 12 * u - bw - 12 * u, by, bw, 46 * u, waitSw ? 'CANCEL SWITCH' : 'SWITCH TEAM', () => MP.to(MP.hostId, { t: 'lswap' }), { px: 13 * u, sub: waitSw ? 'waiting for a trade' : full ? 'trade with someone' : mine ? 'to team A' : 'to team B', on: waitSw, fill: GOLD, solid: waitSw, col: waitSw ? INK : BONE }); }
     // the host's settings and the start button
@@ -155,5 +163,5 @@
       const ok = readyAll(); btn(g, sx2, sy - 6 * u, 200 * u, 48 * u, 'START MATCH', startParty, { on: ok, fill: FOE, solid: ok, col: ok ? INK : DIM, px: 17 * u, sub: ok ? '' : 'waiting for ready' });
     } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S2.size)}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS' : 'NO BOTS'}  ·  ${S2.ranked ? 'RANKED  ·  FIRST TO 5' : 'FIRST TO ' + winOf(S2.win)}  ·  SIDES SWAP AT THE HALF  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
     const waiting = ps.filter(p => p.id !== MP.hostId && !(p.id === me2 ? PARTY.ready : (PARTY.prof.get(p.id) || {}).rd)).length;
-    tx(g, ps.length < 2 ? 'Send your friends the code. You can also start now and play with bots.' : waiting ? `Waiting for ${waiting} to ready up` : 'Everyone is ready', 640, by - 22 * u, 13 * u, waiting ? DIM : YOU, 'center', 800);
+    tx(g, ps.length < 2 ? 'Share the code, or start with bots.' : waiting ? `Waiting for ${waiting} to ready up` : 'Everyone is ready', 640, by - 22 * u, 13 * u, waiting ? DIM : YOU, 'center', 800);
   }

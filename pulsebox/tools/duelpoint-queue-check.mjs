@@ -1,6 +1,7 @@
 // Duelpoint's global queue, with real browsers through the live room relay: two players queueing for 1v1 are matched
 // into one match on opposite sides; four queueing for 2v2 land in one match two against two, with no bots; cancelling
-// leaves the queue. The tests queue on their own shard (Q1VT, Q2VT), apart from real players.
+// leaves the queue; a party of two searching the world plays together against two strangers. The tests queue on their
+// own shard (Q1WT, Q2WT), apart from real players.
 //   node tools/duelpoint-queue-check.mjs <shots dir>
 import { createRequire } from 'module'; import path from 'path';
 const { chromium } = createRequire(import.meta.url)('playwright');
@@ -42,5 +43,19 @@ async function untilAll(ps, fn, ms) { const t0 = Date.now(); for (;;) { const ss
   ok(new Set(ss.map(s => s.code)).size === 1 && ss.every(s => s.humans === 4 && s.bots === 0), 'one match, all four of them and no bots', JSON.stringify(ss.map(s => `${s.code} ${s.humans}h ${s.bots}b`)));
   { const v = sides(ss); ok(new Set(v).size === 1 && v[0].split(' v ').every(x => x.split('+').length === 2), 'two on each side, and every device agrees who is with whom', JSON.stringify(v)); }
   await P[0].screenshot({ path: O + '/queue-2v2.png' }); for (const p of P) await p.context().close(); }
+
+// a party of two searching the world for a 2v2, and two strangers queueing alone: one match, the party on one side
+{ const H = await open('ph', 'Gale'), C = await open('pc', 'Hex'), P = [await open('s1', 'Ivy'), await open('s2', 'Jett')];
+  await H.evaluate(() => { GAME.test.openParty(); MP.create(); }); await H.waitForFunction(() => MP.online() && MP.code, null, { timeout: 30000 }); const code = await H.evaluate(() => MP.code);
+  await C.evaluate(c => { GAME.test.openParty(); MP.join(c); }, code); await C.waitForFunction(() => MP.online() && MP.players().length === 2, null, { timeout: 30000 }); await H.waitForTimeout(800);
+  await H.evaluate(s => { GAME.test.UI.qshard = s; GAME.test.queueStart(2, s, true); }, SHARD); await H.waitForTimeout(1500);
+  const seen = await C.evaluate(() => !!GAME.test.PARTY.qs);
+  ok(seen, 'the party sees its host searching the world', String(seen));
+  for (const p of P) { await p.evaluate(s => GAME.test.queueStart(2, s), SHARD); await p.waitForTimeout(500); }
+  const all = [H, C, ...P], ss = await untilAll(all, s => s.inMatch, 75000);
+  ok(ss.every(s => s.inMatch), 'the party and the two strangers all land in a match', JSON.stringify(ss.map(s => s.screen + '/' + s.code)));
+  ok(new Set(ss.map(s => s.code)).size === 1 && ss.every(s => s.humans === 4 && s.bots === 0), 'one match, all four and no bots', JSON.stringify(ss.map(s => `${s.code} ${s.humans}h ${s.bots}b`)));
+  { const v = sides(ss); ok(new Set(v).size === 1 && v[0].split(' v ').some(x => x.split('+').sort().join('+') === 'Gale+Hex'), 'the party plays together, against the two strangers', JSON.stringify(v)); }
+  await H.screenshot({ path: O + '/queue-party.png' }); for (const p of all) await p.context().close(); }
 
 console.log('errors', JSON.stringify(errs.slice(0, 5))); console.log(failed ? failed + ' check(s) failed' : 'all checks passed'); await b.close(); process.exit(failed ? 1 : 0);

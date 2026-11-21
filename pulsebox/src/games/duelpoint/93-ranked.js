@@ -39,7 +39,8 @@
       tierBadge(g, cx, top + 52 * u, Math.min(26 * u, cw2 * .22), t * DIVS * 100 + (topT ? 0 : 0), true);
       tx(g, T.n.toUpperCase(), cx, top + 104 * u, Math.min(15 * u, cw2 / 6.5), T.col, 'center', 900);
       if (mine) { rr(g, cx - 46 * u, top + 136 * u, 92 * u, 22 * u, 11, T.col); tx(g, 'YOU  ·  ' + me0.rp + ' RP', cx, top + 147 * u, 10.5 * u, INK, 'center', 900); }   // you are here
-      tx(g, ['RECRUIT BOTS', 'RECRUIT BOTS', 'VETERAN BOTS', 'VETERAN BOTS', 'ELITE BOTS', 'ELITE BOTS', 'LEGEND BOTS', 'LEGEND BOTS'][t], cx, top + 122 * u, Math.min(9 * u, cw2 / 12), DIM, 'center', 800);
+      { const lv = ['RECRUIT', 'RECRUIT', 'VETERAN', 'VETERAN', 'ELITE', 'ELITE', 'LEGEND', 'LEGEND'][t]; g.font = `800 ${fitPx(g, Math.min(9 * u, cw2 / 12))}px ${FONT}`; const full = g.measureText('VETERAN BOTS').width < cw2 - 8 * u;   // (narrow columns: just the level, in every column alike)
+        tx(g, full ? lv + ' BOTS' : lv, cx, top + 122 * u, Math.min(9 * u, cw2 / 12), DIM, 'center', 800); }
       // its divisions, I at the bottom up to III (the top tier is one, with no ceiling)
       const divs = topT ? 1 : DIVS, dh = Math.min(34 * u, (ch2 - 150 * u) / 3 - 6 * u);
       for (let d = 0; d < divs; d++) {
@@ -50,7 +51,7 @@
       }
       g.globalAlpha = 1;
     }
-    para(g, `Every division is 100 RP. Win a ranked match to gain RP and lose one to drop; cross 100 and you go up a division, fall below 0 and you go down. Your first ${PLACE_N} ranked matches at each team size are placements, and they set where you start. Beat bots or players above your rank to climb faster.`, px + 26 * u, py + ph - 56 * u, pw - 52 * u, 11.5 * u, '#aeb6c2');
+    para(g, `100 RP a division. Win to gain RP, lose to drop. Your first ${PLACE_N} matches at each size place you. Beat higher ranks to climb faster.`, px + 26 * u, py + ph - 56 * u, pw - 52 * u, 11.5 * u, '#aeb6c2');
   }
   // a rank as words: "Cobalt II · 45 RP", or the placements still to play
   const rankWords = size => { const S = rankedOf(size); return placed(S) ? `${rankLabel(S.rv)}  ·  ${rankOf(S.rv).rp} RP` : `Unranked  ·  placements ${S.n}/${PLACE_N}`; };
