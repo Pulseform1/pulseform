@@ -593,7 +593,7 @@ for (const def of MAPS) {
 }
 if (!only) {
   if (bad) { console.log(`\n${bad} map(s) not fair: nothing written`); process.exit(1); }
-  const js = MAPS.map(d => '    ' + JSON.stringify(d).replace(/"(\w+)":/g, '$1: ').replace(/"/g, "'").replace(/,(?=\S)/g, ', ') + ',').join('\n');
+  const js = MAPS.map(d => '    ' + JSON.stringify(d).replace(/'/g, '’').replace(/"(\w+)":/g, '$1: ').replace(/"/g, "'").replace(/,(?=\S)/g, ', ') + ',').join('\n');
   fs.writeFileSync(outFile, `  /* ---------- 29 maps: the hand-drawn maps (all but Saltworks), written by tools/duelpoint-maps.mjs: edit them there ---------- */\n  const MAP_DEFS = [\n${js}\n  ];\n`);
   console.log('wrote', MAPS.length, 'maps to', path.relative(process.cwd(), outFile));
 }

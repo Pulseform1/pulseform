@@ -36,7 +36,7 @@ const spray = async () => {
   const rel = await p.evaluate(() => ({ ac: window.__snd.length ? null : null }));
   await p.waitForTimeout(150); const relT = await p.evaluate(() => window.__relT = (GAME.test.M && performance.now()));
   await p.waitForTimeout(900);
-  return p.evaluate(() => { const shots = window.__real.length, B = GAME.test.shotBuf('lancer'), s = window.__snd.filter(e => e.buf === B), L = GAME.test.soundLag(), R = window.__real;
+  return p.evaluate(() => { const shots = window.__real.length, B = GAME.test.shotBufs('lancer'), s = window.__snd.filter(e => B.includes(e.buf))   /* (each gun has three baked shots now, taking turns) */, L = GAME.test.soundLag(), R = window.__real;
     const ahead = s.filter(e => e.when > e.at + .005), heard = s.filter(e => e.stopped == null || e.stopped >= e.when), lastReal = Math.max(...R);
     // each sound started early should be its lateness ahead of a real shot of yours
     // (a sound already playing when you let go is for a shot that then never came: the earbuds were behind anyway, so that is
