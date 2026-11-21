@@ -64,12 +64,14 @@
        r  a ring: [Hz, seconds, level], the steel of a revolver, a marksman rifle or a big sniper
        t  the room: [lowpass Hz, seconds, level], the tail, with a slap off the walls a moment later
        rack  a pump or a bolt worked this long after the shot; sup  suppressed (a soft thup, the action louder than the blast)
+       pf  a suppressor's puff: [from Hz, to Hz, seconds, level], a breath of noise whose pitch drops fast
+       sl  a pistol slide: [delay, level], back and home again, two bright metal clicks with a little ring
        v  how loud it plays */
   const GSND = {
     pip: { s: .6, p: [200, 75, .06, .8], c: [2700, .055, .75, .9], m: [3600, .016, .22], t: [1600, .26, .2], v: .85 },
     stub: { s: .5, p: [120, 38, .16, 1.1], c: [1100, .14, .8, .6], m: [2200, .02, .15], t: [900, .55, .3], v: 1.2 },
     wasp: { s: .6, p: [230, 95, .045, .7], c: [3000, .045, .7, .9], m: [4000, .012, .2], t: [1800, .18, .16], v: .8 },
-    quill: { sup: 1, s: .25, p: [160, 70, .05, .5], c: [1100, .04, .35, 1.2], m: [3800, .01, .35], t: [900, .1, .06], v: .7 },
+    quill: { sup: 1, s: .24, p: [130, 46, .16, 4.5], c: [1100, .035, .16, 1.1], pf: [2600, 560, .055, .3], sl: [.016, .5], t: [750, .22, .2], v: .85 },   // a deep tap, a short puff of air, and the slide's two clean clicks
     hammer: { s: .7, p: [130, 42, .14, 1.15], c: [1700, .1, .9, .7], r: [880, .35, .12], m: [2600, .02, .25], t: [1200, .7, .3], v: 1.15 },
     gnat: { s: .65, p: [240, 100, .04, .65], c: [3100, .04, .65, 1], m: [4200, .012, .25], t: [1900, .16, .15], v: .78 },
     hornet: { sup: 1, s: .3, p: [170, 70, .045, .55], c: [1300, .035, .35, 1.2], m: [3500, .011, .32], t: [1100, .12, .08], v: .75 },
@@ -105,6 +107,9 @@
     if (D.m) { noise(D.m[1], .022, D.m[2], 'bandpass', D.m[0], 6); osc(D.m[1], 'square', D.m[0] * .5, D.m[0] * .42, .014, D.m[2] * .25); }   // the action
     if (D.r) { osc(.002, 'sine', D.r[0], D.r[0] * .985, D.r[1], D.r[2]); osc(.002, 'sine', D.r[0] * 2.76, D.r[0] * 2.7, D.r[1] * .6, D.r[2] * .45); }   // the ring
     noise(.006, D.t[1], D.t[2], 'lowpass', D.t[0], .5, .01); noise(.07, D.t[1] * .6, D.t[2] * .45, 'lowpass', D.t[0] * .8, .5, .012);   // the room, and the slap off the walls
+    if (D.pf) { const n = oc.createBufferSource(), fl = oc.createBiquadFilter(), a = oc.createGain(), t0 = .0005; n.buffer = nb; fl.type = 'bandpass'; fl.Q.value = 1.6; fl.frequency.setValueAtTime(D.pf[0], t0); fl.frequency.exponentialRampToValueAtTime(D.pf[1], t0 + D.pf[2]);
+      a.gain.setValueAtTime(0, t0); a.gain.linearRampToValueAtTime(D.pf[3], t0 + .0015); a.gain.exponentialRampToValueAtTime(.0001, t0 + D.pf[2]); n.connect(fl).connect(a).connect(mix); n.start(t0, Math.random() * .4); n.stop(t0 + D.pf[2] + .02); }   // the puff
+    if (D.sl) { for (const [dt0, f0, lv] of [[D.sl[0], 5400, 1], [D.sl[0] + .046, 4300, .8]]) { noise(dt0, .014, D.sl[1] * lv, 'bandpass', f0, 7, .0004); osc(dt0, 'square', f0 * .5, f0 * .46, .01, D.sl[1] * .18 * lv); osc(dt0 + .001, 'sine', f0 * .62, f0 * .6, .035, D.sl[1] * .14 * lv); } }   // the slide, back and home
     if (D.rack) { const r = D.rack; noise(r, .05, .32, 'bandpass', 1900, 3); osc(r, 'square', 320, 260, .03, .06); noise(r + .13, .06, .38, 'bandpass', 1400, 3); osc(r + .13, 'square', 260, 200, .035, .07); }   // pump / bolt
     oc.startRendering().then(B => { const c0 = B.getChannelData(0); let pk = 0; for (let i = 0; i < c0.length; i++) pk = Math.max(pk, Math.abs(c0[i])); if (pk > 0) { const g = .92 / pk; for (let i = 0; i < c0.length; i++) c0[i] *= g; } baked[k] = B; }).catch(() => { baking[k] = 0; });
   }
@@ -196,6 +201,17 @@
   cue('kill', (v, by, head, wk) => { if (by === me() && v !== me()) killSound(killRun, head, (skinOfId(skinFor(me(), wk)) || {}).line); else if (v === me()) tone(outFor(null), 200, .5, 'sawtooth', .1, -130); });
   cue('ability', (f, k) => {
     const key = f.op + k, o = outFor(f);
+    // the C abilities and Vanta
+    if (key === 'vexc') { tone(o, 180, .5, 'sine', .14, -90); hiss(o, .4, .1, 'lowpass', 600); return; }
+    if (key === 'irisc') { tone(o, 1800, .06, 'sine', .08); tone(o, 2400, .08, 'sine', .07, 0, .07); return; }
+    if (key === 'bastionc') { tone(o, 300, .2, 'square', .05, 120); tone(o, 600, .35, 'triangle', .08, 0, .2); return; }
+    if (key === 'novac') { hiss(o, .45, .3, 'bandpass', 900); tone(o, 220, .35, 'sawtooth', .06, 700); return; }
+    if (key === 'wraithc') { tone(o, 900, .3, 'sine', .08, -500); hiss(o, .3, .08, 'highpass', 3000); return; }
+    if (key === 'talonc' || key === 'axiomc' || key === 'emberc') { hiss(o, .14, .14, 'bandpass', 1400); tone(o, 500, .1, 'triangle', .06, 200); return; }
+    if (key === 'vantac') { tone(o, 140, .9, 'sawtooth', .08, 60); hiss(o, .8, .12, 'bandpass', 700); tone(o, 880, .5, 'sine', .05, -200); return; }
+    if (key === 'vantaq') { tone(o, 1800, .25, 'sawtooth', .07, -1500); hiss(o, .2, .14, 'highpass', 2500); return; }
+    if (key === 'vantae') { tone(o, 440, .4, 'triangle', .09, 440); tone(o, 880, .3, 'sine', .06, 0, .15); return; }
+    if (key === 'vantax') { tone(o, 90, 1.2, 'sawtooth', .16, -40); tone(o, 1200, .5, 'sine', .1, -900); hiss(o, 1, .14, 'bandpass', 500); return; }
     if (key === 'vexq') tone(o, 500, .16, 'sine', .14, 1100); else if (key === 'vexe') hiss(o, .5, .2, 'lowpass', 500);
     else if (key === 'irisq') { tone(o, 1300, .25, 'sine', .12, -700); tone(o, 1300, .25, 'sine', .08, -700, .18); } else if (key === 'irise') hiss(o, .08, .12, 'highpass', 1800);
     else if (key === 'bastionq') { tone(o, 80, .35, 'sawtooth', .16, 90); hiss(o, .3, .14, 'lowpass', 600); }
@@ -213,6 +229,20 @@
   cue('wheelTick', () => { if (canHear()) tone(outFor(null), 1500, .025, 'square', .03); });   // the wheel's pointer clicking over a slice
   cue('levelUp', () => { const o = outFor(null); [659, 880, 1175, 1760].forEach((f, i) => { tone(o, f, .32, 'triangle', .09, 0, i * .08); tone(o, f * 2, .2, 'sine', .03, 0, i * .08 + .02); }); });
   cue('passUp', () => { const o = outFor(null); [523, 784, 1046, 1568].forEach((f, i) => tone(o, f, .5, 'triangle', .09, 0, i * .1)); hiss(o, .7, .07, 'highpass', 6000, .05); });
+  // readying an ability: a soft rising charge; nothing to ready: a dull tick
+  cue('abReady', (f, k) => { if (!M || f !== me() || !k) return; const o = outFor(null); tone(o, 320, .16, 'sine', .07, 380); hiss(o, .14, .04, 'bandpass', 2400); });
+  cue('abNo', f => { if (M && f === me()) tone(outFor(null), 160, .07, 'square', .04); });
+  cue('abBack', (f, k) => { if (M && f === me()) { const o = outFor(null); tone(o, 660, .12, 'triangle', .08); tone(o, 990, .14, 'triangle', .07, 0, .1); } });
+  cue('gloomPop', () => hiss(outFor(null), .7, .14, 'lowpass', 400));
+  cue('shockPop', S => { const o = outFor(null); hiss(o, .25, .3, 'highpass', 1800); tone(o, 120, .3, 'square', .1, -60); });
+  cue('beaconPop', () => { const o = outFor(null); tone(o, 520, .4, 'triangle', .1, 260); tone(o, 1040, .3, 'sine', .05, 0, .1); });
+  cue('tetherBack', () => { const o = outFor(null); tone(o, 300, .25, 'sine', .1, 900); hiss(o, .2, .1, 'highpass', 4000); });
+  cue('fieldStart', () => { const o = outFor(null); hiss(o, .6, .12, 'bandpass', 3000); tone(o, 1400, .4, 'sine', .04, -600); });
+  cue('sundered', v => { if (v === me()) { const o = outFor(null); tone(o, 1600, .3, 'sawtooth', .07, -1200); } });
+  cue('wardOn', f => { if (f === me()) { const o = outFor(null); tone(o, 700, .2, 'triangle', .1, 500); tone(o, 1400, .25, 'sine', .06, 0, .08); } });
+  cue('wardBreak', () => { const o = outFor(null); hiss(o, .2, .2, 'highpass', 3000); tone(o, 900, .2, 'square', .06, -500); });
+  cue('duelStart', D => { const o = outFor(null); tone(o, 70, 1.4, 'sawtooth', .18, -30); tone(o, 300, .8, 'sine', .08, -150, .1); hiss(o, 1, .12, 'bandpass', 400); });
+  cue('duelEnd', () => { const o = outFor(null); tone(o, 200, .6, 'sine', .1, 300); hiss(o, .5, .1, 'highpass', 2000); });
   cue('unlock', sk => { const o = outFor(null), t = sk.R.tier, notes = [523, 659, 784, 1046, 1318, 1568].slice(0, 3 + t);
     notes.forEach((f, i) => { tone(o, f, .5 + t * .1, 'triangle', .1, 0, i * .09); tone(o, f * 2, .35, 'sine', .04, 0, i * .09 + .02); });
     hiss(o, .6 + t * .2, .08, 'highpass', 6000, .05); if (t >= 3) { tone(o, 98, 1, 'sine', .3, -20, 0); hiss(o, 1.2, .1, 'bandpass', 2400, .3, 2); } });

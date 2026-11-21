@@ -39,7 +39,15 @@
     X.smokeM = new THREE.MeshLambertMaterial({ color: '#b6aedb', transparent: true, opacity: .94, depthWrite: false }); X.smokeG = new THREE.SphereGeometry(1, 16, 10); X.smokes = [];
     X.smokeGM = new THREE.MeshLambertMaterial({ color: '#c4c8ce', transparent: true, opacity: .96, depthWrite: false });   // a grenade's cloud is grey, Vex's Veil is violet
     { const body = new THREE.MeshStandardMaterial({ color: '#59606b', metalness: .5, roughness: .45 }), band = new THREE.MeshBasicMaterial({ color: '#c3cad4' }); X.nadeMk = () => { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .13, 12), body); const t = new THREE.Mesh(new THREE.CylinderGeometry(.034, .034, .035, 10), band); t.position.y = .08; const l = new THREE.Mesh(new THREE.BoxGeometry(.012, .02, .09), body); l.position.set(.045, .05, 0); g.add(c, t, l); return g; }; X.nadeObjs = []; }
-    X.wallM = new THREE.MeshLambertMaterial({ color: '#ffb347', emissive: '#a85a10', emissiveIntensity: .7, transparent: true, opacity: .88 }); X.walls = [];
+    // Rampart: a barricade of dark armoured slabs, seamed and riveted, with Bastion's amber running hot through a hex lattice
+    { const tex = canvasTex(256, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#4a4438'); gr.addColorStop(1, '#2c2924'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 4; for (let y = 0; y <= h; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } for (let x = 0; x <= w; x += 128) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+        g.fillStyle = 'rgba(255,255,255,.12)'; for (let y = 8; y < h; y += 64) for (let x = 8; x < w; x += 24) g.fillRect(x, y, 3, 3);
+        g.strokeStyle = 'rgba(255,190,90,.35)'; g.lineWidth = 2; const s2 = 22; for (let r = 0; r < 14; r++) for (let c = 0; c < 8; c++) { const cx = c * s2 * 1.5 + 6, cy = r * s2 * .866 * 2 + (c % 2) * s2 * .866; g.beginPath(); for (let k = 0; k < 6; k++) g.lineTo(cx + Math.cos(k * Math.PI / 3) * s2 * .9, cy + Math.sin(k * Math.PI / 3) * s2 * .9); g.closePath(); g.stroke(); } }),
+        glowT = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#000'; g.fillRect(0, 0, w, h); g.strokeStyle = '#ffb347'; g.lineWidth = 2.5; const s2 = 22; for (let r = 0; r < 14; r++) for (let c = 0; c < 8; c++) { const cx = c * s2 * 1.5 + 6, cy = r * s2 * .866 * 2 + (c % 2) * s2 * .866; g.beginPath(); for (let k = 0; k < 6; k++) g.lineTo(cx + Math.cos(k * Math.PI / 3) * s2 * .9, cy + Math.sin(k * Math.PI / 3) * s2 * .9); g.closePath(); g.stroke(); }
+          g.fillStyle = '#ffd27a'; g.fillRect(0, 0, w, 5); g.fillRect(0, h - 5, w, 5); });
+      tex.wrapS = tex.wrapT = glowT.wrapS = glowT.wrapT = THREE.RepeatWrapping; tex.repeat.set(2, 1); glowT.repeat.set(2, 1);
+      X.wallM = new THREE.MeshStandardMaterial({ map: tex, emissiveMap: glowT, emissive: '#ffb347', emissiveIntensity: 1.1, roughness: .55, metalness: .35 }); } X.walls = [];
     /* the charge: a six-sided base on three splayed feet, a canister wound with three glowing coils inside a cage of four
        struts, a collar and a cap with the lamp under its guard, a keypad with a little screen, a carry handle and an aerial.
        Built from plain shapes and then merged into one mesh per material (the lamp stays its own, to blink). */
@@ -85,7 +93,7 @@
     X.flareBall = add(new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' }))); X.flareBall.visible = false;
     X.boom = add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), fm({ color: '#ffb060', opacity: .8 }))); X.boom.visible = false; X.boomT = 0;
     X.ejects = []; X.casings = [];
-    buildKitFx(); buildKillFx();
+    buildKitFx(); buildKitFx2(); buildKillFx();
   }
   function spark(p, v, col, t) { const m = X.sparks[X.spN++ % X.sparks.length]; m.visible = true; m.position.set(p[0], p[1], p[2]); m.material.color.set(col); m.userData.t = t; m.userData.v = v; }
   // where a fighter's muzzle is, near enough for a tracer to start from
@@ -158,9 +166,11 @@
   };
   function abKey(kind, q) { const K2 = AB_KF[kind], o = [0, 0, 0, 0, 0, 0]; let i = 0; while (i < K2.length - 2 && q > K2[i + 1][0]) i++;
     const a = K2[i], b = K2[i + 1], t = sm(cl((q - a[0]) / Math.max(1e-6, b[0] - a[0]), 0, 1)); for (let j = 0; j < 6; j++) o[j] = lp(a[j + 1], b[j + 1], t); return o; }
-  function abHandFrame(P) {
-    const live = P.alive && P.castT > 0 && P.castK && !(P.scoped && gun(P).scope), R = abHand(P.op);
-    for (const k in X.abHands) { const h = X.abHands[k]; if (h !== R || !live) { h.H.visible = h.orb.visible = h.ring.visible = h.arm.visible = false; } }
+  function abHandFrame(P, dt) {
+    const live = P.alive && P.castT > 0 && P.castK && !(P.scoped && gun(P).scope), hold = !live && P.alive && (X.rdyK || 0) > .02, R = abHand(P.op);
+    for (const k in X.abHands) { const h = X.abHands[k]; if (h !== R || (!live && !hold)) { h.H.visible = h.orb.visible = h.ring.visible = h.arm.visible = false; } }
+    if (X.abL) X.abL.intensity = 0;
+    if (hold) { abHold(P, R, dt); return; }
     if (!live) return;
     const kind = P.castK, q = 1 - P.castT / (P.castD || .5), o = abKey(kind, q), big = P.castBig ? 1.25 : 1, { H, orb, ring, fing, glow, arm } = R;
     H.visible = true; H.position.set(o[0], o[1], o[2]); H.rotation.set(o[3], o[4], o[5]);
@@ -184,6 +194,17 @@
     // a ring bursts off the palm (push) or the charge (pulse), growing and fading
     const rq = kind === 'push' ? (q - .3) / .45 : kind === 'pulse' ? (q - .4) / .45 : kind === 'heal' ? (q - .35) / .5 : -1;
     ring.visible = rq > 0 && rq < 1; if (ring.visible) { ring.position.copy(kind === 'pulse' || kind === 'heal' ? orb.position : H.position); if (kind === 'push') ring.position.z -= .05; ring.rotation.set(kind === 'push' ? 0 : Math.PI / 2, 0, 0); ring.scale.setScalar((1 + rq * (kind === 'push' ? 2.6 : 1.8)) * big * (kind === 'heal' ? .6 : 1)); ring.material.opacity = (1 - rq) * .85; }
+  }
+  // the hold: the off hand up and forward, the ability crackling in the palm, lighting the gun and the glove in its colour
+  function abHold(P, R, dt) {
+    const k = sm(X.rdyK), t = X.t, { H, orb, ring, fing, glow, arm } = R, col = (OPS[P.op] || OPS.vex).col, big = P.rdy === 'x' ? 1.3 : 1;
+    H.visible = true; H.position.set(-.15 + Math.sin(t * 1.3) * .003, lp(-.46, -.19, k) + Math.sin(t * 2.1) * .004, -.37); H.rotation.set(lp(-.6, -.2, k), .18, .3);   // low on the left, the gun's side kept clear
+    { H.updateMatrix(); const w = new THREE.Vector3(0, -.004, .07).applyMatrix4(H.matrix), e = new THREE.Vector3(-.2, -.5, .02), d = e.clone().sub(w), L = d.length(); arm.visible = true; arm.position.copy(w); arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); arm.scale.set(1, L, 1); }
+    for (const f of fing) { f.scale.z = .75; f.rotation.x = .55; }   // fingers curled round it
+    H.updateMatrix(); const palm = new THREE.Vector3(0, .05, -.035).applyMatrix4(H.matrix); orb.visible = true; orb.position.copy(palm);
+    const pulse = .85 + .15 * Math.sin(t * 9) + (Math.random() - .5) * .08; orb.scale.setScalar(k * pulse * big * .62); orb.material.opacity = 1; glow.material.opacity = .75 + Math.random() * .25; glow.scale.setScalar(.2 + .05 * Math.sin(t * 7));
+    ring.visible = true; ring.position.copy(palm); ring.rotation.set(t * 2.2, t * 1.4, 0); ring.scale.setScalar(k * (.9 + .1 * Math.sin(t * 5)) * big * .5); ring.material.opacity = .85;
+    X.abL.color.set(col); X.abL.position.copy(palm); X.abL.intensity = k * (1.4 + .4 * Math.sin(t * 13) + Math.random() * .3);
   }
   on('dry', f => { if (X && M && f === me()) X.dryT = .16; });
   const VKICK = { Sidearm: 1.25, SMG: .7, Rifle: 1, Sniper: 2.2, Shotgun: 1.9, Heavy: .8 };   // how hard each class kicks in your hands
@@ -324,7 +345,9 @@
     // the off hand casts (see abHandFrame): the gun dips out of its way, further for a throw or a placing
     if (P.castT > 0) { const D = P.castD || .5, q = 1 - Math.max(0, P.castT) / D, c = Math.sin(Math.min(1, q) * Math.PI), dk = P.castK === 'throw' || P.castK === 'place' ? 1.25 : P.castK === 'dash' ? .5 : .9;
       X.view.position.y -= c * .08 * dk; X.view.position.x += c * .035 * dk; X.view.rotation.x -= c * .45 * dk; X.view.rotation.z += c * .3 * dk; }
-    abHandFrame(P); if (P.castT > 0) P.castT -= dt;
+    // a readied ability: the gun drops away and turns aside, out of the off hand's way
+    X.rdyK = lp(X.rdyK || 0, P.alive && P.rdy && !(P.castT > 0) ? 1 : 0, Math.min(1, dt * 12)); if (X.rdyK > .001) { const k = sm(X.rdyK); X.view.position.y -= .075 * k; X.view.position.x += .04 * k; X.view.rotation.x -= .42 * k; X.view.rotation.z += .26 * k; }
+    abHandFrame(P, dt); if (P.castT > 0) P.castT -= dt;
 
     // the rival
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }
@@ -341,11 +364,11 @@
     const NS = M.nades || []; while (X.nadeObjs.length < NS.length) { const o = X.nadeMk(); X.scene.add(o); X.nadeObjs.push(o); }
     X.nadeObjs.forEach((o, i) => { const n = NS[i]; o.visible = !!n; if (n) { o.position.set(n.x, n.y, n.z); o.rotation.set(n.spin, n.spin * .6, 0); } });
     while (X.walls.length < M.walls.length) addWall();
-    X.walls.forEach((m, i) => { const w = M.walls[i]; m.visible = !!w; if (w) { m.scale.set(w.x1 - w.x0, 3 * w.grow + .01, w.z1 - w.z0); m.position.set((w.x0 + w.x1) / 2, 1.5 * w.grow, (w.z0 + w.z1) / 2); } });
+    X.walls.forEach((m, i) => { const w = M.walls[i]; m.visible = !!w && !w.front; if (w) { m.scale.set(w.x1 - w.x0, 3 * w.grow + .01, w.z1 - w.z0); m.position.set((w.x0 + w.x1) / 2, 1.5 * w.grow, (w.z0 + w.z1) / 2); } });
     X.charge.visible = !!M.planted && !(M.phase === 'end' && M.last && M.last.why === 'boom');
     if (M.planted) { const C = M.planted, lit = !M.defused && C.beep > Math.max(.06, cl(C.t / 12, .12, 1) - .08); X.charge.position.set(C.x, C.y, C.z); X.chargePL.position.set(C.x, C.y + .7, C.z); X.chargeLamp.material.color.set(M.defused ? YOU : lit ? WARN : '#401018'); X.chargePL.intensity = lit && X.charge.visible ? 2.4 : 0; }
     else X.chargePL.intensity = 0;
-    kitFx(dt); stepKillFx(dt); animKit(X.viewGun, dt); lootFx(dt);
+    kitFx(dt); kitFx2(dt); stepKillFx(dt); animKit(X.viewGun, dt); lootFx(dt);
     const fl = M.flares[0]; X.flareBall.visible = !!fl; if (fl) X.flareBall.position.set(fl.x, fl.y, fl.z);
     // tracers, sparks, lights fading
     for (const t of X.tracers) { const u = t.userData; if (!u.live) continue; u.age += dt;

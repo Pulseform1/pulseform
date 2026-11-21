@@ -84,6 +84,7 @@
     else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub']));
     if (f.credits >= 200 && R() < .65) buy(f, 'smoke'); if (f.credits >= 1400 && R() < .45) buy(f, 'smoke');
     for (let n = 0; n < 2; n++) if (f.credits >= OPS[f.op].q.cost && R() < .8) buy(f, 'abq');   // ability charges
+    for (let n = 0; n < 2; n++) if (f.credits >= OPS[f.op].c.cost && R() < .6) buy(f, 'abc');
   }
 
   // the newer operatives' abilities, each with a reason
@@ -113,6 +114,27 @@
       if (f.ab.e && ((side === 'def' && P.k === 'hold' && there && M.t < roundT() - 6) || (side === 'att' && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 2))) botCast(f, 'e', { x: f.x, z: f.z });
     }
   }
+  // every operative's C, and Vanta's kit
+  function kitBot2(f, B, P, side, sees, engaged, fresh, near, dE, e, dt) {
+    const ey = eyeY(f), there = P.path && !P.path.length, holdLook = P.look || (B.last ? [B.last.x, B.last.z] : null), last = fresh && B.last ? B.last : null, roll = R() < dt * 1.2;
+    const lob = (k, tx, tz) => { const dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 13, .45, 1.1), y0 = ey - .1, ty = hAt(tx, tz) + .1; botCast(f, k, { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + LOB_G / 2 * T * T) / T, vz: dz / T }); };
+    if (f.ab.c) {
+      if (f.op === 'vex' && last && !sees && dE > 6 && dE < 20 && roll) lob('c', last.x, last.z);
+      else if (f.op === 'iris' && there && holdLook && ((side === 'def' && P.k === 'hold') || (side === 'att' && P.k === 'post'))) botCast(f, 'c', { x: f.x, y: ey + .2, z: f.z, yaw: yawTo(f.x, f.z, holdLook[0], holdLook[1]) });
+      else if (f.op === 'bastion' && !sees && (f.sh | 0) < 25 && M.t < roundT() - 4 && M.fs.some(q => q !== f && q.team === f.team && q.alive && Math.hypot(q.x - f.x, q.z - f.z) < 6)) botCast(f, 'c', { x: f.x, y: f.y, z: f.z });
+      else if (f.op === 'nova' && engaged && f.hp < 50 && f.ground && R() < dt * 2) ability(f, 'c');
+      else if (f.op === 'wraith' && !f.tether && M.t > roundT() - 6) botCast(f, 'c', { x: f.x, y: f.y, z: f.z });
+      else if (f.op === 'talon' && last && !sees && dE > 5 && dE < 18 && roll) lob('c', last.x, last.z);
+      else if (f.op === 'ember' && last && !sees && dE > 5 && dE < 14 && roll) botCast(f, 'c', { ax: f.x, az: f.z, x: last.x, y: hAt(last.x, last.z) + 1.6, z: last.z });
+      else if (f.op === 'axiom' && last && !sees && dE > 5 && dE < 18 && (side === 'def' || M.planted) && roll) lob('c', last.x, last.z);
+      else if (f.op === 'vanta' && side === 'att' && P.k === 'push' && near < 22 && near > 8 && !sees && R() < dt * .8) ability(f, 'c');
+    }
+    if (f.op === 'wraith' && f.tether && engaged && f.hp < 40 && R() < dt * 3) ability(f, 'c');   // out of a losing fight, back to the anchor
+    if (f.op === 'vanta') {
+      if (f.ab.q && last && !sees && dE < 30 && roll) { const dx = last.x - f.x, dz = last.z - f.z, dy = hAt(last.x, last.z) + 1.1 - ey, L = Math.hypot(dx, dy, dz) || 1; botCast(f, 'q', { x: f.x, y: ey, z: f.z, dx: dx / L, dy: dy / L, dz: dz / L }); }
+      if (f.ab.e && (engaged || (sees && dE < 25))) ability(f, 'e');
+    }
+  }
   // use an ability at a chosen place, without having to look there first
   function botCast(f, k, data) { if (!hasAb(f, k) || M.phase !== 'live' || f.lock > 0 || f.chan) return; spendAb(f, k); applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
   // the ultimate, when there is a reason for it
@@ -124,6 +146,7 @@
     else if ((op === 'nova' || op === 'wraith') && !sees && chance && (push && near < 26 || retake)) botCast(f, 'x', {});
     else if (op === 'talon' && fresh && !sees && dE < 40 && Math.abs(angDiff(yawTo(f.x, f.z, B.last.x, B.last.z), f.yaw)) < .1) botCast(f, 'x', {});
     else if (op === 'ember' && fresh && !sees && dE > 6 && dE < 24 && chance) { const tx = B.last.x, tz = B.last.z, dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 14, .5, 1.2), y0 = eyeY(f) - .1, ty = hAt(tx, tz) + .1; botCast(f, 'x', { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + 7 * T * T) / T, vz: dz / T }); }
+    else if (op === 'vanta' && sees && e && e.alive && !e.duel && dE < 30 && R() < dt * 2) botCast(f, 'x', { t: e.key, ex: e.x, ey: eyeY(e) - .3, ez: e.z });
     else if (op === 'axiom' && ((side === 'def' && fresh && dE < 13) || (retake && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 12))) botCast(f, 'x', { x: f.x, z: f.z });
   }
   const magOf = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return A ? A.mag : 0; };
@@ -276,7 +299,7 @@
       if (f.op === 'iris' && f.ab.e && !sees && fresh && B.last.heard && dE > 6 && dE < 16 && R() < dt * 1.5) botCast(f, 'e', { x: B.last.x, y: 1.6, z: B.last.z });
       if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5) ability(f, 'q');
       if (f.op === 'bastion' && f.ab.e && f.hp < 60 && !sees) ability(f, 'e');
-      kitBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
+      kitBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt); kitBot2(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
       if (hasAb(f, 'x')) botUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
       // smoke grenades: attackers cover a corner before stepping onto the site; defenders smoke the lane they just heard someone in
       if (f.smokes > 0 && !sees && !(B.nadeT > M.time)) {

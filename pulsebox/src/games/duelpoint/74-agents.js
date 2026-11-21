@@ -13,6 +13,7 @@
     talon: { suit: '#2e3a24', plate: '#5f6f3c', cloth: '#8a6a40', skin: '#9a6b4a', wide: 1 },
     ember: { suit: '#3a2620', plate: '#7a3e22', cloth: '#ff7a2f', skin: '#d8a07a', wide: 1.02 },
     axiom: { suit: '#25303e', plate: '#d9dde3', cloth: '#5aa0ff', skin: '#8a5a3c', wide: 1.05 },
+    vanta: { suit: '#1a1522', plate: '#3a2f4a', cloth: '#e25cff', skin: '#c89478', wide: .97 },
   };
   // the agents' materials: fabric with a woven grain, armour plates with panel lines and worn edges, skin, rubber and
   // trim, all lit by the map's reflections. Made once per operative and shared by every copy.
@@ -105,6 +106,8 @@
       else if (f.op === 'wraith') { add(rb(.34, .58, .014, .03), M.cloth, 0, .24, .17, -.06); add(rb(.36, .05, .04, .015), M.plate, 0, .52, .16); }
       else if (f.op === 'talon') { const q = add(cyl(.055, .05, .42, 10), M.cloth, .08, .36, .19, 0, 0, -.45); for (let k = 0; k < 3; k++) add(new THREE.ConeGeometry(.018, .07, 6), M.glow, .16 + k * .022, .58 - k * .012, .19 + (k - 1) * .025, 0, 0, -.45); add(rb(.05, .3, .015, .01), M.dark, 0, .36, .16, 0, 0, .6); }
       else if (f.op === 'ember') { for (const sx of [-1, 1]) { add(cyl(.065, .065, .34, 12), M.plate, sx * .075, .37, .2); add(sph(.065, 12, 8), M.plate, sx * .075, .54, .2); } add(new THREE.TorusGeometry(.12, .015, 6, 16, Math.PI), M.dark, 0, .55, .25, 0, 0, 0); add(rb(.05, .04, .02, .01), M.glow, 0, .3, .27); }
+      else if (f.op === 'vanta') { add(cyl(.12, .12, .045, 6), M.plate, 0, .4, .19, Math.PI / 2); add(cyl(.062, .062, .05, 6), M.glow, 0, .4, .2, Math.PI / 2); add(rb(.05, .62, .014, .02), M.cloth, .06, .25, .17, 0, 0, .38);   // a hex emitter on the back, a sash across it
+        add(cyl(.13, .11, .06, 6), M.plate, -.29 * w, .6, 0, 0, 0, .55); add(cyl(.135, .135, .012, 6, 1, true), M.glow, -.29 * w, .6, 0, 0, 0, .55); }   // one heavy hex plate on the left shoulder
       else if (f.op === 'axiom') { add(rb(.26, .3, .14, .035), M.suit, 0, .37, .2); add(rb(.2, .06, .02, .01), M.glow, 0, .44, .275); add(cyl(.008, .008, .36, 6), M.dark, -.09, .66, .22); add(sph(.018, 8, 6), M.glow, -.09, .845, .22); }
     }
     // coat tails that swing as they run (Vex only)
@@ -139,6 +142,10 @@
     } else if (f.op === 'axiom') {   // an engineer's hard hat with a lamp and a glowing visor
       add(turn([[0, .175], [.11, .165], [.155, .1], [.165, .03], [.2, .005], [.2, -.008], [0, -.008]], 18), M.plate, 0, .018, 0); add(rb(.23, .045, .03, .012), M.glow, 0, -.008, -.128);
       add(cyl(.028, .028, .03, 10), M.dark, 0, .16, -.12, Math.PI / 2); add(sph(.02, 8, 6), M.glow, 0, .16, -.137);
+    } else if (f.op === 'vanta') {   // a close faceted helm, a glowing hex band for a visor, shards swept back on one side
+      add(new THREE.SphereGeometry(.153, 6, 10, 0, TAU, 0, Math.PI * .56), M.plate, 0, .014, .01).scale.set(1, 1.02, 1.06);
+      add(new THREE.CylinderGeometry(.139, .135, .05, 6, 1, true, Math.PI - 1.2, 2.4), M.glow, 0, .002, 0); add(rb(.16, .062, .05, .02), M.dark, 0, -.075, -.102);
+      for (let i = 0; i < 3; i++) add(new THREE.ConeGeometry(.022, .17 - i * .035, 4), M.glow, .095 + i * .022, .125 - i * .022, .03 + i * .05, -1.15, 0, -.55 - i * .15);
     } else {
       add(turn([[0, .185], [.1, .178], [.158, .13], [.17, .02], [.174, -.075], [.15, -.075]], 16), M.plate, 0, 0, .004); add(rb(.3, .045, .07, .015), M.plate, 0, .055, -.13); add(rb(.34, .03, .3, .012), M.dark, 0, -.065, 0);
       add(rb(.21, .03, .02, .008), M.glow, 0, .005, -.172); add(rb(.032, .09, .02, .008), M.glow, 0, -.045, -.172); for (const sx of [-1, 1]) add(rb(.02, .1, .1, .008), M.acc, sx * .172, .0, -.02);
@@ -273,7 +280,7 @@
     if (!A || A.userData.op !== f.op) { if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); } A = agentModel(f); X.agents.set(f, A); }
     const U = A.userData, fk0 = gun(f).k, fsk = skinFor(f, fk0) || '', fk = fk0;
     if (U.gk !== fk || U.gsk !== fsk) { U.gsk = fsk; while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]); const gm = gunModel(fk, { cast: false, flash: true, skin: fsk }); gm.scale.setScalar(1.08); U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
-    A.visible = true; A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;
+    A.visible = !M || duelOk(viewer(), f); A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;   // (a Duel Field hides those in it from everyone else, and everyone else from them)
     { const P = M ? me() : null, foeSide = !!P && f.team !== P.team, op = f.cloak > 0 && f.alive ? (foeSide ? .07 : .35) : 1; U.cop = lp(U.cop == null ? 1 : U.cop, op, Math.min(1, dt * 10));
       // the fade goes on this fighter's own copies of its materials (everyone playing the same operative shares the
       // originals, so fading those turned every other Wraith on the field see-through too)

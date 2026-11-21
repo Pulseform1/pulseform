@@ -355,12 +355,28 @@ const GAME = {
     talon: { n: 'TALON', role: 'Tracker', col: '#7bd65a', bio: 'A ranger who reads a room like tracks in snow.', q: { n: 'Recon Dart', d: 'A dart that sticks where it lands and pulses twice, revealing rivals in its sight.' }, e: { n: 'Snare', d: 'A trap on the floor ahead: the first rival over it is slowed and revealed.' } },
     ember: { n: 'EMBER', role: 'Pyre', col: '#ff7a2f', bio: 'Foundry-born. Thinks every problem is a fuel problem.', q: { n: 'Ignite', d: 'Lob a firebomb: its pool burns rivals for 30 a second, 5 s.' }, e: { n: 'Heat Haze', d: 'A wall of amber haze across your view that blocks sight for 10 s.' } },
     axiom: { n: 'AXIOM', role: 'Engineer', col: '#5aa0ff', bio: 'Builds the thing that holds the angle, then goes for coffee.', q: { n: 'Sentry', d: 'A turret that fires on rivals in front of it until it is shot down.' }, e: { n: 'Tripmine', d: 'A mine at your feet. Armed, it bursts for up to 75 when a rival comes near.' } },
+    vanta: { n: 'VANTA', role: 'Duelist', col: '#e25cff', bio: 'A fixer who settles things one on one. Nobody asks for a second meeting.', q: { n: 'Sunder', d: 'A bolt that passes through walls: rivals it touches are Exposed, taking 25% more damage for 4 s.' }, e: { n: 'Overcharge', d: 'For 12 s, a rival you kill leaves a charge: shoot it for a ward that stops the next hit. Back after 2 kills.' } },
   };
-  /* Abilities the way the genre does them: Q is bought in the armory (a price a charge, up to its most), E is the signature that
+  /* C: the second bought ability (cheaper, a smaller trick), one per operative */
+  const ABC_KIT = {
+    vex: [{ n: 'Gloom', d: 'Lob an orb that bursts into dark: rivals caught can see only 5 m for 3.5 s.' }, 200, 1],
+    iris: [{ n: 'Watcher', d: 'Fix an eye where you aim. For 20 s it marks rivals who walk into its view.' }, 200, 1],
+    bastion: [{ n: 'Ward Beacon', d: 'Set a beacon: you and teammates within 6 m gain 30 shield, up to 50.' }, 200, 1],
+    nova: [{ n: 'Updraft', d: 'Launch straight up, high enough to reach a ledge.' }, 100, 2],
+    wraith: [{ n: 'Tether', d: 'Leave an anchor at your feet; press again later to step back to it.' }, 200, 1],
+    talon: [{ n: 'Shock Bolt', d: 'A bolt that bounces once, then bursts for up to 45.' }, 150, 2],
+    ember: [{ n: 'Flashpoint', d: 'A flash that bends round a corner: left click bends it left, right click right.' }, 200, 2],
+    axiom: [{ n: 'Slow Field', d: 'Lob a canister: a 5 m field that slows rivals inside for 6 s.' }, 200, 1],
+    vanta: [{ n: 'Phase Front', d: 'A wall of light rolls out ahead of you, stopping bullets and sight. Anyone can walk through it.' }, 200, 1],
+  };
+  for (const k in ABC_KIT) { const [c, cost, max] = ABC_KIT[k]; OPS[k].c = Object.assign({}, c, { cost, max }); }
+  // signatures (E) that come back during a round: after some seconds, or after some kills
+  OPS.iris.e.rech = 40; OPS.wraith.e.rech = 35; OPS.vanta.e.kills = 2;
+  /* Abilities the way the genre does them: C and Q are bought in the armory (a price a charge, up to its most), E is the signature that
      comes free every round, X is the ultimate, which charges a point at a time: a kill, a death, planting or defusing the
      charge, and the two orbs that sit on the map each round (hold F over one). Bought charges you don't use carry into the
      next round; they are cleared when sides swap. Ultimate points never are. */
-  const ABQ = { vex: [150, 2], iris: [250, 1], bastion: [300, 1], nova: [150, 2], wraith: [250, 1], talon: [150, 2], ember: [250, 1], axiom: [300, 1] };
+  const ABQ = { vex: [150, 2], iris: [250, 1], bastion: [300, 1], nova: [150, 2], wraith: [250, 1], talon: [150, 2], ember: [250, 1], axiom: [300, 1], vanta: [200, 2] };
   const ULTS = {
     vex: { n: 'Nightwalk', d: 'Gather the dark for a second, then step out of it wherever you aim, up to 30 m away.', pts: 6 },
     iris: { n: 'Allsight', d: 'Every rival on the map shows through the walls for 6 s.', pts: 6 },
@@ -370,6 +386,7 @@ const GAME = {
     talon: { n: 'Piercer', d: 'Three bolts along your aim, a second apart, that go straight through walls for 75 each.', pts: 7 },
     ember: { n: 'Inferno', d: 'Lob a great firebomb: a 5.5 m blaze that burns rivals for 40 a second, 8 s.', pts: 6 },
     axiom: { n: 'Lockdown', d: 'Plant a device; 2.5 s later every rival within 14 m is held: slowed, and unable to fire or use abilities, for 4 s.', pts: 7 },
+    vanta: { n: 'Duel Field', d: 'A beam: the first rival it hits is sealed in a dome with you for up to 12 s. Nobody else sees in, shoots in or gets in.', pts: 7 },
   };
   for (const k in OPS) { OPS[k].q.cost = ABQ[k][0]; OPS[k].q.max = ABQ[k][1]; OPS[k].x = ULTS[k]; }
   const ultCost = f => OPS[f.op] ? OPS[f.op].x.pts : 6;
@@ -1028,9 +1045,9 @@ const GAME = {
     return Object.assign({
       name: '', op: 'vex', local: false, bot: null, net: false, team: 0, key: '0', gone: false,
       x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, crouch: 0, ground: true, jumpHeld: false,
-      hp: 100, sh: 0, alive: true, guns: { 1: null, 2: 'pip', 3: 'knife' }, slot: 2, ammo: {},
+      hp: 100, sh: 0, alive: true, guns: { 1: null, 2: 'pip', 3: 'knife' }, slot: 2, ammo: {}, rdy: null, noFire: false, murk: 0, exposed: 0, ward: 0, over: 0, duel: null, tether: null, eT: 0, eK: 0,
       fireT: 0, reloadT: 0, spray: 0, sseed: 0, burst: null, scoped: 0, kick: 0, swing: null, semiHeld: false,
-      credits: CASH.start, smokes: 0, throwT: 0, spent: {}, lossRun: 0, ready: false, ab: { q: 0, e: 1 }, ult: 0, abT: 0, orbT: 0,
+      credits: CASH.start, smokes: 0, throwT: 0, spent: {}, lossRun: 0, ready: false, ab: { c: 0, q: 0, e: 1 }, ult: 0, abT: 0, orbT: 0,
       flash: 0, reveal: 0, heal: null, dash: null, surge: 0, cloak: 0, daze: 0, snare: 0, guard: 0, od: 0, phase: 0, lock: 0, chan: null, volley: null, plant: 0, defuse: 0, footT: 0, step: 0, walkT: 0, sprinting: false, slide: null, slideCD: 0, crouchHeld: false,
       stat: { k: 0, d: 0, hs: 0, dmg: 0, shots: 0, hits: 0 },
     }, o);
@@ -1056,7 +1073,7 @@ const GAME = {
   /* ---------- the body ---------- */
   const solidAt = (x, z, feet) => {
     if (hMove(x, z) > feet + STEP) return true;
-    for (const w of M.walls) if (x > w.x0 && x < w.x1 && z > w.z0 && z < w.z1 && feet < 3 * w.grow) return true;
+    for (const w of M.walls) if (!w.soft && x > w.x0 && x < w.x1 && z > w.z0 && z < w.z1 && feet < 3 * w.grow) return true;   // (Phase Front is soft: it stops bullets, not feet)
     return false;
   };
   const RING = [[RAD, 0], [-RAD, 0], [0, RAD], [0, -RAD], [RAD * .7, RAD * .7], [-RAD * .7, RAD * .7], [RAD * .7, -RAD * .7], [-RAD * .7, -RAD * .7]];
@@ -1087,7 +1104,7 @@ const GAME = {
     f.sprinting = false;
     f.crouch = cl(f.crouch + (I.crouch || f.slide ? 1 : -1) * dt * 8, 0, 1);
     let sp = (f.sprinting ? SPRINT : f.crouch > .5 ? CSPD : I.walk ? WALK : SPD) * G.spd; if (f.scoped) sp *= G.scope ? .55 : .76;
-    sp *= (f.surge > 0 ? 1.3 : 1) * (f.daze > 0 ? .6 : 1) * (f.snare > 0 ? .35 : 1);   // Surge, a Shockwave's daze, a Snare
+    sp *= (f.surge > 0 ? 1.3 : 1) * (f.daze > 0 ? .6 : 1) * (f.snare > 0 ? .35 : 1) * (f.slowF > 0 ? .5 : 1);   // Surge, a Shockwave's daze, a Snare, a Slow Field
     if (f.tagT > 0) { sp *= lp(1, f.tagK || 1, cl(f.tagT / .12, 0, 1)); f.tagT -= dt; if (f.tagT <= 0) f.tagK = 1; }   // tagged (eases off over its last moment)
     const s = Math.sin(f.yaw), c = Math.cos(f.yaw); let wx = -s * I.mz + c * I.mx, wz = -c * I.mz - s * I.mx; const L = Math.hypot(wx, wz); if (L > 1) { wx /= L; wz /= L; }
     if (frozen) wx = wz = 0;
@@ -1185,7 +1202,7 @@ const GAME = {
     const o = [f.x, eyeY(f), f.z]; let dist = rayGrid(o[0], o[1], o[2], d[0], d[1], d[2], 140), hit = null; const n = [rayN[0], rayN[1], rayN[2]];
     for (const w of M.walls) { const t = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (t > 0 && t < dist) { dist = t; n[0] = -Math.sign(d[0]) * (w.x1 - w.x0 < 1 ? 1 : 0); n[1] = 0; n[2] = -Math.sign(d[2]) * (w.x1 - w.x0 < 1 ? 0 : 1); } }
     let sentry = null; for (const b of sentryBoxes(f)) { const t = rayBox(o, d, b.mn, b.mx); if (t > 0 && t < dist) { dist = t; sentry = b.s; } }   // an enemy sentry is in the way
-    for (const v of M.fs) if (v.team !== f.team && v.alive) {   // whichever part of them the bullet meets first
+    for (const v of M.fs) if (v.team !== f.team && v.alive && duelOk(f, v)) {   // whichever part of them the bullet meets first (a Duel Field keeps its two to themselves)
       const hb = hitboxes(v), th = raySphere(o, d, hb.head, hb.hr), tb = rayFrame(o, d, hb, hb.body), ta = rayFrame(o, d, hb, hb.arms);
       const tbody = tb > 0 && (ta <= 0 || tb <= ta) ? tb : ta, near = th > 0 && (tbody <= 0 || th <= tbody) ? th : tbody;
       if (near > 0 && near < dist) { dist = near; sentry = null; hit = near === th ? { f: v, head: true } : { f: v, head: false, leg: near === tb && o[1] + d[1] * tb < hb.leg }; }
@@ -1215,6 +1232,7 @@ const GAME = {
     for (let p = 0; p < (G.pel || 1); p++) {
       const a2 = R() * TAU, r2 = Math.sqrt(R()) * ps, yw = f.yaw + pt[0] + Math.cos(a) * r + Math.cos(a2) * r2, pc = f.pitch + pt[1] + Math.sin(a) * r + Math.sin(a2) * r2, S = castShot(f, viewDir(yw, pc));
       if (p === 0) { y0 = yw; p0 = pc; }
+      if (p === 0 && !f.net && M.kit && M.kit.hexes.length && hexShot(f, S)) continue;   // Overcharge: the shot took the charge
       emit('shot', f, S, p === 0);
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k, S.hit.leg); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);
@@ -1241,7 +1259,7 @@ const GAME = {
     if (!f.net) net({ t: 'kn', h: heavy ? 1 : 0, f: f.key });
     return true;
   }
-  function reload(f) { const G = gun(f), A = f.ammo[G.k]; if (!A || f.reloadT > 0 || A.mag >= G.mag || A.res <= 0 || !f.alive) return; f.reloadT = G.rel; f.scoped = 0; f.burst = null; emit('reload', f); }
+  function reload(f) { unready(f); const G = gun(f), A = f.ammo[G.k]; if (!A || f.reloadT > 0 || A.mag >= G.mag || A.res <= 0 || !f.alive) return; f.reloadT = G.rel; f.scoped = 0; f.burst = null; emit('reload', f); }
   function stepGun(f, dt) {
     const G = gun(f);
     if (f.fireT > -1) f.fireT -= dt;   // below zero it counts how long the trigger has rested
@@ -1256,10 +1274,11 @@ const GAME = {
     if (f.fireT < -.05 && !f.burst && f.spray > 0) { const from = f.sprayFrom || (f.sprayFrom = f.spray);
       f.spray = Math.max(0, f.spray - dt * (f.surge > 0 ? 2 : 1) * Math.max(from, G.acc.free + 1 + (G.acc.inc ? G.acc.max / G.acc.inc : 4)) / G.acc.recov); if (!f.spray) f.sprayFrom = 0; }
   }
-  function switchTo(f, slot) { if (!f.guns[slot] || f.slot === slot || !f.alive) return; f.slot = slot; f.reloadT = 0; f.autoReload = 0; f.scoped = 0; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, GUNS[f.guns[slot]].equip * .7); emit('swap', f); }
+  function switchTo(f, slot) { unready(f); if (!f.guns[slot] || f.slot === slot || !f.alive) return; f.slot = slot; f.reloadT = 0; f.autoReload = 0; f.scoped = 0; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, GUNS[f.guns[slot]].equip * .7); emit('swap', f); }
   const cycleWeapon = (f, dir = 1) => { const order = [1, 2, 3].filter(s => f.guns[s]); switchTo(f, order[(order.indexOf(f.slot) + (dir > 0 ? 1 : order.length - 1)) % order.length]); };
   // the alternate fire: scope a sniper (twice for the Longbow's 5x), aim down sights, the Pip's burst, the knife's stab
   function altAction(f) {
+    if (f.rdy) { castReady(f, true); return; }   // a readied ability: its other way
     const G = gun(f); if (!f.alive || f.reloadT > 0) return;
     if (G.melee) fire(f, 'heavy');
     else if (G.scope) { f.scoped = (f.scoped + 1) % (G.scope.length + 1); emit('swap', f); }
@@ -1275,6 +1294,9 @@ const GAME = {
   }
   function applyDamage(v, dmg, by, head, wk, leg) {
     if (!v.alive || M.phase === 'end') return;
+    if (by && by !== v && !duelOk(v, by)) return;   // in a Duel Field, only the other one in it can hurt you
+    if (v.ward > 0 && by && by !== v && dmg > 0) { v.ward = 0; emit('wardBreak', v); return; }   // Overcharge's ward: the next hit, whatever it is, stops on it
+    if (v.exposed > 0) dmg *= 1.25;   // Sunder: Exposed
     if (v.guard > 0) dmg *= .5;   // Bulwark
     // tagged: a bullet (or the knife) that lands slows you for a moment, harder from the heavy hitters, so running out into
     // fire is punished and the one holding the angle gets the next shot
@@ -1305,7 +1327,7 @@ const GAME = {
   function novaKill(by, v) { if (by && !by.net && v && by.team !== v.team && by.op === 'nova' && M.mode !== 'range' && (by.ab.q | 0) < OPS.nova.q.max) { by.ab.q = (by.ab.q | 0) + 1; emit('novaRefund', by); } }
   function die(v, by, head, wk) {
     if (!v.alive) return;
-    v.alive = false; v.plant = v.defuse = 0; v.scoped = 0; v.burst = null; v.chan = null; v.volley = null; v.stat.d++; by.stat.k++; if (head) by.stat.hs++;
+    v.alive = false; v.plant = v.defuse = 0; v.scoped = 0; v.rdy = null; v.over = 0; v.burst = null; v.chan = null; v.volley = null; v.stat.d++; by.stat.k++; if (head) by.stat.hs++;
     ultGain(v, 1); if (by.team !== v.team) ultGain(by, 1);
     if (!by.net && by.team !== v.team) by.credits = Math.min(CASH.cap, by.credits + CASH.kill);
     // Nova lives on momentum: every kill hands back one Surge (up to the most she can carry)
@@ -1332,7 +1354,8 @@ const GAME = {
   // a clear line from a fighter's eye to a point (no smoke or cloak rules: for markers, not for spotting)
   function canSeePt(a, x, y, z) { const ey = eyeY(a), dx = x - a.x, dy = y - ey, dz = z - a.z, L = Math.hypot(dx, dy, dz); return L < .3 || rayGrid(a.x, ey, a.z, dx / L, dy / L, dz / L, L) >= L - .3; }
   function canSee(a, b) {
-    if (a.flash > .5) return false; const ea = eyeY(a), d = Math.hypot(b.x - a.x, b.z - a.z);
+    if (a.flash > .5 || !duelOk(a, b)) return false; const ea = eyeY(a), d = Math.hypot(b.x - a.x, b.z - a.z);
+    if (a.murk > 0 && d > 5) return false;   // Gloom: nothing past 5 m
     if (b.phase > 0 && !(b.kick > 0)) return false;   // Phase: unseen even up close
     if (b.cloak > 0 && d > 5 && !(b.kick > 0)) return false;   // Shroud
     if (M.storm > .05 && d > lp(200, STORM_SIGHT, M.storm)) return false;   // a sandstorm: nobody sees far
@@ -1340,22 +1363,46 @@ const GAME = {
     return false;
   }
 
-  /* ---------- abilities: Q bought by the charge, E free every round, X the ultimate ---------- */
+  /* ---------- abilities: C and Q bought by the charge, E free every round (some come back), X the ultimate ----------
+     Your own: a key READIES the ability (your off hand comes up holding it, the gun drops, where it will go shows in the
+     world); a left click uses it, a right click uses its other way (a short lob, a wall turned the other way, a flash bent
+     right); the key again, a gun key or a reload puts it away. A few are used the moment the key is pressed (a dash, a heal,
+     a burst of speed). Bots and the other players' devices use them straight away. */
+  const AB_NOW = new Set(['vexq', 'irisq', 'bastione', 'novaq', 'novac', 'wraithq', 'irisx', 'bastionx', 'novax', 'wraithx', 'talonx', 'vantae']);
+  const tetherBack = (f, k) => f.op === 'wraith' && k === 'c' && !!f.tether;   // Tether laid: the key steps you back, free
+  const abInstant = (f, k) => AB_NOW.has(f.op + k) || tetherBack(f, k);
   const hasAb = (f, k) => k === 'x' ? f.ult >= ultCost(f) : (f.ab[k] | 0) > 0;
-  function spendAb(f, k) { if (k === 'x') { f.ult = 0; emit('ultUsed', f); } else f.ab[k] = Math.max(0, (f.ab[k] | 0) - 1); }
+  function spendAb(f, k) { if (k === 'x') { f.ult = 0; emit('ultUsed', f); } else { f.ab[k] = Math.max(0, (f.ab[k] | 0) - 1); if (k === 'e') { f.eT = 0; f.eK = 0; } } }
   function ultGain(f, n) { if (!M || M.mode === 'range' || !f || !OPS[f.op]) return; const c = ultCost(f), was = f.ult | 0; f.ult = Math.min(c, was + n); if (was < c && f.ult >= c) emit('ultReady', f); }
-  function ability(f, k) {
-    if (!f.alive || M.phase !== 'live' || !hasAb(f, k) || f.plant > 0 || f.defuse > 0 || f.lock > 0 || f.chan) return false;
+  const abBlocked = f => !f.alive || !M || M.phase !== 'live' || f.plant > 0 || f.defuse > 0 || f.lock > 0 || !!f.chan;
+  // where it goes, worked out on the user's device (the same sum the preview shows)
+  function abData(f, k, alt) {
     const d = viewDir(f.yaw, f.pitch), key = f.op + k, S = castShot(f, d); let data = {};
     if (key === 'vexq') { let dx = f.vx, dz = f.vz; const L = Math.hypot(dx, dz); if (L < .5) { dx = -Math.sin(f.yaw); dz = -Math.cos(f.yaw); } else { dx /= L; dz /= L; } data = { dx, dz }; }
     if (key === 'vexe') { const dd = Math.max(1, Math.min(S.hit ? 24 : S.dist, 24) - .6); data = { x: f.x + d[0] * dd, z: f.z + d[2] * dd }; }
     if (key === 'irise') { const dd = Math.max(.5, Math.min((S.hit ? 12 : S.dist) - .6, 12)); data = { x: f.x + d[0] * dd, y: eyeY(f) + d[1] * dd, z: f.z + d[2] * dd }; }
-    if (key === 'bastionq') { const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw); data = { x: f.x + fx * 2.6, z: f.z + fz * 2.6, ax: Math.abs(fx) > Math.abs(fz) ? 1 : 0 }; }
-    if (k === 'x' || !['vex', 'iris', 'bastion'].includes(f.op)) data = kitAim(f, key, d, S);
-    spendAb(f, k); if (M.mode === 'range') f.abT = 4;
+    if (key === 'bastionq') { const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw); data = { x: f.x + fx * 2.6, z: f.z + fz * 2.6, ax: (Math.abs(fx) > Math.abs(fz) ? 1 : 0) ^ (alt ? 1 : 0) }; }   // the other click: along your view
+    if (k === 'x' || k === 'c' || !['vex', 'iris', 'bastion'].includes(f.op)) data = kitAim(f, key, d, S, alt);
+    if (tetherBack(f, k)) data = { back: 1, free: 1 };
+    return data;
+  }
+  function ability(f, k, alt) {
+    if (abBlocked(f)) return false;
+    if (!tetherBack(f, k) && !hasAb(f, k)) return false;
+    const data = abData(f, k, alt); if (!data) return false;
+    if (!data.free) spendAb(f, k); if (M.mode === 'range') f.abT = 4;
     applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key });
     return true;
   }
+  // your key: ready it (or use it, for the quick ones); pressed again, it is put away
+  function readyAb(f, k) {
+    if (f.rdy === k) { f.rdy = null; emit('abReady', f, null); return true; }
+    if (abInstant(f, k)) { if (f.rdy) { f.rdy = null; emit('abReady', f, null); } return ability(f, k, false); }
+    if (abBlocked(f) || !hasAb(f, k)) { emit('abNo', f, k); return false; }
+    f.rdy = k; f.scoped = 0; f.burst = null; f.reloadT = 0; f.autoReload = 0; emit('abReady', f, k); return true;
+  }
+  function unready(f) { if (f && f.rdy) { f.rdy = null; emit('abReady', f, null); } }
+  function castReady(f, alt) { const k = f.rdy; if (!k) return false; f.rdy = null; f.noFire = true; const ok = ability(f, k, alt); emit('abReady', f, null); return ok; }
   // the effect itself, the same whether it was your key press, a bot's choice, or a message from the other player
   function applyAbility(f, k, d) {
     const key = f.op + k;
@@ -1604,7 +1651,8 @@ const GAME = {
       if (!f.alive || pistolRound(n) || ot === 1) { f.guns = { 1: null, 2: 'pip', 3: 'knife' }; f.sh = 0; f.ammo = {}; f.smokes = 0; }   // you keep what you survived with
       if (!f.net && n === HALF() + 1) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; if (n === HALF() + 1 || ot === 1) f.lossRun = 0;   // the loss bonus starts again with the new half f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, surge: 0, cloak: 0, daze: 0, snare: 0, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
-      f.ab.e = 1; if (n === 1 || n === HALF() + 1 || ot === 1) f.ab.q = 0; if (n === 1) f.ult = 0;
+      f.ab.e = 1; if (n === 1 || n === HALF() + 1 || ot === 1) { f.ab.q = 0; f.ab.c = 0; } if (n === 1) f.ult = 0;
+      Object.assign(f, { rdy: null, noFire: false, murk: 0, exposed: 0, ward: 0, over: 0, duel: null, tether: null, eT: 0, eK: 0 });
       Object.assign(f, { guard: 0, od: 0, phase: 0, lock: 0, chan: null, volley: null, orbT: 0 });
       for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
       f.yaw = spawnYaw(f, side); f.padT = f.tpCD = f.padCD = 0; if (f.gone) f.alive = false;
@@ -1613,7 +1661,7 @@ const GAME = {
     M.orbs = ORBS.map((p, i) => ({ i, x: p[0], z: p[1], taken: false }));
     M.loot = []; { const att = M.fs.filter(f => sideOf(f) === 'att' && !f.gone).sort((a, b) => ((a.bot || a.isBot ? 1 : 0) - (b.bot || b.isBot ? 1 : 0)) || (a.key < b.key ? -1 : 1)); M.charge = att.length && M.mode !== 'range' ? { k: att[0].key, at: -9 } : null; }
     if ((n === HALF() + 1 || decider) && M.mode === 'demo') say(decider ? (suddenDeath(n) ? 'SUDDEN DEATH' : 'OVERTIME') : 'SIDES SWAPPED');   // players get the switching-sides band instead
-    for (const f of M.fs) f.inv0 = { g1: f.guns[1] || '', g2: f.guns[2] || '', sh: f.sh | 0, sm: f.smokes | 0, q: f.ab.q | 0 };
+    for (const f of M.fs) f.inv0 = { g1: f.guns[1] || '', g2: f.guns[2] || '', sh: f.sh | 0, sm: f.smokes | 0, q: f.ab.q | 0, c: f.ab.c | 0 };
     emit('round', n);
   }
   // the loss bonus: what losing this round would pay you next round (it grows with each round lost in a row), for the armory
@@ -1641,9 +1689,9 @@ const GAME = {
     } else if (A) {
       if (f.sh >= A.sh) { if (sp.sh && sp.sh.k === A.k) { f.credits += A.cost; f.sh = sp.sh.was; delete sp.sh; ok = true; } }
       else { const refund = sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0; if (f.credits + refund >= A.cost) { f.credits += refund - A.cost; sp.sh = { k: A.k, was: sp.sh ? sp.sh.was : f.sh }; f.sh = A.sh; ok = true; } }
-    } else if (k === 'abq') {   // a charge of your bought ability (Q), up to its most; pressing at the most sells back one bought this round
-      const Q = OPS[f.op].q; if ((f.ab.q | 0) >= Q.max) { if (sp.abq > 0) { sp.abq--; f.ab.q--; f.credits += Q.cost; ok = true; } }
-      else if (f.credits >= Q.cost) { f.credits -= Q.cost; f.ab.q = (f.ab.q | 0) + 1; sp.abq = (sp.abq || 0) + 1; ok = true; }
+    } else if (k === 'abq' || k === 'abc') {   // a charge of a bought ability (C or Q), up to its most; pressing at the most sells back one bought this round
+      const s2 = k[2], Q = OPS[f.op][s2]; if ((f.ab[s2] | 0) >= Q.max) { if (sp[k] > 0) { sp[k]--; f.ab[s2]--; f.credits += Q.cost; ok = true; } }
+      else if (f.credits >= Q.cost) { f.credits -= Q.cost; f.ab[s2] = (f.ab[s2] | 0) + 1; sp[k] = (sp[k] || 0) + 1; ok = true; }
     } else if (k === NADE.k) {   // smokes: one at a time, up to two; with two in hand, pressing again sells back one bought this round
       if ((f.smokes || 0) >= NADE.per) { if (sp.smoke > 0) { sp.smoke--; f.smokes--; f.credits += NADE.cost; ok = true; } }
       else if (f.credits >= NADE.cost) { f.credits -= NADE.cost; f.smokes = (f.smokes || 0) + 1; sp.smoke = (sp.smoke || 0) + 1; ok = true; }
@@ -1652,12 +1700,12 @@ const GAME = {
     emit('buy', f, ok); return ok;
   }
   // REBUY: buy again what you bought last round (main gun, sidearm, shields, smokes, ability charges), as far as the money goes
-  function lastBuyOf(f) { const sp = f.spent || {}, o = { g1: sp[1] && sp[1].k, g2: sp[2] && sp[2].k, sh: sp.sh && sp.sh.k, sm: sp.smoke | 0, q: sp.abq | 0 }; return o.g1 || o.g2 || o.sh || o.sm || o.q ? o : null; }
+  function lastBuyOf(f) { const sp = f.spent || {}, o = { g1: sp[1] && sp[1].k, g2: sp[2] && sp[2].k, sh: sp.sh && sp.sh.k, sm: sp.smoke | 0, q: sp.abq | 0, c: sp.abc | 0 }; return o.g1 || o.g2 || o.sh || o.sm || o.q || o.c ? o : null; }
   on('live', () => { if (M) for (const f of M.fs) if (!f.net) { const b = lastBuyOf(f); if (b) f.lastBuy = b; } });
-  const rebuyCost = f => { const b = f.lastBuy; if (!b) return 0; let c = 0; if (b.g1 && f.guns[1] !== b.g1) c += GUNS[b.g1].cost; if (b.g2 && f.guns[2] !== b.g2) c += GUNS[b.g2].cost; const A = b.sh && ARMOR.find(a => a.k === b.sh); if (A && f.sh < A.sh) c += A.cost; c += Math.max(0, b.sm - (f.smokes | 0)) * NADE.cost + Math.max(0, b.q - (f.ab.q | 0)) * OPS[f.op].q.cost; return c; };
+  const rebuyCost = f => { const b = f.lastBuy; if (!b) return 0; let c = 0; if (b.g1 && f.guns[1] !== b.g1) c += GUNS[b.g1].cost; if (b.g2 && f.guns[2] !== b.g2) c += GUNS[b.g2].cost; const A = b.sh && ARMOR.find(a => a.k === b.sh); if (A && f.sh < A.sh) c += A.cost; c += Math.max(0, b.sm - (f.smokes | 0)) * NADE.cost + Math.max(0, (b.c | 0) - (f.ab.c | 0)) * OPS[f.op].c.cost + Math.max(0, b.q - (f.ab.q | 0)) * OPS[f.op].q.cost; return c; };
   function rebuy(f) { const b = f.lastBuy; if (!b || !canBuy()) return false; let n = 0; const take = k => { if (buy(f, k)) n++; };
     if (b.g1 && f.guns[1] !== b.g1) take(b.g1); if (b.sh) { const A = ARMOR.find(a => a.k === b.sh); if (A && f.sh < A.sh) take(b.sh); } if (b.g2 && f.guns[2] !== b.g2) take(b.g2);
-    for (let i = f.smokes | 0; i < b.sm; i++) take(NADE.k); for (let i = f.ab.q | 0; i < b.q; i++) take('abq'); return n > 0; }
+    for (let i = f.smokes | 0; i < b.sm; i++) take(NADE.k); for (let i = f.ab.q | 0; i < b.q; i++) take('abq'); for (let i = f.ab.c | 0; i < (b.c | 0); i++) take('abc'); return n > 0; }
   // closing the armory says you are ready (shown to your team); the buy phase still runs its full time
   function setReady(f) { if (M.phase !== 'buy' || f.ready) return; f.ready = true; if (!f.net) net({ t: 'rdy', f: f.key }); }
 
@@ -1725,12 +1773,14 @@ const GAME = {
       if (f.net) { netFollow(f, dt); continue; }
       let I = !f.alive ? NEUTRAL : f.bot ? botThink(f, dt) : readInput(f);
       if (f.chan || f.lock > 0) { I = Object.assign({}, I, { fire: false }); if (f.chan) Object.assign(I, { mx: 0, mz: 0, jump: false, sprint: false }); }
+      if (f.rdy) { if (!f.alive || (!hasAb(f, f.rdy) && !tetherBack(f, f.rdy))) unready(f); else { const press = I.fire && !f.semiHeld; f.semiHeld = !!I.fire; I = Object.assign({}, I, { fire: false, spin: false }); if (press) castReady(f, false); } }   // a readied ability takes the trigger
+      if (f.noFire) { if (!I.fire) f.noFire = false; else I = Object.assign({}, I, { fire: false }); }   // (the click that used it does not then fire the gun)
       stepBody(f, I, dt); stepGun(f, dt); stepObjective(f, I, dt);
       if (I.fire && f.sprinting) { f.sprinting = false; f.fireT = Math.max(f.fireT, .1); }
       { const G = gun(f); f.wind = G.wind ? cl((f.wind || 0) + ((I.fire || I.spin) && f.alive && f.reloadT <= 0 ? dt / G.wind : -dt / (G.wind * 1.6)), 0, 1) : 0; }   // a rotary gun spins up before it fires
       if (I.fire && f.alive && (M.phase !== 'buy' || M.mode === 'range') && !(gun(f).wind && f.wind < 1)) { const G = gun(f); if (G.auto || !f.semiHeld || I.press || (I.rapid && f.fireT < -.07)) fire(f); }
       f.semiHeld = !!I.fire;
-      if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) { f.ab = { q: OPS[f.op].q.max, e: 1 }; f.ult = ultCost(f); } if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }
+      if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) { f.ab = { c: OPS[f.op].c.max, q: OPS[f.op].q.max, e: 1 }; f.ult = ultCost(f); } if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }
     }
     stepNades(dt); stepKits(dt); for (const f of M.fs) if (f.throwT > 0) f.throwT -= dt;
     for (const s of M.smokes) { s.t -= dt; s.r = s.t > s.T - .6 ? lp(0, s.R, (s.T - s.t) / .6) : s.t < 1 ? s.R * Math.max(0, s.t) : s.R; } M.smokes = M.smokes.filter(s => s.t > 0);
@@ -1755,26 +1805,26 @@ const GAME = {
                        E Tripmine: a mine at your feet that arms, then bursts for up to 75 when a rival comes near.
      The things they leave in the world live in M.kit and are stepped by stepKits. Like damage, every effect on a fighter
      is worked out on that fighter's own device: a trap or mine that goes off there tells the others, so all screens agree. */
-  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [] };
+  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [] };
   const freshKit = () => Object.fromEntries(Object.keys(KIT_N).map(k => [k, []]));
   const enemyOf = (a, b) => a.team !== b.team;
   const kitId = (f, k) => f.key + ':' + k + ':' + M.round;
   // where an ability goes, worked out on the caster's device; returns the data every device applies
-  function kitAim(f, key, d, S) {
+  function kitAim(f, key, d, S, alt) {
     const e = eyeY(f), reach = (max, back = .6) => Math.max(1, Math.min(S.hit ? max : S.dist, max) - back);
     if (key === 'novae') { const dd = Math.max(1, Math.min(S.dist, 18) - .4); return { x: f.x + d[0] * dd, y: e + d[1] * dd, z: f.z + d[2] * dd }; }   // aimed at a rival, it goes off on them
     if (key === 'wraithe') { const dd = reach(20); return { x: f.x + d[0] * dd, z: f.z + d[2] * dd }; }
     if (key === 'talonq') return { x: f.x + d[0] * .5, y: e + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * 42, vy: d[1] * 42 + 1.5, vz: d[2] * 42 };
     if (key === 'talone') { const dd = Math.min(reach(5, .4), 5); return { x: f.x - Math.sin(f.yaw) * dd, z: f.z - Math.cos(f.yaw) * dd }; }
-    if (key === 'emberq') return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * 15 + f.vx * .4, vy: d[1] * 15 + 3, vz: d[2] * 15 + f.vz * .4 };
+    if (key === 'emberq') { const sp = alt ? 8.5 : 15; return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + (alt ? 2.2 : 3), vz: d[2] * sp + f.vz * .4 }; }   // the other click: a short underhand lob
     if (key === 'embere') { const dd = Math.min(reach(10), 10); return { x: f.x + d[0] * dd, z: f.z + d[2] * dd, px: Math.cos(f.yaw), pz: -Math.sin(f.yaw) }; }
     if (key === 'axiomq') { const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw), dd = walkLine(f.x, f.z, f.x + fx * 1.4, f.z + fz * 1.4) ? 1.4 : .6; return { x: f.x + fx * dd, z: f.z + fz * dd, yaw: f.yaw }; }
     if (key === 'axiome') return { x: f.x, z: f.z };
     // the ultimates
     if (key === 'vexx') { const dd = Math.max(2, Math.min(S.hit ? S.dist : S.dist, 30) - .8); let x = f.x + d[0] * dd, z = f.z + d[2] * dd; const [ci, cj] = nearestNav(x, z); x = (ci + .5) * CS; z = (cj + .5) * CS; return { x, z }; }
-    if (key === 'emberx') return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * 17 + f.vx * .4, vy: d[1] * 17 + 3.5, vz: d[2] * 17 + f.vz * .4 };
+    if (key === 'emberx') { const sp = alt ? 9.5 : 17; return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + (alt ? 2.5 : 3.5), vz: d[2] * sp + f.vz * .4 }; }
     if (key === 'axiomx') return { x: f.x, z: f.z };
-    return {};
+    const r = kitAim2(f, key, d, S, alt); return r === undefined ? {} : r;   // (46: the C abilities and Vanta)
   }
   // the ability itself, the same on every device
   function kitApply(f, key, d) {
@@ -1797,6 +1847,7 @@ const GAME = {
     if (key === 'wraithx') { f.cloak = 8; f.phase = 8; if (f === me()) say('PHASE', OPS.wraith.col); return true; }
     if (key === 'talonx') { f.volley = { n: 3, t: .35 }; if (f === me()) say('PIERCER', OPS.talon.col); return true; }
     if (key === 'emberx') { K2.bombs.push({ x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, big: true }); return true; }
+    if (key.endsWith('c') || key.startsWith('vanta')) return kitApply2(f, key, d);
     if (key === 'axiomx') { K2.locks.push({ x: d.x, z: d.z, y: hAt(d.x, d.z), t: 2.5, T: 2.5, R: 14, by: f }); if (me().team !== f.team && Math.hypot(me().x - d.x, me().z - d.z) < 18) say('LOCKDOWN INCOMING', WARN); return true; }
     return false;
   }
@@ -1821,6 +1872,7 @@ const GAME = {
   function stepKits(dt) {
     const K2 = M.kit || (M.kit = freshKit());
     for (const f of M.fs) for (const k of ['surge', 'cloak', 'daze', 'snare', 'guard', 'od', 'phase', 'lock']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
+    stepKits2(dt);   // (46: the C abilities and Vanta)
     // Nightwalk: a second gathering the dark, then out of it at the far end
     for (const f of M.fs) if (f.chan && (f.chan.t -= dt) <= 0) { const c = f.chan; f.chan = null; if (!f.alive) continue; const from = [f.x, f.z];
       if (!f.net) { f.x = c.x; f.z = c.z; f.y = hAt(c.x, c.z); f.vx = f.vz = f.vy = 0; } emit('nightwalk', f, from, [c.x, c.z]); }
@@ -1897,6 +1949,147 @@ const GAME = {
         if (s.cd <= 0 && Math.abs(angDiff(want, s.aim)) < .12) { s.cd = .28; emit('sentryShot', s, best); if (!best.net && Math.random() < cl(1.15 - bd / 28, .3, .85)) { applyDamage(best, 11, s.by, false, 'sentry'); if (best.bot) best.bot.hitBy = { x: s.x, z: s.z, t: M.time }; if (best === me()) M.hurtDir = Math.atan2(s.x - best.x, s.z - best.z); } } }
       else s.aim += cl(angDiff(s.yaw, s.aim), -1.5 * dt, 1.5 * dt);
     }
+  }
+  /* ---------- 46 kit, second part: every operative's C, and VANTA ----------
+     VEX     C Gloom: a lobbed orb that bursts into dark; rivals caught see only 5 m for 3.5 s.
+     IRIS    C Watcher: an eye fixed where you aim (up to 22 m); for 20 s it marks rivals who walk into its view.
+     BASTION C Ward Beacon: set at your feet; a moment later you and teammates within 6 m gain 30 shield (up to 50).
+     NOVA    C Updraft: straight up, high enough for a ledge.
+     WRAITH  C Tether: an anchor at your feet; the key again steps you back to it (free), any time that round.
+     TALON   C Shock Bolt: bounces once, then bursts for up to 45 within 3.5 m.
+     EMBER   C Flashpoint: a flash that flies ahead and bends round the corner, left (left click) or right (right click).
+     AXIOM   C Slow Field: a lobbed canister; a 5 m field where rivals move at half speed for 6 s.
+     VANTA (Duelist)
+             C Phase Front: a wall of light rolls 14 m out ahead along the nearest straight line, stopping bullets and sight
+               (anyone can walk through it); it holds 5 s where it stops.
+             Q Sunder: a bolt straight through walls; rivals it touches are Exposed (25% more damage taken) for 4 s.
+             E Overcharge: for 12 s, a rival you kill leaves a charge where they fell; shoot it within 3 s for a ward that
+               stops the next hit (20 s). Comes back after two kills.
+             X Duel Field: a beam; the first rival it meets is sealed in a dome with you for up to 12 s: nobody else sees
+               in, shoots in or gets in, and neither of you gets out, until one of you falls.
+     Lobbed things share one flight (gravity 14, the same as a firebomb), so the aiming arc the preview draws is the path. */
+  const LOB_G = 14;
+  function kitAim2(f, key, d, S, alt) {
+    const e = eyeY(f), lob = (sp, up) => ({ x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + up, vz: d[2] * sp + f.vz * .4 });
+    if (key === 'vexc') return lob(alt ? 8 : 15, alt ? 2 : 3);
+    if (key === 'talonc') return lob(alt ? 11 : 19, 2);
+    if (key === 'axiomc') return lob(alt ? 8 : 14, 3);
+    if (key === 'irisc') { if (S.dist > 22) return null; const n = S.n, flat = Math.abs(n[1]) > .7, back = flat ? [-d[0], -d[2]] : [n[0], n[2]];   // on a wall it looks out of it; on the floor, back at you
+      return { x: S.end[0] + n[0] * .08, y: Math.max(S.end[1] + n[1] * .08, hAt(S.end[0], S.end[2]) + .15), z: S.end[2] + n[2] * .08, yaw: yawTo(0, 0, back[0], back[1]) }; }
+    if (key === 'bastionc' || key === 'wraithc') return { x: f.x, y: f.y, z: f.z };
+    if (key === 'novac' || key === 'vantae') return {};
+    if (key === 'emberc') {   // ahead (as far as is open, up to 5 m), then round the corner (up to 4 m)
+      const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw), side = alt ? 1 : -1, sx = Math.cos(f.yaw) * side, sz = -Math.sin(f.yaw) * side;
+      const a = Math.max(1, Math.min(5, los(f.x, e, f.z, f.x + fx * 5, e, f.z + fz * 5) - .4)), ax = f.x + fx * a, az = f.z + fz * a, b = Math.max(.5, Math.min(4, los(ax, e, az, ax + sx * 4, e, az + sz * 4) - .4));
+      return { ax, az, x: ax + sx * b, y: e + .3, z: az + sz * b }; }
+    if (key === 'vantac') { const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw), ax = Math.abs(fx) >= Math.abs(fz) ? 1 : 0, dir = ax ? Math.sign(fx) : Math.sign(fz); return { x: f.x + (ax ? dir * 1.2 : 0), z: f.z + (ax ? 0 : dir * 1.2), ax, dir }; }
+    if (key === 'vantaq') return { x: f.x + d[0] * .6, y: e + d[1] * .6, z: f.z + d[2] * .6, dx: d[0], dy: d[1], dz: d[2] };
+    if (key === 'vantax') { const t = duelTarget(f, d); return { t: t ? t.key : '', ex: t ? t.x : S.end[0], ey: t ? eyeY(t) - .3 : S.end[1], ez: t ? t.z : S.end[2] }; }
+    return undefined;
+  }
+  // Duel Field's beam: the rival it meets (straight on, or within a hair of the aim, with nothing in the way), up to 40 m
+  function duelTarget(f, d) {
+    const S = castShot(f, d); if (S.hit && S.dist <= 40 && !S.hit.f.duel) return S.hit.f;
+    let best = null, bd = .045; const o = [f.x, eyeY(f), f.z];
+    for (const v of M.fs) { if (!v.alive || v.team === f.team || v.duel || !duelOk(f, v)) continue; const dx = v.x - o[0], dy = v.y + 1.1 - o[1], dz = v.z - o[2], L = Math.hypot(dx, dy, dz); if (L > 40) continue;
+      const a = Math.acos(cl((dx * d[0] + dy * d[1] + dz * d[2]) / L, -1, 1)); if (a < bd && los(o[0], o[1], o[2], v.x, v.y + 1.1, v.z) >= L - .4) { best = v; bd = a; } }
+    return best;
+  }
+  // in a Duel Field? only its other half counts (for sight, shots and harm)
+  const duelOk = (a, b) => !a || !b || a === b || (a.duel ? a.duel.id : 0) === (b.duel ? b.duel.id : 0);
+  function kitApply2(f, key, d) {
+    const K2 = M.kit;
+    if (key === 'vexc' || key === 'talonc' || key === 'axiomc') { K2.lobs.push({ k: key, x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, bounce: key === 'talonc' ? 1 : 0 }); return true; }
+    if (key === 'irisc') { K2.eyes.push({ x: d.x, y: d.y, z: d.z, yaw: d.yaw, t: 20, tick: .6, by: f, seen: 0 }); return true; }
+    if (key === 'bastionc') { K2.beacons.push({ x: d.x, y: hAt(d.x, d.z), z: d.z, t: .8, by: f }); return true; }
+    if (key === 'novac') { if (!f.net) { f.vy = 9.6; f.ground = false; } emit('updraft', f); return true; }
+    if (key === 'wraithc') {
+      if (d.back) { const T = f.tether; f.tether = null; if (T) { const from = [f.x, f.z]; if (!f.net) { f.x = T.x; f.z = T.z; f.y = hAt(T.x, T.z); f.vx = f.vz = f.vy = 0; } emit('tetherBack', f, from, [T.x, T.z]); } return true; }
+      f.tether = { x: d.x, z: d.z, y: hAt(d.x, d.z) }; emit('tetherSet', f); return true; }
+    if (key === 'emberc') { const fl = { x: d.x, y: d.y, z: d.z, t: .55, by: f }; M.flares.push(fl); emit('flare', fl); emit('curveFlash', f, d); return true; }
+    if (key === 'vantac') {   // the wall: a thin slab across the way it rolls, 6 m wide and 3 m tall
+      const w = { x0: 0, x1: 0, z0: 0, z1: 0, t: 99, grow: 0, soft: true, front: { x: d.x, z: d.z, ax: d.ax, dir: d.dir, s: 0, hold: 0, by: f } }; placeFront(w); M.walls.push(w); emit('front', w); return true; }
+    if (key === 'vantaq') { K2.sunders.push({ x: d.x, y: d.y, z: d.z, dx: d.dx, dy: d.dy, dz: d.dz, s: 0, by: f, hit: [] }); emit('sunder', f, d); return true; }
+    if (key === 'vantae') { f.over = 12; emit('overcharge', f); return true; }
+    if (key === 'vantax') {
+      const v = d.t && M.byKey[d.t]; emit('duelBeam', f, d);
+      if (v && v.alive && f.alive && !v.duel && !f.duel) { const mx = (f.x + v.x) / 2, mz = (f.z + v.z) / 2, r = Math.max(7.5, Math.hypot(f.x - v.x, f.z - v.z) / 2 + 3), D = { id: f.key + '>' + v.key + ':' + M.round, x: mx, z: mz, r, until: M.time + 12, a: f, b: v };
+        f.duel = v.duel = D; f.scoped = v.scoped = 0; emit('duelStart', D); if (f === me() || v === me()) say('DUEL FIELD', OPS.vanta.col); }
+      else if (f === me()) say('THE BEAM MET NOBODY', DIM);
+      return true; }
+    return false;
+  }
+  const placeFront = w => { const F = w.front, cx = F.x + (F.ax ? F.dir * F.s : 0), cz = F.z + (F.ax ? 0 : F.dir * F.s), half = 3, th = .16;
+    if (F.ax) { w.x0 = cx - th; w.x1 = cx + th; w.z0 = cz - half; w.z1 = cz + half; } else { w.x0 = cx - half; w.x1 = cx + half; w.z0 = cz - th; w.z1 = cz + th; } };
+  // Overcharge's charge, shot: the shooter's own device decides, and tells the others
+  function hexShot(f, S) {
+    const K2 = M.kit; if (!K2 || !K2.hexes.length) return false;
+    for (const h of K2.hexes) { if (h.by !== f) continue; const t = raySphere(S.o, S.d, [h.x, h.y, h.z], .42); if (t > 0 && t < S.dist + .3) { takeHex(f, h, false); return true; } }
+    return false;
+  }
+  function takeHex(f, h, fromNet) { const K2 = M.kit; K2.hexes = K2.hexes.filter(q => q !== h); f.ward = 20; emit('wardOn', f, h); if (!fromNet) net({ t: 'hx', id: h.id, f: f.key }); }
+  on('kill', (v, by) => {
+    if (!M || !by || !v || by === v || by.op !== 'vanta' || by.team === v.team || M.mode === 'demo') return; const K2 = M.kit || (M.kit = freshKit());
+    if (by.over > 0) { const h = { id: v.key + ':' + M.round + ':' + Math.round(M.time * 10), x: v.x, y: v.y + 1.25, z: v.z, t: 3, by }; K2.hexes.push(h); emit('hex', h); }
+    if ((by.ab.e | 0) < 1 && !by.net) { by.eK = (by.eK | 0) + 1; if (by.eK >= OPS.vanta.e.kills) { by.ab.e = 1; by.eK = 0; emit('abBack', by, 'e'); } }
+  });
+  function stepKits2(dt) {
+    const K2 = M.kit;
+    for (const f of M.fs) {
+      for (const k of ['murk', 'exposed', 'ward', 'over', 'slowF']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
+      // signatures that come back with time
+      const E = OPS[f.op] && OPS[f.op].e; if (E && E.rech && (f.ab.e | 0) < 1 && M.phase === 'live' && !f.net) { f.eT = (f.eT || 0) + dt; if (f.eT >= E.rech) { f.ab.e = 1; f.eT = 0; emit('abBack', f, 'e'); } }
+    }
+    // the lobbed ones: Gloom, Shock Bolt (one bounce), Slow Field
+    for (const B of K2.lobs) {
+      B.t += dt; B.vy -= LOB_G * dt; const sp = Math.hypot(B.vx, B.vy, B.vz) || 1, step = sp * dt, dx = B.vx / sp, dy = B.vy / sp, dz = B.vz / sp, hit = rayGrid(B.x, B.y, B.z, dx, dy, dz, step + .05);
+      if (hit < step + .05 || B.t > 3) {
+        B.x += dx * Math.max(0, hit - .08); B.y += dy * Math.max(0, hit - .08); B.z += dz * Math.max(0, hit - .08);
+        if (B.bounce > 0 && B.t <= 3) { B.bounce--; const n = rayN, dot = B.vx * n[0] + B.vy * n[1] + B.vz * n[2]; B.vx = (B.vx - 2 * dot * n[0]) * .45; B.vy = (B.vy - 2 * dot * n[1]) * .45; B.vz = (B.vz - 2 * dot * n[2]) * .45; emit('lobBounce', B); continue; }
+        B.done = true; lobLand(B);
+      } else { B.x += B.vx * dt; B.y += B.vy * dt; B.z += B.vz * dt; }
+    }
+    K2.lobs = K2.lobs.filter(B => !B.done);
+    for (const G2 of K2.glooms) G2.t -= dt; K2.glooms = K2.glooms.filter(G2 => G2.t > 0);
+    // Slow Field: everyone the other side inside it, slowed while there
+    for (const F of K2.fields) { F.t -= dt; for (const v of localFs()) if (enemyOf(F.by, v) && Math.hypot(v.x - F.x, v.z - F.z) < F.r && Math.abs(v.y - F.y) < 2) { if (!(v.slowF > 0) && v === me()) say('SLOWED', WARN); v.slowF = .2; } }
+    K2.fields = K2.fields.filter(F => F.t > 0);
+    // Watcher: a look every 1.6 s; rivals in its view are marked
+    for (const W of K2.eyes) { W.t -= dt; if ((W.tick -= dt) > 0) continue; W.tick = 1.6; let n = 0;
+      for (const v of M.fs) { if (!v.alive || !enemyOf(W.by, v) || !duelOk(W.by, v)) continue; const dd = Math.hypot(v.x - W.x, v.z - W.z); if (dd > 25 || Math.abs(angDiff(yawTo(W.x, W.z, v.x, v.z), W.yaw)) > .9) continue;
+        if (los(W.x, W.y, W.z, v.x, eyeY(v) - .1, v.z) < Math.hypot(dd, eyeY(v) - .1 - W.y) - .4) continue; v.reveal = Math.max(v.reveal, 1.4); n++; if (v === me()) say('A WATCHER SEES YOU', WARN); }
+      W.seen = n; if (n) emit('eyeSpot', W); }
+    K2.eyes = K2.eyes.filter(W => W.t > 0);
+    // Ward Beacon: a beat, then shields for the team round it (each device for its own)
+    for (const B of K2.beacons) if ((B.t -= dt) <= 0) { for (const v of localFs()) if (v.team === B.by.team && Math.hypot(v.x - B.x, v.z - B.z) < 6 && Math.abs(v.y - B.y) < 2.5) { v.sh = Math.min(50, (v.sh | 0) + 30); if (v === me()) say('+30 SHIELD', OPS.bastion.col); } B.done = true; emit('beaconPop', B); }
+    K2.beacons = K2.beacons.filter(B => !B.done);
+    // Phase Front: rolls out until 14 m or a wall, then holds
+    for (const w of M.walls) { const F = w.front; if (!F) continue;
+      if (F.s < 14 && !F.stop) { const was = F.s, step = dt * 4.4; F.s = Math.min(14, F.s + step); const cx = F.x + (F.ax ? F.dir * F.s : 0), cz = F.z + (F.ax ? 0 : F.dir * F.s); if (hAt(cx, cz) > hAt(F.x, F.z) + 1.4) { F.s = was; F.stop = true; } placeFront(w); }
+      else { F.hold += dt; if (F.hold >= 5) w.t = 0; } }
+    // Sunder: flies 40 m/s for 35 m through anything; rivals it passes are Exposed
+    for (const B of K2.sunders) { const s0 = B.s; B.s = Math.min(35, B.s + 40 * dt);
+      for (const v of localFs()) { if (!enemyOf(B.by, v) || B.hit.includes(v.key) || !duelOk(B.by, v)) continue;
+        for (const hy of [eyeY(v) - .1, v.y + 1, v.y + .4]) { const px = v.x - B.x, py = hy - B.y, pz = v.z - B.z, along = px * B.dx + py * B.dy + pz * B.dz; if (along < s0 - .6 || along > B.s + .6) continue;
+          if (Math.hypot(px - B.dx * along, py - B.dy * along, pz - B.dz * along) < .7) { B.hit.push(v.key); v.exposed = 4; emit('sundered', v, B); if (v === me()) say('EXPOSED', WARN); break; } } }
+      if (B.s >= 35) B.done = true; }
+    K2.sunders = K2.sunders.filter(B => !B.done);
+    for (const h of K2.hexes) h.t -= dt; K2.hexes = K2.hexes.filter(h => h.t > 0);
+    // a bot with Overcharge takes its charge a moment after the kill
+    for (const h of K2.hexes) if (h.by.bot && !h.by.net && h.t < 2.5 && h.by.alive) { takeHex(h.by, h, false); break; }
+    // Duel Field: kept inside; over when one falls, leaves, or the time runs out
+    for (const f of M.fs) { const D = f.duel; if (!D) continue; const o = D.a === f ? D.b : D.a;
+      if (!f.alive || !o || !o.alive || o.gone || f.gone || M.time > D.until || o.duel !== D || M.phase !== 'live') { f.duel = null; if (o && o.duel === D) o.duel = null; emit('duelEnd', D, f.alive ? f : o && o.alive ? o : null); continue; }
+      if (!f.net) { const dx = f.x - D.x, dz = f.z - D.z, L = Math.hypot(dx, dz), R2 = D.r - RAD; if (L > R2) { const k = R2 / L, nx = D.x + dx * k, nz = D.z + dz * k; if (!blocked(nx, nz, f.y)) { f.x = nx; f.z = nz; } f.vx *= .3; f.vz *= .3; } } }
+  }
+  // where a lobbed thing lands
+  function lobLand(B) {
+    const K2 = M.kit, x = B.x, z = B.z, y = hAt(x, z);
+    if (B.k === 'vexc') { const G2 = { x, y: Math.max(y, B.y), z, t: 3.5, by: B.by }; K2.glooms.push(G2); emit('gloomPop', G2);
+      for (const v of localFs()) { if (!enemyOf(B.by, v)) continue; const d = Math.hypot(v.x - x, v.z - z); if (d > 6 || los(x, G2.y + .4, z, v.x, eyeY(v), v.z, false) < Math.hypot(d, eyeY(v) - G2.y - .4) - .4) continue; v.murk = 3.5; if (v === me()) say('GLOOM', OPS.vex.col); } }
+    if (B.k === 'talonc') { emit('shockPop', { x, y: B.y, z, by: B.by });
+      for (const v of localFs()) { if (!enemyOf(B.by, v)) continue; const d = Math.hypot(v.x - x, v.y + .9 - B.y, v.z - z); if (d > 3.5 || los(x, B.y + .2, z, v.x, v.y + .9, v.z, false) < d - .5) continue; applyDamage(v, Math.round(45 * cl(1.25 - d / 3.5, .3, 1)), B.by, false, 'shockbolt'); } }
+    if (B.k === 'axiomc') { const F = { x, y, z, r: 5, t: 6, T: 6, by: B.by }; K2.fields.push(F); emit('fieldStart', F); }
   }
   /* ---------- 50 bot: a player with the same body, guns and accuracy rules, and no knowledge it has not earned ----------
      Each tick botThink returns the same intent a person's input would. What a bot knows about its rival is only what it
@@ -1984,6 +2177,7 @@ const GAME = {
     else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub']));
     if (f.credits >= 200 && R() < .65) buy(f, 'smoke'); if (f.credits >= 1400 && R() < .45) buy(f, 'smoke');
     for (let n = 0; n < 2; n++) if (f.credits >= OPS[f.op].q.cost && R() < .8) buy(f, 'abq');   // ability charges
+    for (let n = 0; n < 2; n++) if (f.credits >= OPS[f.op].c.cost && R() < .6) buy(f, 'abc');
   }
 
   // the newer operatives' abilities, each with a reason
@@ -2013,6 +2207,27 @@ const GAME = {
       if (f.ab.e && ((side === 'def' && P.k === 'hold' && there && M.t < roundT() - 6) || (side === 'att' && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 2))) botCast(f, 'e', { x: f.x, z: f.z });
     }
   }
+  // every operative's C, and Vanta's kit
+  function kitBot2(f, B, P, side, sees, engaged, fresh, near, dE, e, dt) {
+    const ey = eyeY(f), there = P.path && !P.path.length, holdLook = P.look || (B.last ? [B.last.x, B.last.z] : null), last = fresh && B.last ? B.last : null, roll = R() < dt * 1.2;
+    const lob = (k, tx, tz) => { const dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 13, .45, 1.1), y0 = ey - .1, ty = hAt(tx, tz) + .1; botCast(f, k, { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + LOB_G / 2 * T * T) / T, vz: dz / T }); };
+    if (f.ab.c) {
+      if (f.op === 'vex' && last && !sees && dE > 6 && dE < 20 && roll) lob('c', last.x, last.z);
+      else if (f.op === 'iris' && there && holdLook && ((side === 'def' && P.k === 'hold') || (side === 'att' && P.k === 'post'))) botCast(f, 'c', { x: f.x, y: ey + .2, z: f.z, yaw: yawTo(f.x, f.z, holdLook[0], holdLook[1]) });
+      else if (f.op === 'bastion' && !sees && (f.sh | 0) < 25 && M.t < roundT() - 4 && M.fs.some(q => q !== f && q.team === f.team && q.alive && Math.hypot(q.x - f.x, q.z - f.z) < 6)) botCast(f, 'c', { x: f.x, y: f.y, z: f.z });
+      else if (f.op === 'nova' && engaged && f.hp < 50 && f.ground && R() < dt * 2) ability(f, 'c');
+      else if (f.op === 'wraith' && !f.tether && M.t > roundT() - 6) botCast(f, 'c', { x: f.x, y: f.y, z: f.z });
+      else if (f.op === 'talon' && last && !sees && dE > 5 && dE < 18 && roll) lob('c', last.x, last.z);
+      else if (f.op === 'ember' && last && !sees && dE > 5 && dE < 14 && roll) botCast(f, 'c', { ax: f.x, az: f.z, x: last.x, y: hAt(last.x, last.z) + 1.6, z: last.z });
+      else if (f.op === 'axiom' && last && !sees && dE > 5 && dE < 18 && (side === 'def' || M.planted) && roll) lob('c', last.x, last.z);
+      else if (f.op === 'vanta' && side === 'att' && P.k === 'push' && near < 22 && near > 8 && !sees && R() < dt * .8) ability(f, 'c');
+    }
+    if (f.op === 'wraith' && f.tether && engaged && f.hp < 40 && R() < dt * 3) ability(f, 'c');   // out of a losing fight, back to the anchor
+    if (f.op === 'vanta') {
+      if (f.ab.q && last && !sees && dE < 30 && roll) { const dx = last.x - f.x, dz = last.z - f.z, dy = hAt(last.x, last.z) + 1.1 - ey, L = Math.hypot(dx, dy, dz) || 1; botCast(f, 'q', { x: f.x, y: ey, z: f.z, dx: dx / L, dy: dy / L, dz: dz / L }); }
+      if (f.ab.e && (engaged || (sees && dE < 25))) ability(f, 'e');
+    }
+  }
   // use an ability at a chosen place, without having to look there first
   function botCast(f, k, data) { if (!hasAb(f, k) || M.phase !== 'live' || f.lock > 0 || f.chan) return; spendAb(f, k); applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
   // the ultimate, when there is a reason for it
@@ -2024,6 +2239,7 @@ const GAME = {
     else if ((op === 'nova' || op === 'wraith') && !sees && chance && (push && near < 26 || retake)) botCast(f, 'x', {});
     else if (op === 'talon' && fresh && !sees && dE < 40 && Math.abs(angDiff(yawTo(f.x, f.z, B.last.x, B.last.z), f.yaw)) < .1) botCast(f, 'x', {});
     else if (op === 'ember' && fresh && !sees && dE > 6 && dE < 24 && chance) { const tx = B.last.x, tz = B.last.z, dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 14, .5, 1.2), y0 = eyeY(f) - .1, ty = hAt(tx, tz) + .1; botCast(f, 'x', { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + 7 * T * T) / T, vz: dz / T }); }
+    else if (op === 'vanta' && sees && e && e.alive && !e.duel && dE < 30 && R() < dt * 2) botCast(f, 'x', { t: e.key, ex: e.x, ey: eyeY(e) - .3, ez: e.z });
     else if (op === 'axiom' && ((side === 'def' && fresh && dE < 13) || (retake && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 12))) botCast(f, 'x', { x: f.x, z: f.z });
   }
   const magOf = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return A ? A.mag : 0; };
@@ -2176,7 +2392,7 @@ const GAME = {
       if (f.op === 'iris' && f.ab.e && !sees && fresh && B.last.heard && dE > 6 && dE < 16 && R() < dt * 1.5) botCast(f, 'e', { x: B.last.x, y: 1.6, z: B.last.z });
       if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5) ability(f, 'q');
       if (f.op === 'bastion' && f.ab.e && f.hp < 60 && !sees) ability(f, 'e');
-      kitBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
+      kitBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt); kitBot2(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
       if (hasAb(f, 'x')) botUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
       // smoke grenades: attackers cover a corner before stepping onto the site; defenders smoke the lane they just heard someone in
       if (f.smokes > 0 && !sees && !(B.nadeT > M.time)) {
@@ -2265,11 +2481,11 @@ const GAME = {
     // a host running bots sends all its fighters in one message (up to eight fighters: far fewer messages through the relay)
     const out = [];
     for (const f of M.fs) if (!f.net && !f.gone) out.push({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
-      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? Math.max(.01, r2(f.plant)) : 0, df: f.defuse > 0 ? Math.max(.01, r2(f.defuse)) : 0, st: f.step > 0 ? 1 : 0, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
+      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? Math.max(.01, r2(f.plant)) : 0, df: f.defuse > 0 ? Math.max(.01, r2(f.defuse)) : 0, st: f.step > 0 ? 1 : 0, rd: f.ready ? 1 : 0, ar: f.rdy || undefined, wd: f.ward > 0 ? 1 : undefined, ov: f.over > 0 ? 1 : undefined, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
     for (const q of out) { const f = M.byKey[q.f], sk = (f.skins && f.skins[f.guns[f.slot]]) || 0, key = f.op + '|' + q.g + '|' + sk;
       if (full || f._sent !== key) { q.op = f.op; q.rt = f.rating || 0; q.sk = sk; f._sent = key; } if (full) { q.dm = Math.round(f.stat.dmg); if (f === me()) q.cd = cardCode(); }
-      const iv = f.credits + '|' + (f.guns[1] || '') + '|' + (f.guns[2] || '') + '|' + (f.smokes | 0) + '|' + (f.ab.q | 0);   // what they have and what they can spend: for their team's armory
-      if (full || f._iv !== iv) { q.c = f.credits; q.g1 = f.guns[1] || ''; q.g2 = f.guns[2] || ''; q.sm = f.smokes | 0; q.aq = f.ab.q | 0; f._iv = iv; } }
+      const iv = f.credits + '|' + (f.guns[1] || '') + '|' + (f.guns[2] || '') + '|' + (f.smokes | 0) + '|' + (f.ab.q | 0) + '|' + (f.ab.c | 0);   // what they have and what they can spend: for their team's armory
+      if (full || f._iv !== iv) { q.c = f.credits; q.g1 = f.guns[1] || ''; q.g2 = f.guns[2] || ''; q.sm = f.smokes | 0; q.aq = f.ab.q | 0; q.ac = f.ab.c | 0; f._iv = iv; } }
     for (const q of out) { for (const k of ['sc', 'pl', 'df', 'st', 'sp', 'sd']) if (!q[k]) delete q[k]; }   // zeros are the default: leave them out
     if (out.length === 1) net(out[0]); else if (out.length) net({ t: 'S', a: out.map(q => { delete q.t; return q; }) });
   }
@@ -2293,8 +2509,8 @@ const GAME = {
     switch (m.t) {
       case 's':
         { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && Math.hypot(sn[sn.length - 1].x - m.x, sn[sn.length - 1].z - m.z) > 6) sn.length = 0; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
-        if (m.rt) F.rating = m.rt; if (m.cd) F.card = cardFrom(m.cd); if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; { const pl = +m.pl || 0, df = +m.df || 0; F.plant = pl > 0 ? (F.plant > 0 && Math.abs(F.plant - pl) < .5 ? F.plant : pl) : 0; F.defuse = df > 0 ? (F.defuse > 0 && Math.abs(F.defuse - df) < .5 ? F.defuse : df) : 0; }   // (kept running between messages by netFollow; a message only corrects it when it has drifted) F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
-        if (m.c != null) { F.credits = +m.c || 0; F.guns[1] = GUNS[m.g1] ? m.g1 : null; F.guns[2] = GUNS[m.g2] ? m.g2 : 'pip'; F.smokes = m.sm | 0; F.ab.q = m.aq | 0; }   // their credits and loadout
+        if (m.rt) F.rating = m.rt; if (m.cd) F.card = cardFrom(m.cd); if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.rdy = m.ar || null; F.wardV = !!m.wd; F.overV = !!m.ov; F.scoped = m.sc || 0; { const pl = +m.pl || 0, df = +m.df || 0; F.plant = pl > 0 ? (F.plant > 0 && Math.abs(F.plant - pl) < .5 ? F.plant : pl) : 0; F.defuse = df > 0 ? (F.defuse > 0 && Math.abs(F.defuse - df) < .5 ? F.defuse : df) : 0; }   // (kept running between messages by netFollow; a message only corrects it when it has drifted) F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
+        if (m.c != null) { F.credits = +m.c || 0; F.guns[1] = GUNS[m.g1] ? m.g1 : null; F.guns[2] = GUNS[m.g2] ? m.g2 : 'pip'; F.smokes = m.sm | 0; F.ab.q = m.aq | 0; F.ab.c = m.ac | 0; }   // their credits and loadout
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
         break;
@@ -2305,7 +2521,8 @@ const GAME = {
         if (!F.alive) break; const by = M.byKey[String(m.by)] || other(F); F.alive = false; F.hp = 0; F.stat.d++; by.stat.k++; if (m.h) by.stat.hs++; if (!by.net && by.team !== F.team) { by.credits = Math.min(CASH.cap, by.credits + CASH.kill); ultGain(by, 1); novaKill(by, F); }   // your kill charges your ultimate (and Nova's Surge), as it does offline
         M.feed.unshift({ a: by.name, b: F.name, w: GUNS[m.w] ? GUNS[m.w].n : m.w, head: !!m.h, t: 0, mine: by === me() }); emit('kill', F, by, !!m.h, m.w); if (M.host) judge(); break;
       }
-      case 'ab': spendAb(F, m.k); applyAbility(F, m.k, m.d || {}); break;
+      case 'hx': { const F2 = M.byKey[m.f], h = M.kit && M.kit.hexes.find(q => q.id === m.id); if (F2 && h) takeHex(F2, h, true); else if (F2) F2.ward = 20; break; }
+      case 'ab': if (!(m.d && m.d.free)) spendAb(F, m.k); applyAbility(F, m.k, m.d || {}); break;
       case 'orb': takeOrb(m.i | 0, F); break;   // someone took an ultimate orb
       case 'kx': kitTrip(m.id, m.v, true); break;   // a snare or mine went off on the victim's device
       case 'kd': { const s2 = M.kit && M.kit.sentries.find(q => q.id === m.id); if (s2) hurtSentry(s2, m.d, true); break; }   // someone shot a sentry
@@ -2438,6 +2655,7 @@ const GAME = {
     X.vscene = new THREE.Scene(); X.vroot = new THREE.Group(); X.vscene.add(X.vroot); X.vscene.add(new THREE.HemisphereLight('#e2f0ff', '#8a7a66', .5));
     { const vs = new THREE.DirectionalLight('#fff0d8', 1.25); vs.position.set(SUN[0] * 50, SUN[1] * 50, SUN[2] * 50); X.vscene.add(vs); const rim = new THREE.DirectionalLight('#9fd8ff', .8); rim.position.set(-1, .6, -1.5); X.vroot.add(rim, rim.target); }
     X.vmuzzle = new THREE.PointLight('#ffcf8a', 0, 2); X.vmuzzle.position.set(.1, -.05, -.8); X.vroot.add(X.vmuzzle);
+    X.abL = new THREE.PointLight('#ffffff', 0, 1.1, 2); X.vroot.add(X.abL);   // a readied ability's glow on the hands and gun (made now, so no shader has to change when it lights)
     X.view = new THREE.Group(); X.vroot.add(X.view); X.viewGun = null; X.viewKey = '';
     addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
     X.texLog = []; buildWorld(); buildSky(); X.mapTex = X.texLog; X.texLog = null; buildFx(); warmShaders(); try { buildPortraits(); } catch (e) { console.warn(e); }
@@ -3728,6 +3946,7 @@ const GAME = {
     talon: { suit: '#2e3a24', plate: '#5f6f3c', cloth: '#8a6a40', skin: '#9a6b4a', wide: 1 },
     ember: { suit: '#3a2620', plate: '#7a3e22', cloth: '#ff7a2f', skin: '#d8a07a', wide: 1.02 },
     axiom: { suit: '#25303e', plate: '#d9dde3', cloth: '#5aa0ff', skin: '#8a5a3c', wide: 1.05 },
+    vanta: { suit: '#1a1522', plate: '#3a2f4a', cloth: '#e25cff', skin: '#c89478', wide: .97 },
   };
   // the agents' materials: fabric with a woven grain, armour plates with panel lines and worn edges, skin, rubber and
   // trim, all lit by the map's reflections. Made once per operative and shared by every copy.
@@ -3820,6 +4039,8 @@ const GAME = {
       else if (f.op === 'wraith') { add(rb(.34, .58, .014, .03), M.cloth, 0, .24, .17, -.06); add(rb(.36, .05, .04, .015), M.plate, 0, .52, .16); }
       else if (f.op === 'talon') { const q = add(cyl(.055, .05, .42, 10), M.cloth, .08, .36, .19, 0, 0, -.45); for (let k = 0; k < 3; k++) add(new THREE.ConeGeometry(.018, .07, 6), M.glow, .16 + k * .022, .58 - k * .012, .19 + (k - 1) * .025, 0, 0, -.45); add(rb(.05, .3, .015, .01), M.dark, 0, .36, .16, 0, 0, .6); }
       else if (f.op === 'ember') { for (const sx of [-1, 1]) { add(cyl(.065, .065, .34, 12), M.plate, sx * .075, .37, .2); add(sph(.065, 12, 8), M.plate, sx * .075, .54, .2); } add(new THREE.TorusGeometry(.12, .015, 6, 16, Math.PI), M.dark, 0, .55, .25, 0, 0, 0); add(rb(.05, .04, .02, .01), M.glow, 0, .3, .27); }
+      else if (f.op === 'vanta') { add(cyl(.12, .12, .045, 6), M.plate, 0, .4, .19, Math.PI / 2); add(cyl(.062, .062, .05, 6), M.glow, 0, .4, .2, Math.PI / 2); add(rb(.05, .62, .014, .02), M.cloth, .06, .25, .17, 0, 0, .38);   // a hex emitter on the back, a sash across it
+        add(cyl(.13, .11, .06, 6), M.plate, -.29 * w, .6, 0, 0, 0, .55); add(cyl(.135, .135, .012, 6, 1, true), M.glow, -.29 * w, .6, 0, 0, 0, .55); }   // one heavy hex plate on the left shoulder
       else if (f.op === 'axiom') { add(rb(.26, .3, .14, .035), M.suit, 0, .37, .2); add(rb(.2, .06, .02, .01), M.glow, 0, .44, .275); add(cyl(.008, .008, .36, 6), M.dark, -.09, .66, .22); add(sph(.018, 8, 6), M.glow, -.09, .845, .22); }
     }
     // coat tails that swing as they run (Vex only)
@@ -3854,6 +4075,10 @@ const GAME = {
     } else if (f.op === 'axiom') {   // an engineer's hard hat with a lamp and a glowing visor
       add(turn([[0, .175], [.11, .165], [.155, .1], [.165, .03], [.2, .005], [.2, -.008], [0, -.008]], 18), M.plate, 0, .018, 0); add(rb(.23, .045, .03, .012), M.glow, 0, -.008, -.128);
       add(cyl(.028, .028, .03, 10), M.dark, 0, .16, -.12, Math.PI / 2); add(sph(.02, 8, 6), M.glow, 0, .16, -.137);
+    } else if (f.op === 'vanta') {   // a close faceted helm, a glowing hex band for a visor, shards swept back on one side
+      add(new THREE.SphereGeometry(.153, 6, 10, 0, TAU, 0, Math.PI * .56), M.plate, 0, .014, .01).scale.set(1, 1.02, 1.06);
+      add(new THREE.CylinderGeometry(.139, .135, .05, 6, 1, true, Math.PI - 1.2, 2.4), M.glow, 0, .002, 0); add(rb(.16, .062, .05, .02), M.dark, 0, -.075, -.102);
+      for (let i = 0; i < 3; i++) add(new THREE.ConeGeometry(.022, .17 - i * .035, 4), M.glow, .095 + i * .022, .125 - i * .022, .03 + i * .05, -1.15, 0, -.55 - i * .15);
     } else {
       add(turn([[0, .185], [.1, .178], [.158, .13], [.17, .02], [.174, -.075], [.15, -.075]], 16), M.plate, 0, 0, .004); add(rb(.3, .045, .07, .015), M.plate, 0, .055, -.13); add(rb(.34, .03, .3, .012), M.dark, 0, -.065, 0);
       add(rb(.21, .03, .02, .008), M.glow, 0, .005, -.172); add(rb(.032, .09, .02, .008), M.glow, 0, -.045, -.172); for (const sx of [-1, 1]) add(rb(.02, .1, .1, .008), M.acc, sx * .172, .0, -.02);
@@ -3988,7 +4213,7 @@ const GAME = {
     if (!A || A.userData.op !== f.op) { if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); } A = agentModel(f); X.agents.set(f, A); }
     const U = A.userData, fk0 = gun(f).k, fsk = skinFor(f, fk0) || '', fk = fk0;
     if (U.gk !== fk || U.gsk !== fsk) { U.gsk = fsk; while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]); const gm = gunModel(fk, { cast: false, flash: true, skin: fsk }); gm.scale.setScalar(1.08); U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
-    A.visible = true; A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;
+    A.visible = !M || duelOk(viewer(), f); A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;   // (a Duel Field hides those in it from everyone else, and everyone else from them)
     { const P = M ? me() : null, foeSide = !!P && f.team !== P.team, op = f.cloak > 0 && f.alive ? (foeSide ? .07 : .35) : 1; U.cop = lp(U.cop == null ? 1 : U.cop, op, Math.min(1, dt * 10));
       // the fade goes on this fighter's own copies of its materials (everyone playing the same operative shares the
       // originals, so fading those turned every other Wraith on the field see-through too)
@@ -6309,7 +6534,15 @@ const GAME = {
     X.smokeM = new THREE.MeshLambertMaterial({ color: '#b6aedb', transparent: true, opacity: .94, depthWrite: false }); X.smokeG = new THREE.SphereGeometry(1, 16, 10); X.smokes = [];
     X.smokeGM = new THREE.MeshLambertMaterial({ color: '#c4c8ce', transparent: true, opacity: .96, depthWrite: false });   // a grenade's cloud is grey, Vex's Veil is violet
     { const body = new THREE.MeshStandardMaterial({ color: '#59606b', metalness: .5, roughness: .45 }), band = new THREE.MeshBasicMaterial({ color: '#c3cad4' }); X.nadeMk = () => { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .13, 12), body); const t = new THREE.Mesh(new THREE.CylinderGeometry(.034, .034, .035, 10), band); t.position.y = .08; const l = new THREE.Mesh(new THREE.BoxGeometry(.012, .02, .09), body); l.position.set(.045, .05, 0); g.add(c, t, l); return g; }; X.nadeObjs = []; }
-    X.wallM = new THREE.MeshLambertMaterial({ color: '#ffb347', emissive: '#a85a10', emissiveIntensity: .7, transparent: true, opacity: .88 }); X.walls = [];
+    // Rampart: a barricade of dark armoured slabs, seamed and riveted, with Bastion's amber running hot through a hex lattice
+    { const tex = canvasTex(256, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#4a4438'); gr.addColorStop(1, '#2c2924'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 4; for (let y = 0; y <= h; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } for (let x = 0; x <= w; x += 128) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+        g.fillStyle = 'rgba(255,255,255,.12)'; for (let y = 8; y < h; y += 64) for (let x = 8; x < w; x += 24) g.fillRect(x, y, 3, 3);
+        g.strokeStyle = 'rgba(255,190,90,.35)'; g.lineWidth = 2; const s2 = 22; for (let r = 0; r < 14; r++) for (let c = 0; c < 8; c++) { const cx = c * s2 * 1.5 + 6, cy = r * s2 * .866 * 2 + (c % 2) * s2 * .866; g.beginPath(); for (let k = 0; k < 6; k++) g.lineTo(cx + Math.cos(k * Math.PI / 3) * s2 * .9, cy + Math.sin(k * Math.PI / 3) * s2 * .9); g.closePath(); g.stroke(); } }),
+        glowT = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#000'; g.fillRect(0, 0, w, h); g.strokeStyle = '#ffb347'; g.lineWidth = 2.5; const s2 = 22; for (let r = 0; r < 14; r++) for (let c = 0; c < 8; c++) { const cx = c * s2 * 1.5 + 6, cy = r * s2 * .866 * 2 + (c % 2) * s2 * .866; g.beginPath(); for (let k = 0; k < 6; k++) g.lineTo(cx + Math.cos(k * Math.PI / 3) * s2 * .9, cy + Math.sin(k * Math.PI / 3) * s2 * .9); g.closePath(); g.stroke(); }
+          g.fillStyle = '#ffd27a'; g.fillRect(0, 0, w, 5); g.fillRect(0, h - 5, w, 5); });
+      tex.wrapS = tex.wrapT = glowT.wrapS = glowT.wrapT = THREE.RepeatWrapping; tex.repeat.set(2, 1); glowT.repeat.set(2, 1);
+      X.wallM = new THREE.MeshStandardMaterial({ map: tex, emissiveMap: glowT, emissive: '#ffb347', emissiveIntensity: 1.1, roughness: .55, metalness: .35 }); } X.walls = [];
     /* the charge: a six-sided base on three splayed feet, a canister wound with three glowing coils inside a cage of four
        struts, a collar and a cap with the lamp under its guard, a keypad with a little screen, a carry handle and an aerial.
        Built from plain shapes and then merged into one mesh per material (the lamp stays its own, to blink). */
@@ -6355,7 +6588,7 @@ const GAME = {
     X.flareBall = add(new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' }))); X.flareBall.visible = false;
     X.boom = add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), fm({ color: '#ffb060', opacity: .8 }))); X.boom.visible = false; X.boomT = 0;
     X.ejects = []; X.casings = [];
-    buildKitFx(); buildKillFx();
+    buildKitFx(); buildKitFx2(); buildKillFx();
   }
   function spark(p, v, col, t) { const m = X.sparks[X.spN++ % X.sparks.length]; m.visible = true; m.position.set(p[0], p[1], p[2]); m.material.color.set(col); m.userData.t = t; m.userData.v = v; }
   // where a fighter's muzzle is, near enough for a tracer to start from
@@ -6428,9 +6661,11 @@ const GAME = {
   };
   function abKey(kind, q) { const K2 = AB_KF[kind], o = [0, 0, 0, 0, 0, 0]; let i = 0; while (i < K2.length - 2 && q > K2[i + 1][0]) i++;
     const a = K2[i], b = K2[i + 1], t = sm(cl((q - a[0]) / Math.max(1e-6, b[0] - a[0]), 0, 1)); for (let j = 0; j < 6; j++) o[j] = lp(a[j + 1], b[j + 1], t); return o; }
-  function abHandFrame(P) {
-    const live = P.alive && P.castT > 0 && P.castK && !(P.scoped && gun(P).scope), R = abHand(P.op);
-    for (const k in X.abHands) { const h = X.abHands[k]; if (h !== R || !live) { h.H.visible = h.orb.visible = h.ring.visible = h.arm.visible = false; } }
+  function abHandFrame(P, dt) {
+    const live = P.alive && P.castT > 0 && P.castK && !(P.scoped && gun(P).scope), hold = !live && P.alive && (X.rdyK || 0) > .02, R = abHand(P.op);
+    for (const k in X.abHands) { const h = X.abHands[k]; if (h !== R || (!live && !hold)) { h.H.visible = h.orb.visible = h.ring.visible = h.arm.visible = false; } }
+    if (X.abL) X.abL.intensity = 0;
+    if (hold) { abHold(P, R, dt); return; }
     if (!live) return;
     const kind = P.castK, q = 1 - P.castT / (P.castD || .5), o = abKey(kind, q), big = P.castBig ? 1.25 : 1, { H, orb, ring, fing, glow, arm } = R;
     H.visible = true; H.position.set(o[0], o[1], o[2]); H.rotation.set(o[3], o[4], o[5]);
@@ -6454,6 +6689,17 @@ const GAME = {
     // a ring bursts off the palm (push) or the charge (pulse), growing and fading
     const rq = kind === 'push' ? (q - .3) / .45 : kind === 'pulse' ? (q - .4) / .45 : kind === 'heal' ? (q - .35) / .5 : -1;
     ring.visible = rq > 0 && rq < 1; if (ring.visible) { ring.position.copy(kind === 'pulse' || kind === 'heal' ? orb.position : H.position); if (kind === 'push') ring.position.z -= .05; ring.rotation.set(kind === 'push' ? 0 : Math.PI / 2, 0, 0); ring.scale.setScalar((1 + rq * (kind === 'push' ? 2.6 : 1.8)) * big * (kind === 'heal' ? .6 : 1)); ring.material.opacity = (1 - rq) * .85; }
+  }
+  // the hold: the off hand up and forward, the ability crackling in the palm, lighting the gun and the glove in its colour
+  function abHold(P, R, dt) {
+    const k = sm(X.rdyK), t = X.t, { H, orb, ring, fing, glow, arm } = R, col = (OPS[P.op] || OPS.vex).col, big = P.rdy === 'x' ? 1.3 : 1;
+    H.visible = true; H.position.set(-.15 + Math.sin(t * 1.3) * .003, lp(-.46, -.19, k) + Math.sin(t * 2.1) * .004, -.37); H.rotation.set(lp(-.6, -.2, k), .18, .3);   // low on the left, the gun's side kept clear
+    { H.updateMatrix(); const w = new THREE.Vector3(0, -.004, .07).applyMatrix4(H.matrix), e = new THREE.Vector3(-.2, -.5, .02), d = e.clone().sub(w), L = d.length(); arm.visible = true; arm.position.copy(w); arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); arm.scale.set(1, L, 1); }
+    for (const f of fing) { f.scale.z = .75; f.rotation.x = .55; }   // fingers curled round it
+    H.updateMatrix(); const palm = new THREE.Vector3(0, .05, -.035).applyMatrix4(H.matrix); orb.visible = true; orb.position.copy(palm);
+    const pulse = .85 + .15 * Math.sin(t * 9) + (Math.random() - .5) * .08; orb.scale.setScalar(k * pulse * big * .62); orb.material.opacity = 1; glow.material.opacity = .75 + Math.random() * .25; glow.scale.setScalar(.2 + .05 * Math.sin(t * 7));
+    ring.visible = true; ring.position.copy(palm); ring.rotation.set(t * 2.2, t * 1.4, 0); ring.scale.setScalar(k * (.9 + .1 * Math.sin(t * 5)) * big * .5); ring.material.opacity = .85;
+    X.abL.color.set(col); X.abL.position.copy(palm); X.abL.intensity = k * (1.4 + .4 * Math.sin(t * 13) + Math.random() * .3);
   }
   on('dry', f => { if (X && M && f === me()) X.dryT = .16; });
   const VKICK = { Sidearm: 1.25, SMG: .7, Rifle: 1, Sniper: 2.2, Shotgun: 1.9, Heavy: .8 };   // how hard each class kicks in your hands
@@ -6594,7 +6840,9 @@ const GAME = {
     // the off hand casts (see abHandFrame): the gun dips out of its way, further for a throw or a placing
     if (P.castT > 0) { const D = P.castD || .5, q = 1 - Math.max(0, P.castT) / D, c = Math.sin(Math.min(1, q) * Math.PI), dk = P.castK === 'throw' || P.castK === 'place' ? 1.25 : P.castK === 'dash' ? .5 : .9;
       X.view.position.y -= c * .08 * dk; X.view.position.x += c * .035 * dk; X.view.rotation.x -= c * .45 * dk; X.view.rotation.z += c * .3 * dk; }
-    abHandFrame(P); if (P.castT > 0) P.castT -= dt;
+    // a readied ability: the gun drops away and turns aside, out of the off hand's way
+    X.rdyK = lp(X.rdyK || 0, P.alive && P.rdy && !(P.castT > 0) ? 1 : 0, Math.min(1, dt * 12)); if (X.rdyK > .001) { const k = sm(X.rdyK); X.view.position.y -= .075 * k; X.view.position.x += .04 * k; X.view.rotation.x -= .42 * k; X.view.rotation.z += .26 * k; }
+    abHandFrame(P, dt); if (P.castT > 0) P.castT -= dt;
 
     // the rival
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }
@@ -6611,11 +6859,11 @@ const GAME = {
     const NS = M.nades || []; while (X.nadeObjs.length < NS.length) { const o = X.nadeMk(); X.scene.add(o); X.nadeObjs.push(o); }
     X.nadeObjs.forEach((o, i) => { const n = NS[i]; o.visible = !!n; if (n) { o.position.set(n.x, n.y, n.z); o.rotation.set(n.spin, n.spin * .6, 0); } });
     while (X.walls.length < M.walls.length) addWall();
-    X.walls.forEach((m, i) => { const w = M.walls[i]; m.visible = !!w; if (w) { m.scale.set(w.x1 - w.x0, 3 * w.grow + .01, w.z1 - w.z0); m.position.set((w.x0 + w.x1) / 2, 1.5 * w.grow, (w.z0 + w.z1) / 2); } });
+    X.walls.forEach((m, i) => { const w = M.walls[i]; m.visible = !!w && !w.front; if (w) { m.scale.set(w.x1 - w.x0, 3 * w.grow + .01, w.z1 - w.z0); m.position.set((w.x0 + w.x1) / 2, 1.5 * w.grow, (w.z0 + w.z1) / 2); } });
     X.charge.visible = !!M.planted && !(M.phase === 'end' && M.last && M.last.why === 'boom');
     if (M.planted) { const C = M.planted, lit = !M.defused && C.beep > Math.max(.06, cl(C.t / 12, .12, 1) - .08); X.charge.position.set(C.x, C.y, C.z); X.chargePL.position.set(C.x, C.y + .7, C.z); X.chargeLamp.material.color.set(M.defused ? YOU : lit ? WARN : '#401018'); X.chargePL.intensity = lit && X.charge.visible ? 2.4 : 0; }
     else X.chargePL.intensity = 0;
-    kitFx(dt); stepKillFx(dt); animKit(X.viewGun, dt); lootFx(dt);
+    kitFx(dt); kitFx2(dt); stepKillFx(dt); animKit(X.viewGun, dt); lootFx(dt);
     const fl = M.flares[0]; X.flareBall.visible = !!fl; if (fl) X.flareBall.position.set(fl.x, fl.y, fl.z);
     // tracers, sparks, lights fading
     for (const t of X.tracers) { const u = t.userData; if (!u.live) continue; u.age += dt;
@@ -7195,6 +7443,7 @@ const GAME = {
      Everything here is unlit and made up front in small pools (buildKitFx), so nothing new has to compile in the middle of
      a round. Traps and mines are shown to their own team, and to rivals only once they are close. */
   function buildKitFx() {
+    X.kf2mats = [];   // (every energy material, its clock moved each frame by kitFx2)
     const add = o => { X.scene.add(o); return o; }, glow = (c, o) => new THREE.MeshBasicMaterial(Object.assign({ color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }, o || {}));
     const flameT = canvasTex(64, 128, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h * .78, 2, w / 2, h * .62, h * .6); gr.addColorStop(0, 'rgba(255,250,210,1)'); gr.addColorStop(.25, 'rgba(255,190,80,.95)'); gr.addColorStop(.6, 'rgba(255,90,20,.55)'); gr.addColorStop(1, 'rgba(120,20,0,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(w / 2, 0); g.bezierCurveTo(w * 1.05, h * .5, w * .95, h, w / 2, h); g.bezierCurveTo(w * .05, h, -w * .05, h * .5, w / 2, 0); g.fill(); });
     const poolT = canvasTex(128, 128, (g, w, h) => { const gr = g.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, 'rgba(255,200,90,.95)'); gr.addColorStop(.55, 'rgba(255,100,20,.6)'); gr.addColorStop(1, 'rgba(255,60,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
@@ -7241,7 +7490,7 @@ const GAME = {
     X.kf.orbs = []; for (let i = 0; i < 3; i++) { const g = add(new THREE.Group()), gem = new THREE.Mesh(new THREE.OctahedronGeometry(.32, 0), glow('#b8f0ff', { opacity: .95 })); gem.position.y = 1.1; g.add(gem);
       const halo = new THREE.Mesh(new THREE.OctahedronGeometry(.5, 0), glow('#5ad1ff', { opacity: .25, wireframe: true })); halo.position.y = 1.1; g.add(halo); const base = disc(.9, glow('#5ad1ff', { map: ringT, opacity: .5 })); base.position.y = .03; g.add(base); g.userData = { gem, halo }; g.visible = false; X.kf.orbs.push(g); }
     X.kf.beams = []; for (let i = 0; i < 3; i++) { const m = add(new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 1, 8, 1, true), glow('#b6ff8a', { opacity: .9 }))); m.visible = false; X.kf.beams.push(m); }
-    X.kf.domes = []; for (let i = 0; i < 2; i++) { const g = add(new THREE.Group()), dome = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 14, 0, TAU, 0, Math.PI / 2), glow('#5aa0ff', { opacity: .22, wireframe: true })); g.add(dome);
+    X.kf.domes = []; for (let i = 0; i < 2; i++) { const g = add(new THREE.Group()), dome = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 20, 0, TAU, 0, Math.PI / 2), energyMat('#5aa0ff', { hex: 9, rim: 1.3, scan: .8, rx: 4, base: .05 }));   // (79-kitfx2: the energy look) g.add(dome);
       const core = new THREE.Mesh(new THREE.CylinderGeometry(.22, .28, .5, 10), lit('#2a2e36')); core.position.y = .25; g.add(core); const eye = new THREE.Mesh(new THREE.SphereGeometry(.12, 10, 8), glow('#5aa0ff', { opacity: 1 })); eye.position.y = .58; g.add(eye); g.userData = { dome, eye }; g.visible = false; X.kf.domes.push(g); }
     X.kf.chans = []; for (let i = 0; i < 2; i++) { const g = add(new THREE.Group()); for (let k = 0; k < 3; k++) { const r = new THREE.Mesh(new THREE.TorusGeometry(.7 + k * .25, .04, 6, 28), glow('#8f6bff', { opacity: .7 })); r.rotation.x = Math.PI / 2; g.add(r); }
       const col = new THREE.Mesh(new THREE.CylinderGeometry(.6, .9, 3.2, 20, 1, true), glow('#3a1a7a', { opacity: .35 })); col.position.y = 1.6; g.add(col); g.visible = false; X.kf.chans.push(g); }
@@ -7282,14 +7531,176 @@ const GAME = {
     // the ultimates: orbs waiting to be taken, Piercer's bolts, Lockdown's dome, Nightwalk gathering and where it comes out
     list(kf.orbs, M.orbs && M.orbs.filter(o => !o.taken), (g, o, i) => { g.position.set(o.x, hAt(o.x, o.z), o.z); g.userData.gem.rotation.y = X.t * 2 + i; g.userData.gem.position.y = 1.1 + Math.sin(X.t * 2.4 + i) * .12; g.userData.halo.rotation.y = -X.t; g.userData.halo.position.y = g.userData.gem.position.y; });
     list(kf.beams, K2 && K2.bolts, (m, B) => { const dx = B.b[0] - B.a[0], dy = B.b[1] - B.a[1], dz = B.b[2] - B.a[2], L = Math.hypot(dx, dy, dz); m.position.set(B.a[0] + dx / 2, B.a[1] + dy / 2, B.a[2] + dz / 2); m.scale.set(1 + (.5 - B.t) * 3, L, 1 + (.5 - B.t) * 3); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx / L, dy / L, dz / L)); m.material.opacity = B.t / .5; });
-    list(kf.domes, K2 && K2.locks, (g, L) => { const k = 1 - L.t / L.T; g.position.set(L.x, L.y, L.z); g.userData.dome.scale.setScalar(.5 + k * L.R); g.userData.dome.material.opacity = .12 + k * .25; g.userData.eye.material.color.set(Math.sin(X.t * (8 + k * 30)) > 0 ? '#ffffff' : '#5aa0ff'); });
+    list(kf.domes, K2 && K2.locks, (g, L) => { const k = 1 - L.t / L.T; g.position.set(L.x, L.y, L.z); g.userData.dome.scale.setScalar(.5 + k * L.R); g.userData.dome.material.uniforms.op.value = .3 + k * .7; g.userData.dome.material.uniforms.pulse.value = k > .9 ? (k - .9) * 6 : 0; g.userData.eye.material.color.set(Math.sin(X.t * (8 + k * 30)) > 0 ? '#ffffff' : '#5aa0ff'); });
     list(kf.chans, M.fs.filter(f => f.chan && f.alive && (f.team === P.team || f === P)).flatMap(f => [[f.chan.fx, f.chan.fz, f.chan], [f.chan.x, f.chan.z, f.chan]]), (g, [x, z, c], i) => { const k = 1 - c.t / c.T; g.position.set(x, hAt(x, z), z); g.rotation.y = X.t * 3 * (i % 2 ? -1 : 1); g.scale.setScalar(i % 2 ? .4 + k * .6 : 1.2 - k * .5); });
     // status rings: Surge (yellow) under a rival, a daze (gold, over the head), a snare (green); Bulwark (amber), Overdrive (white), held by a Lockdown (blue)
     const st = []; for (const f of M.fs) { if (!f.alive || f === P) continue; if (f.surge > 0) st.push([f, '#ffe14d', .05, .55]); if (f.daze > 0) st.push([f, '#ffd23f', eyeY(f) + .35, .3]); if (f.snare > 0) st.push([f, '#7bd65a', .05, .75]);
       if (f.guard > 0) st.push([f, '#ffb347', 1.1, .7]); if (f.od > 0) st.push([f, '#ffffff', .1, .9]); if (f.lock > 0) st.push([f, '#5aa0ff', eyeY(f) + .3, .45]); }
     list(kf.rings, st, (m, [f, c, y, r]) => { m.position.set(ipos(f, 'x'), ipos(f, 'y') + y, ipos(f, 'z')); m.scale.setScalar(r * (1 + Math.sin(X.t * 8) * .08)); m.material.color.set(c); m.rotation.z = X.t * 2; });
   }
-  function hideKitFx() { if (!X.kf) return; for (const k of ['fires', 'darts', 'pulses', 'bombs', 'waves', 'shells', 'mines', 'snares', 'sentries', 'rings', 'booms', 'orbs', 'beams', 'domes', 'chans']) for (const m of X.kf[k]) m.visible = false; }
+  function hideKitFx() { hideKitFx2(); if (!X.kf) return; for (const k of ['fires', 'darts', 'pulses', 'bombs', 'waves', 'shells', 'mines', 'snares', 'sentries', 'rings', 'booms', 'orbs', 'beams', 'domes', 'chans']) for (const m of X.kf[k]) m.visible = false; }
+  /* ---------- 79 kit effects, second part: the C abilities, Vanta, aiming previews, and the energy look ----------
+     ENERGY: one shader for everything made of light (Phase Front, the Duel Field's dome, Overcharge's charge, a Slow Field,
+     wards): a drifting hex lattice whose cells flicker, scan lines climbing it, a rim that brightens where you see it edge
+     on, and a pulse it can be struck with. PREVIEWS: while you hold an ability ready, where it will go is drawn in the
+     world in your operative's colour: a ring where it lands, a dotted arc for a throw, a ghost of a wall, a line for a beam.
+     Everything is made up front (buildKitFx2) so nothing compiles in the middle of a round. */
+  const ENERGY_VS = 'varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying vec3 vW; void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); vV = normalize(cameraPosition - w.xyz); gl_Position = projectionMatrix * viewMatrix * w; }';
+  const ENERGY_FS = [
+    'uniform vec3 col; uniform float t, op, hexS, scan, rim, pulse, base; uniform vec2 rep; varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying vec3 vW;',
+    'float hexd(vec2 p){ p = abs(p); return max(dot(p, vec2(.5, .8660254)), p.x); }',
+    'vec4 hexg(vec2 p){ vec2 r = vec2(1., 1.7320508), h = r * .5; vec2 a = mod(p, r) - h, b = mod(p - h, r) - h; vec2 g = dot(a, a) < dot(b, b) ? a : b; return vec4(g, p - g); }',
+    'void main(){ vec4 H = hexg(vUv * rep * hexS + vec2(0., t * .12)); float e = .5 - hexd(H.xy), edge = smoothstep(.07, .0, e) * step(.001, hexS);',
+    '  float cell = fract(sin(dot(floor(H.zw * 10.), vec2(12.9898, 78.233))) * 43758.5453), flick = step(.93, fract(cell * 7.31 + t * .5)) * .7;',
+    '  float sc = scan * pow(.5 + .5 * sin(vW.y * 14. - t * 5.), 6.), fr = pow(1. - abs(dot(normalize(vN), vV)), 2.2) * rim;',
+    '  float a = op * (base + edge * .65 + flick * .4 * step(.001, hexS) + sc * .5 + fr + pulse);',
+    '  vec3 c = mix(col * .55, col, clamp(edge + fr + pulse, 0., 1.)) + vec3(1.) * (edge * .25 + pulse * .6 + flick * .15);',   // (deeper in the cells, hot at the edges)
+    '  gl_FragColor = vec4(c, clamp(a * .85, 0., .92)); }'].join('\n');
+  function energyMat(col, o = {}) {
+    const m = new THREE.ShaderMaterial({ uniforms: { col: { value: new THREE.Color(col) }, t: { value: 0 }, op: { value: o.op == null ? 1 : o.op }, hexS: { value: o.hex == null ? 3 : o.hex }, scan: { value: o.scan || 0 }, rim: { value: o.rim == null ? .7 : o.rim }, pulse: { value: 0 }, base: { value: o.base == null ? .12 : o.base }, rep: { value: new THREE.Vector2(o.rx || 1, o.ry || 1) } },
+      vertexShader: ENERGY_VS, fragmentShader: ENERGY_FS, transparent: true, depthWrite: false, blending: o.add ? THREE.AdditiveBlending : THREE.NormalBlending, side: THREE.DoubleSide });   // (normal blending by default: on a bright map, light added to light is only white)
+    (X.kf2mats || (X.kf2mats = [])).push(m); return m;
+  }
+  function buildKitFx2() {
+    const add = o => { X.scene.add(o); o.visible = false; return o; }, glowT = X.glowT || (X.glowT = canvasTex(64, 64, g => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.35, 'rgba(255,255,255,.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }));
+    const basic = (col, o) => new THREE.MeshBasicMaterial(Object.assign({ color: col, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }, o || {}));
+    const smokeT = canvasTex(128, 128, (g, w, h) => { for (let i = 0; i < 26; i++) { const x = 30 + Math.random() * 68, y = 30 + Math.random() * 68, r = 14 + Math.random() * 26, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,.22)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); } });
+    const sprite = (col, s, blend = THREE.AdditiveBlending, map = glowT) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map, color: col, transparent: true, depthWrite: false, blending: blend, toneMapped: false })); sp.scale.setScalar(s); return sp; };
+    const flat = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.rotation.x = -Math.PI / 2; return m; };
+    const K = X.kf2 = { glowT };
+    // previews
+    K.pvRing = add(flat(new THREE.RingGeometry(.86, 1, 56), basic('#ffffff', { opacity: .95, blending: THREE.NormalBlending }))); K.pvDisc = add(flat(new THREE.CircleGeometry(1, 48), basic('#ffffff', { opacity: .2, blending: THREE.NormalBlending })));
+    { const n = 40, geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); K.pvArc = add(new THREE.Points(geo, new THREE.PointsMaterial({ size: .2, map: glowT, color: '#ffffff', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }))); K.pvArc.frustumCulled = false; }
+    K.pvWall = add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), energyMat('#ffffff', { hex: 6, op: .55, scan: 1, rx: 2 })));
+    K.pvBeam = add(new THREE.Mesh(new THREE.CylinderGeometry(.018, .018, 1, 6, 1, true), basic('#ffffff', { opacity: .7 }))); K.pvBeam.geometry.translate(0, .5, 0); K.pvBeam.geometry.rotateX(Math.PI / 2);   // (laid along +z, one long)
+    K.pvMark = add(sprite('#ffffff', .8, THREE.NormalBlending));
+    // Phase Front, the Duel Field, a Slow Field
+    K.fronts = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), m = new THREE.Mesh(new THREE.PlaneGeometry(6, 3), energyMat(OPS.vanta.col, { hex: 5, scan: 1, rx: 2, base: .16, rim: 0 })); m.position.y = 1.5; g.add(m);
+      const edge = new THREE.Mesh(new THREE.BoxGeometry(6, .05, .05), basic(OPS.vanta.col)); edge.position.y = 3; g.add(edge); const foot = edge.clone(); foot.position.y = .02; g.add(foot); g.userData = { m, edge, foot }; K.fronts.push(add(g)); }
+    K.domes = []; for (let i = 0; i < 2; i++) { const g = new THREE.Group(), geo = new THREE.SphereGeometry(1, 48, 24, 0, TAU, 0, Math.PI / 2), shade = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: '#160a1e', transparent: true, opacity: .55, depthWrite: false, side: THREE.DoubleSide }));
+      const skin = new THREE.Mesh(geo, energyMat(OPS.vanta.col, { hex: 10, rim: 1.3, scan: .6, rx: 4, ry: 1, base: .06 })), floor = flat(new THREE.RingGeometry(.97, 1, 72), basic(OPS.vanta.col, { opacity: .9 })); floor.position.y = .03; g.add(shade, skin, floor); g.userData = { shade, skin, floor }; K.domes.push(add(g)); }
+    K.fields = []; for (let i = 0; i < 2; i++) { const g = new THREE.Group(), disc = flat(new THREE.CircleGeometry(1, 48), energyMat('#9fe8ff', { hex: 7, rim: 0, base: .14 })), dome = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 12, 0, TAU, 0, Math.PI / 2), energyMat('#9fe8ff', { hex: 0, rim: 1, base: .0, scan: .5 })), rim = flat(new THREE.RingGeometry(.96, 1, 56), basic('#c8f4ff', { opacity: .8 }));
+      disc.position.y = .04; rim.position.y = .05; dome.scale.set(1, .35, 1); g.add(disc, dome, rim); g.userData = { disc, dome, rim }; K.fields.push(add(g)); }
+    // Overcharge's charge: a turning hex with a hot core; and wards round a fighter
+    K.hexes = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), hx = new THREE.Mesh(new THREE.CylinderGeometry(.24, .24, .07, 6), energyMat(OPS.vanta.col, { hex: 0, rim: 1, base: .5 })); hx.rotation.x = Math.PI / 2; const core = sprite('#ffffff', .45), halo = sprite(OPS.vanta.col, 1.2); g.add(hx, core, halo); g.userData = { hx, core, halo }; K.hexes.push(add(g)); }
+    K.wards = []; for (let i = 0; i < 5; i++) K.wards.push(add(new THREE.Mesh(new THREE.SphereGeometry(.62, 24, 16), energyMat(OPS.vanta.col, { hex: 6, rim: 1.2, base: .02, op: .8 }))));
+    // the lobbed ones in flight, Gloom's dark, the Watcher, a Tether's anchor, Sunder's bolt, the Duel Field's beam, Flashpoint's flight
+    K.lobs = []; for (let i = 0; i < 6; i++) { const g = new THREE.Group(), core = new THREE.Mesh(new THREE.SphereGeometry(.07, 10, 8), basic('#ffffff', { blending: THREE.NormalBlending, transparent: false })), halo = sprite('#ffffff', .6); g.add(core, halo); g.userData = { core, halo }; K.lobs.push(add(g)); }
+    K.glooms = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), puffs = []; for (let k = 0; k < 10; k++) { const s = sprite('#1a0f2a', 2, THREE.NormalBlending, smokeT); s.material.opacity = .9; g.add(s); puffs.push(s); } const glow = sprite(OPS.vex.col, 3); g.add(glow); g.userData = { puffs, glow }; K.glooms.push(add(g)); }
+    K.eyes = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), ball = new THREE.Mesh(new THREE.SphereGeometry(.09, 14, 10), new THREE.MeshBasicMaterial({ color: '#e8fffb' })), iris = new THREE.Mesh(new THREE.TorusGeometry(.055, .014, 6, 18), basic(OPS.iris.col, { blending: THREE.NormalBlending, transparent: false })), pupil = new THREE.Mesh(new THREE.CircleGeometry(.03, 12), new THREE.MeshBasicMaterial({ color: '#06201c' }));
+      iris.position.z = -.075; pupil.position.z = -.088; pupil.rotation.y = Math.PI; const cone = new THREE.Mesh(new THREE.ConeGeometry(Math.tan(.9) * 6, 6, 24, 1, true), energyMat(OPS.iris.col, { hex: 0, rim: 0, base: .08, scan: 1 })); cone.rotation.x = Math.PI / 2; cone.position.z = -3;
+      const halo = sprite(OPS.iris.col, .7); g.add(ball, iris, pupil, cone, halo); g.userData = { iris, cone, halo }; K.eyes.push(add(g)); }
+    K.anchors = []; for (let i = 0; i < 2; i++) { const g = new THREE.Group(), ring = flat(new THREE.RingGeometry(.35, .42, 32), basic(OPS.wraith.col)), ring2 = flat(new THREE.RingGeometry(.18, .22, 6), basic('#ffffff')), beam = new THREE.Mesh(new THREE.CylinderGeometry(.04, .2, 1.6, 12, 1, true), energyMat(OPS.wraith.col, { hex: 0, rim: 0, base: .25, scan: 1 }));
+      ring.position.y = ring2.position.y = .04; beam.position.y = .8; g.add(ring, ring2, beam); g.userData = { ring, ring2, beam }; K.anchors.push(add(g)); }
+    K.sunders = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), streak = new THREE.Mesh(new THREE.CylinderGeometry(.03, .09, 2.4, 8, 1, true), basic(OPS.vanta.col)); streak.geometry.rotateX(Math.PI / 2); const head = sprite('#ffffff', .7), halo = sprite(OPS.vanta.col, 1.8); g.add(streak, head, halo); K.sunders.push(add(g)); }
+    K.beams = []; for (let i = 0; i < 2; i++) { const m = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 1, 8, 1, true), basic(OPS.vanta.col)); m.geometry.translate(0, .5, 0); m.geometry.rotateX(Math.PI / 2); m.userData.t = 9; K.beams.push(add(m)); }
+    K.flights = []; for (let i = 0; i < 2; i++) { const s = sprite('#fff6d6', .5); s.userData.t = 9; K.flights.push(add(s)); }
+    // bursts: rings across the floor, shells that swell and fade, pillars of light (a pool each)
+    K.bRings = []; for (let i = 0; i < 8; i++) K.bRings.push(add(flat(new THREE.RingGeometry(.86, 1, 48), basic('#ffffff'))));
+    K.bShells = []; for (let i = 0; i < 6; i++) K.bShells.push(add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), energyMat('#ffffff', { hex: 5, rim: 1.2, base: .1 }))));
+    K.bPillars = []; for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 24, 1, true), energyMat('#ffffff', { hex: 0, rim: .8, base: .25, scan: 1 })); m.geometry.translate(0, .5, 0); K.bPillars.push(add(m)); }
+    K.bursts = [];
+    // other players' readied abilities: a glow in the hand
+    K.rdy = []; for (let i = 0; i < 6; i++) K.rdy.push(add(sprite('#ffffff', .4)));
+  }
+  // a burst: kind 'ring' | 'shell' | 'pillar', where, colour, size, how long
+  function burst(kind, x, y, z, col, r, T, h) { const K = X && X.kf2; if (!K) return; K.bursts.push({ kind, x, y, z, col, r, T, t: 0, h: h || 3 }); }
+  // the preview for a readied ability: what kind, and where (from the same sums the ability uses)
+  const PV = { vexe: 'spot', irise: 'mark', vexx: 'spot', axiomx: 'self', bastionq: 'wall', embere: 'haze', talone: 'floor', axiomq: 'floor', axiome: 'floor', bastionc: 'floor', wraithc: 'floor',
+    emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', wraithe: 'spot', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'beam' };
+  const PV_R = { vexe: 3.8, vexx: 1, axiomx: 14, emberq: 3.2, emberx: 5.5, vexc: 6, talonc: 3.5, axiomc: 5, wraithe: 1.2, talone: 1.3, axiomq: .6, axiome: 2.2, bastionc: 6, wraithc: .5, novae: 4.5 };
+  function previewFrame(P) {
+    const K = X.kf2; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false;
+    if (!P || !P.alive || !P.rdy || P.net) return; const key = P.op + P.rdy, kind = PV[key]; if (!kind) return;
+    const d = abData(P, P.rdy, false), col = (OPS[P.op] || OPS.vex).col, pulse = .75 + .25 * Math.sin(X.t * 6), R = PV_R[key] || 1;
+    const ring = (x, y, z, r, bad) => { K.pvRing.visible = K.pvDisc.visible = true; K.pvRing.position.set(x, y + .04, z); K.pvDisc.position.set(x, y + .035, z); K.pvRing.scale.setScalar(r); K.pvDisc.scale.setScalar(r); K.pvRing.material.color.set(bad ? WARN : col); K.pvDisc.material.color.set(bad ? WARN : col); K.pvRing.material.opacity = .95 * pulse; K.pvRing.rotation.z = X.t * .5; };
+    if (!d) { const S = castShot(P, viewDir(P.yaw, P.pitch)); K.pvMark.visible = true; K.pvMark.position.set(S.end[0], S.end[1], S.end[2]); K.pvMark.material.color.set(WARN); return; }   // nowhere it can go
+    if (kind === 'spot') ring(d.x, hAt(d.x, d.z), d.z, R);
+    else if (kind === 'self') ring(P.x, P.y, P.z, R);
+    else if (kind === 'floor') ring(d.x, hAt(d.x, d.z), d.z, R);
+    else if (kind === 'mark') { K.pvMark.visible = true; K.pvMark.position.set(d.x, d.y, d.z); K.pvMark.material.color.set(col); K.pvMark.scale.setScalar(.5 * pulse + .2); if (key === 'novae') ring(d.x, d.y - 1, d.z, R); }
+    else if (kind === 'eye') { K.pvMark.visible = true; K.pvMark.position.set(d.x, d.y, d.z); K.pvMark.material.color.set(col); K.pvMark.scale.setScalar(.6 * pulse); }
+    else if (kind === 'lob' || kind === 'dart') {   // the throw, flown ahead: dots along its path, a ring where it comes down
+      const pos = K.pvArc.geometry.attributes.position, g2 = kind === 'dart' ? 4 : key === 'emberq' || key === 'emberx' ? 14 : LOB_G; let x = d.x, y = d.y, z = d.z, vx = d.vx, vy = d.vy, vz = d.vz, n = 0, landed = false, bounce = key === 'talonc' ? 1 : 0;
+      for (let s = 0; s < 160 && n < 40; s++) { const dt2 = 1 / 40; vy -= g2 * dt2; const sp = Math.hypot(vx, vy, vz) || 1, st = sp * dt2, hit = rayGrid(x, y, z, vx / sp, vy / sp, vz / sp, st + .05);
+        if (hit < st + .05) { x += vx / sp * Math.max(0, hit - .08); y += vy / sp * Math.max(0, hit - .08); z += vz / sp * Math.max(0, hit - .08); if (bounce-- > 0 && kind !== 'dart') { const nn = rayN, dot = vx * nn[0] + vy * nn[1] + vz * nn[2]; vx = (vx - 2 * dot * nn[0]) * .45; vy = (vy - 2 * dot * nn[1]) * .45; vz = (vz - 2 * dot * nn[2]) * .45; continue; } landed = true; break; }
+        x += vx * dt2; y += vy * dt2; z += vz * dt2; if (s % 2 === 0) { pos.setXYZ(n++, x, y, z); } }
+      for (let i = n; i < 40; i++) pos.setXYZ(i, x, y, z); pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); K.pvArc.material.opacity = .9;
+      if (landed && kind === 'lob') ring(x, hAt(x, z), z, R); else if (landed) { K.pvMark.visible = true; K.pvMark.position.set(x, y, z); K.pvMark.material.color.set(col); } }
+    else if (kind === 'wall' || kind === 'haze' || kind === 'front') {
+      let cx, cz, w, h = 3, ax; if (kind === 'wall') { cx = d.x; cz = d.z; ax = d.ax; w = 5.2; } else if (kind === 'haze') { cx = d.x; cz = d.z; ax = Math.abs(d.pz) > Math.abs(d.px) ? 1 : 0; w = 9.4; h = 2.6; } else { cx = d.x + (d.ax ? d.dir * 1.2 : 0); cz = d.z + (d.ax ? 0 : d.dir * 1.2); ax = d.ax; w = 6; }
+      K.pvWall.visible = true; K.pvWall.position.set(cx, hAt(cx, cz) + h / 2, cz); K.pvWall.scale.set(ax ? .12 : w, h, ax ? w : .12); K.pvWall.material.uniforms.col.value.set(col); K.pvWall.material.uniforms.op.value = .45 + .15 * pulse;
+      if (kind === 'front') { const L = 14, ex = cx + (d.ax ? d.dir * L : 0), ez = cz + (d.ax ? 0 : d.dir * L); K.pvBeam.visible = true; K.pvBeam.position.set(cx, hAt(cx, cz) + .05, cz); K.pvBeam.lookAt(ex, hAt(cx, cz) + .05, ez); K.pvBeam.scale.set(3, 3, L); K.pvBeam.material.color.set(col); K.pvBeam.material.opacity = .45; } }
+    else if (kind === 'curve') { const pos = K.pvArc.geometry.attributes.position, e = eyeY(P); for (let i = 0; i < 40; i++) { const q = i / 39, a = Math.min(1, q * 2), b = Math.max(0, q * 2 - 1); pos.setXYZ(i, lp(P.x, d.ax, a) + (d.x - d.ax) * b, e + .3 * q, lp(P.z, d.az, a) + (d.z - d.az) * b); } pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); K.pvMark.visible = true; K.pvMark.position.set(d.x, d.y, d.z); K.pvMark.material.color.set('#fff6d6'); }
+    else if (kind === 'beam') { const e = eyeY(P), v = viewDir(P.yaw, P.pitch), L = key === 'vantax' ? 40 : 35, ex = key === 'vantax' ? d.ex : P.x + v[0] * L, ey = key === 'vantax' ? d.ey : e + v[1] * L, ez = key === 'vantax' ? d.ez : P.z + v[2] * L;
+      K.pvBeam.visible = true; K.pvBeam.position.set(P.x + v[0] * .8, e - .25, P.z + v[2] * .8); K.pvBeam.lookAt(ex, ey, ez); K.pvBeam.scale.set(key === 'vantax' && d.t ? 2.2 : 1, key === 'vantax' && d.t ? 2.2 : 1, Math.hypot(ex - P.x, ey - e, ez - P.z)); K.pvBeam.material.color.set(key === 'vantax' && !d.t ? DIM : col); K.pvBeam.material.opacity = .55 * pulse;
+      if (key === 'vantax' && d.t) { K.pvMark.visible = true; K.pvMark.position.set(ex, ey, ez); K.pvMark.material.color.set(col); K.pvMark.scale.setScalar(1.1 * pulse); } }
+  }
+  function kitFx2(dt) {
+    const K = X.kf2, K2 = M.kit; if (!K || !K2) return; const P = me(), Vw = viewer();
+    for (const m of X.kf2mats) m.uniforms.t.value = X.t;
+    const list = (pool, items, fn) => pool.forEach((m, i) => { const it = items && items[i]; m.visible = !!it; if (it) fn(m, it, i); });
+    previewFrame(P);
+    list(K.fronts, M.walls.filter(w => w.front), (g, w) => { const F = w.front, cx = (w.x0 + w.x1) / 2, cz = (w.z0 + w.z1) / 2, fade = F.hold > 4.4 ? (5 - F.hold) / .6 : 1, k = Math.min(1, w.grow);
+      g.position.set(cx, hAt(F.x, F.z), cz); g.rotation.y = F.ax ? Math.PI / 2 : 0; g.scale.set(1, k, 1); g.userData.m.material.uniforms.op.value = .85 * fade; g.userData.m.material.uniforms.pulse.value = Math.max(0, g.userData.m.material.uniforms.pulse.value - dt * 3); g.userData.edge.material.opacity = g.userData.foot.material.opacity = fade; });
+    // the Duel Field: a dome where it stands; inside, the dome's dark is the world outside going dim
+    const duels = []; for (const f of M.fs) if (f.duel && f.duel.a === f) duels.push(f.duel);
+    list(K.domes, duels, (g, D) => { g.position.set(D.x, hAt(D.x, D.z) - .1, D.z); const k = Math.min(1, (X.t - (D.vt || (D.vt = X.t))) / .4); g.scale.set(D.r * k, D.r * 1.15 * k, D.r * k); const inside = Vw && Vw.duel === D; g.userData.shade.material.opacity = inside ? .42 : .72; g.userData.skin.material.uniforms.op.value = inside ? .7 : 1; });
+    list(K.fields, K2.fields, (g, F) => { const k = Math.min(1, (F.T - F.t) / .3) * Math.min(1, F.t / .5); g.position.set(F.x, F.y, F.z); g.scale.setScalar(F.r * (.6 + .4 * k)); g.userData.disc.material.uniforms.op.value = k; g.userData.dome.material.uniforms.op.value = k * .8; g.userData.rim.material.opacity = k * (.6 + .3 * Math.sin(X.t * 4)); g.userData.disc.rotation.z = X.t * .3;
+      if (Math.random() < dt * 10) spark([F.x + rnd(-F.r, F.r) * .7, F.y + .1, F.z + rnd(-F.r, F.r) * .7], [0, rnd(.4, 1.2), 0], '#c8f4ff', .8); });
+    list(K.hexes, K2.hexes.filter(h => h.by === P || h.by.team === P.team), (g, h) => { g.position.set(h.x, h.y + Math.sin(X.t * 3) * .06, h.z); g.userData.hx.rotation.z = X.t * 2.5; g.rotation.y = X.t; const k = Math.min(1, h.t / .4); g.scale.setScalar(k * (1 + .08 * Math.sin(X.t * 12))); g.userData.halo.material.opacity = .6 + .3 * Math.sin(X.t * 8); });
+    list(K.wards, M.fs.filter(f => f.alive && f !== Vw && (f.ward > 0 || f.wardV) && duelOk(Vw, f)), (m, f) => { m.position.set(ipos(f, 'x'), ipos(f, 'y') + 1.05, ipos(f, 'z')); m.scale.set(1, 1.55, 1); m.material.uniforms.op.value = .55 + .15 * Math.sin(X.t * 5); });
+    list(K.lobs, K2.lobs, (g, B) => { const col = (OPS[B.by.op] || OPS.vex).col; g.position.set(B.x, B.y, B.z); g.userData.halo.material.color.set(B.k === 'vexc' ? '#5a2a9a' : col); g.userData.core.material.color.set(B.k === 'vexc' ? '#120a1c' : '#ffffff'); g.userData.halo.scale.setScalar(.55 + .15 * Math.sin(X.t * 20));
+      if (Math.random() < .7) spark([B.x, B.y, B.z], [rnd(-.3, .3), rnd(-.2, .4), rnd(-.3, .3)], B.k === 'talonc' ? '#d8ffb0' : col, .35); });
+    list(K.glooms, K2.glooms, (g, G2) => { const k = Math.min(1, (3.5 - G2.t) / .25) * Math.min(1, G2.t / .8); g.position.set(G2.x, G2.y + 1, G2.z); g.userData.puffs.forEach((s, i) => { const a = i * 2.4 + X.t * (.3 + i * .03), r = 1.2 + (i % 3) * 1.3; s.position.set(Math.cos(a) * r, Math.sin(i * 1.7 + X.t) * .6, Math.sin(a) * r); s.scale.setScalar((2.6 + (i % 4)) * k); s.material.opacity = .85 * k; s.material.rotation = X.t * .2 + i; });
+      g.userData.glow.material.opacity = .5 * k; g.userData.glow.scale.setScalar(4 * k); });
+    list(K.eyes, K2.eyes.filter(W => W.by.team === P.team || Math.hypot(W.x - P.x, W.z - P.z) < 12), (g, W) => { g.position.set(W.x, W.y, W.z); g.rotation.y = W.yaw; const spot = (W.flashT || 0) > X.t; g.userData.cone.visible = W.by.team === P.team; g.userData.cone.material.uniforms.op.value = spot ? 1 : .35 + .1 * Math.sin(X.t * 3); g.userData.halo.material.opacity = spot ? 1 : .5; g.userData.iris.rotation.z = X.t * 2; });
+    list(K.anchors, M.fs.filter(f => f.tether && (f.team === P.team)).map(f => f.tether), (g, T) => { g.position.set(T.x, T.y, T.z); g.userData.ring.rotation.z = X.t; g.userData.ring2.rotation.z = -X.t * 1.6; g.userData.beam.material.uniforms.op.value = .6 + .2 * Math.sin(X.t * 4); });
+    list(K.sunders, K2.sunders, (g, B) => { g.position.set(B.x + B.dx * B.s, B.y + B.dy * B.s, B.z + B.dz * B.s); g.lookAt(g.position.x + B.dx, g.position.y + B.dy, g.position.z + B.dz); if (Math.random() < .8) spark([g.position.x, g.position.y, g.position.z], [rnd(-.5, .5), rnd(-.5, .5), rnd(-.5, .5)], OPS.vanta.col, .3); });
+    for (const m of K.beams) { const u = m.userData; u.t += dt; m.visible = u.t < .45; if (m.visible) { m.material.opacity = 1 - u.t / .45; m.scale.x = m.scale.y = 1 + u.t * 4; } }
+    for (const s of K.flights) { const u = s.userData; u.t += dt; s.visible = u.t < .55; if (s.visible && u.d) { const q = u.t / .55, a = Math.min(1, q * 2), b = Math.max(0, q * 2 - 1); s.position.set(lp(u.x0, u.d.ax, a) + (u.d.x - u.d.ax) * b, lp(u.y0, u.d.y, q), lp(u.z0, u.d.az, a) + (u.d.z - u.d.az) * b); s.scale.setScalar(.5 + .2 * Math.sin(X.t * 30)); if (Math.random() < .8) spark([s.position.x, s.position.y, s.position.z], [0, 0, 0], '#ffd27a', .25); } }
+    // bursts
+    const live = K.bursts.filter(b => (b.t += dt) < b.T); K.bursts = live; const byKind = k => live.filter(b => b.kind === k);
+    list(K.bRings, byKind('ring'), (m, b) => { const q = b.t / b.T, e = 1 - Math.pow(1 - q, 3); m.position.set(b.x, b.y + .05, b.z); m.scale.setScalar(.2 + e * b.r); m.material.color.set(b.col); m.material.opacity = 1 - q; });
+    list(K.bShells, byKind('shell'), (m, b) => { const q = b.t / b.T, e = 1 - Math.pow(1 - q, 2.5); m.position.set(b.x, b.y, b.z); m.scale.setScalar(.2 + e * b.r); m.material.uniforms.col.value.set(b.col); m.material.uniforms.op.value = 1 - q; m.material.uniforms.pulse.value = (1 - q) * .4; });
+    list(K.bPillars, byKind('pillar'), (m, b) => { const q = b.t / b.T; m.position.set(b.x, b.y, b.z); m.scale.set(b.r * (1 - q * .5), b.h * Math.min(1, q * 5), b.r * (1 - q * .5)); m.material.uniforms.col.value.set(b.col); m.material.uniforms.op.value = 1 - q; });
+    // other players holding an ability ready: it glows in their off hand
+    list(K.rdy, M.fs.filter(f => f !== Vw && f.alive && f.rdy && duelOk(Vw, f) && (f.team === P.team || canSee(P, f) || f.reveal > 0)), (s, f) => { const y = f.yaw, rx = Math.cos(y), rz = -Math.sin(y), fx = -Math.sin(y), fz = -Math.cos(y); s.position.set(ipos(f, 'x') - rx * .24 + fx * .38, ipos(f, 'y') + 1.2 + lp(0, -.4, f.crouch), ipos(f, 'z') - rz * .24 + fz * .38);   // (in the off hand: left of them and ahead)
+      s.material.color.set((OPS[f.op] || OPS.vex).col); s.scale.setScalar(.35 + .1 * Math.sin(X.t * 12)); });
+    // Gloom: the fog closes in round you while it lasts
+    { const k = Vw && Vw.murk > 0 ? Math.min(1, Vw.murk / .4, (3.5 - Vw.murk) / .25 + .2) : 0, fog = X.scene.fog;
+      if (k > 0) { if (!X.murkBase) X.murkBase = { near: fog.near, far: fog.far, col: fog.color.clone(), bg: X.scene.background && X.scene.background.isColor ? X.scene.background.clone() : null };
+        const B = X.murkBase, dark = new THREE.Color('#0c0714'); fog.near = lp(B.near, 1.2, k); fog.far = lp(B.far, 7, k); fog.color.copy(B.col).lerp(dark, k); if (B.bg) X.scene.background.copy(B.bg).lerp(dark, k); }
+      else if (X.murkBase) { const B = X.murkBase; fog.near = B.near; fog.far = B.far; fog.color.copy(B.col); if (B.bg) X.scene.background.copy(B.bg); X.murkBase = null; } }
+  }
+  function hideKitFx2() { const K = X && X.kf2; if (!K) return; for (const k of ['fronts', 'domes', 'fields', 'hexes', 'wards', 'lobs', 'glooms', 'eyes', 'anchors', 'sunders', 'beams', 'flights', 'bRings', 'bShells', 'bPillars', 'rdy']) for (const m of K[k]) m.visible = false; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false; K.bursts = []; }
+  // the moments
+  const fxOk = () => X && ready && X.kf2 && M;
+  const OPC = op => (OPS[op] || OPS.vex).col;
+  on('gloomPop', G2 => { if (!fxOk()) return; burst('shell', G2.x, G2.y + .8, G2.z, OPS.vex.col, 6.5, .55); burst('ring', G2.x, G2.y, G2.z, '#b58cff', 7, .7); for (let i = 0; i < 18; i++) spark([G2.x, G2.y + 1, G2.z], [rnd(-5, 5), rnd(0, 4), rnd(-5, 5)], '#2a1440', .7); });
+  on('shockPop', S => { if (!fxOk()) return; burst('shell', S.x, S.y, S.z, '#d8ffb0', 3.8, .35); burst('ring', S.x, hAt(S.x, S.z), S.z, OPS.talon.col, 4.5, .45); X.flashL.position.set(S.x, S.y + .5, S.z); X.flashL.intensity = 16; X.shake = Math.max(X.shake || 0, .25);
+    for (let i = 0; i < 26; i++) spark([S.x, S.y + .2, S.z], [rnd(-6, 6), rnd(1, 6), rnd(-6, 6)], i % 3 ? '#e8ffd0' : '#ffffff', .5); });
+  on('lobBounce', B => { if (!fxOk()) return; for (let i = 0; i < 8; i++) spark([B.x, B.y, B.z], [rnd(-2, 2), rnd(.5, 3), rnd(-2, 2)], '#e8ffd0', .3); });
+  on('beaconPop', B => { if (!fxOk()) return; burst('pillar', B.x, B.y, B.z, OPS.bastion.col, .9, .9, 4.5); burst('ring', B.x, B.y, B.z, OPS.bastion.col, 6.5, .8); for (const f of M.fs) if (f.alive && f.team === B.by.team && Math.hypot(f.x - B.x, f.z - B.z) < 6) burst('shell', f.x, f.y + 1, f.z, '#7fc8ff', 1.1, .6); });
+  on('updraft', f => { if (!fxOk()) return; const y = hAt(f.x, f.z); burst('ring', f.x, y, f.z, OPS.nova.col, 2.4, .45); burst('ring', f.x, y + .4, f.z, '#ffffff', 1.6, .35); burst('pillar', f.x, y, f.z, OPS.nova.col, .45, .4, 3); for (let i = 0; i < 14; i++) spark([f.x + rnd(-.4, .4), y + .1, f.z + rnd(-.4, .4)], [rnd(-1, 1), rnd(4, 9), rnd(-1, 1)], '#fff6c0', .5); });
+  on('tetherSet', f => { if (!fxOk()) return; burst('ring', f.x, hAt(f.x, f.z), f.z, OPS.wraith.col, 1.4, .5); });
+  on('tetherBack', (f, a, b) => { if (!fxOk()) return; for (const p of [a, b]) { const y = hAt(p[0], p[1]); burst('pillar', p[0], y, p[1], OPS.wraith.col, .7, .5, 2.6); burst('ring', p[0], y, p[1], '#dfe6ff', 2, .5); for (let i = 0; i < 14; i++) spark([p[0], y + rnd(.2, 2), p[1]], [rnd(-1, 1), rnd(-.5, 1.5), rnd(-1, 1)], '#c8d2ff', .6); } });
+  on('curveFlash', (f, d) => { if (!fxOk()) return; const s = X.kf2.flights.find(q => q.userData.t > .55) || X.kf2.flights[0]; Object.assign(s.userData, { t: 0, d, x0: f.x, y0: eyeY(f) - .1, z0: f.z }); });
+  on('fieldStart', F => { if (!fxOk()) return; burst('shell', F.x, F.y + .3, F.z, '#c8f4ff', 5, .5); for (let i = 0; i < 20; i++) spark([F.x, F.y + .3, F.z], [rnd(-5, 5), rnd(.5, 3), rnd(-5, 5)], '#e8fbff', .6); });
+  on('sunder', (f, d) => { if (!fxOk()) return; for (let i = 0; i < 8; i++) spark([d.x, d.y, d.z], [d.dx * 6 + rnd(-1, 1), d.dy * 6 + rnd(-1, 1), d.dz * 6 + rnd(-1, 1)], OPS.vanta.col, .3); });
+  on('sundered', v => { if (!fxOk()) return; burst('shell', v.x, v.y + 1.1, v.z, OPS.vanta.col, 1.3, .5); for (let i = 0; i < 12; i++) spark([v.x, v.y + 1.1, v.z], [rnd(-3, 3), rnd(-1, 3), rnd(-3, 3)], '#ffd0ff', .4); });
+  on('overcharge', f => { if (!fxOk()) return; burst('shell', f.x, f.y + 1, f.z, OPS.vanta.col, 1.6, .5); burst('ring', f.x, hAt(f.x, f.z), f.z, OPS.vanta.col, 2.2, .5); });
+  on('hex', h => { if (!fxOk()) return; burst('shell', h.x, h.y, h.z, OPS.vanta.col, .9, .35); });
+  on('wardOn', (f, h) => { if (!fxOk()) return; burst('shell', f.x, f.y + 1, f.z, OPS.vanta.col, 1.2, .5); if (h) for (let i = 0; i < 14; i++) spark([h.x, h.y, h.z], [rnd(-3, 3), rnd(-1, 3), rnd(-3, 3)], '#ffffff', .4); });
+  on('wardBreak', f => { if (!fxOk()) return; burst('shell', f.x, f.y + 1.05, f.z, '#ffffff', 1.4, .35); for (let i = 0; i < 18; i++) spark([f.x, f.y + 1.1, f.z], [rnd(-4, 4), rnd(-1, 4), rnd(-4, 4)], OPS.vanta.col, .5); });
+  on('duelBeam', (f, d) => { if (!fxOk()) return; const m = X.kf2.beams.find(q => q.userData.t > .45) || X.kf2.beams[0], e = eyeY(f); m.userData.t = 0; m.position.set(f.x, e - .2, f.z); m.lookAt(d.ex, d.ey, d.ez); m.scale.set(1, 1, Math.hypot(d.ex - f.x, d.ey - e, d.ez - f.z)); });
+  on('duelStart', D => { if (!fxOk()) return; const y = hAt(D.x, D.z); burst('ring', D.x, y, D.z, OPS.vanta.col, D.r * 1.05, .6); burst('pillar', D.a.x, D.a.y, D.a.z, OPS.vanta.col, .8, .6, 4); burst('pillar', D.b.x, D.b.y, D.b.z, OPS.vanta.col, .8, .6, 4); X.shake = Math.max(X.shake || 0, .3); });
+  on('duelEnd', D => { if (!fxOk()) return; burst('shell', D.x, hAt(D.x, D.z), D.z, OPS.vanta.col, D.r * 1.1, .5); });
+  on('eyeSpot', W => { W.flashT = X ? X.t + .5 : 0; });
+  on('front', w => { if (!fxOk()) return; const F = w.front; burst('ring', F.x, hAt(F.x, F.z), F.z, OPS.vanta.col, 3, .4); });
+  on('flarePop', fl => { if (fxOk()) burst('shell', fl.x, fl.y, fl.z, '#fff6d6', 2.2, .3); });
+  // a bullet into Phase Front: the wall ripples
+  on('shot', (f, S) => { if (!fxOk() || !S || S.hit) return; for (const g of X.kf2.fronts) if (g.visible && Math.abs(g.position.x - S.end[0]) < 3.2 && Math.abs(g.position.z - S.end[2]) < 3.2 && S.end[1] - g.position.y < 3.1) { g.userData.m.material.uniforms.pulse.value = .5; for (let i = 0; i < 4; i++) spark(S.end, [rnd(-1, 1), rnd(-1, 1), rnd(-1, 1)], OPS.vanta.col, .25); } });
   /* ---------- 80 audio: every sound is synthesised, and placed ----------
      A sound made by the rival is quieter with distance, panned left or right by where it is relative to your facing, and
      muffled when a wall is in the way, so footsteps and gunfire tell you where they are. Your own sounds play dead centre.
@@ -7356,12 +7767,14 @@ const GAME = {
        r  a ring: [Hz, seconds, level], the steel of a revolver, a marksman rifle or a big sniper
        t  the room: [lowpass Hz, seconds, level], the tail, with a slap off the walls a moment later
        rack  a pump or a bolt worked this long after the shot; sup  suppressed (a soft thup, the action louder than the blast)
+       pf  a suppressor's puff: [from Hz, to Hz, seconds, level], a breath of noise whose pitch drops fast
+       sl  a pistol slide: [delay, level], back and home again, two bright metal clicks with a little ring
        v  how loud it plays */
   const GSND = {
     pip: { s: .6, p: [200, 75, .06, .8], c: [2700, .055, .75, .9], m: [3600, .016, .22], t: [1600, .26, .2], v: .85 },
     stub: { s: .5, p: [120, 38, .16, 1.1], c: [1100, .14, .8, .6], m: [2200, .02, .15], t: [900, .55, .3], v: 1.2 },
     wasp: { s: .6, p: [230, 95, .045, .7], c: [3000, .045, .7, .9], m: [4000, .012, .2], t: [1800, .18, .16], v: .8 },
-    quill: { sup: 1, s: .25, p: [160, 70, .05, .5], c: [1100, .04, .35, 1.2], m: [3800, .01, .35], t: [900, .1, .06], v: .7 },
+    quill: { sup: 1, s: .24, p: [130, 46, .16, 4.5], c: [1100, .035, .16, 1.1], pf: [2600, 560, .055, .3], sl: [.016, .5], t: [750, .22, .2], v: .85 },   // a deep tap, a short puff of air, and the slide's two clean clicks
     hammer: { s: .7, p: [130, 42, .14, 1.15], c: [1700, .1, .9, .7], r: [880, .35, .12], m: [2600, .02, .25], t: [1200, .7, .3], v: 1.15 },
     gnat: { s: .65, p: [240, 100, .04, .65], c: [3100, .04, .65, 1], m: [4200, .012, .25], t: [1900, .16, .15], v: .78 },
     hornet: { sup: 1, s: .3, p: [170, 70, .045, .55], c: [1300, .035, .35, 1.2], m: [3500, .011, .32], t: [1100, .12, .08], v: .75 },
@@ -7397,6 +7810,9 @@ const GAME = {
     if (D.m) { noise(D.m[1], .022, D.m[2], 'bandpass', D.m[0], 6); osc(D.m[1], 'square', D.m[0] * .5, D.m[0] * .42, .014, D.m[2] * .25); }   // the action
     if (D.r) { osc(.002, 'sine', D.r[0], D.r[0] * .985, D.r[1], D.r[2]); osc(.002, 'sine', D.r[0] * 2.76, D.r[0] * 2.7, D.r[1] * .6, D.r[2] * .45); }   // the ring
     noise(.006, D.t[1], D.t[2], 'lowpass', D.t[0], .5, .01); noise(.07, D.t[1] * .6, D.t[2] * .45, 'lowpass', D.t[0] * .8, .5, .012);   // the room, and the slap off the walls
+    if (D.pf) { const n = oc.createBufferSource(), fl = oc.createBiquadFilter(), a = oc.createGain(), t0 = .0005; n.buffer = nb; fl.type = 'bandpass'; fl.Q.value = 1.6; fl.frequency.setValueAtTime(D.pf[0], t0); fl.frequency.exponentialRampToValueAtTime(D.pf[1], t0 + D.pf[2]);
+      a.gain.setValueAtTime(0, t0); a.gain.linearRampToValueAtTime(D.pf[3], t0 + .0015); a.gain.exponentialRampToValueAtTime(.0001, t0 + D.pf[2]); n.connect(fl).connect(a).connect(mix); n.start(t0, Math.random() * .4); n.stop(t0 + D.pf[2] + .02); }   // the puff
+    if (D.sl) { for (const [dt0, f0, lv] of [[D.sl[0], 5400, 1], [D.sl[0] + .046, 4300, .8]]) { noise(dt0, .014, D.sl[1] * lv, 'bandpass', f0, 7, .0004); osc(dt0, 'square', f0 * .5, f0 * .46, .01, D.sl[1] * .18 * lv); osc(dt0 + .001, 'sine', f0 * .62, f0 * .6, .035, D.sl[1] * .14 * lv); } }   // the slide, back and home
     if (D.rack) { const r = D.rack; noise(r, .05, .32, 'bandpass', 1900, 3); osc(r, 'square', 320, 260, .03, .06); noise(r + .13, .06, .38, 'bandpass', 1400, 3); osc(r + .13, 'square', 260, 200, .035, .07); }   // pump / bolt
     oc.startRendering().then(B => { const c0 = B.getChannelData(0); let pk = 0; for (let i = 0; i < c0.length; i++) pk = Math.max(pk, Math.abs(c0[i])); if (pk > 0) { const g = .92 / pk; for (let i = 0; i < c0.length; i++) c0[i] *= g; } baked[k] = B; }).catch(() => { baking[k] = 0; });
   }
@@ -7488,6 +7904,17 @@ const GAME = {
   cue('kill', (v, by, head, wk) => { if (by === me() && v !== me()) killSound(killRun, head, (skinOfId(skinFor(me(), wk)) || {}).line); else if (v === me()) tone(outFor(null), 200, .5, 'sawtooth', .1, -130); });
   cue('ability', (f, k) => {
     const key = f.op + k, o = outFor(f);
+    // the C abilities and Vanta
+    if (key === 'vexc') { tone(o, 180, .5, 'sine', .14, -90); hiss(o, .4, .1, 'lowpass', 600); return; }
+    if (key === 'irisc') { tone(o, 1800, .06, 'sine', .08); tone(o, 2400, .08, 'sine', .07, 0, .07); return; }
+    if (key === 'bastionc') { tone(o, 300, .2, 'square', .05, 120); tone(o, 600, .35, 'triangle', .08, 0, .2); return; }
+    if (key === 'novac') { hiss(o, .45, .3, 'bandpass', 900); tone(o, 220, .35, 'sawtooth', .06, 700); return; }
+    if (key === 'wraithc') { tone(o, 900, .3, 'sine', .08, -500); hiss(o, .3, .08, 'highpass', 3000); return; }
+    if (key === 'talonc' || key === 'axiomc' || key === 'emberc') { hiss(o, .14, .14, 'bandpass', 1400); tone(o, 500, .1, 'triangle', .06, 200); return; }
+    if (key === 'vantac') { tone(o, 140, .9, 'sawtooth', .08, 60); hiss(o, .8, .12, 'bandpass', 700); tone(o, 880, .5, 'sine', .05, -200); return; }
+    if (key === 'vantaq') { tone(o, 1800, .25, 'sawtooth', .07, -1500); hiss(o, .2, .14, 'highpass', 2500); return; }
+    if (key === 'vantae') { tone(o, 440, .4, 'triangle', .09, 440); tone(o, 880, .3, 'sine', .06, 0, .15); return; }
+    if (key === 'vantax') { tone(o, 90, 1.2, 'sawtooth', .16, -40); tone(o, 1200, .5, 'sine', .1, -900); hiss(o, 1, .14, 'bandpass', 500); return; }
     if (key === 'vexq') tone(o, 500, .16, 'sine', .14, 1100); else if (key === 'vexe') hiss(o, .5, .2, 'lowpass', 500);
     else if (key === 'irisq') { tone(o, 1300, .25, 'sine', .12, -700); tone(o, 1300, .25, 'sine', .08, -700, .18); } else if (key === 'irise') hiss(o, .08, .12, 'highpass', 1800);
     else if (key === 'bastionq') { tone(o, 80, .35, 'sawtooth', .16, 90); hiss(o, .3, .14, 'lowpass', 600); }
@@ -7505,6 +7932,20 @@ const GAME = {
   cue('wheelTick', () => { if (canHear()) tone(outFor(null), 1500, .025, 'square', .03); });   // the wheel's pointer clicking over a slice
   cue('levelUp', () => { const o = outFor(null); [659, 880, 1175, 1760].forEach((f, i) => { tone(o, f, .32, 'triangle', .09, 0, i * .08); tone(o, f * 2, .2, 'sine', .03, 0, i * .08 + .02); }); });
   cue('passUp', () => { const o = outFor(null); [523, 784, 1046, 1568].forEach((f, i) => tone(o, f, .5, 'triangle', .09, 0, i * .1)); hiss(o, .7, .07, 'highpass', 6000, .05); });
+  // readying an ability: a soft rising charge; nothing to ready: a dull tick
+  cue('abReady', (f, k) => { if (!M || f !== me() || !k) return; const o = outFor(null); tone(o, 320, .16, 'sine', .07, 380); hiss(o, .14, .04, 'bandpass', 2400); });
+  cue('abNo', f => { if (M && f === me()) tone(outFor(null), 160, .07, 'square', .04); });
+  cue('abBack', (f, k) => { if (M && f === me()) { const o = outFor(null); tone(o, 660, .12, 'triangle', .08); tone(o, 990, .14, 'triangle', .07, 0, .1); } });
+  cue('gloomPop', () => hiss(outFor(null), .7, .14, 'lowpass', 400));
+  cue('shockPop', S => { const o = outFor(null); hiss(o, .25, .3, 'highpass', 1800); tone(o, 120, .3, 'square', .1, -60); });
+  cue('beaconPop', () => { const o = outFor(null); tone(o, 520, .4, 'triangle', .1, 260); tone(o, 1040, .3, 'sine', .05, 0, .1); });
+  cue('tetherBack', () => { const o = outFor(null); tone(o, 300, .25, 'sine', .1, 900); hiss(o, .2, .1, 'highpass', 4000); });
+  cue('fieldStart', () => { const o = outFor(null); hiss(o, .6, .12, 'bandpass', 3000); tone(o, 1400, .4, 'sine', .04, -600); });
+  cue('sundered', v => { if (v === me()) { const o = outFor(null); tone(o, 1600, .3, 'sawtooth', .07, -1200); } });
+  cue('wardOn', f => { if (f === me()) { const o = outFor(null); tone(o, 700, .2, 'triangle', .1, 500); tone(o, 1400, .25, 'sine', .06, 0, .08); } });
+  cue('wardBreak', () => { const o = outFor(null); hiss(o, .2, .2, 'highpass', 3000); tone(o, 900, .2, 'square', .06, -500); });
+  cue('duelStart', D => { const o = outFor(null); tone(o, 70, 1.4, 'sawtooth', .18, -30); tone(o, 300, .8, 'sine', .08, -150, .1); hiss(o, 1, .12, 'bandpass', 400); });
+  cue('duelEnd', () => { const o = outFor(null); tone(o, 200, .6, 'sine', .1, 300); hiss(o, .5, .1, 'highpass', 2000); });
   cue('unlock', sk => { const o = outFor(null), t = sk.R.tier, notes = [523, 659, 784, 1046, 1318, 1568].slice(0, 3 + t);
     notes.forEach((f, i) => { tone(o, f, .5 + t * .1, 'triangle', .1, 0, i * .09); tone(o, f * 2, .35, 'sine', .04, 0, i * .09 + .02); });
     hiss(o, .6 + t * .2, .08, 'highpass', 6000, .05); if (t >= 3) { tone(o, 98, 1, 'sine', .3, -20, 0); hiss(o, 1.2, .1, 'bandpass', 2400, .3, 2); } });
@@ -7638,7 +8079,7 @@ const GAME = {
 
   /* ---------- keyboard and mouse ---------- */
   let keys = {}; const mouse = { l: false, tap: false };   // tap: a press not yet seen by a tick (a quick click can start and end between two)
-  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'walk', ShiftRight: 'walk', KeyZ: 'walk', ControlLeft: 'crouch', ControlRight: 'crouch', KeyC: 'crouch', Space: 'jump', KeyF: 'use', KeyV: 'fire' };   // V fires too (handy on a trackpad)
+  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'walk', ShiftRight: 'walk', KeyZ: 'walk', ControlLeft: 'crouch', ControlRight: 'crouch', Space: 'jump', KeyF: 'use', KeyV: 'fire' };   // V fires too (handy on a trackpad)
   // trackpad aiming: the system's pointer acceleration stays on (raw input feels dead on a trackpad), its own speed, and a light assist
   const trackpad = () => CFG.aim === 'trackpad' && !isTouch();
   const WHEEL = { acc: 0, t: 0, cd: 0, small: 0 };
@@ -7683,12 +8124,12 @@ const GAME = {
     if (c === 'KeyB' && canBuy()) return openArmory(!UI.armory);
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
-    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyX') ability(P, 'x'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) startInspect(P);
+    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyC') readyAb(P, 'c'); else if (c === 'KeyQ') readyAb(P, 'q'); else if (c === 'KeyE') readyAb(P, 'e'); else if (c === 'KeyX') readyAb(P, 'x');   // ready it (the key again puts it away); a click uses it else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) startInspect(P);
     else if (c === 'KeyT') dropHeld(P); else if (c === 'KeyH') dropCharge(P); else if (c === 'KeyJ') ping(P);   // drop the gun in your hand, or the charge, for a teammate
   }
   if (typeof document !== 'undefined') {
     // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser
-    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOXTHJ]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
+    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOXTHJC]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       if (UI.armory) { const V = K.view, s = 1 / pxPer(); ptr = { x: cl(ptr.x + e.movementX * s, V.x0 + 2, V.x1 - 4), y: cl(ptr.y + e.movementY * s, V.y0 + 2, V.y1 - 4) }; KNAV.on = false; if (dragZ) dragZ.fn(ptr.x, ptr.y); return; }   // the armory's cursor
       const P = me(); if (!P.alive) return;   // the dead don't turn: the body stays as it fell
@@ -7716,12 +8157,12 @@ const GAME = {
   // where each touch button sits by default (round the right thumb, in the HUD's units) and how big. Settings > Button
   // layout moves and sizes them (CFG.tlay: per button an offset from here, in the HUD's units, and a size), so a layout
   // holds on any screen; it is saved with the other settings, which go to your account
-  const TOUCH_KEYS = ['fire', 'alt', 'jump', 'crouch', 'reload', 'swap', 'q', 'e', 'x', 'nade', 'use', 'drop'];
+  const TOUCH_KEYS = ['fire', 'alt', 'jump', 'crouch', 'reload', 'swap', 'c', 'q', 'e', 'x', 'nade', 'use', 'drop'];
   function touchHome(k) {
     const V = K.view, u = uiScale(), fx = V.x1 - 150 * u, fy = V.y1 - 150 * u;
     if (k === 'move') return [V.x0 + 170 * u, V.y1 - 150 * u, 62];
     return { fire: [fx, fy, 62], alt: [fx - 22 * u, fy - 116 * u, 38], jump: [fx + 104 * u, fy - 44 * u, 38], crouch: [fx + 100 * u, fy + 66 * u, 36], reload: [fx - 110 * u, fy + 56 * u, 36], swap: [fx + 72 * u, fy - 128 * u, 36],
-      q: [fx - 118 * u, fy - 46 * u, 38], x: [fx - 290 * u, fy + 30 * u, 36], e: [fx - 204 * u, fy + 4 * u, 38], nade: [fx - 196 * u, fy - 104 * u, 34], use: [640, V.y1 - 200 * u, 58], drop: [fx - 300 * u, fy - 150 * u, 32] }[k];
+      c: [fx - 282 * u, fy - 60 * u, 34], q: [fx - 118 * u, fy - 46 * u, 38], x: [fx - 290 * u, fy + 30 * u, 36], e: [fx - 204 * u, fy + 4 * u, 38], nade: [fx - 196 * u, fy - 104 * u, 34], use: [640, V.y1 - 200 * u, 58], drop: [fx - 300 * u, fy - 150 * u, 32] }[k];
   }
   const touchSize = k => (((CFG.tlay || {})[k] || {}).s) || 1;
   function touchAt(k) {
@@ -7740,9 +8181,10 @@ const GAME = {
       { k: 'crouch', ...at('crouch'), t: canSlide(P) ? 'SLIDE' : 'DUCK', show: P.alive, on: TS.crouch || !!P.slide },
       { k: 'reload', ...at('reload'), t: 'LOAD', show: P.alive && !G.melee },
       { k: 'swap', ...at('swap'), t: 'SWAP', show: P.alive },
-      { k: 'q', ...at('q'), t: op.q.n.toUpperCase() + (op.q.max > 1 ? ' ' + (P.ab.q | 0) : ''), show: P.alive && live, off: !P.ab.q, col: op.col },
-      { k: 'x', ...at('x'), t: P.ult >= ultCost(P) ? op.x.n.toUpperCase() : `ULT ${P.ult | 0}/${ultCost(P)}`, show: P.alive && live, off: P.ult < ultCost(P), col: op.col },
-      { k: 'e', ...at('e'), t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, col: op.col },
+      { k: 'c', ...at('c'), t: op.c.n.toUpperCase() + (op.c.max > 1 ? ' ' + (P.ab.c | 0) : ''), show: P.alive && live, off: !P.ab.c && !P.tether, on: P.rdy === 'c', col: op.col },
+      { k: 'q', ...at('q'), t: op.q.n.toUpperCase() + (op.q.max > 1 ? ' ' + (P.ab.q | 0) : ''), show: P.alive && live, off: !P.ab.q, on: P.rdy === 'q', col: op.col },
+      { k: 'x', ...at('x'), t: P.ult >= ultCost(P) ? op.x.n.toUpperCase() : `ULT ${P.ult | 0}/${ultCost(P)}`, show: P.alive && live, off: P.ult < ultCost(P), on: P.rdy === 'x', col: op.col },
+      { k: 'e', ...at('e'), t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, on: P.rdy === 'e', col: op.col },
       { k: 'nade', ...at('nade'), t: 'SMOKE ' + (P.smokes || 0), show: P.alive && live && P.smokes > 0, off: !(P.smokes > 0), col: NADE.col },
       { k: 'use', ...at('use'), t: P.nearLoot ? (lootFree(P) ? 'PICK UP' : 'SWAP GUN') : orbNear ? 'TAKE ORB' : canUse ? (sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE') : 'DOOR', show: canUse || (P.alive && !!P.nearLoot) || (live && P.alive && (orbNear || doorNear)), col: P.nearLoot ? BONE : orbNear ? op.col : FOE },
       { k: 'drop', ...at('drop'), t: carries(P) && !M.planted ? 'DROP ◆' : 'DROP', show: P.alive && M.mode !== 'range' && M.phase !== 'end' && ((carries(P) && !M.planted) || (M.phase === 'buy' && !!(P.guns[1] || P.guns[2] !== 'pip'))), col: carries(P) ? GOLD : BONE },
@@ -7753,7 +8195,7 @@ const GAME = {
       const P = me(); click();
       if (b.k === 'fire') { TS.fire = id; TS.tap = true; TS.look = { id, x, y }; try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} }   // the fire thumb keeps aiming while it holds
       else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (canSlide(me())) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
-      else if (b.k === 'q' || b.k === 'e' || b.k === 'x') ability(P, b.k); else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);
+      else if (b.k === 'c' || b.k === 'q' || b.k === 'e' || b.k === 'x') readyAb(P, b.k);   // ready it (FIRE uses it, the alt button its other way; tap again to put it away) else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);
       return;
     }
     if (M && screen === 'play' && !me().alive && UI.spec && X && M.mode !== 'range') { nextSpec(); return; }   // dead: a tap moves to the next teammate
@@ -7939,6 +8381,40 @@ const GAME = {
     g.beginPath(); g.moveTo(0, .1 * r); g.lineTo(.07 * r, .24 * r); g.lineTo(-.07 * r, .24 * r); g.closePath(); g.fill();
     for (const tx0 of [-.12, 0, .12]) g.fillRect((tx0 - .018) * r, .36 * r, .036 * r, .14 * r);
   }
+  /* ---- ability icons: a small line drawing for each, in the bar and the armory */
+  const ABICON = { vexc: 'orb', vexq: 'dash', vexe: 'smoke', vexx: 'portal', irisc: 'eye', irisq: 'wave', irise: 'flash', irisx: 'eye', bastionc: 'beacon', bastionq: 'wall', bastione: 'heart', bastionx: 'shield',
+    novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'ghost', wraithe: 'steps', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
+    emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'mine', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel' };
+  // what the other click does, for the hint under the bar
+  const ABALT = { vexc: 'A SHORT LOB', talonc: 'A SHORT LOB', axiomc: 'A SHORT LOB', emberq: 'A SHORT LOB', emberx: 'A SHORT LOB', emberc: 'BENT RIGHT', bastionq: 'TURNED ALONG YOUR VIEW' };
+  function abIcon(g, kind, cx, cy, r, col, acc) {
+    g.save(); g.translate(cx, cy); g.strokeStyle = col; g.fillStyle = col; g.lineWidth = r * .16; g.lineCap = 'round'; g.lineJoin = 'round'; const P2 = (pts, close) => { g.beginPath(); pts.forEach(([a, b], i) => i ? g.lineTo(a * r, b * r) : g.moveTo(a * r, b * r)); if (close) g.closePath(); };
+    const C = (x, y, rad, a0 = 0, a1 = TAU) => { g.beginPath(); g.arc(x * r, y * r, rad * r, a0, a1); };
+    if (kind === 'orb') { C(0, 0, .55); g.fill(); g.strokeStyle = acc; C(0, 0, .85, -.6, 1.2); g.stroke(); C(0, 0, .85, 2.5, 4.3); g.stroke(); }
+    else if (kind === 'dash') { for (const o of [-.35, .1, .55]) { P2([[o - .45, -.55], [o, 0], [o - .45, .55]]); g.stroke(); } }
+    else if (kind === 'smoke') { for (const [x, y, q] of [[-.35, .2, .45], [.3, .2, .45], [0, -.2, .55]]) { C(x, y, q); g.fill(); } }
+    else if (kind === 'portal') { g.save(); g.scale(.6, 1); C(0, 0, .85); g.stroke(); g.restore(); C(0, 0, .25); g.fill(); }
+    else if (kind === 'eye') { g.beginPath(); g.moveTo(-.95 * r, 0); g.quadraticCurveTo(0, -.85 * r, .95 * r, 0); g.quadraticCurveTo(0, .85 * r, -.95 * r, 0); g.stroke(); C(0, 0, .3); g.fill(); }
+    else if (kind === 'wave') { C(0, .5, .2); g.fill(); for (const q of [.5, .85]) { C(0, .5, q, -Math.PI * .85, -Math.PI * .15); g.stroke(); } }
+    else if (kind === 'flash' || kind === 'spark') { for (let i = 0; i < 8; i++) { const a = i * TAU / 8, q = i % 2 ? .45 : .95; g.beginPath(); g.moveTo(Math.cos(a) * .2 * r, Math.sin(a) * .2 * r); g.lineTo(Math.cos(a) * q * r, Math.sin(a) * q * r); g.stroke(); } C(0, 0, .22); g.fill(); }
+    else if (kind === 'beacon' || kind === 'shield') { P2([[0, -.9], [.75, -.55], [.65, .3], [0, .9], [-.65, .3], [-.75, -.55]], true); kind === 'shield' ? g.fill() : g.stroke(); if (kind === 'beacon') { P2([[0, -.4], [0, .4]]); g.stroke(); P2([[-.35, 0], [.35, 0]]); g.stroke(); } }
+    else if (kind === 'wall') { for (let i = 0; i < 3; i++) g.fillRect((-.9 + i * .62) * r, -.7 * r, .5 * r, 1.4 * r); }
+    else if (kind === 'heart') { g.beginPath(); g.moveTo(0, .8 * r); g.bezierCurveTo(-1.1 * r, 0, -.55 * r, -.9 * r, 0, -.3 * r); g.bezierCurveTo(.55 * r, -.9 * r, 1.1 * r, 0, 0, .8 * r); g.fill(); }
+    else if (kind === 'up') { P2([[-.6, 0], [0, -.75], [.6, 0]]); g.stroke(); P2([[0, -.7], [0, .85]]); g.stroke(); P2([[-.6, .85], [.6, .85]]); g.stroke(); }
+    else if (kind === 'bolt') { P2([[.15, -.9], [-.45, .1], [0, .1], [-.15, .9], [.45, -.15], [0, -.15]], true); g.fill(); }
+    else if (kind === 'anchor') { C(0, -.6, .2); g.stroke(); P2([[0, -.4], [0, .8]]); g.stroke(); C(0, .2, .6, .2, Math.PI - .2); g.stroke(); P2([[-.35, -.15], [.35, -.15]]); g.stroke(); }
+    else if (kind === 'ghost') { g.beginPath(); g.arc(0, -.15 * r, .6 * r, Math.PI, 0); g.lineTo(.6 * r, .8 * r); for (let i = 0; i < 3; i++) { g.lineTo((.4 - i * .4) * r, .55 * r); g.lineTo((.2 - i * .4) * r, .8 * r); } g.closePath(); g.fill(); g.fillStyle = INK; C(-.22, -.15, .12); g.fill(); C(.22, -.15, .12); g.fill(); }
+    else if (kind === 'steps') { for (const [x, y] of [[-.4, .45], [.35, -.35]]) { g.save(); g.translate(x * r, y * r); g.rotate(-.3); g.beginPath(); g.ellipse(0, 0, .2 * r, .34 * r, 0, 0, TAU); g.fill(); g.restore(); } }
+    else if (kind === 'arrow' || kind === 'pierce') { P2([[-.85, .85], [.75, -.75]]); g.stroke(); P2([[.85, -.85], [.25, -.75], [.75, -.25]], true); g.fill(); if (kind === 'pierce') { g.strokeStyle = acc; P2([[-.2, -.75], [.75, .2]]); g.stroke(); } }
+    else if (kind === 'trap') { P2([[-.85, .5], [.85, .5]]); g.stroke(); for (let i = 0; i < 4; i++) { P2([[-.65 + i * .43, .5], [-.45 + i * .43, -.3], [-.25 + i * .43, .5]]); g.stroke(); } }
+    else if (kind === 'flame') { g.beginPath(); g.moveTo(0, .9 * r); g.bezierCurveTo(-.8 * r, .7 * r, -.6 * r, -.1 * r, -.1 * r, -.9 * r); g.bezierCurveTo(-.05 * r, -.3 * r, .2 * r, -.35 * r, .25 * r, -.5 * r); g.bezierCurveTo(.8 * r, 0, .7 * r, .7 * r, 0, .9 * r); g.fill(); }
+    else if (kind === 'rings') { for (const q of [.3, .6, .9]) { C(0, 0, q); g.stroke(); } }
+    else if (kind === 'turret') { g.fillRect(-.45 * r, -.35 * r, .9 * r, .5 * r); g.fillRect(0, -.22 * r, .9 * r, .2 * r); P2([[-.3, .15], [-.6, .85]]); g.stroke(); P2([[.3, .15], [.6, .85]]); g.stroke(); }
+    else if (kind === 'mine') { C(0, .2, .55, Math.PI, 0); g.fill(); g.fillRect(-.7 * r, .2 * r, 1.4 * r, .2 * r); C(0, -.45, .12); g.fill(); }
+    else if (kind === 'hex') { P2([0, 1, 2, 3, 4, 5].map(i => [Math.cos(i * Math.PI / 3 + Math.PI / 6) * .85, Math.sin(i * Math.PI / 3 + Math.PI / 6) * .85]), true); g.stroke(); C(0, 0, .3); g.fill(); }
+    else if (kind === 'duel') { C(0, 0, .85); g.stroke(); P2([[-.55, .55], [.55, -.55]]); g.stroke(); P2([[-.55, -.55], [.55, .55]]); g.stroke(); }
+    g.restore();
+  }
   // a small bust of an operative for the top bar: shoulders in their colour and their headgear, greyed once they are down
   function opBust(g, op, x, y, s, up) {
     const O = OPS[op] || OPS.vex, kt = KIT[op] || KIT.vex, grey = c => up ? c : '#3c4049', glow = up ? O.col : '#555a63';
@@ -7955,30 +8431,100 @@ const GAME = {
     else if (op === 'wraith') { g.fillStyle = grey(kt.suit); g.beginPath(); g.arc(0, -6, 11.5, Math.PI * .95, Math.PI * 2.05); g.lineTo(9, 6); g.lineTo(-9, 6); g.closePath(); g.fill(); g.fillStyle = grey(kt.plate); g.beginPath(); g.ellipse(0, -3, 6.5, 8.5, 0, 0, TAU); g.fill(); g.fillStyle = glow; g.fillRect(-5, -5, 3.6, 1.6); g.fillRect(1.4, -5, 3.6, 1.6); g.fillStyle = grey(kt.cloth); g.fillRect(-10, 6, 20, 4); }
     else if (op === 'talon') { g.fillStyle = grey(kt.cloth); g.beginPath(); g.arc(0, -8, 10, Math.PI, TAU); g.fill(); g.fillRect(-14, -9, 28, 2.6); g.fillStyle = grey('#15171c'); g.fillRect(-7, -13, 14, 4); g.fillStyle = glow; g.beginPath(); g.arc(-3.5, -11, 1.6, 0, TAU); g.arc(3.5, -11, 1.6, 0, TAU); g.fill(); }
     else if (op === 'ember') { g.fillStyle = grey('#15171c'); g.fillRect(-6, -2, 12, 7); g.fillStyle = grey(kt.plate); g.beginPath(); g.arc(-5.5, 2, 2.4, 0, TAU); g.arc(5.5, 2, 2.4, 0, TAU); g.fill(); g.fillStyle = glow; for (let i = 0; i < 4; i++) { g.beginPath(); g.moveTo(-6 + i * 4, -13); g.lineTo(-4 + i * 4, -23 + Math.abs(i - 1.5) * 3); g.lineTo(-2 + i * 4, -13); g.closePath(); g.fill(); } }
+    else if (op === 'vanta') { g.fillStyle = grey(kt.plate); g.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; g.lineTo(Math.cos(a) * 11, -6 + Math.sin(a) * 11); } g.closePath(); g.fill(); g.fillStyle = glow; g.fillRect(-10, -7, 20, 3.4); g.beginPath(); g.moveTo(5, -14); g.lineTo(14, -24); g.lineTo(9, -13); g.closePath(); g.fill(); }
     else if (op === 'axiom') { g.fillStyle = grey(kt.plate); g.beginPath(); g.arc(0, -8, 10, Math.PI, TAU); g.fill(); g.fillRect(-13, -9, 26, 2.4); g.fillStyle = glow; g.fillRect(-8, -6, 16, 2.6); g.beginPath(); g.arc(0, -16, 1.8, 0, TAU); g.fill(); }
     else { g.fillStyle = glow; tx(g, (O.n || '?')[0], 0, -4, 12, glow, 'center', 900); }
     g.restore();
   }
+  /* ---- the kill banner: an emblem that grows with every kill in the round, 1 to 5
+     1  the emblem in a disc, a ring, four ticks and four lights
+     2  + a second ring of arcs, dashes out to the sides, six lights
+     3  + chevrons above and below, brackets round the ring, eight lights
+     4  + blades out to the sides like wings, a dashed halo turning outside, ten lights
+     5  + great wings and a crown, the halo doubled and gold, twelve lights, embers rising
+     It slams in: a white flash, a shockwave, shards thrown out in its colour, a streak of light across it, and the ring of
+     lights spins round once, faster the more kills, then settles and glows. Each new kill replaces the last, bigger. */
+  function bannerShards(n, seed) { let s2 = seed >>> 0; const r = () => { s2 = (s2 * 1664525 + 1013904223) >>> 0; return s2 / 4294967296; }, out = [];
+    for (let i = 0; i < 14 + n * 7; i++) { const a = r() * TAU; out.push({ a, v: .9 + r() * 1.6 + n * .12, w: .05 + r() * .08, l: .14 + r() * .3, spin: (r() - .5) * 6, d: r() * .08, k: r() }); } return out; }
+  /* ---- abilities on you, at the edges of the screen: Exposed (cracks of magenta light creeping in), slowed (frost at the
+     edges), Gloom (a dark that closes round the middle), a ward (a hex shimmer), a Duel Field (the world tinted, the time
+     left at the top) */
+  const STX = {};
+  function statusFx(g, P, V, W, H, u) {
+    if (!P || !P.alive) return; const t = K.t || 0, cx = 640, cy = (V.y0 + V.y1) / 2, edge = (col, a, inner = .45) => { const gr = g.createRadialGradient(cx, cy, H * inner, cx, cy, H * .95); gr.addColorStop(0, col + '00'); gr.addColorStop(1, col + Math.round(cl(a, 0, 1) * 255).toString(16).padStart(2, '0')); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); };
+    if (P.murk > 0) { const k = Math.min(1, P.murk / .4, (3.5 - P.murk) / .2 + .3); edge('#0c0714', .95 * k, .12); }
+    if (P.slowF > 0) { edge('#9fe8ff', .5, .5); if (!STX.frost) { STX.frost = []; for (let i = 0; i < 40; i++) STX.frost.push([Math.random(), Math.random(), .3 + Math.random() * .7]); }
+      g.strokeStyle = 'rgba(220,248,255,.55)'; g.lineWidth = 1.5 * u; for (const [a, b, s2] of STX.frost) { const side = a < .5, x = side ? (a < .25 ? V.x0 + b * 60 * u : V.x1 - b * 60 * u) : V.x0 + b * W, y = side ? V.y0 + (a * 4 % 1) * H : (a < .75 ? V.y0 + b * 40 * u : V.y1 - b * 40 * u); g.beginPath(); for (let k = 0; k < 3; k++) { const an = k * Math.PI / 3 + s2; g.moveTo(x - Math.cos(an) * 9 * s2 * u, y - Math.sin(an) * 9 * s2 * u); g.lineTo(x + Math.cos(an) * 9 * s2 * u, y + Math.sin(an) * 9 * s2 * u); } g.stroke(); } }
+    if (P.exposed > 0) { const k = Math.min(1, P.exposed / .3), fl = .75 + .25 * Math.sin(t * 9); edge(OPS.vanta.col, .38 * k * fl, .55);
+      if (!STX.cracks) { STX.cracks = []; for (let i = 0; i < 9; i++) { const side = i % 4, pts = [], a = Math.random(); let x = side === 0 ? a : side === 1 ? 1 : side === 2 ? a : 0, y = side === 0 ? 0 : side === 1 ? a : side === 2 ? 1 : a; pts.push([x, y]); for (let k2 = 0; k2 < 6; k2++) { x += (side === 1 ? -1 : side === 3 ? 1 : (Math.random() - .5)) * .04; y += (side === 0 ? 1 : side === 2 ? -1 : (Math.random() - .5)) * .06; pts.push([x, y]); } STX.cracks.push(pts); } }
+      g.strokeStyle = `rgba(255,170,255,${.7 * k * fl})`; g.lineWidth = 2 * u; for (const pts of STX.cracks) { g.beginPath(); pts.forEach(([x, y], i) => { const X2 = V.x0 + x * W, Y2 = V.y0 + y * H; i ? g.lineTo(X2, Y2) : g.moveTo(X2, Y2); }); g.stroke(); }
+      txo(g, 'EXPOSED', cx, V.y0 + 120 * u, 13 * u, OPS.vanta.col, u); }
+    if (P.ward > 0) { const a = .22 + .1 * Math.sin(t * 4); g.strokeStyle = `rgba(226,92,255,${a})`; g.lineWidth = 1.5 * u; const s2 = 28 * u;
+      for (let i = 0; i < 2; i++) for (let j = 0; j < 12; j++) { const x = i ? V.x1 - s2 * .9 : V.x0 + s2 * .9, y = V.y0 + H * .15 + j * s2 * 1.55; g.beginPath(); for (let k = 0; k < 6; k++) { const an = k * Math.PI / 3; g.lineTo(x + Math.cos(an) * s2 * .8, y + Math.sin(an) * s2 * .8); } g.closePath(); g.stroke(); }
+      txo(g, '◆ WARD', V.x0 + 330 * u, V.y1 - 100 * u, 11 * u, OPS.vanta.col, u); }
+    if (P.over > 0) txo(g, `OVERCHARGE  ${Math.ceil(P.over)}`, cx, V.y1 - 150 * u, 12 * u, OPS.vanta.col, u);
+    if (P.duel) { const D = P.duel, left = Math.max(0, D.until - M.time); g.fillStyle = 'rgba(80,10,90,.16)'; g.fillRect(V.x0, V.y0, W, H); edge('#2a0a30', .7, .4);
+      const o = D.a === P ? D.b : D.a; txo(g, 'DUEL FIELD', cx, V.y0 + 96 * u, 18 * u, OPS.vanta.col, u); txo(g, `${o ? o.name.toUpperCase() : ''}  ·  ${left.toFixed(1)} s`, cx, V.y0 + 120 * u, 12 * u, BONE, u); }
+  }
+  function txo(g, s2, x, y, px, col, u) { px = fitPx(g, px); g.font = `900 ${px}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = Math.max(3, px * .28); g.strokeStyle = 'rgba(6,8,12,.85)'; g.strokeText(s2, x, y); g.fillStyle = col; g.fillText(s2, x, y); }   // words with a dark edge
   function drawBanner(g, V, u) {
-    if (!banner) return; const t = (performance.now() - banner.t0) / 1000, T = 2; if (t > T) { banner = null; return; }
-    const B = banner, E = B.em, cx = 640, cy = V.y1 - (isTouch() ? 150 : 128) * u, R = 44 * u * (1 + Math.min(4, B.n - 1) * .05);
-    const pop = t < .16 ? 1.55 - .55 * smooth(t / .16) : 1 + Math.sin(Math.min(1, (t - .16) / .25) * Math.PI) * .05, a = t > T - .4 ? (T - t) / .4 : 1;
-    g.save(); g.globalAlpha = a; g.translate(cx, cy);
-    if (t < .55) { const q = t / .55; g.strokeStyle = E.glow; g.globalAlpha = a * (1 - q) * .8; g.lineWidth = 6 * u * (1 - q) + 1; g.beginPath(); g.arc(0, 0, R * (1.1 + q * 1.6), 0, TAU); g.stroke();   // a ring bursting out
-      for (let i = 0; i < 12; i++) { const an = i / 12 * TAU + .13, r0 = R * (1.15 + q * .9), r1 = r0 + R * .5 * (1 - q); g.beginPath(); g.moveTo(Math.cos(an) * r0, Math.sin(an) * r0); g.lineTo(Math.cos(an) * r1, Math.sin(an) * r1); g.stroke(); } g.globalAlpha = a; }
-    g.scale(pop, pop);
-    const hex = rr0 => { g.beginPath(); for (let i = 0; i < 6; i++) { const an = -Math.PI / 2 + i * TAU / 6; g.lineTo(Math.cos(an) * rr0, Math.sin(an) * rr0); } g.closePath(); };
-    g.shadowColor = E.glow; g.shadowBlur = 22 * u; hex(R); g.fillStyle = 'rgba(10,14,20,.86)'; g.fill(); g.shadowBlur = 0;
-    g.lineWidth = 3 * u; g.strokeStyle = E.glow; g.stroke(); hex(R * .84); g.lineWidth = 1.2 * u; g.strokeStyle = 'rgba(239,233,220,.3)'; g.stroke();
-    glyph(g, E.shape, R * .92, E.col, 'rgba(10,14,20,.95)');
-    if (t < .12) { g.globalAlpha = a * (1 - t / .12); hex(R); g.fillStyle = '#ffffff'; g.fill(); g.globalAlpha = a; }   // the white flash as it lands
+    if (!banner) return; const B = banner, n = cl(B.n | 0, 1, 5), T = 2.1 + n * .12, t = B.pin != null ? B.pin : (performance.now() - B.t0) / 1000;   // (pin: the tests hold a moment) if (t > T) { banner = null; return; }
+    if (!B.sh) B.sh = bannerShards(n, Math.floor(B.t0 * 7));
+    const E = B.em, acc = n >= 5 ? GOLD : E.glow, cx = 640, cy = V.y1 - (isTouch() ? 160 : 140) * u, R = 40 * u * (1 + (n - 1) * .07);
+    const inK = smooth(cl(t / .14, 0, 1)), pop = t < .14 ? 1.7 - .7 * inK : 1 + Math.sin(Math.min(1, (t - .14) / .22) * Math.PI) * .06, outK = smooth(cl((t - (T - .35)) / .35, 0, 1)), a = (t < .06 ? t / .06 : 1) * (1 - outK), sc = pop * (1 - outK * .25);
+    const st = (c, w) => { g.strokeStyle = c; g.lineWidth = w; }, line = (x0, y0, x1, y1) => { g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); };
+    g.save(); g.translate(cx, cy);
+    // behind it all: a dark backing (it has to read on a bright map), a soft glow, and (from three kills) a beam of light up and down
+    { g.globalAlpha = a * .62; const bk = g.createRadialGradient(0, 0, R * .5, 0, 0, R * (2.3 + n * .2)); bk.addColorStop(0, 'rgba(6,8,12,.95)'); bk.addColorStop(.6, 'rgba(6,8,12,.55)'); bk.addColorStop(1, 'rgba(6,8,12,0)'); g.fillStyle = bk; g.beginPath(); g.arc(0, 0, R * (2.3 + n * .2), 0, TAU); g.fill(); }
+    { g.globalAlpha = a * (.55 + .1 * n); const gr = g.createRadialGradient(0, 0, R * .3, 0, 0, R * (2.4 + n * .25)); gr.addColorStop(0, acc + '55'); gr.addColorStop(1, acc + '00'); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, R * (2.4 + n * .25), 0, TAU); g.fill();
+      if (n >= 3) { const bw = R * (.16 + .03 * n), bg2 = g.createLinearGradient(0, -R * 4, 0, R * 4); bg2.addColorStop(0, acc + '00'); bg2.addColorStop(.5, acc + '66'); bg2.addColorStop(1, acc + '00'); g.fillStyle = bg2; g.globalAlpha = a * (t < .5 ? t / .5 : 1) * .7; g.fillRect(-bw / 2, -R * 4, bw, R * 8); } }
+    // the shockwave and the shards, thrown out from the middle as it lands
+    if (t < .7) { const q = t / .7, e2 = 1 - Math.pow(1 - q, 3); g.globalAlpha = a * (1 - q); st(BONE, (5 - 4 * q) * u); g.beginPath(); g.arc(0, 0, R * (1 + e2 * (1.8 + n * .2)), 0, TAU); g.stroke();
+      st(acc, (3 - 2 * q) * u); g.beginPath(); g.arc(0, 0, R * (1.1 + e2 * (2.4 + n * .3)), 0, TAU); g.stroke(); }
+    for (const p of B.sh) { const q = cl((t - p.d) / (.75 + p.k * .35), 0, 1); if (q <= 0 || q >= 1) continue; const e2 = 1 - Math.pow(1 - q, 2.4), r0 = R * (1.05 + e2 * p.v * 1.6), x = Math.cos(p.a) * r0, y = Math.sin(p.a) * r0 * .82 + q * q * R * .6;
+      g.save(); g.translate(x, y); g.rotate(p.a + p.spin * q); g.globalAlpha = a * (1 - q) * (p.k > .3 ? 1 : .6); g.fillStyle = p.k > .55 ? acc : p.k > .2 ? BONE : E.col; const L = R * p.l * (1 - q * .5), W = R * p.w;
+      g.beginPath(); g.moveTo(L, 0); g.lineTo(0, W); g.lineTo(-L * .4, 0); g.lineTo(0, -W); g.closePath(); g.fill(); g.restore(); }
+    g.globalAlpha = a; g.scale(sc, sc);
+    // wings (4: blades; 5: great wings), behind the disc
+    if (n >= 4) { const wk = smooth(cl((t - .05) / .35, 0, 1)), big = n >= 5 ? 1.35 : 1;
+      for (const sx of [-1, 1]) { g.save(); g.scale(sx, 1); g.rotate((1 - wk) * .6);
+        for (let k = 0; k < (n >= 5 ? 4 : 3); k++) { const L = R * (1.25 + k * .32) * big * wk, y0 = -R * .3 + k * R * .26, x0 = R * .9;
+          const gr = g.createLinearGradient(x0, 0, x0 + L, 0); gr.addColorStop(0, BONE); gr.addColorStop(.7, BONE); gr.addColorStop(1, acc); g.fillStyle = gr;
+          g.beginPath(); g.moveTo(x0, y0 - R * .07); g.lineTo(x0 + L, y0 - R * (.28 - k * .1) * big); g.lineTo(x0 + L * .78, y0 + R * .04); g.lineTo(x0, y0 + R * .1); g.closePath(); st('rgba(6,8,12,.9)', 3 * u); g.stroke(); g.fill(); st(acc, 1 * u); g.stroke(); }
+        g.restore(); } }
+    // the crown (5) and the chevrons (3+)
+    if (n >= 3) { const ck = smooth(cl((t - .08) / .25, 0, 1)); g.fillStyle = n >= 5 ? GOLD : BONE;
+      for (const sy of [-1, 1]) { const y0 = sy * R * (1.32 + (1 - ck) * .5); g.beginPath(); g.moveTo(-R * .34, y0); g.lineTo(0, y0 + sy * R * .3); g.lineTo(R * .34, y0); g.lineTo(R * .2, y0); g.lineTo(0, y0 + sy * R * .14); g.lineTo(-R * .2, y0); g.closePath(); st('rgba(6,8,12,.9)', 3 * u); g.stroke(); g.fill(); }
+      if (n >= 5) { const y0 = -R * (1.62 + (1 - ck) * .4); g.beginPath(); g.moveTo(-R * .5, y0 + R * .12); g.lineTo(-R * .56, y0 - R * .3); g.lineTo(-R * .24, y0 - R * .08); g.lineTo(0, y0 - R * .46); g.lineTo(R * .24, y0 - R * .08); g.lineTo(R * .56, y0 - R * .3); g.lineTo(R * .5, y0 + R * .12); g.closePath(); st('rgba(6,8,12,.9)', 3 * u); g.stroke(); g.fill(); } }
+    // dashes out to the sides (2+)
+    if (n >= 2) { const dk = smooth(cl((t - .04) / .25, 0, 1)); st(BONE, 2.2 * u); for (const sx of [-1, 1]) for (const dy of [-.07, .07]) line(sx * R * (1.5 + (1 - dk) * .4), dy * R, sx * R * (1.5 + (1 - dk) * .4 + .34 * dk), dy * R); }
+    // the halo (4+): a dashed ring turning outside, doubled and gold at 5
+    if (n >= 4) { g.save(); g.rotate(t * .6); st(acc, 1.6 * u); g.setLineDash([R * .2, R * .14]); g.beginPath(); g.arc(0, 0, R * 1.72, 0, TAU); g.stroke(); if (n >= 5) { g.rotate(-t * 1.4); g.setLineDash([R * .08, R * .1]); g.beginPath(); g.arc(0, 0, R * 1.86, 0, TAU); g.stroke(); } g.setLineDash([]); g.restore(); }
+    // the ring of lights: they spin round as it lands, then settle and glow
+    { const N = 2 + n * 2, spinT = .55 + n * .08, sq = smooth(cl(t / spinT, 0, 1)), rot = (1 - sq) * TAU * (1 + n * .25), rL = R * 1.46;
+      for (let i = 0; i < N; i++) { const an = -Math.PI / 2 + i * TAU / N + rot, lit = t > .08 + i * (spinT / N) * .9, x = Math.cos(an) * rL, y = Math.sin(an) * rL, pl = lit ? .75 + .25 * Math.sin(t * 6 + i) : .3;
+        if (lit) { const gg = g.createRadialGradient(x, y, 0, x, y, R * .2); gg.addColorStop(0, acc + 'cc'); gg.addColorStop(1, acc + '00'); g.fillStyle = gg; g.globalAlpha = a * pl; g.beginPath(); g.arc(x, y, R * .2, 0, TAU); g.fill(); }
+        g.globalAlpha = a; g.fillStyle = lit ? BONE : 'rgba(239,233,220,.35)'; g.beginPath(); g.arc(x, y, R * (lit ? .055 : .04), 0, TAU); g.fill(); } }
+    // the rings round the disc: outer, then (2+) arcs, then (3+) brackets; four ticks always
+    st(BONE, 2.4 * u); g.beginPath(); g.arc(0, 0, R * 1.2, 0, TAU); g.stroke();
+    for (let i = 0; i < 4; i++) { const an = i * Math.PI / 2; line(Math.cos(an) * R * 1.24, Math.sin(an) * R * 1.24, Math.cos(an) * R * 1.36, Math.sin(an) * R * 1.36); }
+    if (n >= 2) { g.save(); g.rotate(-t * .8); st(acc, 3 * u); for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(0, 0, R * 1.08, i * TAU / 3 + .2, i * TAU / 3 + TAU / 3 - .2); g.stroke(); } g.restore(); }
+    if (n >= 3) { st(BONE, 3 * u); for (const sx of [-1, 1]) { g.beginPath(); g.arc(0, 0, R * 1.3, sx > 0 ? -.5 : Math.PI - .5, sx > 0 ? .5 : Math.PI + .5); g.stroke(); } }
+    // the disc and the emblem
+    { const dg = g.createRadialGradient(0, -R * .3, R * .1, 0, 0, R); dg.addColorStop(0, '#2a3140'); dg.addColorStop(1, '#0b0e14'); g.fillStyle = dg; g.beginPath(); g.arc(0, 0, R, 0, TAU); g.fill(); st(acc, 2.5 * u); g.stroke(); st('rgba(239,233,220,.25)', 1 * u); g.beginPath(); g.arc(0, 0, R * .86, 0, TAU); g.stroke(); }
+    g.save(); g.shadowColor = acc; g.shadowBlur = 14 * u; glyph(g, E.shape, R * 1.02, n >= 5 ? '#fff6d6' : E.col, '#0b0e14'); g.restore();
+    // the white flash as it lands, and a streak of light across it
+    if (t < .14) { g.globalAlpha = a * (1 - t / .14); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(0, 0, R * 1.25, 0, TAU); g.fill(); g.globalAlpha = a; }
+    if (t > .1 && t < .6) { const q = (t - .1) / .5, x = lp(-R * 3, R * 3, q); g.save(); g.beginPath(); g.arc(0, 0, R * 1.22, 0, TAU); g.clip(); g.rotate(-.5); const sg = g.createLinearGradient(x - R * .4, 0, x + R * .4, 0); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.55)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = sg; g.fillRect(-R * 3, -R * 3, R * 6, R * 6); g.restore(); }
+    // embers rising at five
+    if (n >= 5) for (let i = 0; i < 10; i++) { const q = ((t * .6 + i / 10) % 1), x = Math.sin(i * 2.4) * R * 1.4, y = R * 1.2 - q * R * 3.2; g.globalAlpha = a * (1 - q) * .9; g.fillStyle = i % 2 ? GOLD : BONE; g.fillRect(x, y, 2.4 * u, 2.4 * u); }
     g.restore(); g.save(); g.globalAlpha = a;
-    // pips: one diamond for each kill in this run
-    const n = Math.max(1, B.n), pw = 16 * u, px0 = cx - (n - 1) * pw / 2, py = cy + R + 16 * u;
-    for (let i = 0; i < n; i++) { const fresh = i === n - 1, sz = 5.5 * u * (fresh && t < .25 ? 1 + (1 - t / .25) * .8 : 1); g.fillStyle = fresh ? E.glow : BONE; g.beginPath(); g.moveTo(px0 + i * pw, py - sz); g.lineTo(px0 + i * pw + sz, py); g.lineTo(px0 + i * pw, py + sz); g.lineTo(px0 + i * pw - sz, py); g.closePath(); g.fill(); }
-    const run = ['', '', 'DOUBLE', 'TRIPLE', 'QUAD', 'RAMPAGE'][Math.min(5, B.n)];
-    if (run) tx(g, run, cx, cy - R - 16 * u, 14 * u, E.glow, 'center', 900);
-    tx(g, 'ELIMINATED  ' + B.name.toUpperCase(), cx, py + 20 * u, 12 * u, 'rgba(239,233,220,.8)', 'center', 800);
+    // the words: the run above, who fell below, a pip a kill
+    const top = cy - R * sc * (n >= 5 ? 2.05 : n >= 3 ? 1.75 : 1.5) - 10 * u, run = ['', '', 'DOUBLE KILL', 'TRIPLE KILL', 'QUADRA KILL', 'ACE'][n];
+    if (run) { const rk = smooth(cl((t - .1) / .25, 0, 1)); g.globalAlpha = a * rk; txo(g, run, cx, top + (1 - rk) * 8 * u, (14 + n * 1.5) * u, acc, u); g.globalAlpha = a; }
+    const py = cy + R * sc * (n >= 3 ? 1.75 : 1.5) + 12 * u, pw = 15 * u, px0 = cx - (n - 1) * pw / 2;
+    for (let i = 0; i < n; i++) { const fresh = i === n - 1, sz = 5 * u * (fresh && t < .25 ? 1 + (1 - t / .25) * .9 : 1); g.fillStyle = fresh ? acc : BONE; g.beginPath(); g.moveTo(px0 + i * pw, py - sz); g.lineTo(px0 + i * pw + sz, py); g.lineTo(px0 + i * pw, py + sz); g.lineTo(px0 + i * pw - sz, py); g.closePath(); g.fill(); }
+    txo(g, (B.head ? 'HEADSHOT  ·  ' : '') + B.name.toUpperCase(), cx, py + 19 * u, 12 * u, BONE, u);
     g.restore();
   }
   // a running step or a shot from the rival marks the minimap for a moment (only if a bot could have heard it too)
@@ -8195,6 +8741,7 @@ const GAME = {
     // --- over the whole view: scope, flash, the red of being hit
     if (P.scoped && G.scope && P.alive) { const r = Math.min(H * .46, 330); g.fillStyle = '#000'; g.beginPath(); g.rect(V.x0, V.y0, W, H); g.arc(640, 360, r, 0, TAU, true); g.fill(); g.strokeStyle = 'rgba(0,0,0,.9)'; g.lineWidth = 2; g.beginPath(); g.moveTo(640 - r, 360); g.lineTo(640 + r, 360); g.moveTo(640, 360 - r); g.lineTo(640, 360 + r); g.stroke(); g.fillStyle = WARN; g.fillRect(639, 359, 2, 2); }
     if (P.flash > 0) { g.fillStyle = `rgba(255,255,255,${cl(P.flash / 1.2, 0, 1)})`; g.fillRect(V.x0, V.y0, W, H); }
+    statusFx(g, P, V, W, H, u);   // what abilities are doing to you: Exposed, slowed, in Gloom, warded, in a Duel Field
     if (M.hurt > 0) { const gr = g.createRadialGradient(640, 360, H * .35, 640, 360, H * .8); gr.addColorStop(0, 'rgba(255,60,50,0)'); gr.addColorStop(1, `rgba(255,60,50,${M.hurt * .5})`); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H);
       const a = M.hurtDir - P.yaw + Math.PI; g.save(); g.translate(640, 360); g.rotate(-a); g.fillStyle = `rgba(255,90,77,${M.hurt * .8})`; g.beginPath(); g.arc(0, 0, 150 * u, Math.PI * 1.36, Math.PI * 1.64); g.arc(0, 0, 134 * u, Math.PI * 1.64, Math.PI * 1.36, true); g.fill(); g.restore(); }
     // --- markers in the world: a pinged rival, the planted charge
@@ -8294,13 +8841,24 @@ const GAME = {
       g.save(); g.translate(V.x0 + 22, V.y1 - 20); g.scale(u, u); rr(g, 0, -58, 250, 58, 8, GLASS);
       tx(g, String(Math.ceil(P.hp)), 18, -28, 40, hpCol, 'left'); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(104, -36, 128, 8); g.fillStyle = hpCol; g.fillRect(104, -36, 128 * P.hp / 100, 8);
       if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(104, -22, 128 * P.sh / 50, 6); tx(g, String(P.sh), 104 + 128 * P.sh / 50 + 6, -19, 11, '#7fc8ff', 'left'); }
-      // the abilities: Q (bought, its charges as pips), E (the free signature), X (the ultimate, its points round a ring)
-      const op = OPS[P.op]; [['Q', 'q'], ['E', 'e']].forEach(([key, k], i) => { const x = 266 + i * 96, n = P.ab[k] | 0, on = n > 0 && M.mode !== 'demo'; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? op.col : 'rgba(255,255,255,.12)'); tx(g, op[k].n.toUpperCase(), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, key, x + 43 - (k === 'q' ? 12 : 0), -16, 14, on ? op.col : '#5a6272');
-        if (k === 'q') for (let c = 0; c < op.q.max; c++) { g.fillStyle = c < n ? op.col : 'rgba(255,255,255,.15)'; g.fillRect(x + 50 + c * 11, -21, 8, 8); } });
-      { const x = 458, c = ultCost(P), pts = Math.min(c, P.ult | 0), ready = pts >= c, pulse = ready ? .55 + .45 * Math.sin(K.t * 5) : 0; rr(g, x, -58, 86, 58, 8, ready ? 'rgba(12,16,22,.7)' : 'rgba(12,16,22,.4)', ready ? op.col : 'rgba(255,255,255,.12)', ready ? 2 + pulse * 2 : 1);
-        for (let q = 0; q < c; q++) { const a0 = -Math.PI / 2 + q * TAU / c + .08, a1 = -Math.PI / 2 + (q + 1) * TAU / c - .08; g.strokeStyle = q < pts ? op.col : 'rgba(255,255,255,.18)'; g.lineWidth = 4; g.beginPath(); g.arc(x + 22, -29, 13, a0, a1); g.stroke(); }
-        tx(g, 'X', x + 22, -29, 12, ready ? BONE : '#5a6272'); tx(g, ready ? op.x.n.toUpperCase() : `${pts}/${c}`, x + 61, -36, ready ? 11 : 13, ready ? BONE : '#5a6272'); tx(g, 'ULT', x + 61, -18, 10, ready ? op.col : '#5a6272'); }
-      if (P.smokes > 0) { const x = 554, on = P.smokes > 0; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? NADE.col : 'rgba(255,255,255,.12)'); tx(g, 'SMOKE ×' + (P.smokes || 0), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, 'G', x + 43, -16, 12, on ? NADE.col : '#5a6272'); }
+      // the abilities, the way the genre lays them out: C and Q (bought, their charges as pips), E (the signature, free each
+      // round; some come back, the wait shown round it), X (the ultimate, its points round a ring). The readied one lifts and glows.
+      const op = OPS[P.op], slot = (key, k, x, w) => { const ult = k === 'x', n = ult ? 0 : P.ab[k] | 0, c2 = ultCost(P), pts = Math.min(c2, P.ult | 0), have = ult ? pts >= c2 : n > 0 || (k === 'c' && !!P.tether), on = have && M.mode !== 'demo', rdy = P.rdy === k, lift = rdy ? -7 : 0, A = ult ? op.x : op[k];
+        const pulse = (ult && have) || rdy ? .55 + .45 * Math.sin(K.t * (rdy ? 9 : 5)) : 0;
+        g.save(); g.translate(0, lift); rr(g, x, -62, w, 62, 8, rdy ? 'rgba(20,24,34,.92)' : on ? GLASS : 'rgba(12,16,22,.4)', on ? op.col : 'rgba(255,255,255,.12)', rdy ? 2.5 + pulse * 1.5 : ult && have ? 2 + pulse * 2 : 1.5);
+        if (rdy) { const gr = g.createLinearGradient(0, -62, 0, 0); gr.addColorStop(0, op.col + '00'); gr.addColorStop(1, op.col + '55'); g.fillStyle = gr; g.fillRect(x + 2, -60, w - 4, 58); }
+        abIcon(g, ABICON[P.op + k] || 'orb', x + w / 2, -40, 13, on ? (rdy ? '#ffffff' : BONE) : '#5a6272', on ? op.col : '#3c4250');
+        if (ult) for (let q = 0; q < c2; q++) { const a0 = -Math.PI / 2 + q * TAU / c2 + .1, a1 = -Math.PI / 2 + (q + 1) * TAU / c2 - .1; g.strokeStyle = q < pts ? op.col : 'rgba(255,255,255,.18)'; g.lineWidth = 3.5; g.beginPath(); g.arc(x + w / 2, -40, 19, a0, a1); g.stroke(); }
+        if (k === 'e' && !n) { const E = op.e, q = E.rech ? (P.eT || 0) / E.rech : E.kills ? (P.eK | 0) / E.kills : 0; if (q > 0) { g.strokeStyle = op.col; g.lineWidth = 3; g.beginPath(); g.arc(x + w / 2, -40, 18, -Math.PI / 2, -Math.PI / 2 + TAU * q); g.stroke(); } }
+        // the key, and the charges
+        rr(g, x + 5, -19, 15, 14, 3, on ? op.col : 'rgba(255,255,255,.12)'); tx(g, key, x + 12.5, -12, 10, on ? INK : '#5a6272', 'center', 900);
+        if (!ult && k !== 'e') { const mx = A.max; for (let c = 0; c < mx; c++) { g.fillStyle = c < n ? op.col : 'rgba(255,255,255,.18)'; g.fillRect(x + w - 8 - (mx - c) * 9, -15, 7, 7); } }
+        if (ult) tx(g, have ? 'READY' : `${pts}/${c2}`, x + w - 6, -12, 9.5, have ? op.col : '#5a6272', 'right', 900);
+        if (rdy) tx(g, A.n.toUpperCase(), x + w / 2, -74, 11, op.col, 'center', 900);
+        g.restore(); };
+      slot('C', 'c', 262, 70); slot('Q', 'q', 338, 70); slot('E', 'e', 414, 70); slot('X', 'x', 490, 78);
+      if (P.rdy) { const K2 = isTouch() ? 'FIRE' : 'CLICK', A = P.rdy === 'x' ? op.x : op[P.rdy]; tx(g, `${K2} TO USE  ·  ${isTouch() ? 'ALT' : 'RIGHT CLICK'}: ${ABALT[P.op + P.rdy] || 'THE SAME'}  ·  ${P.rdy.toUpperCase()} TO PUT AWAY`, 400, -96, 10, BONE, 'center', 800); }
+      if (P.smokes > 0) { const x = 578, on = P.smokes > 0; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? NADE.col : 'rgba(255,255,255,.12)'); tx(g, 'SMOKE ×' + (P.smokes || 0), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, 'G', x + 43, -16, 12, on ? NADE.col : '#5a6272'); }
       g.restore();
       g.save(); g.translate(V.x1 - 22 - 50 / pxPer(), V.y1 - 20); g.scale(u, u); rr(g, -270, -58, 270, 58, 8, GLASS);
       if (G.melee) tx(g, '—', -150, -28, 34, BONE); else { tx(g, String(A.mag), -150, -28, 42, A.mag ? BONE : WARN, 'right'); tx(g, '/ ' + A.res, -140, -22, 18, DIM, 'left'); }
@@ -8706,7 +9264,7 @@ const GAME = {
       R.push((g, x, y, w) => { tx(g, 'Aim with', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['mouse', 'MOUSE'], ['trackpad', 'TRACKPAD']], CFG.aim, v => { CFG.aim = v; CFG.aimSet = true; if (locked()) { releaseMouse(); grabMouse(); } }); });
       R.push((g, x, y, w) => CFG.aim === 'trackpad' ? fine(g, x, y, w, 'Trackpad speed', CFG.tpsens, .2, 3, .05, v => { CFG.tpsens = v; }, v => v.toFixed(2)) : fine(g, x, y, w, 'Mouse sensitivity', CFG.sens, .05, 3, .01, v => { CFG.sens = v; }, v => v.toFixed(2)));
       R.push((g, x, y, w) => fine(g, x, y, w, 'Aiming / scoped', CFG.zsens, .3, 1.5, .05, v => { CFG.zsens = v; }, v => 'x' + v.toFixed(2)));
-      R.push((g, x, y, w) => { tx(g, 'Crouch (Ctrl or C)', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['hold', 'HOLD'], ['toggle', 'TOGGLE']], CFG.crouch, v => { CFG.crouch = v; keys.crouchT = false; }); });
+      R.push((g, x, y, w) => { tx(g, 'Crouch (Ctrl)', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['hold', 'HOLD'], ['toggle', 'TOGGLE']], CFG.crouch, v => { CFG.crouch = v; keys.crouchT = false; }); });
       R.push((g, x, y, w, wide) => toggle(g, x, y, w, 'Full screen in play', CFG.full, v => { CFG.full = v; if (!v && document.fullscreenElement) try { document.exitFullscreen(); } catch (e) {} }, wide && 'stops Ctrl+W closing the tab'));
     }
     R.push((g, x, y, w) => fine(g, x, y, w, 'Field of view', fovH(), 90, 115, 1, v => { CFG.fov = v; }, v => Math.round(v) + '\u00b0'));
@@ -8917,9 +9475,9 @@ const GAME = {
   // each round's money buys them; press something you bought this round to sell it back. The smoke grenade sits under the heavy gun.
   const ARMORY_COLS = [[['SIDEARMS', 'Sidearm']], [['SMGS', 'SMG'], ['SHOTGUNS', 'Shotgun']], [['RIFLES', 'Rifle']], [['SNIPERS', 'Sniper'], ['HEAVY', 'Heavy'], ['UTILITY', 'Utility']], [['SHIELDS', 'Shield']]];
   const shopItem = k => GUNS[k] || (k === NADE.k ? NADE : null);
-  // the Utility row holds the smoke and a charge of your operative's bought ability (Q), side by side
-  const abItem = () => { const op = OPS[me().op]; return { k: 'abq', n: op.q.n, short: op.q.n, cost: op.q.cost, col: op.col, ab: op }; };
-  const itemsOf = cat => cat === 'Shield' ? ARMOR.map(a => ({ k: a.k, n: a.n, cost: a.cost, col: '#7fc8ff', armor: a })) : cat === 'Utility' ? [NADE, abItem()] : Object.values(GUNS).filter(q => q.cat === cat);
+  // the Utility rows: a charge of each of your operative's bought abilities (C and Q) side by side, and the smoke
+  const abItems = () => { const op = OPS[me().op]; return ['c', 'q'].map(s2 => ({ k: 'ab' + s2, s2, n: op[s2].n, short: op[s2].n, cost: op[s2].cost, col: op.col, ab: op })); };   // the two bought abilities, C and Q
+  const itemsOf = cat => cat === 'Shield' ? ARMOR.map(a => ({ k: a.k, n: a.n, cost: a.cost, col: '#7fc8ff', armor: a })) : cat === 'Utility' ? [NADE, ...abItems()] : Object.values(GUNS).filter(q => q.cat === cat);
   /* THE ARMORY: everything for sale in five columns by class, as it always was. With teammates, a strip of them runs across
      the top (what each has, can spend and has just bought); the box under the shields shows the gun you point at in numbers. */
   function drawArmory(g) {
@@ -8928,7 +9486,7 @@ const GAME = {
     const pad = isTouch() ? 46 / pxPer() : 0; tx(g, 'ARMORY', x + 18 * u + pad, y0 + 24 * u, 24 * u, BONE, 'left'); tx(g, `◈ ${P.credits}`, x + w - 18 * u - pad, y0 + 24 * u, 23 * u, GOLD, 'right');
     { tx(g, range ? 'Everything is free on the range' : `${pistolRound(M.round) ? 'Pistol round · ' : otRound(M.round) ? 'Overtime · ' : ''}Round starts in ${Math.max(0, Math.ceil(M.t))}${lossNext(P)}`, x + w / 2, y0 + 24 * u, 14 * u, DIM); }
     const team = range ? [] : M.fs.filter(q => q.team === P.team && !q.gone).sort((a, b) => (b === P) - (a === P)), att = !range && sideOf(P) === 'att', sth = team.length > 1 ? (isTouch() ? tapH(34, 36) : 50 * u) : 0;
-    const by = y0 + 46 * u + (sth ? sth + gap : 0), bh = y0 + h - by - 12 * u, hh = fitPx(g, 12 * u) * 1.7, cw = (w - 28 * u - 4 * gap) / 5, ch = (bh - hh - 4 * gap) / 5; let focus = null;
+    const by = y0 + 46 * u + (sth ? sth + gap : 0), bh = y0 + h - by - 12 * u, hh = fitPx(g, 12 * u) * 1.7, cw = (w - 28 * u - 4 * gap) / 5, ch = (bh - hh * 3 - 6 * gap) / 5; let focus = null;   // (the fourth column holds five rows under three headings: snipers, heavy, utility)
     /* YOUR TEAM, one tile each above the columns: operative, name, whether they are ready (✓) or still buying, their credits,
        the gun they will carry (in gold with a + if they bought it this round) with its picture, and their shield, bought
        charges and smokes. Attacking, the diamond on a tile hands that teammate the charge. */
@@ -8947,28 +9505,29 @@ const GAME = {
       let cx2 = lx; const cp = Math.min(10.5 * u, sth * .22), lim = rx2 - iw - 4 * u, chip = (s2, col, px2 = cp) => { g.font = `800 ${fitPx(g, px2)}px ${FONT}`; const wd = g.measureText(s2).width; if (cx2 + wd > lim) return; tx(g, s2, cx2, y2, px2, col, 'left', 800); cx2 += wd + 7 * u; };
       if (tight) chip('◈' + q.credits, GOLD);
       if (G1 && lim - cx2 > 34 * u) { const [gn, gpx] = fitName(g, (fresh ? '+' : '') + G1.n.toUpperCase(), lim - cx2, cp * 1.08); tx(g, gn, cx2, y2, gpx, fresh ? GOLD : G1.col, 'left', 800); g.font = `800 ${fitPx(g, gpx)}px ${FONT}`; cx2 += g.measureText(gn).width + 7 * u; }
-      chip('⬢' + Math.ceil(q.sh || 0), q.sh > (I0.sh | 0) ? GOLD : q.sh > 0 ? '#7fc8ff' : '#5a6272'); if ((q.ab.q | 0) > 0) chip('Q' + (q.ab.q | 0), (q.ab.q | 0) > (I0.q | 0) ? GOLD : O2.col); if ((q.smokes | 0) > 0) chip('S' + q.smokes, (q.smokes | 0) > (I0.sm | 0) ? GOLD : NADE.col);
+      chip('⬢' + Math.ceil(q.sh || 0), q.sh > (I0.sh | 0) ? GOLD : q.sh > 0 ? '#7fc8ff' : '#5a6272'); if ((q.ab.c | 0) > 0) chip('C' + (q.ab.c | 0), (q.ab.c | 0) > (I0.c | 0) ? GOLD : O2.col); if ((q.ab.q | 0) > 0) chip('Q' + (q.ab.q | 0), (q.ab.q | 0) > (I0.q | 0) ? GOLD : O2.col); if ((q.smokes | 0) > 0) chip('S' + q.smokes, (q.smokes | 0) > (I0.sm | 0) ? GOLD : NADE.col);
       if (att) { const has = carries(q), bx2 = tx1 + cw - bw2 - 6 * u, by2 = ty1 + (sth - bw2) / 2, can = !has && q.alive && (carries(P) || !carrier() || carrier().bot || carrier().isBot), h2 = zone(bx2, by2, bw2, bw2, () => { if (giveCharge(P, q)) click(); });   // the charge: press to hand it over
         rr(g, bx2, by2, bw2, bw2, 6, has ? 'rgba(255,214,102,.3)' : h2 && can ? 'rgba(255,214,102,.12)' : 'rgba(255,255,255,.035)', has ? GOLD : can ? 'rgba(255,214,102,.45)' : 'rgba(255,255,255,.08)', has ? 2 : 1); tx(g, '◆', bx2 + bw2 / 2, by2 + bw2 / 2, bw2 * .5, has ? GOLD : can ? 'rgba(255,214,102,.6)' : '#3c434e', 'center', 900); }
     });
     const card = (it, cx, cy, cw2 = cw) => {
       const cw = cw2, A = it.armor, AB = it.ab ? it : null, N = it === NADE ? it : null, G = A || N || AB ? null : it, sp = P.spent, lock = false;
-      const on = A ? P.sh >= A.sh : AB ? (P.ab.q | 0) >= AB.ab.q.max : N ? (P.smokes || 0) >= NADE.per : P.guns[G.slot] === it.k, mineNow = A ? sp.sh && sp.sh.k === it.k : AB ? sp.abq > 0 : N ? sp.smoke > 0 : sp[G.slot] && sp[G.slot].k === it.k;
+      const on = A ? P.sh >= A.sh : AB ? (P.ab[AB.s2] | 0) >= AB.ab[AB.s2].max : N ? (P.smokes || 0) >= NADE.per : P.guns[G.slot] === it.k, mineNow = A ? sp.sh && sp.sh.k === it.k : AB ? sp[AB.k] > 0 : N ? sp.smoke > 0 : sp[G.slot] && sp[G.slot].k === it.k;
       const refund = A ? (sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0) : N || AB ? 0 : (sp[G.slot] ? GUNS[sp[G.slot].k].cost : 0), can = !on && P.credits + refund >= it.cost;
       const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
       rr(g, cx, cy, cw, ch, 8, on ? 'rgba(53,224,200,.14)' : hot && can ? 'rgba(255,138,61,.18)' : 'rgba(255,255,255,.045)', on ? YOU : hot || UI.pick === it.k ? 'rgba(239,233,220,.6)' : can ? 'rgba(239,233,220,.2)' : 'rgba(255,255,255,.06)');
       const tp = Math.min(15 * u, ch * .2, cw * .075), ty = cy + tp * .95;
       g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nm = it.short && g.measureText((it.n + '  ◈ 200').toUpperCase()).width > cw - 18 * u ? it.short : it.n;
-      const have = (N && P.smokes) || (AB && P.ab.q);
+      const have = (N && P.smokes) || (AB && P.ab[AB.s2]);
       // its name, and its price on the same line, or (a tile too narrow for both) along its foot
-      const price = on ? (mineNow ? 'SELL' : AB ? 'FULL' : G && resale(it.k) ? `SELL ◈ ${resale(it.k)}` : 'OWNED') : have ? `${N ? P.smokes : P.ab.q} · ◈ ${it.cost}` : it.cost ? `◈ ${it.cost}` : 'FREE', pcol = on ? YOU : can ? GOLD : '#5a6272';
+      const price = on ? (mineNow ? 'SELL' : AB ? 'FULL' : G && resale(it.k) ? `SELL ◈ ${resale(it.k)}` : 'OWNED') : have ? `${N ? P.smokes : P.ab[AB.s2]} · ◈ ${it.cost}` : it.cost ? `◈ ${it.cost}` : 'FREE', pcol = on ? YOU : can ? GOLD : '#5a6272';
       g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nmW = g.measureText(nm.toUpperCase()).width; g.font = `700 ${fitPx(g, tp * .85)}px ${FONT}`; const prW = g.measureText(price).width, foot = nmW + prW + 12 * u > cw - 17 * u;
       tx(g, nm.toUpperCase(), cx + 9 * u, ty, tp, can || on || have ? it.col : '#5a6272', 'left');
       if (foot) tx(g, price, cx + cw / 2, cy + ch - tp * .7, tp * .85, pcol, 'center'); else tx(g, price, cx + cw - 8 * u, ty, tp * .85, pcol, 'right');
       g.save(); g.globalAlpha = can || on || have ? 1 : .35; g.beginPath(); g.rect(cx + 2, cy + 2, cw - 4, ch - 4); g.clip(); const iy = cy + tp * 1.7, ih = ch - tp * 1.7 - 3;
       if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih * (G.cat === 'Sidearm' ? 1.12 : 1.05), (cw - 12 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.5 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.2 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } }
-      else if (AB) { const mx = cx + cw / 2, my = iy + ih / 2, r = Math.min(ih * .36, cw * .22), mx2 = AB.ab.q.max; g.strokeStyle = it.col; g.lineWidth = 3 * u; g.beginPath(); g.arc(mx, my - 4 * u, r, 0, TAU); g.stroke(); tx(g, 'Q', mx, my - 4 * u, r * 1.1, it.col, 'center', 900);
-        for (let c = 0; c < mx2; c++) { g.fillStyle = c < (P.ab.q | 0) ? it.col : 'rgba(255,255,255,.18)'; g.fillRect(mx - mx2 * 7 * u + c * 14 * u + 2 * u, my + r + 2 * u, 10 * u, 6 * u); } }
+      else if (AB) { const mx = cx + cw / 2, my = iy + ih / 2, r = Math.min(ih * .36, cw * .22), mx2 = AB.ab[AB.s2].max; g.strokeStyle = it.col; g.lineWidth = 3 * u; g.beginPath(); g.arc(mx, my - 4 * u, r, 0, TAU); g.stroke(); abIcon(g, ABICON[me().op + AB.s2] || 'orb', mx, my - 4 * u, r * .62, BONE, it.col);
+        rr(g, mx + r * .55, my - 4 * u + r * .35, r * .62, r * .62, 3, it.col); tx(g, AB.s2.toUpperCase(), mx + r * .86, my - 4 * u + r * .66, r * .44, INK, 'center', 900);
+        for (let c = 0; c < mx2; c++) { g.fillStyle = c < (P.ab[AB.s2] | 0) ? it.col : 'rgba(255,255,255,.18)'; g.fillRect(mx - mx2 * 7 * u + c * 14 * u + 2 * u, my + r + 2 * u, 10 * u, 6 * u); } }
       else if (N) { const ih2 = ih - tp * 1.1, mx = cx + cw / 2, my = iy + ih2 / 2 + 4 * u, s2 = ih2 / 62; for (let i = 0; i < NADE.per; i++) { const ox = mx + (i - (NADE.per - 1) / 2) * 30 * s2; rr(g, ox - 10 * s2, my - 18 * s2, 20 * s2, 40 * s2, 5 * s2, '#59606b', '#9aa3ad', 1.5); g.fillStyle = NADE.col; g.fillRect(ox - 10 * s2, my - 10 * s2, 20 * s2, 5 * s2); rr(g, ox - 6 * s2, my - 25 * s2, 12 * s2, 8 * s2, 2 * s2, '#3d434b'); g.fillStyle = '#9aa3ad'; g.fillRect(ox + 6 * s2, my - 24 * s2, 3 * s2, 18 * s2); } if (!foot) tx(g, 'CARRY ' + NADE.per, mx, cy + ch - tp * .7, tp * .62, DIM); }
       else { const mx = cx + cw / 2, my = iy + ih / 2, s2 = ih / 80 * (A.sh === 50 ? 1.05 : .85); g.fillStyle = it.col + '33'; g.strokeStyle = it.col; g.lineWidth = 2.5 * u; g.beginPath(); g.moveTo(mx, my - 32 * s2); g.lineTo(mx + 26 * s2, my - 22 * s2); g.lineTo(mx + 22 * s2, my + 12 * s2); g.lineTo(mx, my + 32 * s2); g.lineTo(mx - 22 * s2, my + 12 * s2); g.lineTo(mx - 26 * s2, my - 22 * s2); g.closePath(); g.fill(); g.stroke(); tx(g, '+' + A.sh, mx, my, 20 * s2, BONE); }
       g.restore();
@@ -8977,7 +9536,7 @@ const GAME = {
     ARMORY_COLS.forEach((col, ci) => {
       const cx = x + 14 * u + ci * (cw + gap); let y = by;
       for (const [label, cat] of col) { tx(g, label, cx + 2, y + hh / 2, 12 * u, DIM, 'left'); y += hh;
-        if (cat === 'Utility') { const its = itemsOf(cat), hw = (cw - gap) / 2; its.forEach((it, n) => card(it, cx + n * (hw + gap), y, hw)); y += ch + gap; continue; }   // two half cards in one row
+        if (cat === 'Utility') { const its = itemsOf(cat), ab = its.filter(q => q.ab), hw = (cw - gap) / 2; ab.forEach((it, n) => card(it, cx + n * (hw + gap), y, hw)); y += ch + gap; card(NADE, cx, y, cw); y += ch + gap; continue; }   // C and Q side by side, the smoke under them
         for (const it of itemsOf(cat)) { card(it, cx, y); y += ch + gap; } }
       if (ci === 4) endY = y;
     });
@@ -9007,9 +9566,9 @@ const GAME = {
           for (const [lab, key] of [['HEAD', 'head'], ['BODY', 'body'], ['LEGS', 'legs']]) { tx(g, lab, px3, y, fp * .8, DIM, 'left', 800); S.bands.forEach((b2, i) => { const v = b2[key] * S.pel; tx(g, String(b2[key]), c0 + cw4 * (i + .5), y, fp * .95, v >= 150 ? GOLD : v >= 100 ? BONE : '#b6bdc9', 'center', 800); }); y += fp * 1.32; } }
         if (yEnd - y >= fp * 1.6) { y += fp * .35; row('MAGAZINE · RELOAD', `${G.mag} · ${G.rel} s`); }
       } else {
-        y = para(g, F.armor ? `Blocks the next ${F.armor.sh} damage.` : F.ab ? `${F.ab.q.d} Up to ${F.ab.q.max}; they carry over. E (${F.ab.e.n}) is free every round; X (${F.ab.x.n}) is your ultimate.` : F.desc, px3, y, cw - 19 * u, fp, '#cfd6e2', 1.25) + fp * .3;
+        y = para(g, F.armor ? `Blocks the next ${F.armor.sh} damage.` : F.ab ? `${F.ab[F.s2].d} Up to ${F.ab[F.s2].max}; they carry over. E (${F.ab.e.n}) is free every round${F.ab.e.rech ? ' and comes back after ' + F.ab.e.rech + ' s' : F.ab.e.kills ? ' and comes back after ' + F.ab.e.kills + ' kills' : ''}; X (${F.ab.x.n}) is your ultimate.` : F.desc, px3, y, cw - 19 * u, fp, '#cfd6e2', 1.25) + fp * .3;
         if (F === NADE) { row('CARRY', `UP TO ${NADE.per}`); row('CLOUD', `${NADE.T} S`); }
-        if (F.ab) { row('CHARGES', `${P.ab.q | 0} OF ${F.ab.q.max}`); row('ULTIMATE', `${Math.min(P.ult | 0, ultCost(P))} / ${ultCost(P)} POINTS`); }
+        if (F.ab) { row('CHARGES', `${P.ab[F.s2] | 0} OF ${F.ab[F.s2].max}`); row('ULTIMATE', `${Math.min(P.ult | 0, ultCost(P))} / ${ultCost(P)} POINTS`); }
         row('PRICE', F.cost ? `◈ ${F.cost}` : 'FREE');
       }
       g.restore();
@@ -9296,7 +9855,8 @@ const GAME = {
     { const pop = smooth(cl((now - (S.pickT || S.t0)) / 260, 0, 1)), cx = x0 + (S.o ? 260 * u : 0) + 20 * u, cy = V.y0 + 150 * u; g.save(); g.globalAlpha = .4 + .6 * pop;
       tx(g, O.role.toUpperCase(), cx, cy - 40 * u, 13 * u, O.col, 'left', 900); tx(g, O.n, cx - 4 * u, cy + 8 * u, 74 * u, BONE, 'left', 900);
       let y = para(g, O.bio || '', cx, cy + 56 * u, 320 * u, 14 * u, '#c9cfd8') + 18 * u;
-      for (const [key, a] of [['Q', O.q], ['E', O.e], ['X', O.x]]) { rr(g, cx, y - 15 * u, 30 * u, 30 * u, 5, 'rgba(12,16,22,.8)', O.col, 2); tx(g, key, cx + 15 * u, y, 15 * u, O.col, 'center', 900); tx(g, a.n.toUpperCase(), cx + 42 * u, y - 2 * u, 16 * u, BONE, 'left', 900); y = para(g, a.d, cx + 42 * u, y + 18 * u, 290 * u, 12.5 * u, '#b9c0cc') + 16 * u; }
+      for (const [key, a] of [['C', O.c], ['Q', O.q], ['E', O.e], ['X', O.x]]) { rr(g, cx, y - 17 * u, 34 * u, 34 * u, 6, 'rgba(12,16,22,.85)', O.col, 2); abIcon(g, ABICON[S.op + key.toLowerCase()] || 'orb', cx + 17 * u, y, 10 * u, BONE, O.col); rr(g, cx + 22 * u, y + 8 * u, 14 * u, 13 * u, 3, O.col); tx(g, key, cx + 29 * u, y + 14.5 * u, 9.5 * u, INK, 'center', 900);
+        tx(g, a.n.toUpperCase(), cx + 46 * u, y - 4 * u, 15 * u, BONE, 'left', 900); y = para(g, a.d, cx + 46 * u, y + 14 * u, 290 * u, 12 * u, '#b9c0cc') + 12 * u; }
       g.restore(); }
     // the roster along the bottom
     const n = keys.length, tw = Math.min(86 * u, (W - 160 * u) / n - 8 * u), th = tw * 1.1, total = n * (tw + 8 * u) - 8 * u, rx0 = 640 - total / 2, ry = V.y1 - th - 30 * u;
@@ -10056,7 +10616,7 @@ const GAME = {
   };
   // for the browser tests
   GAME.test = {
-    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, PS, STATS, seasonNow, myPass, passTier, passRewards, buyPremium, myChallenges, levelOf, myCard, overNext, matchAwards, payProgress, heroArt, heroRender, get ptr() { return ptr; }, mech: () => ({ TPS, PADS, GATES, BRKS, VENTS, navCells, GRASS, ICE, LOWG, BELT, GW, GH, NC, hAt, los, setGate, setWall }), hurt: (v, n, by, h) => applyDamage(v, n, by, h, 'vesper'), get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
+    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, PS, STATS, seasonNow, myPass, passTier, passRewards, buyPremium, myChallenges, levelOf, myCard, overNext, matchAwards, payProgress, heroArt, heroRender, get baked() { return baked; }, readyAb, castReady, abData, killBanner: (n, pin, wk) => { banner = { t0: performance.now(), n, head: true, name: 'Kestrel', em: killEmblem(wk || 'pip'), pin }; }, get ptr() { return ptr; }, mech: () => ({ TPS, PADS, GATES, BRKS, VENTS, navCells, GRASS, ICE, LOWG, BELT, GW, GH, NC, hAt, los, setGate, setWall }), hurt: (v, n, by, h) => applyDamage(v, n, by, h, 'vesper'), get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),

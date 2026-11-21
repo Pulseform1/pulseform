@@ -78,7 +78,8 @@
     { const pop = smooth(cl((now - (S.pickT || S.t0)) / 260, 0, 1)), cx = x0 + (S.o ? 260 * u : 0) + 20 * u, cy = V.y0 + 150 * u; g.save(); g.globalAlpha = .4 + .6 * pop;
       tx(g, O.role.toUpperCase(), cx, cy - 40 * u, 13 * u, O.col, 'left', 900); tx(g, O.n, cx - 4 * u, cy + 8 * u, 74 * u, BONE, 'left', 900);
       let y = para(g, O.bio || '', cx, cy + 56 * u, 320 * u, 14 * u, '#c9cfd8') + 18 * u;
-      for (const [key, a] of [['Q', O.q], ['E', O.e], ['X', O.x]]) { rr(g, cx, y - 15 * u, 30 * u, 30 * u, 5, 'rgba(12,16,22,.8)', O.col, 2); tx(g, key, cx + 15 * u, y, 15 * u, O.col, 'center', 900); tx(g, a.n.toUpperCase(), cx + 42 * u, y - 2 * u, 16 * u, BONE, 'left', 900); y = para(g, a.d, cx + 42 * u, y + 18 * u, 290 * u, 12.5 * u, '#b9c0cc') + 16 * u; }
+      for (const [key, a] of [['C', O.c], ['Q', O.q], ['E', O.e], ['X', O.x]]) { rr(g, cx, y - 17 * u, 34 * u, 34 * u, 6, 'rgba(12,16,22,.85)', O.col, 2); abIcon(g, ABICON[S.op + key.toLowerCase()] || 'orb', cx + 17 * u, y, 10 * u, BONE, O.col); rr(g, cx + 22 * u, y + 8 * u, 14 * u, 13 * u, 3, O.col); tx(g, key, cx + 29 * u, y + 14.5 * u, 9.5 * u, INK, 'center', 900);
+        tx(g, a.n.toUpperCase(), cx + 46 * u, y - 4 * u, 15 * u, BONE, 'left', 900); y = para(g, a.d, cx + 46 * u, y + 14 * u, 290 * u, 12 * u, '#b9c0cc') + 12 * u; }
       g.restore(); }
     // the roster along the bottom
     const n = keys.length, tw = Math.min(86 * u, (W - 160 * u) / n - 8 * u), th = tw * 1.1, total = n * (tw + 8 * u) - 8 * u, rx0 = 640 - total / 2, ry = V.y1 - th - 30 * u;

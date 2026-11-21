@@ -11,26 +11,26 @@
                        E Tripmine: a mine at your feet that arms, then bursts for up to 75 when a rival comes near.
      The things they leave in the world live in M.kit and are stepped by stepKits. Like damage, every effect on a fighter
      is worked out on that fighter's own device: a trap or mine that goes off there tells the others, so all screens agree. */
-  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [] };
+  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [] };
   const freshKit = () => Object.fromEntries(Object.keys(KIT_N).map(k => [k, []]));
   const enemyOf = (a, b) => a.team !== b.team;
   const kitId = (f, k) => f.key + ':' + k + ':' + M.round;
   // where an ability goes, worked out on the caster's device; returns the data every device applies
-  function kitAim(f, key, d, S) {
+  function kitAim(f, key, d, S, alt) {
     const e = eyeY(f), reach = (max, back = .6) => Math.max(1, Math.min(S.hit ? max : S.dist, max) - back);
     if (key === 'novae') { const dd = Math.max(1, Math.min(S.dist, 18) - .4); return { x: f.x + d[0] * dd, y: e + d[1] * dd, z: f.z + d[2] * dd }; }   // aimed at a rival, it goes off on them
     if (key === 'wraithe') { const dd = reach(20); return { x: f.x + d[0] * dd, z: f.z + d[2] * dd }; }
     if (key === 'talonq') return { x: f.x + d[0] * .5, y: e + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * 42, vy: d[1] * 42 + 1.5, vz: d[2] * 42 };
     if (key === 'talone') { const dd = Math.min(reach(5, .4), 5); return { x: f.x - Math.sin(f.yaw) * dd, z: f.z - Math.cos(f.yaw) * dd }; }
-    if (key === 'emberq') return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * 15 + f.vx * .4, vy: d[1] * 15 + 3, vz: d[2] * 15 + f.vz * .4 };
+    if (key === 'emberq') { const sp = alt ? 8.5 : 15; return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + (alt ? 2.2 : 3), vz: d[2] * sp + f.vz * .4 }; }   // the other click: a short underhand lob
     if (key === 'embere') { const dd = Math.min(reach(10), 10); return { x: f.x + d[0] * dd, z: f.z + d[2] * dd, px: Math.cos(f.yaw), pz: -Math.sin(f.yaw) }; }
     if (key === 'axiomq') { const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw), dd = walkLine(f.x, f.z, f.x + fx * 1.4, f.z + fz * 1.4) ? 1.4 : .6; return { x: f.x + fx * dd, z: f.z + fz * dd, yaw: f.yaw }; }
     if (key === 'axiome') return { x: f.x, z: f.z };
     // the ultimates
     if (key === 'vexx') { const dd = Math.max(2, Math.min(S.hit ? S.dist : S.dist, 30) - .8); let x = f.x + d[0] * dd, z = f.z + d[2] * dd; const [ci, cj] = nearestNav(x, z); x = (ci + .5) * CS; z = (cj + .5) * CS; return { x, z }; }
-    if (key === 'emberx') return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * 17 + f.vx * .4, vy: d[1] * 17 + 3.5, vz: d[2] * 17 + f.vz * .4 };
+    if (key === 'emberx') { const sp = alt ? 9.5 : 17; return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + (alt ? 2.5 : 3.5), vz: d[2] * sp + f.vz * .4 }; }
     if (key === 'axiomx') return { x: f.x, z: f.z };
-    return {};
+    const r = kitAim2(f, key, d, S, alt); return r === undefined ? {} : r;   // (46: the C abilities and Vanta)
   }
   // the ability itself, the same on every device
   function kitApply(f, key, d) {
@@ -53,6 +53,7 @@
     if (key === 'wraithx') { f.cloak = 8; f.phase = 8; if (f === me()) say('PHASE', OPS.wraith.col); return true; }
     if (key === 'talonx') { f.volley = { n: 3, t: .35 }; if (f === me()) say('PIERCER', OPS.talon.col); return true; }
     if (key === 'emberx') { K2.bombs.push({ x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, big: true }); return true; }
+    if (key.endsWith('c') || key.startsWith('vanta')) return kitApply2(f, key, d);
     if (key === 'axiomx') { K2.locks.push({ x: d.x, z: d.z, y: hAt(d.x, d.z), t: 2.5, T: 2.5, R: 14, by: f }); if (me().team !== f.team && Math.hypot(me().x - d.x, me().z - d.z) < 18) say('LOCKDOWN INCOMING', WARN); return true; }
     return false;
   }
@@ -77,6 +78,7 @@
   function stepKits(dt) {
     const K2 = M.kit || (M.kit = freshKit());
     for (const f of M.fs) for (const k of ['surge', 'cloak', 'daze', 'snare', 'guard', 'od', 'phase', 'lock']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
+    stepKits2(dt);   // (46: the C abilities and Vanta)
     // Nightwalk: a second gathering the dark, then out of it at the far end
     for (const f of M.fs) if (f.chan && (f.chan.t -= dt) <= 0) { const c = f.chan; f.chan = null; if (!f.alive) continue; const from = [f.x, f.z];
       if (!f.net) { f.x = c.x; f.z = c.z; f.y = hAt(c.x, c.z); f.vx = f.vz = f.vy = 0; } emit('nightwalk', f, from, [c.x, c.z]); }
