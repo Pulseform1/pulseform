@@ -123,6 +123,17 @@ function gunplayChecks() {
 }
 
 // whole matches, bot against bot, watching for errors, fighters that stop moving, and rounds that never end
+// a standing first shot: every pistol, SMG and rifle puts it on a head (radius .18) at 30 metres nearly every time; letting go
+// of the keys leaves you accurate in well under a fifth of a second
+function firstShotChecks() {
+  section('first-shot accuracy');
+  const head30 = Math.atan(.18 / 30) / T.D2R, odds = fs => Math.min(1, (head30 / Math.max(1e-6, fs)) ** 2);
+  const gs = Object.values(T.GUNS).filter(G => ['Sidearm', 'SMG', 'Rifle'].includes(G.cat) && !G.pel), low = gs.filter(G => odds(G.acc.fs) < .85);
+  ok(gs.length >= 10 && !low.length, 'a standing first shot from any pistol, SMG or rifle lands on a head at 30 m at least 85% of the time', low.map(G => G.k + ' ' + Math.round(100 * odds(G.acc.fs)) + '%').join(', ') || gs.map(G => G.k + ' ' + Math.round(100 * odds(G.acc.fs)) + '%').join(' '));
+  ok(odds(T.GUNS.torrent.acc.fs) >= .5 && T.GUNS.paladin.acc.fs <= .06 && T.GUNS.lancer.acc.fs < T.GUNS.vesper.acc.fs, 'the heavy gun\'s first shot is fair at range; the tap rifles are pin-point');
+  let I = idle(); T.setInput(() => I); let [M, P] = lab('vesper'); I = Object.assign({}, I, { mx: 1 }); run(1.2); const v0 = Math.hypot(P.vx, P.vz); I = Object.assign({}, I, { mx: 0 }); let t = 0; while (T.spreadOf(P) / T.D2R > T.GUNS.vesper.acc.fs + 1e-6 && t < 1) { run(1 / 60); t += 1 / 60; }
+  ok(v0 > 5 && t > 0 && t <= .125, 'let go of the keys at a run and you are accurate again within 125 ms', Math.round(t * 1000) + ' ms from ' + v0.toFixed(1) + ' m/s');
+}
 function moveChecks() {
   section('no sprint: the knife is the quick way round; slides, adaptive bots');
   let I = idle(); T.setInput(() => I);
@@ -623,13 +634,13 @@ if (arg === 'map') { printMap(); process.exit(0); }
 if (arg === 'matches') matchChecks(+process.argv[3] || 20);
 else if (arg === 'two') twoSiteChecks(+process.argv[3] || 12);
 else if (arg === 'maps') everyMapChecks(+process.argv[3] || 2);
-else if (arg === 'quick') { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); }
+else if (arg === 'quick') { mapChecks(); gunplayChecks(); firstShotChecks(); hitboxChecks(); moveChecks(); loadChecks(); }
 else if (arg === 'hit') hitboxChecks();
 else if (arg === 'teams') { teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); }
 else if (arg === 'kits') kitChecks();
 else if (arg === 'ults') ultChecks();
 else if (arg === 'skins') skinChecks();
 else if (arg === 'progress') progressChecks();
-else { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); ultChecks(); skinChecks(); progressChecks(); teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); matchChecks(20); twoSiteChecks(12); }
+else { mapChecks(); gunplayChecks(); firstShotChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); ultChecks(); skinChecks(); progressChecks(); teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); matchChecks(20); twoSiteChecks(12); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

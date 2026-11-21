@@ -89,7 +89,7 @@
       const tR = (wx * rx + wz * rz) * sp, tF = (wx * fx + wz * fz) * sp, against = (t, v) => f.ground && t !== 0 && Math.sign(t) === -Math.sign(v) && Math.abs(v) > .05;
       const cR = against(tR, vR), cF = against(tF, vF);
       const tx = tR * rx + tF * fx, tz = tR * rz + tF * fz, ddx = tx - f.vx, ddz = tz - f.vz, dl = Math.hypot(ddx, ddz);
-      const rate = (!f.ground ? 6 : cR || cF ? 80 : Math.hypot(tx, tz) < .01 ? 26 : f.sprinting ? 30 : 44) * (onIce ? ICE_GRIP : 1);
+      const rate = (!f.ground ? 6 : cR || cF ? 80 : Math.hypot(tx, tz) < .01 ? 34 :   /* (letting go: 34, a quick coast to a stop, so a shot soon after is steady; a touch stick can only let go) */ f.sprinting ? 30 : 44) * (onIce ? ICE_GRIP : 1);
       if (dl > 0) { const stp = Math.min(dl, rate * dt); f.vx += ddx / dl * stp; f.vz += ddz / dl * stp; }
       for (const [on, v0, ax, az] of [[cR, vR, rx, rz], [cF, vF, fx, fz]]) {
         if (!on) continue; const v1 = f.vx * ax + f.vz * az;

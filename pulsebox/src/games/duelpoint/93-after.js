@@ -27,53 +27,88 @@
       g.restore(); });
     g.restore();
   }
-  // ---- the line-up
-  function lineupScene() {
-    if (X.lu) return X.lu; const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(24, 1, .1, 80); scene.background = new THREE.Color('#0a0d12');
-    scene.add(new THREE.HemisphereLight('#e6ecff', '#2a2622', .75));
-    const key = new THREE.DirectionalLight('#fff1dc', 1.25); key.position.set(-2.5, 5, 6); scene.add(key, key.target);
-    const fill = new THREE.DirectionalLight('#9fc4ff', .35); fill.position.set(3, 2, 4); scene.add(fill, fill.target);
-    const la = new THREE.PointLight(YOU, 2.2, 14), lb = new THREE.PointLight(FOE, 2.2, 14); la.position.set(-3.2, 2.4, -2.6); lb.position.set(3.2, 2.4, -2.6); scene.add(la, lb);
-    // the floor: a dark stage that falls away into the backdrop, a line of light along the row
-    { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), gr = g.createRadialGradient(128, 128, 10, 128, 128, 128); gr.addColorStop(0, '#2a3140'); gr.addColorStop(.55, '#151a22'); gr.addColorStop(1, '#0a0d12'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
-      const fl = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c) })); fl.rotation.x = -Math.PI / 2; scene.add(fl); }
-    return X.lu = { scene, cam, la, lb, fakes: [], M: null, pts: [] };
+  // ---- the line-up: every operative as a picture on a tall card, with what they did best on a plate under it
+  /* Each picture is rendered once, off the screen: the operative (holding the gun they ended on, in its skin) in a little
+     studio of its own, a warm key light, a cool fill and two rim lights in their colour, drawn at twice the size and
+     shrunk, so the edges are smooth whatever the screen's own quality setting. The background is left clear, so the
+     card's colours show round them. Kept (by operative, gun and skin) for the rest of the visit. */
+  const HERO = { W: 360, H: 720, SS: 2 };
+  function heroStudio() {
+    if (X.hs) return X.hs; const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(20, HERO.W / HERO.H, .1, 60);
+    scene.add(new THREE.HemisphereLight('#e8eeff', '#2a2420', .6));
+    const key = new THREE.DirectionalLight('#fff0dc', 1.4); key.position.set(-2.2, 3.4, 4.2); scene.add(key, key.target);
+    const fill = new THREE.DirectionalLight('#a9c8ff', .38); fill.position.set(3.2, 1.2, 3); scene.add(fill, fill.target);
+    const rimL = new THREE.DirectionalLight('#ffffff', 1.7), rimR = new THREE.DirectionalLight('#ffffff', 1.7); rimL.position.set(-2.8, 2.6, -3); rimR.position.set(2.8, 2.6, -3); scene.add(rimL, rimL.target, rimR, rimR.target);
+    const w = HERO.W * HERO.SS, h = HERO.H * HERO.SS, rt = new THREE.WebGLRenderTarget(w, h, { format: THREE.RGBAFormat }); rt.texture.encoding = THREE.sRGBEncoding;
+    const big = document.createElement('canvas'); big.width = w; big.height = h;
+    return X.hs = { scene, cam, rimL, rimR, rt, buf: new Uint8Array(w * h * 4), big, bg: big.getContext('2d'), img: big.getContext('2d').createImageData(w, h) };
   }
-  function lineupEnd() { const S = X && X.lu; if (!S) return; for (const k of S.fakes) { const A = X.agents.get(k); if (A) { if (A.parent) A.parent.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); X.agents.delete(k); } } S.fakes = []; S.M = null; S.pts = []; }
-  function renderLineup(dt) {
-    const S = lineupScene(), P = me(), cam = S.cam;
-    if (S.M !== M) { lineupEnd(); S.M = M; S.t0 = performance.now();
-      // your team on the left, best in the middle of the screen; the rivals on the right, best nearest the middle
-      const by = (a, b) => csOf(b) - csOf(a), mine = M.fs.filter(f => f.team === P.team && !f.gone).sort(by).reverse(), theirs = M.fs.filter(f => f.team !== P.team && !f.gone).sort(by);
-      S.order = [...mine, ...theirs]; S.nMine = mine.length;
-      S.fakes = S.order.map((f, i) => { const k = fighter({ op: f.op, key: 'lu' + i, name: f.name, team: P.team }), g1 = f.guns[1] || null; k.guns = { 1: g1, 2: f.guns[2] || 'pip', 3: 'knife' }; k.slot = g1 ? 1 : 2; k.skins = f.skins || {}; k.src = f; return k; }); }
-    const n = S.fakes.length, asp = innerWidth / innerHeight, gap = n > 2 ? .7 : .5, Hv = Math.max(n <= 4 ? 4 : 5.2, ((n - 1) * .74 + gap + 1.5) / asp), Wv = Hv * asp, sp = Math.min(1.05, (Wv - 1.5 - gap) / Math.max(1, n - 1)), D = Hv / 2 / Math.tan(12 * D2R), t = (performance.now() - S.t0) / 1000;
-    cam.aspect = asp; cam.fov = 24; cam.position.set(0, 1.25, D); cam.lookAt(0, Hv * .115, 0); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
-    const total = (n - 1) * sp + gap; S.pts = [];
-    S.fakes.forEach((k, i) => { const x = -total / 2 + i * sp + (i >= S.nMine ? gap : 0), pop = smooth(cl((t - .1 - i * .09) / .35, 0, 1));
-      Object.assign(k, { x, y: 0, z: 0, px: x, py: 0, pz: 0, vx: 0, vz: 0, yaw: yawTo(x, 0, x * .55, D), pitch: 0, alive: true, walkT: 0, crouch: 0 });
-      updateAgent(k, dt); const A = X.agents.get(k); if (!A) return; if (A.parent !== S.scene) S.scene.add(A); A.visible = pop > 0; A.scale.setScalar(.7 + .3 * pop); A.position.set(x, 0, 0);
-      const v = new THREE.Vector3(x, 0, 0).project(cam), h = new THREE.Vector3(x, 1.9, 0).project(cam), V = K.view; S.pts.push({ f: k.src, x: lp(V.x0, V.x1, (v.x + 1) / 2), y: lp(V.y0, V.y1, (1 - v.y) / 2), yh: lp(V.y0, V.y1, (1 - h.y) / 2), a: pop }); });
-    S.la.position.x = -total / 4 - 1; S.lb.position.x = total / 4 + 1; S.la.color.set(M.over.won ? YOU : '#3a4a5a'); S.lb.color.set(M.over.won ? '#5a3a3a' : FOE);
-    X.renderer.render(S.scene, cam); return true;
+  const heroGun = f => f.guns[1] || f.guns[2] || 'pip';
+  const heroKey = f => { const g1 = heroGun(f); return f.op + '|' + g1 + '|' + ((f.skins && f.skins[g1]) || ''); };
+  const heroArt = f => (X && X.heroes && X.heroes.get(heroKey(f))) || null;
+  function heroRender(f) {
+    const key = heroKey(f); X.heroes = X.heroes || new Map(); if (X.heroes.has(key)) return X.heroes.get(key);
+    const S = heroStudio(), g1 = heroGun(f), G = GUNS[g1] || GUNS.pip, k = fighter({ op: f.op, key: 'hero', name: '', team: me().team });
+    k.guns = { 1: G.slot === 1 ? g1 : null, 2: G.slot === 2 ? g1 : 'pip', 3: 'knife' }; k.slot = G.slot === 1 ? 1 : 2; k.skins = Object.assign({}, f.skins || {});
+    Object.assign(k, { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0, vx: 0, vz: 0, pitch: -.03, alive: true, walkT: 0, crouch: 0, yaw: yawTo(0, 0, 1.3, 6) });
+    for (let i = 0; i < 14; i++) updateAgent(k, .05);   // (settled into its stance)
+    const A = X.agents.get(k); let c = null;
+    if (A) {
+      if (A.parent) A.parent.remove(A); S.scene.add(A); A.visible = true; A.position.set(0, 0, 0); A.scale.setScalar(1); A.updateMatrixWorld(true);
+      const col = (OPS[f.op] || OPS.vex).col; S.rimL.color.set(col); S.rimR.color.set(col).lerp(new THREE.Color('#ffffff'), .45);
+      // framed on the whole figure, gun and all, feet near the bottom
+      const bb = new THREE.Box3().setFromObject(A), sz = bb.getSize(new THREE.Vector3()), cx = (bb.min.x + bb.max.x) / 2, hv = Math.max(sz.y * 1.1, sz.x * 1.16 / (HERO.W / HERO.H)), D = hv / 2 / Math.tan(10 * D2R), cy = bb.min.y + hv / 2 - sz.y * .035;
+      S.cam.position.set(cx, cy + .05, D); S.cam.lookAt(cx, cy, 0); S.cam.updateProjectionMatrix();
+      const R2 = X.renderer, prev = { rt: R2.getRenderTarget(), col: R2.getClearColor(new THREE.Color()).clone(), a: R2.getClearAlpha() }, w = S.rt.width, h = S.rt.height;
+      R2.setRenderTarget(S.rt); R2.setClearColor(0x000000, 0); R2.clear(); R2.render(S.scene, S.cam); R2.readRenderTargetPixels(S.rt, 0, 0, w, h, S.buf);
+      R2.setRenderTarget(prev.rt); R2.setClearColor(prev.col, prev.a);
+      for (let y = 0; y < h; y++) S.img.data.set(S.buf.subarray((h - 1 - y) * w * 4, (h - y) * w * 4), y * w * 4);   // (the target is bottom-up)
+      S.bg.putImageData(S.img, 0, 0); c = document.createElement('canvas'); c.width = HERO.W; c.height = HERO.H; const cg = c.getContext('2d'); cg.imageSmoothingQuality = 'high'; cg.drawImage(S.big, 0, 0, HERO.W, HERO.H);
+      S.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); const gh = A.userData.gunHold; (function drop(o) { if (o === gh) return; if (o.geometry) o.geometry.dispose(); o.children.forEach(drop); })(A);   // (its body's own shapes; a gun's may be shared)
+    }
+    X.agents.delete(k); X.heroes.set(key, c); return c;
+  }
+  // one picture a frame while the line-up is up (so it never stalls), and the screen behind it cleared to the stage's dark
+  function heroWork() {
+    const f = M && M.fs.find(q => !q.gone && !(X.heroes && X.heroes.has(heroKey(q)))); if (f) { try { heroRender(f); } catch (e) { (X.heroes = X.heroes || new Map()).set(heroKey(f), null); } }
+    X.renderer.setRenderTarget(null); X.renderer.setClearColor('#090c11', 1); X.renderer.clear(); return true;
+  }
+  // a card: the operative's colour rising from the floor of it, slanted bands, their name large and faint up the side, the picture
+  function heroCard(g, f, x, y, w, h, u, a, edge, ew) {
+    const O = OPS[f.op] || OPS.vex, c = heroArt(f); g.save(); rr(g, x, y, w, h, 8, null, null); g.clip();
+    g.fillStyle = '#0d1118'; g.fillRect(x, y, w, h);
+    { const gr = g.createRadialGradient(x + w / 2, y + h * .78, w * .05, x + w / 2, y + h * .72, h * .62); gr.addColorStop(0, O.col + '99'); gr.addColorStop(.45, O.col + '33'); gr.addColorStop(1, O.col + '00'); g.fillStyle = gr; g.fillRect(x, y, w, h); }
+    g.globalAlpha = .07; g.fillStyle = O.col; for (let i = -2; i < 6; i++) { const bx = x + i * w * .34; g.beginPath(); g.moveTo(bx, y + h); g.lineTo(bx + h * .5, y); g.lineTo(bx + h * .5 + w * .12, y); g.lineTo(bx + w * .12, y + h); g.closePath(); g.fill(); } g.globalAlpha = 1;
+    { g.save(); g.translate(x + w * .16, y + h * .97); g.rotate(-Math.PI / 2); const px = Math.min(w * .3, 120 * u); g.font = `900 ${px}px ${FONT}`; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillStyle = O.col; g.globalAlpha = .16; g.fillText(O.n.toUpperCase(), 0, 0); g.restore(); }
+    if (c) { const k = Math.min(w * 1.02 / c.width, h * .98 / c.height), dw = c.width * k, dh = c.height * k, rise = (1 - a) * 18 * u; g.globalAlpha = a; g.drawImage(c, x + (w - dw) / 2, y + h - dh + rise, dw, dh); g.globalAlpha = 1; }
+    else portraitTile(g, f.op, x + w * .2, y + h * .35, w * .6, w * .6, { r: 6 });   // (until its picture is ready)
+    { const gr = g.createLinearGradient(0, y + h * .74, 0, y + h); gr.addColorStop(0, 'rgba(9,12,17,0)'); gr.addColorStop(1, 'rgba(9,12,17,.8)'); g.fillStyle = gr; g.fillRect(x, y + h * .74, w, h * .26); }
+    g.restore();
+    rr(g, x, y, w, h, 8, null, edge, ew); g.fillStyle = f.team === me().team ? YOU : FOE; g.fillRect(x + 6, y, w - 12, 3 * u);
   }
   const overNext = () => { M.overStage = (M.overStage | 0) + 1; M.overT = performance.now(); click(); };
   function drawLineup(g) {
-    const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), P = me(), won = M.over.won, S = X.lu, t = (performance.now() - (M.overT || 0)) / 1000;
-    { const gr = g.createLinearGradient(0, V.y0, 0, V.y0 + 150 * u); gr.addColorStop(0, 'rgba(8,10,14,.9)'); gr.addColorStop(1, 'rgba(8,10,14,0)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, 150 * u); }
+    const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), P = me(), won = M.over.won, t = (performance.now() - (M.overT || 0)) / 1000;
+    { const gr = g.createRadialGradient(640, V.y0 + H * .55, 40 * u, 640, V.y0 + H * .55, W * .7); gr.addColorStop(0, won ? 'rgba(53,224,200,.10)' : 'rgba(244,63,63,.10)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); }
     const hy = V.y0 + Math.min(58 * u, H * .09); tx(g, won ? 'VICTORY' : 'DEFEAT', 640, hy, Math.min(56 * u, H * .09), won ? YOU : FOE, 'center', 900); tx(g, `${M.wins[0]}  –  ${M.wins[1]}`, 640, hy + Math.min(44 * u, H * .068), Math.min(24 * u, H * .04), BONE, 'center', 900);
-    if (M.over.why === 'left') tx(g, M.fs.length > 2 ? 'The other team left the match' : 'Your rival left the match', 640, hy + 72 * u, 12 * u, DIM);
+    if (M.over.why === 'left') tx(g, M.fs.length > 2 ? 'The other team left the match' : 'Your rival left the match', 640, hy + Math.min(44 * u, H * .068) + 18 * u, 11 * u, DIM);
     if (!M.awards) M.awards = matchAwards(M.fs, won ? P.team : 1 - P.team);
-    if (S && S.pts.length) { const n = S.pts.length, step = n > 1 ? Math.abs(S.pts[1].x - S.pts[0].x) : 220 * u, pw = cl(step - 6 * u, 60 * u, 190 * u), tiny = pw < 104 * u, bh0 = tapH(44);
-      // a plate under each: name, award, what earned it, then level and kills / deaths. Lines are never closer than they can be read
-      const lh = Math.max(19 * u, 13.5 / pxPer()), px = Math.min(13 * u, pw * .13);
-      S.pts.forEach(q => { const f = q.f, A = M.awards.get(f.key) || { title: '', line: '' }, col = f.team === P.team ? YOU : FOE, x = q.x - pw / 2, y = q.y + 8 * u, room = V.y1 - bh0 - 18 * u - y, rows = room >= lh * 4 + 10 * u ? 4 : room >= lh * 3 + 10 * u ? 3 : 2, ph = rows * lh + 10 * u, c = cardOf(f); if (room < lh * 2 + 10 * u) return;
-        g.save(); g.globalAlpha = q.a; g.translate(0, (1 - q.a) * 14 * u);
-        rr(g, x, y, pw, ph, 6, 'rgba(10,13,18,.9)', A.top ? GOLD : f === P ? 'rgba(239,233,220,.55)' : 'rgba(239,233,220,.16)', A.top ? 2 : 1); g.fillStyle = col; g.fillRect(x, y, pw, 3 * u);
-        let ly = y + 6 * u + lh / 2; fitTx(g, f.name.toUpperCase(), q.x, ly, px, f === P ? YOU : BONE, 'center', 900, pw - 10 * u); ly += lh;
-        fitTx(g, (A.top ? '★ ' : '') + A.title, q.x, ly, px, A.top ? GOLD : '#dfe6ee', 'center', 900, pw - 8 * u); ly += lh;
-        if (rows >= 3) { fitTx(g, A.line, q.x, ly, Math.min(10.5 * u, pw * .1), DIM, 'center', 800, pw - 8 * u); ly += lh; }
-        if (rows >= 4) { const kd = `${f.stat.k} / ${f.stat.d}`; if (c.lv && !tiny) { tx(g, 'LV ' + c.lv, x + 9 * u, ly, 10.5 * u, lvCol(c.lv), 'left', 900); tx(g, kd, x + pw - 9 * u, ly, 11 * u, BONE, 'right', 800); } else tx(g, kd, q.x, ly, 11 * u, BONE, 'center', 800); }
+    // the cards: your team on the left (best nearest the middle), the rivals on the right; plates under them, then CONTINUE
+    { const by = (a, b) => csOf(b) - csOf(a), mine = M.fs.filter(f => f.team === P.team && !f.gone).sort(by).reverse(), theirs = M.fs.filter(f => f.team !== P.team && !f.gone).sort(by), order = [...mine, ...theirs], n = order.length;
+      const bh0 = tapH(44), lh = Math.max(19 * u, 13.5 / pxPer()), plateH = 4 * lh + 10 * u, top = hy + Math.min(44 * u, H * .068) + Math.min(24 * u, H * .035), bot = V.y1 - bh0 - 20 * u - plateH - 8 * u, gap = 8 * u, tg = n > 2 ? 34 * u : 24 * u;
+      const ch = Math.max(60 * u, bot - top), cw = Math.min(ch * .52, 200 * u, (W - 40 * u - tg - (n - 2) * gap) / n), total = n * cw + (n - 2) * gap + tg, x0 = 640 - total / 2, tiny = cw < 104 * u, px = Math.min(13 * u, cw * .13);
+      UI.lu = [];
+      order.forEach((f, i) => { const x = x0 + i * (cw + gap) + (i >= mine.length ? tg - gap : 0), a = smooth(cl((t - .1 - i * .08) / .35, 0, 1)), A = M.awards.get(f.key) || { title: '', line: '' }, col = f.team === P.team ? YOU : FOE, c = cardOf(f);
+        UI.lu.push({ k: f.key, x, y: top, w: cw, h: ch, art: !!heroArt(f) });
+        g.save(); g.globalAlpha = a; g.translate(0, (1 - a) * 16 * u);
+        heroCard(g, f, x, top, cw, ch, u, smooth(cl((t - .25 - i * .08) / .4, 0, 1)), A.top ? GOLD : f === P ? 'rgba(239,233,220,.6)' : 'rgba(239,233,220,.16)', A.top ? 2.5 : 1);
+        // the plate: name, award, what earned it, then level and kills / deaths
+        const y = top + ch + 8 * u, room = V.y1 - bh0 - 18 * u - y, rows = room >= lh * 4 + 10 * u ? 4 : room >= lh * 3 + 10 * u ? 3 : 2, ph = rows * lh + 10 * u;
+        if (room >= lh * 2 + 10 * u) { rr(g, x, y, cw, ph, 6, 'rgba(10,13,18,.92)', A.top ? GOLD : f === P ? 'rgba(239,233,220,.55)' : 'rgba(239,233,220,.16)', A.top ? 2 : 1); g.fillStyle = col; g.fillRect(x, y, cw, 3 * u);
+          const mx = x + cw / 2; let ly = y + 6 * u + lh / 2; fitTx(g, f.name.toUpperCase(), mx, ly, px, f === P ? YOU : BONE, 'center', 900, cw - 10 * u); ly += lh;
+          fitTx(g, (A.top ? '★ ' : '') + A.title, mx, ly, px, A.top ? GOLD : '#dfe6ee', 'center', 900, cw - 8 * u); ly += lh;
+          if (rows >= 3) { fitTx(g, A.line, mx, ly, Math.min(10.5 * u, cw * .1), DIM, 'center', 800, cw - 8 * u); ly += lh; }
+          if (rows >= 4) { const kd = `${f.stat.k} / ${f.stat.d}`; if (c.lv && !tiny) { tx(g, 'LV ' + c.lv, x + 9 * u, ly, 10.5 * u, lvCol(c.lv), 'left', 900); tx(g, kd, x + cw - 9 * u, ly, 11 * u, BONE, 'right', 800); } else tx(g, kd, mx, ly, 11 * u, BONE, 'center', 800); } }
         g.restore(); }); }
     // on, when you are ready (anywhere on the screen, once the line-up has settled)
     if (t > .7) zone(V.x0, V.y0, W, H, overNext);
