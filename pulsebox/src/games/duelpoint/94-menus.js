@@ -126,53 +126,118 @@
     const dia = (x, y, L) => { g.fillStyle = col; g.beginPath(); g.moveTo(x, y - s * .45); g.lineTo(x + s * .45, y); g.lineTo(x, y + s * .45); g.lineTo(x - s * .45, y); g.closePath(); g.fill(); if (L) tx(g, L, x, y + 1, s * .42, INK, 'center', 900); };
     if (two) { dia(cx + s * 1.1, cy - s * .9, 'A'); dia(cx + s * 1.1, cy + s * .9, 'B'); } else dia(cx + s * .7, cy, '');
   }
+  /* ---- the Play page ----
+     Left: your operative, full length, holding your best rifle (the first one you have a skin on), lit in their colour
+     with their name huge behind them; below, their role, their four abilities and the way to change them. A click on
+     them opens agent select. Right, top to bottom: your rank at this team size (click: the ladder) and the season pass
+     (click: the pass); the two modes; the match set-up (queue, team size, rounds, bots); today's challenges when there
+     is room; friends, matchmaking, practice and the armory; and PLAY. On a phone the set-up rows pair up, two to a line. */
+  const MENU_TIPS = ['Stand still to shoot straight: sprays climb, so pull down.', 'Run with the knife out, then crouch, to slide.', 'Defenders can walk onto their sites during the buy phase.',
+    'Ready an ability with its key, then click to use it. The key again puts it away.', 'Every key can be changed in Settings, under Keybinds.', 'Two losses in a row still pays for most of a full buy.', 'J, or the middle mouse button, pings a spot for your team.'];
+  function menuHero() {
+    if (!X || !ready) return null;
+    const eq = STATS.equip || {}, gk = Object.keys(eq).find(k => GUNS[k] && GUNS[k].slot === 1 && eq[k]) || 'lancer';
+    const f = { op: CFG.op, guns: { 1: gk, 2: 'pip', 3: 'knife' }, skins: eq[gk] ? { [gk]: eq[gk] } : {} }, key = heroKey(f);
+    if (X.heroes && X.heroes.has(key)) return X.heroes.get(key);
+    if (UI.heroWait !== key) { UI.heroWait = key; return null; }   // (the page shows first; the picture is made the frame after)
+    try { return heroRender(f); } catch (e) { console.warn(e); (X.heroes = X.heroes || new Map()).set(key, null); return null; }
+  }
   function drawPlay(g, V, W, H, u) {
-    const x0 = V.x0 + 60 / pxPer() + 20 * u, touch = isTouch(), O = OPS[CFG.op] || OPS.vex, sites = CFG.sites === 1 ? 1 : 2, top = V.y0 + 46 * u;
-    tx(g, 'CHOOSE A MODE', x0, V.y0 + 26 * u, 12 * u, DIM, 'left', 900);
-    const modes = [{ k: 2, n: 'STANDARD', sub: 'TWO OR THREE SITES', d: 'Big maps, two or three sites, a twist on each.', col: '#ff9a3c', maps: '6 MAPS · 100-105 S ROUNDS' },
-      { k: 1, n: 'SWIFT', sub: 'ONE SITE', d: 'One site, three ways in, a twist on each.', col: YOU, maps: '7 MAPS · 80-90 S ROUNDS' }];
-    const rw = 330 * u, cw = Math.min(330 * u, (V.x1 - x0 - rw - 70 * u) / 2 - 8 * u), ch = Math.max(96 * u, Math.min(touch ? 210 * u : 250 * u, H * (touch ? .33 : .4), V.y1 - top - (12 * u + 4 * tapH(34) + 3 * 14 * u + 8 * u)));   // short enough that the four rows below fit
-    modes.forEach((md, i) => {
-      const x = x0 + i * (cw + 16 * u), on = sites === md.k, hot = zone(x, top, cw, ch, () => { CFG.sites = md.k; saveAll(); click(); });
-      g.save(); g.beginPath(); if (g.roundRect) g.roundRect(x, top, cw, ch, 10); else g.rect(x, top, cw, ch); g.clip();
-      const gr = g.createLinearGradient(x, top + ch, x + cw, top); gr.addColorStop(0, md.col + (on ? '55' : '22')); gr.addColorStop(1, 'rgba(14,18,26,.94)'); g.fillStyle = 'rgba(14,18,26,.94)'; g.fillRect(x, top, cw, ch); g.fillStyle = gr; g.fillRect(x, top, cw, ch);
-      g.strokeStyle = 'rgba(255,255,255,.04)'; g.lineWidth = 1; g.beginPath(); for (let k = -ch; k < cw; k += 12) { g.moveTo(x + k, top + ch); g.lineTo(x + k + ch, top); } g.stroke();
-      modeGlyph(g, x + cw * .6, top + ch * .4, Math.min(38 * u, ch * .15), md.k === 2, md.col); g.restore();
-      rr(g, x, top, cw, ch, 10, null, on ? md.col : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', on ? 3 : 1.5);
-      tx(g, md.sub, x + 18 * u, top + 24 * u, 11 * u, md.col, 'left', 900); tx(g, md.n, x + 16 * u, top + ch - (touch ? 50 : 92) * u, 34 * u, BONE, 'left', 900);
-      // on a phone the words come out too big for the card (and ran over the TEAM SIZE row): the name, the sites and the maps say enough
-      if (!touch) para(g, md.d, x + 18 * u, top + ch - 62 * u, cw - 36 * u, 12 * u, '#c9cfd8'); tx(g, md.maps, x + 18 * u, top + ch - 16 * u, 10 * u, DIM, 'left', 800);
-      if (on && cw >= 300 * u) tx(g, '✓ SELECTED', x + cw - 16 * u, top + 24 * u, 11 * u, md.col, 'right', 900);
-    });
-    // team size and the bots
-    let y = top + ch + 12 * u + tapH(34) / 2; const lw = cw * 2 + 16 * u;
-    tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[5, '5V5'], [4, '4V4'], [3, '3V3'], [2, '2V2'], [1, '1V1 · DUEL']], teamSize(CFG.size), v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
-    const ranked = CFG.queue === 'ranked';
-    { const S = rankedOf(CFG.size), bx = x0 + lw - tapH(34), by0 = y - tapH(34) / 2, hov = zone(bx, by0, tapH(34), tapH(34), () => { UI.rankScale = teamSize(CFG.size); });
-      rr(g, bx, by0, tapH(34), tapH(34), 6, hov ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.05)', 'rgba(239,233,220,.22)', 1); tierBadge(g, bx + tapH(34) / 2, y - 2 * u, tapH(34) * .3, S.rv, placed(S)); }   // your rank: click for the ladder
-    tx(g, 'QUEUE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u - tapH(34) - 8 * u, tapH(34), [['unrated', 'UNRATED'], ['ranked', 'RANKED  ·  ' + (placed(rankedOf(CFG.size)) ? rankLabel(rankedOf(CFG.size).rv).toUpperCase() : rankedOf(CFG.size).n + '/' + PLACE_N)]], CFG.queue, v => { CFG.queue = v; saveAll(); }); y += tapH(34) + 14 * u;
-    if (ranked) { tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); rr(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED IS FIRST TO 5  ·  SIDES SWAP AT THE HALF  ·  OVERTIME AT 4–4  ·  BEAT BOTS ABOVE YOUR RANK TO CLIMB FASTER', x0 + 110 * u + (lw - 110 * u) / 2, y, Math.min(11.5 * u, (lw - 110 * u) / 70), GOLD, 'center', 800); }
-    else choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), MATCH_LENS.map(w => [w, `FIRST TO ${w}`]), winOf(CFG.win), v => { CFG.win = v; saveAll(); });
-    if (!ranked) tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); y += tapH(34) + 14 * u;
-    tx(g, 'BOT LEVEL', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 14 * u;
-    if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight. Sprays climb: pull down.', 'Knife (3): run faster, crouch to slide  ·  Shift: walk  ·  B: armory  ·  F: use  ·  T: drop gun  ·  H: drop charge  ·  Q E X: abilities  ·  J: ping'].reduce((yy, l) => para(g, l, x0, yy, lw, 11.5 * u, '#aeb6c2') + 4 * u, y + 26 * u); }   // wrapped to the left column, clear of PLAY
-    // the right column: your operative, friends, practice
-    const rx = V.x1 - rw - 30 * u; let ry = top;
-    { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
-      portraitTile(g, CFG.op, rx + 10 * u, ry + 10 * u, h - 20 * u, h - 20 * u, { r: 6 }); tx(g, 'YOUR OPERATIVE', rx + h + 4 * u, ry + 24 * u, 10 * u, DIM, 'left', 900); tx(g, O.n, rx + h + 2 * u, ry + 54 * u, 28 * u, BONE, 'left', 900);
-      tx(g, `${O.q.n} · ${O.e.n}`, rx + h + 4 * u, ry + 80 * u, 12 * u, O.col, 'left', 800); tx(g, hot ? 'CHANGE →' : 'CHANGE', rx + rw - 14 * u, ry + h - 16 * u, 10 * u, hot ? O.col : DIM, 'right', 900); ry += h + 14 * u; }
-    // a short screen (a phone on its side): the queue shares the friends card, so PLAY stays on screen
-    const tight = ry + (104 + 14 + 96 + 14 + 12 + 72) * u + tapH(42) > V.y1 - 4 * u;
-    { const h = 104 * u, bw = tight ? (rw - 40 * u) / 2 : rw - 32 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, tight ? 'up to ten' : 'up to ten, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
-      btn(g, rx + 16 * u, ry + 56 * u, bw, 36 * u, MP.online() ? (tight ? 'PARTY · ' : 'BACK TO YOUR PARTY · ') + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u });
-      if (tight) { tx(g, 'FIND A MATCH', rx + rw - 16 * u, ry + 24 * u, 12 * u, GOLD, 'right', 900); tx(g, 'anyone · unrated', rx + rw - 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'right', 700); drawQueueMini(g, rx + 24 * u + bw, ry + 56 * u, bw, 36 * u, u); }
-      ry += h + 14 * u; }
-    if (!tight) ry += drawQueueCard(g, rx, ry, rw, u) + 14 * u;   // the global queue: 1v1 or 2v2 against anyone
-    btn(g, rx, ry, (rw - 10 * u) / 2, tapH(42), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 13 * u }); btn(g, rx + (rw + 10 * u) / 2, ry, (rw - 10 * u) / 2, tapH(42), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 13 * u, sub: 'try every gun' });
+    const touch = isTouch(), O = OPS[CFG.op] || OPS.vex, sites = CFG.sites === 1 ? 1 : 2, ranked = CFG.queue === 'ranked', t = performance.now() / 1000;
+    const L = V.x0 + 60 / pxPer() + 20 * u, R = V.x1 - 24 * u, T = V.y0 + 14 * u, B = V.y1 - 14 * u;
+    const cw = Math.min(600 * u, (R - L) * .52), cx = R - cw, hx0 = L, hx1 = cx - 28 * u, hw = hx1 - hx0, hmid = hx0 + hw * .6;
+    // the backdrop: the map still flies by, darkened behind the operative and under the column
+    { const gr = g.createLinearGradient(V.x0, 0, V.x1, 0); gr.addColorStop(0, 'rgba(7,9,13,.82)'); gr.addColorStop(.36, 'rgba(7,9,13,.3)'); gr.addColorStop(.56, 'rgba(7,9,13,.62)'); gr.addColorStop(1, 'rgba(7,9,13,.86)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); }
+
+    // ---- the operative
+    zone(V.x0, V.y0, hx1 - V.x0, H, () => openSelect(null));
+    g.save(); g.beginPath(); g.rect(V.x0, V.y0, hx1 - V.x0 + 16 * u, H); g.clip();
+    { const gr = g.createRadialGradient(hmid, B, 8 * u, hmid, B - H * .3, H * .75); gr.addColorStop(0, O.col + '70'); gr.addColorStop(.45, O.col + '20'); gr.addColorStop(1, O.col + '00'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, hx1 - V.x0 + 16 * u, H); }
+    g.globalAlpha = .055; g.fillStyle = O.col; { const step = 130 * u, sh = (t * 10 * u) % step; for (let i = -4; i < 9; i++) { const bx = hx0 + i * step + sh; g.beginPath(); g.moveTo(bx, B + 14 * u); g.lineTo(bx + H * .55, V.y0); g.lineTo(bx + H * .55 + 30 * u, V.y0); g.lineTo(bx + 30 * u, B + 14 * u); g.closePath(); g.fill(); } } g.globalAlpha = 1;
+    { let px = 230 * u; g.font = `900 ${px}px ${FONT}`; const mw = g.measureText(O.n).width; if (mw > hw * 1.05) px *= hw * 1.05 / mw; g.font = `900 ${px}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      const ny = V.y0 + H * .4; g.globalAlpha = .1; g.fillStyle = O.col; g.fillText(O.n, hmid, ny); g.globalAlpha = .28; g.strokeStyle = O.col; g.lineWidth = 1.5; g.strokeText(O.n, hmid, ny); g.globalAlpha = 1; }
+    const art = menuHero();
+    if (art) { const dh = Math.min((B - T) * 1.02, hw * 2.1), dw = dh * art.width / art.height, bob = Math.sin(t * 1.2) * 2.5 * u, fy = B + 2 * u;   // (feet on the floor at the bottom, a shadow under them)
+      { const gr = g.createRadialGradient(hmid, fy - 6 * u, 2, hmid, fy - 6 * u, dw * .42); gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.save(); g.translate(hmid, fy - 6 * u); g.scale(1, .22); g.translate(-hmid, -(fy - 6 * u)); g.fillStyle = gr; g.fillRect(hmid - dw * .5, fy - 6 * u - dw * .5, dw, dw); g.restore(); }
+      g.drawImage(art, hmid - dw / 2, fy - dh + bob, dw, dh); }
+    else portraitTile(g, CFG.op, hmid - 80 * u, V.y0 + H * .3, 160 * u, 160 * u, { r: 8 });
+    g.restore();
+    // who they are: role, name, the four abilities, and the way to change them
+    { const ih = 118 * u, gy = B - ih; const gr = g.createLinearGradient(0, gy - 40 * u, 0, B + 14 * u); gr.addColorStop(0, 'rgba(7,9,13,0)'); gr.addColorStop(.6, 'rgba(7,9,13,.55)'); gr.addColorStop(1, 'rgba(7,9,13,.8)'); g.fillStyle = gr; g.fillRect(V.x0, gy - 40 * u, hx1 - V.x0 + 16 * u, ih + 54 * u);
+      g.fillStyle = O.col; g.fillRect(hx0, gy + 4 * u, 4 * u, 46 * u);
+      tx(g, (O.role || '').toUpperCase() + '  ·  YOUR OPERATIVE', hx0 + 14 * u, gy + 12 * u, 11 * u, O.col, 'left', 900);
+      tx(g, O.n, hx0 + 12 * u, gy + 37 * u, 40 * u, BONE, 'left', 900);
+      const s = 38 * u, ay = gy + 64 * u;
+      ['c', 'q', 'e', 'x'].forEach((k, i) => { const x = hx0 + i * (s + 8 * u), A = O[k] || {}; rr(g, x, ay, s, s, 7, 'rgba(14,18,26,.88)', k === 'x' ? O.col : 'rgba(239,233,220,.2)', k === 'x' ? 1.5 : 1);
+        abIcon(g, ABICON[CFG.op + k] || 'orb', x + s / 2, ay + s / 2 - 2 * u, s * .3, k === 'x' ? O.col : BONE, O.col); tx(g, keyLabel('ab' + k), x + s - 5 * u, ay + s - 7 * u, 8.5 * u, DIM, 'right', 900); });
+      const bx = hx0 + 4 * (s + 8 * u) + 6 * u, bw = Math.max(120 * u, Math.min(210 * u, hx1 - bx));
+      if (bw >= 120 * u) btn(g, bx, ay, bw, s, 'CHANGE OPERATIVE', () => openSelect(null), { px: 12 * u, edge: O.col + 'aa' });
+      if (!touch && art) { const tip = MENU_TIPS[Math.floor(t / 8) % MENU_TIPS.length]; tx(g, 'TIP', hx0, T + 10 * u, 10 * u, GOLD, 'left', 900); tx(g, tip, hx0 + 30 * u, T + 10 * u, 11 * u, '#c9cfd8', 'left', 700); } }
+
+    // ---- the column, laid out from the bottom up: PLAY, then the quick tiles; whatever is left above holds the rest
+    const ph = Math.max(tapH(58, 50), Math.min(78 * u, (B - T) * .13)), th = tapH(48, 44), playY = B - ph, tileY = playY - 10 * u - th;
+    let y = T;
+    // your rank and the pass
+    { const sh = 52 * u, half = (cw - 10 * u) / 2, S = rankedOf(CFG.size), pl = placed(S);
+      const hr = zone(cx, y, half, sh, () => { UI.rankScale = teamSize(CFG.size); click(); });
+      rr(g, cx, y, half, sh, 10, 'rgba(14,18,26,.9)', hr ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', 1.5); tierBadge(g, cx + 27 * u, y + sh / 2, 16 * u, S.rv, pl);
+      tx(g, 'RANKED  ' + vsLabel(CFG.size), cx + 52 * u, y + 17 * u, 10 * u, DIM, 'left', 900);
+      tx(g, pl ? rankLabel(S.rv).toUpperCase() : `PLACING  ${S.n}/${PLACE_N}`, cx + 52 * u, y + 36 * u, 15 * u, pl ? rankOf(S.rv).T.col : BONE, 'left', 900);
+      const px2 = cx + half + 10 * u, tier = passTier(), P = myPass(), frac = tier >= PASS_TIERS ? 1 : (P.xp % PASS_XP) / PASS_XP, se = seasonNow();
+      const hp = zone(px2, y, half, sh, () => { UI.panel = 'pass'; click(); });
+      rr(g, px2, y, half, sh, 10, 'rgba(14,18,26,.9)', hp ? GOLD : 'rgba(239,233,220,.14)', 1.5);
+      tx(g, `SEASON ${se.n}  ·  ${String(se.name).toUpperCase()}`, px2 + 14 * u, y + 17 * u, 10 * u, DIM, 'left', 900); tx(g, hp ? 'PASS →' : 'PASS', px2 + half - 12 * u, y + 17 * u, 10 * u, hp ? GOLD : DIM, 'right', 900);
+      tx(g, `TIER ${tier}`, px2 + 14 * u, y + 37 * u, 15 * u, GOLD, 'left', 900); const bx = px2 + 84 * u, bw = half - 98 * u;
+      rr(g, bx, y + 33 * u, bw, 7 * u, 3.5 * u, 'rgba(255,255,255,.08)'); if (frac > 0) rr(g, bx, y + 33 * u, Math.max(7 * u, bw * frac), 7 * u, 3.5 * u, GOLD);
+      y += sh + 12 * u; }
+    // the set-up panel's size, so the mode cards can take what is left
+    const pair = touch || cw < 520 * u, rowH = tapH(32, 40), rows = pair ? 2 : 4, pnlH = 14 * u + rows * (rowH + 8 * u) + 2 * u;
+    const roomForCards = tileY - 12 * u - y - 12 * u - pnlH, chH = 96 * u, showCh = !touch && roomForCards - chH - 12 * u >= 86 * u, mh = cl(roomForCards - (showCh ? chH + 12 * u : 0), 56 * u, 112 * u);
+    // the modes
+    { const mw = (cw - 10 * u) / 2, nOf = k => MAPS.filter(m => ((m.sites | 0) >= 2 ? 2 : 1) === k && !m.hidden).length;
+      [{ k: 2, n: 'STANDARD', sub: 'TWO SITES', d: `${nOf(2)} maps  ·  plant, hold, retake`, col: '#ff9a3c' }, { k: 1, n: 'SWIFT', sub: 'ONE SITE', d: `${nOf(1)} maps  ·  short, sharp rounds`, col: YOU }].forEach((md, i) => {
+        const x = cx + i * (mw + 10 * u), on = sites === md.k, hot = zone(x, y, mw, mh, () => { CFG.sites = md.k; saveAll(); click(); });
+        g.save(); g.beginPath(); if (g.roundRect) g.roundRect(x, y, mw, mh, 10); else g.rect(x, y, mw, mh); g.clip();
+        g.fillStyle = 'rgba(14,18,26,.94)'; g.fillRect(x, y, mw, mh); const gr = g.createLinearGradient(x, y + mh, x + mw, y); gr.addColorStop(0, md.col + (on ? '5a' : '20')); gr.addColorStop(1, 'rgba(14,18,26,0)'); g.fillStyle = gr; g.fillRect(x, y, mw, mh);
+        g.strokeStyle = 'rgba(255,255,255,.04)'; g.lineWidth = 1; g.beginPath(); for (let k = -mh; k < mw; k += 12) { g.moveTo(x + k, y + mh); g.lineTo(x + k + mh, y); } g.stroke();
+        modeGlyph(g, x + mw * .76, y + mh * .5, Math.min(26 * u, mh * .2), md.k === 2, md.col); g.restore();
+        rr(g, x, y, mw, mh, 10, null, on ? md.col : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', on ? 2.5 : 1.5);
+        tx(g, md.sub, x + 14 * u, y + 18 * u, 10 * u, md.col, 'left', 900); if (on) tx(g, '✓', x + mw - 14 * u, y + 18 * u, 13 * u, md.col, 'right', 900);
+        tx(g, md.n, x + 13 * u, y + Math.max(40 * u, mh * .54), Math.min(28 * u, mh * .3), BONE, 'left', 900);
+        if (mh >= 80 * u) tx(g, md.d, x + 14 * u, y + mh - 14 * u, 10.5 * u, '#aeb6c2', 'left', 700);
+      });
+      y += mh + 12 * u; }
+    // the match set-up
+    { rr(g, cx, y, cw, pnlH, 10, 'rgba(14,18,26,.86)', 'rgba(239,233,220,.12)', 1.5);
+      const lab = (s, x, yy) => tx(g, s, x, yy + rowH / 2, 11 * u, DIM, 'left', 900), lw = pair ? 66 * u : 104 * u;
+      const items = [
+        [pair ? 'QUEUE' : 'QUEUE', (x, yy, w) => choice(g, x, yy, w, rowH, [['unrated', 'UNRATED'], ['ranked', 'RANKED']], CFG.queue, v => { CFG.queue = v; saveAll(); })],
+        [pair ? 'SIZE' : 'TEAM SIZE', (x, yy, w) => choice(g, x, yy, w, rowH, [[5, '5V5'], [4, '4V4'], [3, '3V3'], [2, '2V2'], [1, '1V1']], teamSize(CFG.size), v => { CFG.size = v; saveAll(); })],
+        ['ROUNDS', (x, yy, w) => ranked ? (rr(g, x, yy, w, rowH, 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1), tx(g, 'RANKED: FIRST TO 5', x + w / 2, yy + rowH / 2, 11 * u, GOLD, 'center', 900)) : choice(g, x, yy, w, rowH, MATCH_LENS.map(n => [n, (w > 380 * u ? 'FIRST TO ' : 'TO ') + n]), winOf(CFG.win), v => { CFG.win = v; saveAll(); })],
+        ['BOTS', (x, yy, w) => choice(g, x, yy, w, rowH, [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; })]];
+      const colW = pair ? (cw - 28 * u - 14 * u) / 2 : cw - 28 * u;
+      items.forEach(([name, draw], i) => { const col = pair ? i % 2 : 0, row = pair ? Math.floor(i / 2) : i, x = cx + 14 * u + col * (colW + 14 * u), yy = y + 10 * u + row * (rowH + 8 * u); lab(name, x, yy); draw(x + lw, yy, colW - lw); });
+      y += pnlH + 12 * u; }
+    // today's challenges, when there is room
+    if (showCh) { const C = myChallenges().filter(c => !c.weekly).slice(0, 3), hot = zone(cx, y, cw, chH, () => { UI.panel = 'pass'; click(); });
+      rr(g, cx, y, cw, chH, 10, 'rgba(14,18,26,.86)', hot ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.12)', 1.5);
+      tx(g, 'TODAY', cx + 14 * u, y + 17 * u, 11 * u, YOU, 'left', 900); tx(g, `${C.filter(c => c.done).length}/${C.length} DONE`, cx + cw - 14 * u, y + 17 * u, 10 * u, DIM, 'right', 900);
+      C.forEach((c, i) => { const yy = y + 36 * u + i * 20 * u, bw = 110 * u, bx = cx + cw - 14 * u - bw, words = c.words || c.t || c.s || '';
+        tx(g, (c.done ? '✓  ' : '') + words, cx + 14 * u, yy, 11.5 * u, c.done ? DIM : '#d5dbe4', 'left', 700); rr(g, bx, yy - 3 * u, bw, 6 * u, 3 * u, 'rgba(255,255,255,.08)'); if (c.at) rr(g, bx, yy - 3 * u, Math.max(6 * u, bw * c.at / c.n), 6 * u, 3 * u, c.done ? YOU : GOLD);
+        tx(g, `${c.at}/${c.n}`, bx - 8 * u, yy, 10 * u, DIM, 'right', 800); });
+      y += chH + 12 * u; }
+    // friends, matchmaking, practice, the armory
+    { const gap = 8 * u, w4 = (cw - gap * 3) / 4;
+      btn(g, cx, tileY, w4, th, MP.online() ? 'PARTY · ' + MP.code : 'FRIENDS', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 13 * u, sub: MP.online() ? '' : 'open a party' });
+      drawQueueMini(g, cx + w4 + gap, tileY, w4 * 2 + gap, th, u);
+      tx(g, QUE.mode ? 'SEARCHING ONLINE' : 'FIND A MATCH ONLINE', cx + w4 + gap, tileY - 8 * u, 9.5 * u, GOLD, 'left', 900);
+      btn(g, cx + (w4 + gap) * 3, tileY, w4, th, 'PRACTICE', () => play({ mode: 'range' }), { px: 13 * u, sub: 'the range' }); }
     // PLAY
-    const lvl = (CFG.diff === 'auto' ? (CFG.queue === 'ranked' ? DIFF[botLevelFor(rankStrength(CFG.size))].n : rankName(STATS.rating)) : DIFF[CFG.diff].n) + ' bots', ph = 72 * u, below = ry + tapH(42) + 12 * u, roomy = V.y1 - ph - 64 * u >= below, pyy = roomy ? V.y1 - ph - 64 * u : below, pw = roomy ? rw : rw - 84 * u;   // clear of the sound button in the corner, and of the buttons above
-    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(teamSize(CFG.size)), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${CFG.queue === 'ranked' ? 'RANKED' : sites === 2 ? 'STANDARD' : 'SWIFT'} · ${vsLabel(CFG.size)}` + (roomy ? ` · ${lvl}` : '') }); zones[zones.length - 1].prime = true;
-    if (!touch && roomy) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays · the arrow keys work here too', rx + pw / 2, pyy - 12 * u, 10 * u, DIM, 'center', 700);
+    { const lvl = (CFG.diff === 'auto' ? (ranked ? DIFF[botLevelFor(rankStrength(CFG.size))].n : rankName(STATS.rating)) : DIFF[CFG.diff].n) + ' bots';
+      btn(g, cx, playY, cw, ph, 'PLAY', () => menuPlay(teamSize(CFG.size)), { on: true, fill: FOE, solid: true, col: INK, px: Math.min(36 * u, ph * .5), sub: `${ranked ? 'RANKED' : sites === 2 ? 'STANDARD' : 'SWIFT'}  ·  ${vsLabel(CFG.size)}  ·  ${lvl}` }); zones[zones.length - 1].prime = true;
+      g.save(); g.beginPath(); if (g.roundRect) g.roundRect(cx, playY, cw, ph, Math.min(10, ph / 4)); else g.rect(cx, playY, cw, ph); g.clip();   // a sheen sweeping across it now and then
+      const k = (t * .45) % 1.6 - .3, sx = cx + k * cw, gr = g.createLinearGradient(sx - 60 * u, 0, sx + 60 * u, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, 'rgba(255,255,255,.22)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(cx, playY, cw, ph); g.restore();
+      if (!touch) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays', cx + cw, tileY - 8 * u, 9.5 * u, DIM, 'right', 700); }
   }
   function drawSettings(g, V, W, u) {
     const w = Math.min(W - 80, 760 * u), x = 640 - w / 2; let y = V.y0 + 24 * u;

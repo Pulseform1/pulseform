@@ -163,8 +163,8 @@
         pose.front = fr || -.215; }
       const out = Math.min(0, pose.front + .215) * 1.3;   // (negative: further forward)
       gunHold.position.set(...(knife ? [.17, -.17, -.33] : gd.pistolHold ? [.03, -.04, -.47] : gd.k === 'stub' ? [.09, -.11, -.36 + out] : [.118, -.07, -.255 + out]));
-      const hold = gunHold.position, Rt = [hold.x + gd.grip[0] * s, hold.y + gd.grip[1] * s, hold.z + gd.grip[2] * s];
-      let Lt = knife ? [-.2, -.34, -.2] : gd.pistolHold ? [Rt[0] - .05, Rt[1] - .015, Rt[2] + .005] : [hold.x + gd.sup[0] * s - .01, hold.y + gd.sup[1] * s, hold.z + gd.sup[2] * s];
+      const hold = gunHold.position, Rt = gd.dead ? gd.dead[0] : [hold.x + gd.grip[0] * s, hold.y + gd.grip[1] * s, hold.z + gd.grip[2] * s];   // (dead: the hands wherever the body left them)
+      let Lt = gd.dead ? gd.dead[1] : knife ? [-.2, -.34, -.2] : gd.pistolHold ? [Rt[0] - .05, Rt[1] - .015, Rt[2] + .005] : [hold.x + gd.sup[0] * s - .01, hold.y + gd.sup[1] * s, hold.z + gd.sup[2] * s];
       const SR = [.235 * w, 0, 0], SL = [-.235 * w, 0, 0];
       while (Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) > a + b - .02 && Lt[2] < -.2) Lt[2] += .02;   // a long handguard: slide the hand back to where the arm reaches
       T = armMesh;
@@ -176,7 +176,7 @@
         const fa = new THREE.Vector3(Hn[0] - E[0], Hn[1] - E[1], Hn[2] - E[2]).normalize(), mid = [lp(E[0], Hn[0], .58), lp(E[1], Hn[1], .58), lp(E[2], Hn[2], .58)];
         const br = add(cyl(.052, .058, .12, 10), M.plate, mid[0], mid[1], mid[2]); br.quaternion.setFromUnitVectors(UP, fa); add(sph(.03, 8, 6), M.acc, mid[0] - fa.y * .0 + px * .0, mid[1] + .05, mid[2]).scale.set(1, .4, 1.4);   // bracer with a light on it
         // the hand: a palm in line with the forearm, four fingers closed round the grip (or cupped under the handguard), a thumb
-        const hand = new THREE.Group(); hand.position.set(Hn[0], Hn[1], Hn[2]); hand.lookAt(Hn[0] + fa.x, Hn[1] + fa.y, Hn[2] + fa.z); if (px < 0 && !gd.pistolHold && !knife) hand.rotateZ(-1.2); armMesh.add(hand); const was = T; T = hand;
+        const hand = new THREE.Group(); hand.position.set(Hn[0], Hn[1], Hn[2]); hand.lookAt(Hn[0] + fa.x, Hn[1] + fa.y, Hn[2] + fa.z); if (px < 0 && !gd.pistolHold && !knife && !gd.dead) hand.rotateZ(-1.2); armMesh.add(hand); const was = T; T = hand;
         add(cyl(.044, .048, .03, 10), M.dark, 0, 0, -.005, Math.PI / 2); add(rb(.074, .034, .078, .012), M.dark, 0, 0, .042);   // cuff, palm
         add(rb(.07, .03, .05, .012), M.dark, -px * .012, -.02, .09, .9); add(rb(.066, .028, .04, .012), M.dark, -px * .014, -.05, .092, 1.9);   // fingers, curled
         add(rb(.024, .026, .055, .01), M.dark, px * .03, .012, .06, -.3, px * .5); add(rb(.07, .02, .03, .006), M.plate, 0, .024, .05);   // thumb, knuckle guard
@@ -287,7 +287,8 @@
     let A = X.agents.get(f);
     if (!A || A.userData.op !== f.op) { if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); } A = agentModel(f); X.agents.set(f, A); }
     const U = A.userData, fk0 = gun(f).k, fsk = skinFor(f, fk0) || '', fk = fk0;
-    if (U.gk !== fk || U.gsk !== fsk) {   // a gun once built for this fighter is kept, outline and all: switching back to it costs nothing
+    if (f.alive && U.deadArms) { U.deadArms = false; U.gk = ''; }   // (back on their feet: the arms take the gun again)
+    if ((U.gk !== fk || U.gsk !== fsk) && !U.deadArms) {   // a gun once built for this fighter is kept, outline and all: switching back to it costs nothing
       U.gsk = fsk; while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]);
       const GC = U.gunCache || (U.gunCache = new Map()), gkey = fk + '|' + fsk; let gm = GC.get(gkey);
       if (!gm) { gm = gunModel(fk, { cast: false, flash: true, skin: fsk }); gm.scale.setScalar(1.08); gm.userData.cachedGun = true; GC.set(gkey, gm); if (GC.size > 6) GC.delete(GC.keys().next().value); }
@@ -363,9 +364,19 @@
   on('kill', (v, by, head) => { v.rag = { fx: by ? by.x : null, fz: by ? by.z : null, head: !!head }; });
   /* A body going down. Where it lies and which way it fell are fixed the moment it dies, so nothing the player does after
      (looking round on the death cam, the facing their device still sends) moves it. The knees give first, the body twists
-     away from the shot and topples, faster and faster, lands with a small bounce and settles loose: one knee up, the arms
-     flung, the head rolled aside. A headshot drops it straight down before it tips. Shot from behind, it pitches onto its
-     face. A wall closer than a body length stops the fall short: it slumps against the wall instead of sinking through. */
+     away from the shot and topples, faster and faster, lands with a small bounce and settles loose. A headshot drops it
+     straight down before it tips; shot from behind it pitches onto its face; a wall closer than a body length stops the fall
+     short and it slumps against the wall instead.
+     How it lies: on its back, one knee fallen out to the side, an arm flung out, the head rolled over; or face down, one
+     leg drawn up sideways, an arm up by the head and the cheek on the floor. Every limb bends in the plane of the floor, so
+     nothing sticks up in the air. Halfway down the arms let go of the gun and are rebuilt reaching for where they come to
+     rest, and the finished pose is measured once so the body rests on the floor: not floating, not sunk into it. */
+  const LIMP = {   // the resting pose: per leg [twist, swing, splay, knee, foot], the head [nod, turn], the hands (in the arms' frame)
+    back: { leg: [[0, .5, .34, -.8, .55], [0, .07, .12, -.1, .7]], head: [-.12, .75], arms: [[[.7, .06, .1], [-.42, -.42, .1]], [[.36, .46, .1], [-.66, -.05, .1]], [[.66, -.1, .1], [-.64, .1, .1]]] },
+    face: { leg: [[1.57, 0, .8, -1.4, -.75], [0, -.02, .1, -.12, -.9]], head: [.1, 1.25], arms: [[[.4, .42, -.1], [-.42, -.42, -.1]], [[.62, .12, -.1], [-.34, .44, -.1]], [[.42, -.4, -.1], [-.4, .4, -.1]]] },
+    slump: { leg: [[0, 1.3, .2, -1.6, .2], [0, 1.15, .14, -1.35, .3]], head: [.55, .35], arms: [[[.36, -.5, -.06], [-.36, -.5, -.06]]] },
+    slumpF: { leg: [[0, 1.45, .1, -2.35, .3], [0, 1.45, .1, -2.35, .3]], head: [.5, .3], arms: [[[.32, -.48, -.16], [-.32, -.48, -.16]]] }
+  };
   function ragdoll(f, A, U, dt) {
     let R = U.rag;
     if (!R) {
@@ -375,24 +386,36 @@
       const push = Math.atan2(dx, dz), plan = d => { const turnB = angDiff(d, f.yaw), turnF = angDiff(d + Math.PI, f.yaw), fwd = Math.abs(turnB) > Math.abs(turnF) + .3, yaw1 = f.yaw + cl(fwd ? turnF : turnB, -1.3, 1.3) * .85, s = fwd ? -1 : 1, fx = Math.sin(yaw1) * s, fz = Math.cos(yaw1) * s;
         return { fwd, yaw1, s, fx, fz, room: los(x0, y0 + .45, z0, x0 + fx * 1.9, y0 + .45, z0 + fz * 1.9, false) }; };
       let P2 = null; for (const off of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) { const c = plan(push + off); if (!P2 || c.room > P2.room + .05) P2 = c; if (c.room >= 1.75) break; }
-      const { fwd, yaw1, s, fx, fz, room } = P2, aEnd = room >= 1.75 ? 1.5 : cl(Math.asin(cl((room - .2) / 1.6, 0, 1)), .5, 1.5);
+      const { fwd, yaw1, s, fx, fz, room } = P2, aEnd = room >= 1.75 ? 1.53 : cl(Math.asin(cl((room - .2) / 1.6, 0, 1)), .5, 1.53);
       const sd = String(f.key || f.name).split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7) + (M ? M.round * 131 : 0), rn = k => { const v = Math.sin(sd * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); };
-      R = U.rag = { x: x0, y: y0, z: z0, yaw0: f.yaw, yaw1, fwd, s, fx, fz, aEnd, slump: aEnd < 1.15, head: !!hit.head, t: 0, leg: rn(1) < .5 ? 0 : 1, side: rn(2) < .5 ? -1 : 1, r3: rn(3), slide: cl(room - 1.8, 0, .3) };
+      const slump = aEnd < 1.15, kind = slump ? (fwd ? 'slumpF' : 'slump') : fwd ? 'face' : 'back', Lp = LIMP[kind], arms = Lp.arms[Math.floor(rn(4) * Lp.arms.length) % Lp.arms.length];
+      R = U.rag = { x: x0, y: y0, z: z0, yaw0: f.yaw, yaw1, fwd, s, fx, fz, aEnd, slump, kind, Lp, arms, head: !!hit.head, t: 0, leg: rn(1) < .5 ? 0 : 1, side: rn(2) < .5 ? -1 : 1, slide: cl(room - 1.8, 0, .3), lift: null };
+      // where the finished pose meets the floor: lay it out once, find its lowest few points (the arms aside: they come later)
+      // and lift or lower the whole body by that much
+      ragPose(A, U, R, 1, 0, R.aEnd); A.updateMatrixWorld(true);
+      { const v = new THREE.Vector3(), d = []; A.traverse(o => { if (!o.isMesh || o.userData.isOL || o.userData.px || !o.visible) return; for (let q = o; q; q = q.parent) if (q === U.arms || q === U.gunHold) return;
+          const P = o.geometry.attributes.position; for (let i = 0; i < P.count; i += 2) { v.fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld); const fl = hAt(v.x, v.z); if (fl - y0 > .3) continue; d.push(v.y - fl); } });
+        d.sort((p, q) => p - q); R.lift = d.length ? cl(.012 - d[Math.floor(d.length * .015)], -.12, .5) : .14; }
     }
     R.t += dt; const t = R.t, t0 = R.head ? .16 : .1, T = R.head ? .58 : .5, u = cl((t - t0) / T, 0, 1), ti = t0 + T;
     const buckle = smooth(cl(t / (R.head ? .16 : .22), 0, 1)), g = smooth(u), land = t > ti ? Math.exp(-(t - ti) * 7) * Math.abs(Math.sin((t - ti) * 17)) : 0;
     const a = R.aEnd * u * u - .12 * land;   // gravity: slow to tip, fast at the end; then the bounce dies away
-    A.rotation.y = R.yaw0 + angDiff(R.yaw1, R.yaw0) * g; A.rotation.x = a * R.s; A.rotation.z = R.side * .1 * g;
-    A.position.set(R.x + R.fx * R.slide * g, R.y + (R.fwd ? .16 : .13) * Math.sin(Math.max(0, a)) - (R.head ? .06 : 0) * buckle * (1 - g), R.z + R.fz * R.slide * g);
-    // the limbs: knees giving way, then loose on the floor
-    const hipDrop = (R.head ? .3 : .2) * buckle * (1 - g * .55) + (R.slump ? (R.fwd ? .5 : .32) * g : 0);
-    U.hip.position.y = .95 - hipDrop;
-    [U.L, U.Rg].forEach((lg, i) => { const bent = i === R.leg, kneeT = R.fwd ? (bent ? -.35 : .05) : R.slump ? 1.25 : bent ? .95 : .12, kneeS = R.fwd ? (bent ? -1.1 : -.15) : R.slump ? -1.35 : bent ? -1.55 : -.12;
-      const kt = R.fwd && R.slump ? 1.45 : kneeT, ks = R.fwd && R.slump ? -2.35 : kneeS;   // (slumped forward against a wall: kneeling)
-      lg.th.rotation.x = lp(.55 * buckle, kt, g); lg.sn.rotation.x = lp(-1.1 * buckle, ks, g); lg.th.rotation.z = (i ? -1 : 1) * .12 * g; lg.th.rotation.y = 0; lg.ft.rotation.set(.35 * g - .2 * buckle * (1 - g), 0, (i ? 1 : -1) * .25 * g); });
-    U.hip.position.x = 0; U.torso.rotation.z = 0;
-    U.torso.rotation.x = lp(.25 * buckle, R.fwd ? .2 : -.18, g); U.torso.rotation.y = R.side * .22 * g; U.torso.position.y = 0;
-    U.arms.rotation.x = lp(-.5 * buckle, R.fwd ? -1.25 : R.slump ? -.9 : 1.15 + R.r3 * .5, g); U.arms.rotation.y = R.side * .35 * g; U.arms.rotation.z = R.side * (R.fwd ? -.2 : .45) * g; U.arms.position.z = 0;
-    U.head.rotation.x = lp(.3 * buckle, R.fwd ? .45 : R.slump ? .55 : -.4, g); U.head.rotation.z = R.side * .45 * g; U.head.rotation.y = R.side * .25 * g;
+    // halfway down the hands let go of the gun: the arms are rebuilt once, reaching for where they will lie
+    if (!R.armsDone && u > .45) { R.armsDone = true; U.deadArms = true; U.pose({ k: 'dead', dead: R.side > 0 ? R.arms : R.arms.map(q => [-q[0], q[1], q[2]]).reverse(), grip: [0, 0, 0], sup: [0, 0, 0] }); }
+    ragPose(A, U, R, g, buckle, a);
+  }
+  // one frame of the fall: g how far down (0..1), buckle the knees giving, a the tip so far
+  function ragPose(A, U, R, g, buckle, a) {
+    const Lp = R.Lp, sd = R.side, lift = R.lift == null ? 0 : R.lift * Math.sin(cl(a, 0, 1.6)) / Math.sin(R.aEnd);
+    A.rotation.y = R.yaw0 + angDiff(R.yaw1, R.yaw0) * g; A.rotation.x = a * R.s; A.rotation.z = R.slump ? 0 : sd * .06 * g;
+    A.position.set(R.x + R.fx * R.slide * g, R.y + lift - (R.head ? .06 : 0) * buckle * (1 - g), R.z + R.fz * R.slide * g);
+    // the hips: knees give, then (lying) back in line with the body; slumped, sitting down against the wall
+    U.hip.position.set(0, .95 - (R.head ? .3 : .2) * buckle * (1 - g) - (R.slump ? (R.fwd ? .5 : .34) * g : 0), 0);
+    [U.L, U.Rg].forEach((lg, i) => { const out = i ? 1 : -1, q = Lp.leg[i === R.leg ? 0 : 1];   // out: the way this leg splays (the left leg is at -x)
+      lg.th.rotation.y = q[0] * out * g; lg.th.rotation.x = lp(.55 * buckle, q[1], g); lg.th.rotation.z = q[2] * out * g; lg.sn.rotation.x = lp(-1.1 * buckle, q[3], g);
+      lg.ft.rotation.set(lp(-.2 * buckle, q[4] < 0 ? q[4] : .25, g), 0, 0); lg.ft.rotation.y = q[4] > 0 ? q[4] * out * g : 0; });
+    U.torso.rotation.set(lp(.25 * buckle, R.fwd ? .06 : R.slump ? .12 : -.06, g), sd * .14 * g, sd * .05 * g); U.torso.position.y = 0;
+    U.arms.rotation.set(lp(-.5 * buckle, 0, g), 0, 0); U.arms.position.z = 0;
+    U.head.rotation.set(lp(.3 * buckle, Lp.head[0], g), sd * Lp.head[1] * g, sd * .25 * g);
     U.tails.rotation.x = .1 + .4 * g; U.gunHold.visible = false; if (U.held) U.held.visible = false;
   }

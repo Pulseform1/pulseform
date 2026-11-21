@@ -50,7 +50,7 @@
   const heroArt = f => (X && X.heroes && X.heroes.get(heroKey(f))) || null;
   function heroRender(f) {
     const key = heroKey(f); X.heroes = X.heroes || new Map(); if (X.heroes.has(key)) return X.heroes.get(key);
-    const S = heroStudio(), g1 = heroGun(f), G = GUNS[g1] || GUNS.pip, k = fighter({ op: f.op, key: 'hero', name: '', team: me().team });
+    const S = heroStudio(), g1 = heroGun(f), G = GUNS[g1] || GUNS.pip, k = fighter({ op: f.op, key: 'hero', name: '', team: M ? me().team : 0 });
     k.guns = { 1: G.slot === 1 ? g1 : null, 2: G.slot === 2 ? g1 : 'pip', 3: 'knife' }; k.slot = G.slot === 1 ? 1 : 2; k.skins = Object.assign({}, f.skins || {});
     Object.assign(k, { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0, vx: 0, vz: 0, pitch: -.03, alive: true, walkT: 0, crouch: 0, yaw: yawTo(0, 0, 1.3, 6) });
     for (let i = 0; i < 14; i++) updateAgent(k, .05);   // (settled into its stance)
