@@ -25,6 +25,8 @@
     return hot;
   }
   // wrap text into lines no wider than w; returns the y after the last line
+  // how tall a paragraph will be when para() draws it
+  function paraH(g, s, w, px, lh = 1.3) { px = fitPx(g, px); g.font = `600 ${px}px ${FONT}`; let line = '', n = 1; for (const word of s.split(' ')) { const t = line ? line + ' ' + word : word; if (g.measureText(t).width > w && line) { line = word; n++; } else line = t; } return n * px * lh; }
   function para(g, s, x, y, w, px, col, lh = 1.3) {
     px = fitPx(g, px); g.font = `600 ${px}px ${FONT}`; g.fillStyle = col; g.textAlign = 'left'; g.textBaseline = 'middle'; let line = '';
     for (const word of s.split(' ')) { const t = line ? line + ' ' + word : word; if (g.measureText(t).width > w && line) { g.fillText(line, x, y); line = word; y += px * lh; } else line = t; }

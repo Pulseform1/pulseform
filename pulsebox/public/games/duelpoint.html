@@ -6906,6 +6906,8 @@ const GAME = {
     return hot;
   }
   // wrap text into lines no wider than w; returns the y after the last line
+  // how tall a paragraph will be when para() draws it
+  function paraH(g, s, w, px, lh = 1.3) { px = fitPx(g, px); g.font = `600 ${px}px ${FONT}`; let line = '', n = 1; for (const word of s.split(' ')) { const t = line ? line + ' ' + word : word; if (g.measureText(t).width > w && line) { line = word; n++; } else line = t; } return n * px * lh; }
   function para(g, s, x, y, w, px, col, lh = 1.3) {
     px = fitPx(g, px); g.font = `600 ${px}px ${FONT}`; g.fillStyle = col; g.textAlign = 'left'; g.textBaseline = 'middle'; let line = '';
     for (const word of s.split(' ')) { const t = line ? line + ' ' + word : word; if (g.measureText(t).width > w && line) { g.fillText(line, x, y); line = word; y += px * lh; } else line = t; }
@@ -7799,117 +7801,101 @@ const GAME = {
   const shopItem = k => GUNS[k] || (k === NADE.k ? NADE : null);
   // the Utility row holds the smoke and a charge of your operative's bought ability (Q), side by side
   const abItem = () => { const op = OPS[me().op]; return { k: 'abq', n: op.q.n, short: op.q.n, cost: op.q.cost, col: op.col, ab: op }; };
-  const itemsOf = cat => cat === 'Shield' ? ARMOR.map(a => ({ k: a.k, n: a.n, short: a.k === 'light' ? 'Light' : 'Heavy', cost: a.cost, col: '#7fc8ff', armor: a })) : cat === 'Utility' ? [NADE, abItem()] : Object.values(GUNS).filter(q => q.cat === cat);
-  /* THE ARMORY, laid out the way the genre does its buy menu:
-       left    YOUR TEAM: each teammate's operative, credits, the guns and shield they hold, their charges, and whether they
-               are still buying or ready. What they have bought this round is picked out in gold. Attacking, the diamond
-               hands the charge over.
-       middle  everything for sale, by class.
-       right   the gun you point at (or the one you last picked): its picture, what it is for, six bars (damage, fire rate,
-               accuracy, control, range, mobility) with a tick on each showing the gun you hold now, and its damage table
-               by range; then REBUY and READY. */
+  const itemsOf = cat => cat === 'Shield' ? ARMOR.map(a => ({ k: a.k, n: a.n, cost: a.cost, col: '#7fc8ff', armor: a })) : cat === 'Utility' ? [NADE, abItem()] : Object.values(GUNS).filter(q => q.cat === cat);
+  /* THE ARMORY: everything for sale in five columns by class, as it always was. With teammates, a strip of them runs across
+     the top (what each has, can spend and has just bought); the box under the shields shows the gun you point at in numbers. */
   function drawArmory(g) {
     const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), x = V.x0 + 20 * u, w = W - 40 * u, y0 = V.y0 + 56 * Math.min(u, 1.15), h = V.y1 - y0 - 10 * u, gap = 7 * Math.min(u, 1.2), range = M.mode === 'range';
     rr(g, x, y0, w, h, 12, 'rgba(12,16,22,.95)', 'rgba(239,233,220,.25)');
     const pad = isTouch() ? 46 / pxPer() : 0; tx(g, 'ARMORY', x + 18 * u + pad, y0 + 24 * u, 24 * u, BONE, 'left'); tx(g, `◈ ${P.credits}`, x + w - 18 * u - pad, y0 + 24 * u, 23 * u, GOLD, 'right');
     { tx(g, range ? 'Everything is free on the range' : `${pistolRound(M.round) ? 'Pistol round · ' : otRound(M.round) ? 'Overtime · ' : ''}Round starts in ${Math.max(0, Math.ceil(M.t))}${lossNext(P)}`, x + w / 2, y0 + 24 * u, 14 * u, DIM); }
-    const by = y0 + 46 * u, bh = y0 + h - by - 12 * u, hh = fitPx(g, 12 * u) * 1.7;
-    const tw = cl(w * .17, 150 * u, 216 * u), sw = cl(w * .235, 214 * u, 300 * u), tx0 = x + 14 * u, sx = x + w - 14 * u - sw, gx = tx0 + tw + gap * 2, gw = sx - gap * 2 - gx;
-    const cw = (gw - 4 * gap) / 5, ch = (bh - hh - 4 * gap) / 5; let focus = null;
+    const team = range ? [] : M.fs.filter(q => q.team === P.team && !q.gone).sort((a, b) => (b === P) - (a === P)), att = !range && sideOf(P) === 'att', sth = team.length > 1 ? (isTouch() ? tapH(34, 36) : 50 * u) : 0;
+    const by = y0 + 46 * u + (sth ? sth + gap : 0), bh = y0 + h - by - 12 * u, hh = fitPx(g, 12 * u) * 1.7, cw = (w - 28 * u - 4 * gap) / 5, ch = (bh - hh - 4 * gap) / 5; let focus = null;
+    /* YOUR TEAM, one tile each above the columns: operative, name, whether they are ready (✓) or still buying, their credits,
+       the gun they will carry (in gold with a + if they bought it this round) with its picture, and their shield, bought
+       charges and smokes. Attacking, the diamond on a tile hands that teammate the charge. */
+    if (sth) team.forEach((q, i) => {
+      const tx1 = x + 14 * u + i * (cw + gap), ty1 = y0 + 46 * u, I0 = q.inv0 || {}, g1 = q.guns[1], g2 = q.guns[2], main = g1 || g2, G1 = GUNS[main], fresh = g1 ? g1 !== I0.g1 : g2 !== I0.g2 && g2 !== 'pip', mine = q === P, O2 = OPS[q.op] || OPS.vex;
+      rr(g, tx1, ty1, cw, sth, 8, mine ? 'rgba(53,224,200,.08)' : 'rgba(255,255,255,.04)', mine ? 'rgba(53,224,200,.5)' : 'rgba(239,233,220,.16)', 1);
+      const ps = sth - 8 * u; portraitTile(g, q.op, tx1 + 4 * u, ty1 + 4 * u, ps, ps, { r: 4, dead: !q.alive });
+      const bw2 = att ? Math.min(sth - 12 * u, 34 * u) : 0, rx2 = tx1 + cw - 7 * u - (bw2 ? bw2 + 6 * u : 0), lx = tx1 + ps + 11 * u, y1 = ty1 + sth * .3, y2 = ty1 + sth * .7, np = Math.min(13 * u, sth * .27);
+      // the first line: name, ready or not, credits
+      g.font = `800 ${fitPx(g, np)}px ${FONT}`; const crw = g.measureText('◈ ' + q.credits).width, [nm, npx] = fitName(g, mine ? 'YOU' : q.name.toUpperCase(), rx2 - crw - lx - 30 * u, np);
+      tx(g, nm, lx, y1, npx, mine ? YOU : BONE, 'left', 800); g.font = `800 ${fitPx(g, npx)}px ${FONT}`; const nw = g.measureText(nm).width, rdy = q.ready || !!(q.bot || q.isBot);
+      tx(g, rdy ? '✓' : '…', lx + nw + 6 * u, y1, np * .95, rdy ? YOU : DIM, 'left', 900);
+      tx(g, '◈ ' + q.credits, rx2, y1, np, GOLD, 'right', 800);
+      // the second line: their gun, then shield, charges and smokes as far as there is room; the gun's picture at the right
+      const iw = Math.min(att ? 58 * u : 70 * u, cw * .3), ih = iw * 150 / 480, ic = G1 ? gunIcon(main) : null; if (ic) g.drawImage(ic, rx2 - iw, y2 - ih / 2 + 1 * u, iw, ih);
+      let cx2 = lx; const cp = Math.min(10.5 * u, sth * .22), lim = rx2 - iw - 4 * u, chip = (s2, col, px2 = cp) => { g.font = `800 ${fitPx(g, px2)}px ${FONT}`; const wd = g.measureText(s2).width; if (cx2 + wd > lim) return; tx(g, s2, cx2, y2, px2, col, 'left', 800); cx2 += wd + 7 * u; };
+      if (G1) { const [gn, gpx] = fitName(g, (fresh ? '+' : '') + G1.n.toUpperCase(), lim - cx2, cp * 1.08); tx(g, gn, cx2, y2, gpx, fresh ? GOLD : G1.col, 'left', 800); g.font = `800 ${fitPx(g, gpx)}px ${FONT}`; cx2 += g.measureText(gn).width + 7 * u; }
+      chip('⬢' + Math.ceil(q.sh || 0), q.sh > (I0.sh | 0) ? GOLD : q.sh > 0 ? '#7fc8ff' : '#5a6272'); if ((q.ab.q | 0) > 0) chip('Q' + (q.ab.q | 0), (q.ab.q | 0) > (I0.q | 0) ? GOLD : O2.col); if ((q.smokes | 0) > 0) chip('S' + q.smokes, (q.smokes | 0) > (I0.sm | 0) ? GOLD : NADE.col);
+      if (att) { const has = carries(q), bx2 = tx1 + cw - bw2 - 6 * u, by2 = ty1 + (sth - bw2) / 2, can = !has && q.alive && (carries(P) || !carrier() || carrier().bot || carrier().isBot), h2 = zone(bx2, by2, bw2, bw2, () => { if (giveCharge(P, q)) click(); });   // the charge: press to hand it over
+        rr(g, bx2, by2, bw2, bw2, 6, has ? 'rgba(255,214,102,.3)' : h2 && can ? 'rgba(255,214,102,.12)' : 'rgba(255,255,255,.035)', has ? GOLD : can ? 'rgba(255,214,102,.45)' : 'rgba(255,255,255,.08)', has ? 2 : 1); tx(g, '◆', bx2 + bw2 / 2, by2 + bw2 / 2, bw2 * .5, has ? GOLD : can ? 'rgba(255,214,102,.6)' : '#3c434e', 'center', 900); }
+    });
     const card = (it, cx, cy, cw2 = cw) => {
-      const cw = cw2, A = it.armor, AB = it.ab ? it : null, N = it === NADE ? it : null, G = A || N || AB ? null : it, sp = P.spent;
+      const cw = cw2, A = it.armor, AB = it.ab ? it : null, N = it === NADE ? it : null, G = A || N || AB ? null : it, sp = P.spent, lock = false;
       const on = A ? P.sh >= A.sh : AB ? (P.ab.q | 0) >= AB.ab.q.max : N ? (P.smokes || 0) >= NADE.per : P.guns[G.slot] === it.k, mineNow = A ? sp.sh && sp.sh.k === it.k : AB ? sp.abq > 0 : N ? sp.smoke > 0 : sp[G.slot] && sp[G.slot].k === it.k;
       const refund = A ? (sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0) : N || AB ? 0 : (sp[G.slot] ? GUNS[sp[G.slot].k].cost : 0), can = !on && P.credits + refund >= it.cost;
       const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
       rr(g, cx, cy, cw, ch, 8, on ? 'rgba(53,224,200,.14)' : hot && can ? 'rgba(255,138,61,.18)' : 'rgba(255,255,255,.045)', on ? YOU : hot || UI.pick === it.k ? 'rgba(239,233,220,.6)' : can ? 'rgba(239,233,220,.2)' : 'rgba(255,255,255,.06)');
-      const tp = Math.min(14 * u, ch * .19, cw * .1), ty = cy + tp * .95;
-      g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nm = it.short && g.measureText((it.n + '  ◈ 2000').toUpperCase()).width > cw - 14 * u ? it.short : it.n;
+      const tp = Math.min(15 * u, ch * .2, cw * .075), ty = cy + tp * .95;
+      g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nm = it.short && g.measureText((it.n + '  ◈ 200').toUpperCase()).width > cw - 18 * u ? it.short : it.n;
       const have = (N && P.smokes) || (AB && P.ab.q);
-      const slim = cw < 92 * u, price = on ? (mineNow ? 'SELL' : AB ? 'FULL' : G && resale(it.k) ? `◈ ${resale(it.k)}` : 'OWNED') : have && !slim ? `${N ? P.smokes : P.ab.q} · ◈ ${it.cost}` : it.cost ? `◈ ${it.cost}` : 'FREE';
-      tx(g, (slim && it.short ? it.short : nm).toUpperCase(), slim ? cx + cw / 2 : cx + 7 * u, ty, tp, can || on || have ? it.col : '#5a6272', slim ? 'center' : 'left');
-      if (slim) tx(g, price, cx + cw / 2, cy + ch - tp * .75, tp * .82, on ? YOU : can ? GOLD : '#5a6272', 'center'); else tx(g, price, cx + cw - 7 * u, ty, tp * .82, on ? YOU : can ? GOLD : '#5a6272', 'right');
-      g.save(); g.globalAlpha = can || on || have ? 1 : .35; g.beginPath(); g.rect(cx + 2, cy + 2, cw - 4, ch - 4); g.clip(); const iy = cy + tp * 1.7, ih = ch - tp * 1.7 - 3 - (slim ? tp * 1.3 : 0);
-      if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih * (G.cat === 'Sidearm' ? 1.12 : 1.05), (cw - 10 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.5 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.2 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } }
+      tx(g, nm.toUpperCase(), cx + 9 * u, ty, tp, can || on || have ? it.col : '#5a6272', 'left');
+      tx(g, on ? (mineNow ? 'SELL' : AB ? 'FULL' : G && resale(it.k) ? `SELL ◈ ${resale(it.k)}` : 'OWNED') : have ? `${N ? P.smokes : P.ab.q} · ◈ ${it.cost}` : it.cost ? `◈ ${it.cost}` : 'FREE', cx + cw - 8 * u, ty, tp * .85, on ? YOU : can ? GOLD : '#5a6272', 'right');
+      g.save(); g.globalAlpha = can || on || have ? 1 : .35; g.beginPath(); g.rect(cx + 2, cy + 2, cw - 4, ch - 4); g.clip(); const iy = cy + tp * 1.7, ih = ch - tp * 1.7 - 3;
+      if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih * (G.cat === 'Sidearm' ? 1.12 : 1.05), (cw - 12 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.5 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.2 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } }
       else if (AB) { const mx = cx + cw / 2, my = iy + ih / 2, r = Math.min(ih * .36, cw * .22), mx2 = AB.ab.q.max; g.strokeStyle = it.col; g.lineWidth = 3 * u; g.beginPath(); g.arc(mx, my - 4 * u, r, 0, TAU); g.stroke(); tx(g, 'Q', mx, my - 4 * u, r * 1.1, it.col, 'center', 900);
         for (let c = 0; c < mx2; c++) { g.fillStyle = c < (P.ab.q | 0) ? it.col : 'rgba(255,255,255,.18)'; g.fillRect(mx - mx2 * 7 * u + c * 14 * u + 2 * u, my + r + 2 * u, 10 * u, 6 * u); } }
-      else if (N) { const ih2 = ih - tp * 1.1, mx = cx + cw / 2, my = iy + ih2 / 2 + 4 * u, s2 = ih2 / 62; for (let i = 0; i < NADE.per; i++) { const ox = mx + (i - (NADE.per - 1) / 2) * 30 * s2; rr(g, ox - 10 * s2, my - 18 * s2, 20 * s2, 40 * s2, 5 * s2, '#59606b', '#9aa3ad', 1.5); g.fillStyle = NADE.col; g.fillRect(ox - 10 * s2, my - 10 * s2, 20 * s2, 5 * s2); rr(g, ox - 6 * s2, my - 25 * s2, 12 * s2, 8 * s2, 2 * s2, '#3d434b'); g.fillStyle = '#9aa3ad'; g.fillRect(ox + 6 * s2, my - 24 * s2, 3 * s2, 18 * s2); } if (!slim) tx(g, 'CARRY ' + NADE.per, mx, cy + ch - tp * .7, tp * .62, DIM); }
+      else if (N) { const ih2 = ih - tp * 1.1, mx = cx + cw / 2, my = iy + ih2 / 2 + 4 * u, s2 = ih2 / 62; for (let i = 0; i < NADE.per; i++) { const ox = mx + (i - (NADE.per - 1) / 2) * 30 * s2; rr(g, ox - 10 * s2, my - 18 * s2, 20 * s2, 40 * s2, 5 * s2, '#59606b', '#9aa3ad', 1.5); g.fillStyle = NADE.col; g.fillRect(ox - 10 * s2, my - 10 * s2, 20 * s2, 5 * s2); rr(g, ox - 6 * s2, my - 25 * s2, 12 * s2, 8 * s2, 2 * s2, '#3d434b'); g.fillStyle = '#9aa3ad'; g.fillRect(ox + 6 * s2, my - 24 * s2, 3 * s2, 18 * s2); } tx(g, 'CARRY ' + NADE.per, mx, cy + ch - tp * .7, tp * .62, DIM); }
       else { const mx = cx + cw / 2, my = iy + ih / 2, s2 = ih / 80 * (A.sh === 50 ? 1.05 : .85); g.fillStyle = it.col + '33'; g.strokeStyle = it.col; g.lineWidth = 2.5 * u; g.beginPath(); g.moveTo(mx, my - 32 * s2); g.lineTo(mx + 26 * s2, my - 22 * s2); g.lineTo(mx + 22 * s2, my + 12 * s2); g.lineTo(mx, my + 32 * s2); g.lineTo(mx - 22 * s2, my + 12 * s2); g.lineTo(mx - 26 * s2, my - 22 * s2); g.closePath(); g.fill(); g.stroke(); tx(g, '+' + A.sh, mx, my, 20 * s2, BONE); }
       g.restore();
     };
-    // ---- the middle: everything for sale
     let endY = by;
     ARMORY_COLS.forEach((col, ci) => {
-      const cx = gx + ci * (cw + gap); let y = by;
+      const cx = x + 14 * u + ci * (cw + gap); let y = by;
       for (const [label, cat] of col) { tx(g, label, cx + 2, y + hh / 2, 12 * u, DIM, 'left'); y += hh;
         if (cat === 'Utility') { const its = itemsOf(cat), hw = (cw - gap) / 2; its.forEach((it, n) => card(it, cx + n * (hw + gap), y, hw)); y += ch + gap; continue; }   // two half cards in one row
         for (const it of itemsOf(cat)) { card(it, cx, y); y += ch + gap; } }
       if (ci === 4) endY = y;
     });
-    // under the shields: what the round pays, and the least you will have next round whatever happens
-    if (!range && by + bh - endY > 70 * u) { const mx = gx + 4 * (cw + gap), mh = Math.min(by + bh - endY, 168 * u), fp = Math.min(11.5 * u, cw * .085), lossPay = CASH.loss[Math.min(2, P.lossRun | 0)], nextPistol = pistolRound(M.round + 1) || otRound(M.round + 1);
-      rr(g, mx, endY, cw, mh, 8, 'rgba(255,255,255,.03)', 'rgba(239,233,220,.12)'); let y = endY + fp * 1.5; tx(g, 'ROUND MONEY', mx + 8 * u, y, fp, DIM, 'left', 900); y += fp * 1.8;
-      const line = (a, b2, col) => { if (y > endY + mh - fp * .6) return; tx(g, a, mx + 8 * u, y, fp, DIM, 'left'); tx(g, b2, mx + cw - 8 * u, y, fp, col || BONE, 'right', 800); y += fp * 1.5; };
-      line('WIN', '◈ ' + CASH.win, YOU); line('LOSE', '◈ ' + lossPay, FOE); line('KILL', '◈ ' + CASH.kill); line('PLANT', '◈ ' + CASH.plant);
-      if (!nextPistol && y < endY + mh - fp * 2.6) { y += fp * .5; tx(g, 'NEXT ROUND, AT LEAST', mx + 8 * u, y, fp * .88, DIM, 'left'); y += fp * 1.5; tx(g, '◈ ' + Math.min(CASH.cap, P.credits + lossPay), mx + cw - 8 * u, y, fp * 1.25, GOLD, 'right', 900); } }
-
-    // ---- the left: your team, and what they are buying
-    { const team = range ? [P] : M.fs.filter(q => q.team === P.team && !q.gone).sort((a, b) => (b === P) - (a === P)), att = !range && sideOf(P) === 'att' && team.length > 1;
-      tx(g, team.length > 1 ? 'YOUR TEAM' : 'YOUR LOADOUT', tx0 + 2, by + hh / 2, 12 * u, DIM, 'left'); if (team.length > 1 && tw > 186 * u) tx(g, 'gold: bought this round', tx0 + tw - 2, by + hh / 2, Math.min(9.5 * u, tw * .052), 'rgba(255,214,102,.75)', 'right', 700);
-      const rh2 = Math.min(104 * u, (bh - hh - (team.length - 1) * gap) / team.length), small = rh2 < 74 * u; let ty2 = by + hh;
-      for (const q of team) { const I0 = q.inv0 || {}, g1 = q.guns[1], g2 = q.guns[2], main = g1 || g2, G1 = GUNS[main], newMain = g1 ? g1 !== I0.g1 : g2 !== I0.g2 && g2 !== 'pip', mine = q === P;
-        rr(g, tx0, ty2, tw, rh2, 8, mine ? 'rgba(53,224,200,.07)' : 'rgba(255,255,255,.035)', mine ? 'rgba(53,224,200,.45)' : 'rgba(239,233,220,.14)', 1);
-        const ps = Math.min(34 * u, rh2 * .36), px2 = tx0 + 5 * u, py2 = ty2 + 5 * u; portraitTile(g, q.op, px2, py2, ps, ps, { r: 4, dead: !q.alive });
-        const [nm, npx] = fitName(g, mine ? 'YOU' : q.name.toUpperCase(), tw - ps - 74 * u, Math.min(13 * u, ps * .42)); tx(g, nm, px2 + ps + 6 * u, py2 + ps * .3, npx, mine ? YOU : BONE, 'left', 800);
-        tx(g, '◈ ' + q.credits, tx0 + tw - 7 * u, py2 + ps * .3, Math.min(12.5 * u, ps * .4), GOLD, 'right', 800);
-        // still choosing, or ready (a bot is ready as soon as it has bought)
-        { const rdy = q.ready || !!(q.bot || q.isBot), dots = '.'.repeat(1 + (Math.floor(performance.now() / 400) % 3)); tx(g, range ? '' : rdy ? 'READY' : 'BUYING' + dots, px2 + ps + 6 * u, py2 + ps * .78, Math.min(9.5 * u, ps * .3), rdy ? YOU : DIM, 'left', 800); }
-        // the gun they will carry (their main gun, or their sidearm if that is all they have)
-        const iy = py2 + ps + 3 * u, ih = Math.max(14 * u, rh2 - ps - (small ? 12 : 30) * u), ic = G1 ? gunIcon(main) : null, bw2 = att ? Math.min(30 * u, ih) : 0;
-        if (ic) { const dw = Math.min(tw - 14 * u - bw2, ih * 480 / 150 * (G1.cat === 'Sidearm' ? 1.5 : 1.15)), dh = dw * 150 / 480; g.save(); g.beginPath(); g.rect(tx0 + 2, iy - 2, tw - 4 - bw2, ih + 4); g.clip(); g.drawImage(ic, tx0 + 6 * u, iy + (ih - dh) / 2, dw, dh); g.restore(); }
-        if (G1) tx(g, G1.n.toUpperCase(), tx0 + tw - 7 * u, py2 + ps * .78, Math.min(11.5 * u, tw * .066), newMain ? GOLD : G1.col, 'right', 900);
-        if (att) { const has = carries(q), bx2 = tx0 + tw - bw2 - 4 * u, by2 = iy + ih - bw2, can = !has && q.alive && (carries(P) || !carrier() || carrier().bot || carrier().isBot), h2 = zone(bx2, by2, bw2, bw2, () => { if (giveCharge(P, q)) click(); });   // the charge: press to hand it over
-          rr(g, bx2, by2, bw2, bw2, 6, has ? 'rgba(255,214,102,.3)' : h2 && can ? 'rgba(255,214,102,.12)' : 'rgba(255,255,255,.035)', has ? GOLD : can ? 'rgba(255,214,102,.45)' : 'rgba(255,255,255,.08)', has ? 2 : 1); tx(g, '◆', bx2 + bw2 / 2, by2 + bw2 / 2, bw2 * .5, has ? GOLD : can ? 'rgba(255,214,102,.6)' : '#3c434e', 'center', 900); }
-        // the rest: sidearm, shield, bought charges, smokes
-        if (!small) { const cy2 = ty2 + rh2 - 12 * u, cp = Math.min(10 * u, tw * .058), O2 = OPS[q.op] || OPS.vex; let cx2 = tx0 + 7 * u;
-          const chip = (s2, col, nw) => { g.font = `800 ${fitPx(g, cp)}px ${FONT}`; const wd = g.measureText(s2).width; if (cx2 + wd > tx0 + tw - 5 * u) return; tx(g, s2, cx2, cy2, cp, nw ? GOLD : col, 'left', 800); cx2 += wd + 8 * u; };
-          if (g1 && g2) chip(GUNS[g2].n.toUpperCase(), '#9aa4b0', g2 !== I0.g2 && g2 !== 'pip'); chip(q.sh > 0 ? '⬢ ' + Math.ceil(q.sh) : '⬡ 0', q.sh > 0 ? '#7fc8ff' : '#5a6272', q.sh > (I0.sh | 0));
-          if ((q.ab.q | 0) > 0) chip(`${O2.q.n.toUpperCase()} ${q.ab.q | 0}`, O2.col, (q.ab.q | 0) > (I0.q | 0)); if ((q.smokes | 0) > 0) chip(`SMOKE ${q.smokes}`, NADE.col, (q.smokes | 0) > (I0.sm | 0)); }
-        ty2 += rh2 + gap; } }
-
-    // ---- the right: the gun you point at, in numbers
-    const rhb = tapH(50), dh2 = bh - rhb - gap; rr(g, sx, by, sw, dh2, 8, 'rgba(255,255,255,.03)', 'rgba(239,233,220,.12)');
-    if (!focus) { const hk = P.guns[P.slot] && !GUNS[P.guns[P.slot]].melee ? P.guns[P.slot] : P.guns[1] || P.guns[2]; focus = GUNS[hk] || null; }   // nothing pointed at: the gun in your hands
+    // the right column, under the shields: what you are pointing at, a buy button for a gold-edged one, and the way out
+    const dx = x + 14 * u + 4 * (cw + gap), rh = tapH(50);
+    const dh = by + bh - endY - rh - gap;
+    rr(g, dx, endY, cw, dh, 8, 'rgba(255,255,255,.03)', 'rgba(239,233,220,.12)');
     if (focus) {
-      const F = focus, G = F.armor || F === NADE || F.ab ? null : F, fp = Math.min(13 * u, sw * .05), px3 = sx + 12 * u, pw3 = sw - 24 * u; let y = by + fp * 1.5;
-      g.save(); g.beginPath(); g.rect(sx, by, sw, dh2); g.clip();
-      tx(g, F.n.toUpperCase(), px3, y, fp * 1.55, F.col, 'left', 900); tx(g, F.cost ? `◈ ${F.cost}` : 'FREE', sx + sw - 12 * u, y, fp * 1.2, GOLD, 'right', 800); y += fp * 1.5;
-      tx(g, (G ? G.cat + (G.auto ? ' · automatic' : G.scope ? ' · bolt action' : ' · one shot a pull') : F.armor ? 'Shield' : 'Utility').toUpperCase(), px3, y, fp * .8, DIM, 'left', 800); y += fp * .9;
-      const tall = dh2 > 430 * u;
-      if (G && tall) { const ic = gunIcon(G.k), ihh = Math.min(74 * u, dh2 * .15); if (ic) { const dw = Math.min(pw3, ihh * 480 / 150 * (G.cat === 'Sidearm' ? 1.5 : 1.1)), dh = dw * 150 / 480; g.drawImage(ic, sx + (sw - dw) / 2, y + (ihh - dh) / 2, dw, dh); } y += ihh + fp * .4; } else y += fp * .5;
-      y = para(g, F.armor ? `Soaks the next ${F.armor.sh} damage. Lasts until used up.` : F.ab ? `${F.ab.q.d} Up to ${F.ab.q.max} charge${F.ab.q.max > 1 ? 's' : ''}; unused ones carry into the next round. E (${F.ab.e.n}) is free every round; X (${F.ab.x.n}) is your ultimate.` : F.desc, px3, y + fp * .5, pw3, fp * .92, '#cfd6e2', 1.25) + fp * .5;
-      const row = (a, b2) => { tx(g, a, px3, y, fp * .9, DIM, 'left'); tx(g, b2, sx + sw - 12 * u, y, fp * .9, BONE, 'right'); y += fp * 1.5; };
+      /* What you are pointing at. A gun: what it is for, six bars (damage, fire rate, accuracy, control, range, mobility,
+         with a tick on each for the gun you carry in that slot now) and its damage by range. What does not fit a short
+         screen is left out from the bottom up, the description first. */
+      const F = focus, G = F.armor || F === NADE || F.ab ? null : F, fp = Math.min(13 * u, cw * .062), px3 = dx + 10 * u, rx3 = dx + cw - 9 * u, yEnd = endY + dh - fp * .5; let y = endY + fp * 1.3;
+      const cur = G && P.guns[G.slot] && P.guns[G.slot] !== G.k ? GUNS[P.guns[G.slot]] : null;
+      g.save(); g.beginPath(); g.rect(dx, endY, cw, dh); g.clip();
+      tx(g, F.n.toUpperCase(), px3, y, fp * 1.25, F.col, 'left'); tx(g, cur ? `▏YOUR ${cur.n.toUpperCase()}` : G ? G.cat.toUpperCase() : '', rx3, y, fp * .78, cur ? '#cfd6e2' : DIM, 'right'); y += fp * 1.8;
+      const row = (a, b2) => { tx(g, a, px3, y, fp * .9, DIM, 'left'); tx(g, b2, rx3, y, fp * .9, BONE, 'right'); y += fp * 1.45; };
       if (G) {
-        // six bars; the tick on each is the gun you carry in that slot now, to weigh one against the other
-        const S = gunStats(G), cur = P.guns[G.slot] && P.guns[G.slot] !== G.k ? GUNS[P.guns[G.slot]] : null, CS = cur ? gunStats(cur) : null, lw2 = pw3 * .3, bw3 = pw3 * .36, bx3 = px3 + lw2, bhh = fp * .5;
-        if (cur) { tx(g, `▏ your ${cur.n}`, sx + sw - 12 * u, y, fp * .72, '#9aa4b0', 'right', 700); } y += fp * .9;
+        const S = gunStats(G), CS = cur ? gunStats(cur) : null, rowH = Math.min(Math.max(fp * 1.42, fitPx(g, fp * .8) * 1.45), Math.max(fitPx(g, fp * .8) * 1.12, (yEnd - y - fp * .3) / 6)), barsH = 6 * rowH,   // (on a short box the six rows close up to fit)
+           tabH = Math.max(fp * 5.6, fitPx(g, fp * .8) * 5.6), room = yEnd - y;
+        if (room >= barsH + tabH + fp * .9 + paraH(g, F.desc, cw - 19 * u, fp * .95, 1.25)) y = para(g, F.desc, px3, y, cw - 19 * u, fp * .95, '#cfd6e2', 1.25) + fp * .7;   // (the numbers come first: the words are added only when all of it fits)
+        const wOf = (t2, px2, wt) => { g.font = `${wt} ${fitPx(g, px2)}px ${FONT}`; return g.measureText(t2).width; }, full = cw - 19 * u, lw2 = Math.max(...S.bars.map(q => wOf(q[0], fp * .8, 800))) + 9 * u, vw0 = Math.max(...S.bars.map(q => wOf(q[2], fp * .76, 700))) + 9 * u, vals = full - lw2 - vw0 >= 44 * u, bw3 = full - lw2 - (vals ? vw0 : 0), bx3 = px3 + lw2, bhh = fp * .5;
         S.bars.forEach(([lab, k, txt], i) => { tx(g, lab, px3, y, fp * .8, DIM, 'left', 800); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(bx3, y - bhh / 2, bw3, bhh); g.fillStyle = k > .66 ? YOU : k > .33 ? BONE : '#9aa4b0'; g.fillRect(bx3, y - bhh / 2, bw3 * k, bhh);
           if (CS) { g.fillStyle = '#cfd6e2'; g.fillRect(bx3 + bw3 * CS.bars[i][1] - 1 * u, y - bhh, 2 * u, bhh * 2); }
-          tx(g, txt, sx + sw - 12 * u, y, fp * .74, BONE, 'right', 700); y += fp * 1.42; });
-        y += fp * .3;
-        // damage by range: head, body, legs (a number that kills a full-health rival with a heavy shield, 150, is gold)
-        const n = S.bands.length, c0 = px3 + pw3 * .3, cw4 = (pw3 * .7) / n; tx(g, 'DAMAGE' + (S.pel > 1 ? '  ·  per pellet, ×' + S.pel : ''), px3, y, fp * .74, DIM, 'left', 800); y += fp * 1.25;
-        S.bands.forEach((b2, i) => tx(g, b2.label, c0 + cw4 * (i + .5), y, fp * .72, '#9aa4b0', 'center', 700)); y += fp * 1.2;
-        for (const [lab, key] of [['HEAD', 'head'], ['BODY', 'body'], ['LEGS', 'legs']]) { tx(g, lab, px3, y, fp * .8, DIM, 'left', 800); S.bands.forEach((b2, i) => { const v = b2[key] * S.pel; tx(g, String(b2[key]), c0 + cw4 * (i + .5), y, fp * .92, v >= 150 ? GOLD : v >= 100 ? BONE : '#b6bdc9', 'center', 800); }); y += fp * 1.32; }
-        y += fp * .4; row('MAGAZINE', `${G.mag}  ·  ${G.res} spare`); row('RELOAD · DRAW', `${G.rel} s · ${G.equip} s`); if (G.scope) row('SCOPE', G.scope.map(z => z + 'x').join(' / ')); else if (G.ads) row('AIMED', G.ads + 'x zoom');
+          if (vals) tx(g, txt, rx3, y, fp * .76, BONE, 'right', 700); y += rowH; });
+        if (yEnd - y >= tabH) { y += fp * .5; const n = S.bands.length, c0 = px3 + (cw - 19 * u) * .28, cw4 = (cw - 19 * u) * .72 / n;   // damage by range: head, body, legs (150, a full-health rival behind a heavy shield, in gold)
+          tx(g, S.pel > 1 ? `×${S.pel} PELLETS` : 'DAMAGE', px3, y, fp * .74, DIM, 'left', 800); S.bands.forEach((b2, i) => tx(g, n === 1 ? 'ANY RANGE' : b2.label, c0 + cw4 * (i + .5), y, fp * .72, '#9aa4b0', 'center', 700)); y += fp * 1.3;
+          for (const [lab, key] of [['HEAD', 'head'], ['BODY', 'body'], ['LEGS', 'legs']]) { tx(g, lab, px3, y, fp * .8, DIM, 'left', 800); S.bands.forEach((b2, i) => { const v = b2[key] * S.pel; tx(g, String(b2[key]), c0 + cw4 * (i + .5), y, fp * .95, v >= 150 ? GOLD : v >= 100 ? BONE : '#b6bdc9', 'center', 800); }); y += fp * 1.32; } }
+        if (yEnd - y >= fp * 1.6) { y += fp * .35; row('MAGAZINE · RELOAD', `${G.mag} · ${G.rel} s`); }
+      } else {
+        y = para(g, F.armor ? `Soaks the next ${F.armor.sh} damage. Lasts until used up.` : F.ab ? `${F.ab.q.d} Up to ${F.ab.q.max} charge${F.ab.q.max > 1 ? 's' : ''}; unused ones carry into the next round. E (${F.ab.e.n}) is free every round; X (${F.ab.x.n}) is your ultimate.` : F.desc, px3, y, cw - 19 * u, fp, '#cfd6e2', 1.25) + fp * .3;
+        if (F === NADE) { row('CARRY', `UP TO ${NADE.per}`); row('CLOUD', `${NADE.T} S`); }
+        if (F.ab) { row('CHARGES', `${P.ab.q | 0} OF ${F.ab.q.max}`); row('ULTIMATE', `${Math.min(P.ult | 0, ultCost(P))} / ${ultCost(P)} POINTS`); }
+        row('PRICE', F.cost ? `◈ ${F.cost}` : 'FREE');
       }
-      if (F === NADE) { row('CARRY', `UP TO ${NADE.per}`); row('CLOUD', `${NADE.T} S`); }
-      if (F.ab) { row('CHARGES', `${P.ab.q | 0} OF ${F.ab.q.max}`); row('ULTIMATE', `${Math.min(P.ult | 0, ultCost(P))} / ${ultCost(P)} POINTS`); }
       g.restore();
-    } else para(g, `Press a weapon to buy it, and again to sell it back. Q (${OPS[P.op].q.n}) is bought by the charge; E (${OPS[P.op].e.n}) comes free every round; X (${OPS[P.op].x.n}) charges from kills, deaths, plants, defuses and the orbs on the map.`, sx + 12 * u, by + 22 * u, sw - 24 * u, Math.min(13 * u, sw * .05), DIM);
+    } else para(g, `Press a weapon to buy it, and again to sell it back. Point at one to see its numbers. Q (${OPS[P.op].q.n}) is bought by the charge; E (${OPS[P.op].e.n}) comes free every round; X (${OPS[P.op].x.n}) charges from kills, deaths, plants, defuses and the orbs on the map. Rounds 1 and 5 are pistol rounds.`, dx + 9 * u, endY + 22 * u, cw - 18 * u, Math.min(13 * u, cw * .062), DIM);
     // REBUY: last round's loadout in one press, beside READY
     const rbc = !range && P.lastBuy ? rebuyCost(P) : 0, half = rbc > 0;
-    if (half) btn(g, sx, by + bh - rhb, sw * .48, rhb, 'REBUY', () => { if (!rebuy(P)) click(); }, { px: rhb * .3, sub: '◈ ' + rbc, col: P.credits >= rbc ? GOLD : '#5a6272', edge: GOLD });
-    btn(g, half ? sx + sw * .52 : sx, by + bh - rhb, half ? sw * .48 : sw, rhb, range ? 'CLOSE' : 'READY', () => { if (!range) setReady(P); openArmory(false); }, { on: true, fill: YOU, px: rhb * (half ? .32 : .4), sub: isTouch() ? '' : 'or press B' });
+    if (half) btn(g, dx, by + bh - rh, cw * .48, rh, 'REBUY', () => { if (!rebuy(P)) click(); }, { px: rh * .3, sub: '◈ ' + rbc, col: P.credits >= rbc ? GOLD : '#5a6272', edge: GOLD });
+    btn(g, half ? dx + cw * .52 : dx, by + bh - rh, half ? cw * .48 : cw, rh, range ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * (half ? .32 : .4), sub: isTouch() ? '' : 'or press B' });
   }
 
   // a coin count: a little gold disc and the number, right-aligned at x
