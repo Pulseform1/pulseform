@@ -43,8 +43,11 @@ pages['index.html'] = re.sub(r"file: '(games/[a-z0-9-]+)\.html'", r"file: '\1'",
 featured = json.load(open(os.path.join(PUB, 'featured.json'))) if os.path.exists(os.path.join(PUB, 'featured.json')) else {}
 added_file = os.path.join(PUB, 'games-added.json')
 added = json.load(open(added_file)) if os.path.exists(added_file) else {}
+# (a shallow clone's oldest commit seems to add every file: there, only games not yet on record take their date from git)
+shallow = subprocess.run(['git', 'rev-parse', '--is-shallow-repository'], cwd=HERE, capture_output=True, text=True).stdout.strip() == 'true'
 for f in sorted(glob.glob(os.path.join(PUB, 'games', '*.html'))):
     gid = os.path.basename(f)[:-5]
+    if shallow and gid in added: continue
     if '-lab-' in gid: continue  # private test pages stay out of the hub's data
     try:
         d = subprocess.run(['git', 'log', '--diff-filter=A', '--format=%cI', '--', os.path.relpath(f, HERE)], cwd=HERE, capture_output=True, text=True).stdout.split()
