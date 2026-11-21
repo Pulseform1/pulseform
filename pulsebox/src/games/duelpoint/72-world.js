@@ -315,6 +315,7 @@
       const p = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), m); p.position.set(s.x, 3.35, s.z); p.rotation.y = s.ry; W.add(p);
     }
     detail(W, TH, sh, roofed, signs);
+    horizonBackdrop(W, TH);   // the far distance, all the way round (72-horizon)
     if (MAP.theme !== 'harbor') { scenery(W, TH); buildMech(W, TH); return; }
     // beyond the sea wall: water, a jetty with a boat, a lighthouse; and two cranes over the east wall
     const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); W.add(o); return o; };
@@ -530,24 +531,36 @@
     if (t === 'neon') {   // a city at night: towers with lit windows, signs on the tops
       floor('#1a1a26'); const winT = canvasTex(64, 128, (g, w, h) => { g.fillStyle = '#10121c'; g.fillRect(0, 0, w, h); for (let y = 4; y < h; y += 8) for (let x = 4; x < w; x += 8) if (Math.random() < .45) { g.fillStyle = Math.random() < .5 ? '#ffd27a' : Math.random() < .5 ? '#7af0ff' : '#ff7ad8'; g.fillRect(x, y, 4, 4); } }); winT.wrapT = winT.wrapS = THREE.RepeatWrapping; winT.repeat.set(2, 3);
       const tower = new THREE.MeshBasicMaterial({ map: winT });
-      ring(26, 70, 150, (x, z, i) => { const h = 30 + Math.random() * 70, w = 10 + Math.random() * 12; put(new THREE.BoxGeometry(w, h, w), tower, x, h / 2, z); put(new THREE.BoxGeometry(w * .8, 1.2, .4), bas(['#ff3ea5', '#3df2ff', '#ffd23f', '#7c5cff'][i % 4]), x, h + 1, z); });
+      ring(26, 70, 150, (x, z, i) => { const h = 30 + Math.random() * 70, w = 10 + Math.random() * 12; put(new THREE.BoxGeometry(w, h, w), tower, x, h / 2, z); put(new THREE.BoxGeometry(w * .8, 1.2, .4), bas(['#ff3ea5', '#3df2ff', '#ffd23f', '#7c5cff'][i % 4]), x, h + 1, z);
+        if (i % 3 === 0) { put(new THREE.CylinderGeometry(1.4, 1.4, 2.4, 8), lam('#3a3448'), x + w * .25, h + 1.2, z + w * .2); } else { put(new THREE.BoxGeometry(w * .5, 3, w * .5), lam('#22202e'), x, h + 1.5, z); }   // a water tank, or a plant room
+        put(new THREE.CylinderGeometry(.15, .15, 8, 4), lam('#22202e'), x - w * .3, h + 4, z - w * .3); put(new THREE.BoxGeometry(.6, .6, .6), bas('#ff3a3a'), x - w * .3, h + 8.2, z - w * .3); });   // an aerial with its warning light
+      ring(5, 160, 220, (x, z) => { const h = 120 + Math.random() * 60; put(new THREE.BoxGeometry(14, h, 14), tower, x, h / 2, z); put(new THREE.ConeGeometry(7, 26, 4), lam('#2a2440'), x, h + 13, z).rotation.y = Math.PI / 4; put(new THREE.BoxGeometry(.8, .8, .8), bas('#ff3a3a'), x, h + 27, z); });   // a few spires over the rest
     } else if (t === 'snow') {   // snowfields, pines and white peaks
       floor('#f4f8fb'); const pine = lam('#24442e'), snowM = lam('#ffffff');
-      ring(70, 45, 120, (x, z) => { const s = 1 + Math.random() * 1.6; put(new THREE.CylinderGeometry(.3 * s, .4 * s, 2 * s, 6), lam('#4a3626'), x, s, z); put(new THREE.ConeGeometry(2.4 * s, 6 * s, 7), pine, x, 5 * s, z); put(new THREE.ConeGeometry(1.2 * s, 2.4 * s, 7), snowM, x, 7.6 * s, z); });
+      ring(70, 45, 120, (x, z) => { const s = 1 + Math.random() * 1.6; put(new THREE.CylinderGeometry(.3 * s, .4 * s, 2 * s, 6), lam('#4a3626'), x, s, z);
+        for (let k = 0; k < 3; k++) { const r = (2.6 - k * .7) * s, y = (3.2 + k * 2.1) * s; put(new THREE.ConeGeometry(r, 3.4 * s, 8), pine, x, y, z); put(new THREE.ConeGeometry(r * .62, 1.1 * s, 8), snowM, x, y + 1.25 * s, z); } });   // a pine in three tiers, snow on each
+      ring(24, 40, 90, (x, z) => { const r = .8 + Math.random() * 2; const b = put(new THREE.DodecahedronGeometry(r, 0), lam('#8a96a4'), x, r * .3, z); b.scale.y = .6; put(new THREE.SphereGeometry(r * .8, 8, 5, 0, TAU, 0, Math.PI / 2), snowM, x, r * .45, z).scale.y = .4; });   // boulders under snow
       ring(10, 220, 300, (x, z) => { const h = 60 + Math.random() * 80; put(new THREE.ConeGeometry(h * .9, h, 6), lam('#b8c8d8'), x, h / 2, z); put(new THREE.ConeGeometry(h * .36, h * .4, 6), snowM, x, h * .8, z); });
     } else if (t === 'desert') {   // dunes, broken columns, a far pyramid of stone
       floor('#e8c992'); ring(30, 60, 200, (x, z) => { const d = put(new THREE.SphereGeometry(10 + Math.random() * 20, 12, 8), lam('#e2bf86'), x, -4, z); d.scale.y = .3; });
-      ring(16, 40, 70, (x, z) => { const h = 4 + Math.random() * 10; put(new THREE.CylinderGeometry(1.1, 1.3, h, 10), lam('#d8b884'), x, h / 2, z); });
+      ring(16, 40, 70, (x, z) => { const h = 4 + Math.random() * 10; put(new THREE.CylinderGeometry(1.1, 1.3, h, 10), lam('#d8b884'), x, h / 2, z); put(new THREE.BoxGeometry(2.6, .5, 2.6), lam('#d8b884'), x, h + .25, z); });   // broken columns, with their capitals
+      ring(8, 120, 190, (x, z) => { const h = 18 + Math.random() * 22, r = 16 + Math.random() * 20; put(new THREE.CylinderGeometry(r * .92, r, h, 7), lam('#c08a58'), x, h / 2, z); put(new THREE.CylinderGeometry(r * .98, r * 1.35, h * .22, 7), lam('#c89462'), x, h * .11, z); });   // mesas: sheer sides, a little scree round their feet
       put(new THREE.ConeGeometry(60, 70, 4), lam('#d4ae74'), MW / 2 + 40, 35, -180).rotation.y = Math.PI / 4;
     } else if (t === 'jungle') {   // a wall of trees, broad canopies, vines of mist
-      floor('#4f6a34'); ring(110, 40, 110, (x, z) => { const s = 1 + Math.random() * 1.8; put(new THREE.CylinderGeometry(.5 * s, .8 * s, 10 * s, 7), lam('#5a4026'), x, 5 * s, z); const c = put(new THREE.SphereGeometry(4 * s, 9, 7), lam(Math.random() < .5 ? '#2f6a2a' : '#3f8a34'), x, 11 * s, z); c.scale.y = .7; });
+      floor('#4f6a34'); ring(110, 40, 110, (x, z) => { const s = 1 + Math.random() * 1.8, gr = Math.random() < .5 ? '#2f6a2a' : '#3f8a34'; put(new THREE.CylinderGeometry(.5 * s, .8 * s, 10 * s, 7), lam('#5a4026'), x, 5 * s, z); const c = put(new THREE.SphereGeometry(4 * s, 9, 7), lam(gr), x, 11 * s, z); c.scale.y = .7;
+        const c2 = put(new THREE.SphereGeometry(2.6 * s, 8, 6), lam(gr === '#2f6a2a' ? '#3f8a34' : '#4f9a3c'), x + (Math.random() - .5) * 3 * s, 13.4 * s, z + (Math.random() - .5) * 3 * s); c2.scale.y = .65; });   // a canopy in two tiers
+      ring(14, 60, 120, (x, z) => { const s = 2.6 + Math.random(); put(new THREE.CylinderGeometry(.6 * s, 1 * s, 14 * s, 7), lam('#6a4c2e'), x, 7 * s, z); const c = put(new THREE.SphereGeometry(5 * s, 10, 7), lam('#2a5a26'), x, 15 * s, z); c.scale.y = .45; });   // emergent giants over the rest
+      ring(60, 34, 60, (x, z) => { const s = .8 + Math.random() * .8; const f = put(new THREE.ConeGeometry(1.6 * s, 1.4 * s, 6), lam('#3a7a30'), x, .6 * s, z); f.rotation.x = Math.PI; });   // ferns at the forest's edge
     } else if (t === 'lava') {   // a glowing lava sea round the works, chimneys smoking into a red sky
       const lavaT = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#ff5a10'; g.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '60,10,0' : '255,210,80'},${.2 + Math.random() * .5})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 6 + Math.random() * 30, 4 + Math.random() * 14, Math.random() * 3, 0, 7); g.fill(); } });
       lavaT.wrapS = lavaT.wrapT = THREE.RepeatWrapping; lavaT.repeat.set(30, 30); const lv = put(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshBasicMaterial({ map: lavaT }), MW / 2, -1.2, MH / 2); lv.rotation.x = -Math.PI / 2; X.seaT = lavaT;
-      ring(12, 50, 110, (x, z) => { const h = 30 + Math.random() * 30; put(new THREE.CylinderGeometry(2.2, 3, h, 10), lam('#3a3030'), x, h / 2, z); put(new THREE.CylinderGeometry(2.4, 2.4, 1.2, 10), bas('#ff7a2a'), x, h - 2, z); });
+      ring(12, 50, 110, (x, z) => { const h = 30 + Math.random() * 30; put(new THREE.CylinderGeometry(2.2, 3, h, 10), lam('#3a3030'), x, h / 2, z); put(new THREE.CylinderGeometry(2.4, 2.4, 1.2, 10), bas('#ff7a2a'), x, h - 2, z); put(new THREE.CylinderGeometry(3.4, 3.4, 1.4, 10), lam('#2a2222'), x, h * .3, z); });
+      ring(30, 40, 70, (x, z) => { const r = 1 + Math.random() * 3; const b = put(new THREE.DodecahedronGeometry(r, 0), lam('#2a2020'), x, 0, z); b.scale.y = .55; });   // cooled rock at the shore
     } else if (t === 'space') {   // a station deck over nothing: a planet, a ring of panels, guide lights
       const planet = put(new THREE.SphereGeometry(140, 32, 20), lam('#3a6ab8', { emissive: LC('#0a1a3a') }), MW / 2 - 120, -60, -320); planet.rotation.z = .4;
       const rg = put(new THREE.RingGeometry(170, 230, 48), new THREE.MeshBasicMaterial({ color: LC('#9ab0d8'), side: THREE.DoubleSide, transparent: true, opacity: .35 }), MW / 2 - 120, -60, -320); rg.rotation.x = 1.2;
       ring(30, 40, 60, (x, z, i) => { put(new THREE.BoxGeometry(6, .6, 6), lam('#8a96aa'), x, -.5, z); if (i % 2) put(new THREE.BoxGeometry(.4, .4, .4), bas('#38e8ff'), x, .1, z); });
+      ring(8, 90, 150, (x, z, i) => { const len = 30 + Math.random() * 30, y = 6 + Math.random() * 20, a = Math.random() * TAU; const tr = put(new THREE.BoxGeometry(len, 1, 1), lam('#5a6680'), x, y, z); tr.rotation.y = a;
+        for (let k = 0; k < 2; k++) { const d = (k - .5) * len * .5; const mo = put(new THREE.CylinderGeometry(2.4, 2.4, 9, 12), lam('#c8d0e0'), x + Math.cos(a) * d, y - 2.6, z - Math.sin(a) * d); mo.rotation.z = Math.PI / 2; mo.rotation.y = a; put(new THREE.BoxGeometry(.5, .5, .5), bas(k ? '#ff8a3d' : '#38e8ff'), x + Math.cos(a) * d, y + .8, z - Math.sin(a) * d); } });   // the station's other arms, hung with modules
     }
   }

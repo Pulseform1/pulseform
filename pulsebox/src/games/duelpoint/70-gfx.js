@@ -64,11 +64,11 @@
     const TH = X.theme || { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'] }, S = TH.sky; if (X.dome) { X.scene.remove(X.dome); X.dome.material.map.dispose(); }
     // the dome: deep blue overhead, pale haze at the horizon, a glow round the sun, a few long clouds
     const th = Math.acos(SUN[1]) / Math.PI, ph = ((Math.atan2(SUN[2], -SUN[0]) / TAU) + 1) % 1;
-    const tex = canvasTex(1024, 512, (g, w, h) => {
+    const tex = canvasTex(X.low ? 1024 : 2048, X.low ? 512 : 1024, (g, w, h) => {
       const gr = g.createLinearGradient(0, 0, 0, h * .5); gr.addColorStop(0, S[0]); gr.addColorStop(.55, S[1]); gr.addColorStop(1, S[2]); g.fillStyle = gr; g.fillRect(0, 0, w, h * .5); g.fillStyle = S[2]; g.fillRect(0, h * .5, w, h * .5);
       if (TH.stars) for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(255,255,255,${.3 + Math.random() * .7})`; g.fillRect(Math.random() * w, Math.random() * h * .45, Math.random() < .1 ? 2 : 1, Math.random() < .1 ? 2 : 1); }
-      for (const dx of [-w, 0, w]) { const sg = g.createRadialGradient(ph * w + dx, th * h, 4, ph * w + dx, th * h, 190); sg.addColorStop(0, 'rgba(255,252,235,1)'); sg.addColorStop(.06, 'rgba(255,244,205,.95)'); sg.addColorStop(.3, 'rgba(255,230,180,.35)'); sg.addColorStop(1, 'rgba(255,230,180,0)'); g.fillStyle = sg; g.fillRect(0, 0, w, h * .5); }
-      for (let i = 0; i < 26; i++) { const x = Math.random() * w, y = h * (.3 + Math.random() * .16), rw = 60 + Math.random() * 150; g.fillStyle = `rgba(255,255,255,${.1 + Math.random() * .2})`; for (let k = 0; k < 5; k++) { g.beginPath(); g.ellipse(x + (Math.random() - .5) * rw, y + (Math.random() - .5) * 8, rw * (.3 + Math.random() * .5), 5 + Math.random() * 9, 0, 0, 7); g.fill(); } }
+      for (const dx of [-w, 0, w]) { const sg = g.createRadialGradient(ph * w + dx, th * h, 4 * w / 1024, ph * w + dx, th * h, 190 * w / 1024); sg.addColorStop(0, 'rgba(255,252,235,1)'); sg.addColorStop(.06, 'rgba(255,244,205,.95)'); sg.addColorStop(.3, 'rgba(255,230,180,.35)'); sg.addColorStop(1, 'rgba(255,230,180,0)'); g.fillStyle = sg; g.fillRect(0, 0, w, h * .5); }
+      g.save(); g.scale(w / 1024, h / 512); skyClouds(g, 1024, 512, TH, ph); g.restore();   // (72-horizon)
     });
     tex.wrapT = THREE.ClampToEdgeWrapping;
     const dome = new THREE.Mesh(new THREE.SphereGeometry(700, 32, 20), new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false, depthWrite: false })); dome.renderOrder = -10; X.scene.add(dome); X.dome = dome;
