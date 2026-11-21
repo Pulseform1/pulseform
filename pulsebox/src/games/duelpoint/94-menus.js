@@ -44,6 +44,8 @@
     }
     R.push((g, x, y, w) => fine(g, x, y, w, 'Field of view', fovH(), 90, 115, 1, v => { CFG.fov = v; }, v => Math.round(v) + '\u00b0'));
     R.push((g, x, y, w) => fine(g, x, y, w, 'Volume', K.save.mute ? 0 : CFG.vol == null ? 1 : CFG.vol, 0, 1, .05, v => { CFG.vol = v; if (K.save.mute && v > 0) { K.save.mute = false; K.persist(); } }, v => K.save.mute ? 'MUTED' : Math.round(v * 100) + '%'));   // (muted with the hub's sound button: turning it up turns sound back on)
+    R.push((g, x, y, w, wide) => { const L = Math.round(reportedLag() * 1000); tx(g, 'Sound sync', x, y + h / 2 - (wide ? 7 * u : 0), 17 * u, BONE, 'left'); if (wide) tx(g, L ? `for Bluetooth earbuds  ·  this device says ${L} ms` : 'for Bluetooth earbuds', x, y + h / 2 + 11 * u, 10.5 * u, DIM, 'left', 700);
+      choice(g, x + w * .42, y, w * .58, h, [['auto', 'AUTO'], [0, 'OFF'], [.15, '150 MS'], [.25, '250 MS'], [.35, '350 MS']], CFG.sync == null ? 'auto' : CFG.sync, v => { CFG.sync = v; }); });
     R.push((g, x, y, w, wide) => toggle(g, x, y, w, 'Show frame rate', !!CFG.fps, v => { CFG.fps = v; }, wide && 'frames a second, top right, while you play'));
     if (page) R.push((g, x, y, w) => { tx(g, 'Picture quality', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['auto', 'AUTO'], ['low', 'FAST'], ['high', 'SHARP']], CFG.quality, v => { if (v !== CFG.quality) toast('PICTURE QUALITY CHANGES ON THE NEXT LOAD'); CFG.quality = v; }); });
     return R;

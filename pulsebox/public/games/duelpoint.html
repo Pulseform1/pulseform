@@ -5849,7 +5849,7 @@ const GAME = {
     return K[K.length - 1].slice(1);
   }
   function renderFrame(dt) {
-    if (!X || !ready) return; const cam = X.camera; X.t += dt; X.frameN = (X.frameN || 0) + 1; iconsAhead(dt); tunePixels(dt); skinTick(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; } mechFrame(dt);
+    if (!X || !ready) return; const cam = X.camera; X.t += dt; X.frameN = (X.frameN || 0) + 1; iconsAhead(dt); audioFrame(); tunePixels(dt); skinTick(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; } mechFrame(dt);
     const live = M && (screen === 'play' || (screen === 'over' && posed)) && !loadingNow();
     if (!live) {   // behind the menus: a slow flight round the site
       if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker') && renderGunShow(dt)) return;
@@ -6110,9 +6110,26 @@ const GAME = {
   // every Duelpoint sound runs through one bus before the kit's master, so the volume setting (CFG.vol, 0 to 1) scales them all
   let busN = null;
   function bus() {
-    const ac = K.ac; if (!busN || busN.context !== ac) { busN = ac.createGain(); busN.connect(K.master); }
+    const ac = K.ac; if (!busN || busN.context !== ac) { busN = ac.createGain(); busN.connect(K.master); keepAwake(ac); }
     const v = CFG.vol == null ? 1 : cl(+CFG.vol, 0, 1); if (busN.gain.value !== v) busN.gain.value = v; return busN;
   }
+  /* ---- Bluetooth earbuds ----
+     Wireless earbuds play everything late (often 0.15 to 0.3 s), and many of them, and some browsers, put the audio link to
+     sleep in a silence, so the next sound after a quiet moment comes later still or loses its start. So:
+     - a whisper of sound, far below hearing, runs all the time and keeps the link awake;
+     - sounds whose moment is known ahead are started that much early, so they land with what you see: the shots to come
+       in a spray you are holding down, a reload's clicks, the charge's beeps. (The first shot of a spray cannot be known
+       ahead: it is as late as the earbuds make it, and the rest of the spray lines up with the muzzle from there.)
+     How late is the 'Sound sync' setting: AUTO takes what the browser says the output adds (wired, a few ms: nothing is
+     moved; Bluetooth, far more), or a fixed amount, or OFF. */
+  let keep = null;
+  function keepAwake(ac) {
+    if (keep || K.bot) return;
+    try { const b = ac.createBuffer(1, ac.sampleRate, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 3e-5;   // about -90 dB
+      const s = ac.createBufferSource(); s.buffer = b; s.loop = true; s.connect(ac.destination); s.start(); keep = s; } catch (e) {}
+  }
+  const reportedLag = () => { const ac = K.ac; return ac ? (ac.outputLatency || 0) + (ac.baseLatency || 0) : 0; };
+  function lag() { const s = CFG.sync == null ? 'auto' : CFG.sync; if (s !== 'auto') return cl(+s || 0, 0, .5); const L = reportedLag(); return L > .06 ? Math.min(L, .45) : 0; }
   // where to plug a sound in: returns an audio node that leads to the speakers, shaped for a source at fighter f (or your own)
   // who is listening: you, or (dead, in a team game) the teammate you are watching through: their sounds are 'yours'
   const ear = () => (M && typeof viewer === 'function' && viewer()) || me();
@@ -6196,14 +6213,46 @@ const GAME = {
   }
   // bake every gun as a match starts (it takes a few milliseconds each, off the main sound path)
   on('round', () => { if (K.ac) for (const k in GSND) bakeShot(k); });
+  // the gun's own shot, a hair higher or lower each time; far away it loses its edge. when: an audio-clock time (0: now)
+  function shotAt(f, G, out, mine, when) {
+    const ac = K.ac, src = ac.createBufferSource(), a = ac.createGain(); src.buffer = baked[G.k]; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v;
+    let head = out; if (!mine && M) { const P = ear(), d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 2200, cl((d - 12) / 40, 0, 1)); lpf.connect(out); head = lpf; } }
+    src.connect(a).connect(head); src.start(when || 0); return src;
+  }
+  // your spray as it is heard: when it began, its last real shot, and the shots started ahead of time
+  const SPR = { live: false, pt: 0, gap: 0, last: 0, k: '', q: [] }, BEEP = { q: null };
+  function sprayStop(now) { for (const e of SPR.q) if (e.st > now) { try { e.src.stop(); } catch (er) {} } SPR.q = []; SPR.live = false; }
+  // every frame: a spray you let go of (or that ran dry, or was put away) stops at once, so nothing scheduled ahead is heard;
+  // the charge's next beep is called off if the charge is no longer ticking
+  function audioFrame() {
+    if (!K.ac) return; const now = K.ac.currentTime;
+    if (SPR.live) { const P = M && me(), G = P && gun(P); if (!(P && P.alive && P.semiHeld && G && G.k === SPR.k && !(P.reloadT > 0) && ((P.ammo[G.k] || {}).mag | 0) > 0 && M.phase !== 'buy' && !M.over)) sprayStop(now); }
+    if (BEEP.q && !(M && M.planted && M.phase === 'live' && !M.defused)) { if (BEEP.q.st > now) try { BEEP.q.src.stop(); } catch (er) {} BEEP.q = null; }
+  }
   on('shot', (f, S, first) => {
     if (!first || !canHear()) return; const G = gun(f), mine = f === ear(), out = outFor(f, mine ? .6 : 1);
     if (G.rail) { tone(out, 1800, .25, 'sawtooth', .12, -1500); hiss(out, .3, .3, 'highpass', 2500); tone(out, 70, .25, 'sine', .6, -30); return; }
     const B = baked[G.k];
-    if (B) {   // the gun's own shot, a hair higher or lower each time; far away it loses its edge
-      const ac = K.ac, src = ac.createBufferSource(), a = ac.createGain(); src.buffer = B; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v;
-      let head = out; if (!mine && M) { const P = ear(), d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 2200, cl((d - 12) / 40, 0, 1)); lpf.connect(out); head = lpf; } }
-      src.connect(a).connect(head); src.start(); return;
+    if (B) {
+      // your own spray, on earbuds that play late: the shots to come are started early so they are heard as they are fired.
+      // Only while the game is keeping real time (the last two shots came the gun's interval apart): on a stutter every shot
+      // is played as it is fired instead. A shot that a sound started early already covers is not played again.
+      const L = mine && f === me() && !f.net && G.auto ? lag() : 0;
+      if (L) { const ac = K.ac, now = ac.currentTime, I = 60 / (G.rpm * (G.spin ? 1 + G.spin * Math.min(1, f.spray / 14) : 1)), cont = SPR.live && SPR.k === G.k && now - SPR.last < I * 1.8;
+        if (!cont) { sprayStop(now); Object.assign(SPR, { live: true, k: G.k, pt: 0, gap: 0, gs: 0 }); }
+        else SPR.gap = now - SPR.last;
+        SPR.last = now;
+        const steady = cont && Math.abs(SPR.gap - I) < I * .4; if (steady) SPR.gs = SPR.gs ? lp(SPR.gs, SPR.gap, .35) : SPR.gap; else SPR.gs = 0;   // gs: the spray's real rhythm, smoothed (frames make each gap a little uneven)
+        if (!steady) { for (const e of SPR.q) if (e.st > now) { try { e.src.stop(); } catch (er) {} e.off = 1; } SPR.q = SPR.q.filter(e => !e.off); SPR.pt = 0; }
+        else if (!SPR.pt) SPR.pt = now;   // early starts begin from here
+        // this shot: already playing (started early), or left out (it falls inside the lateness of the shot played just before the early ones began), or played now
+        const covered = SPR.q.some(e => Math.abs(e.t - now) < I * .5), gapShot = SPR.pt && now > SPR.pt + .001 && now < SPR.pt + L + I * .5;
+        if (!covered && !gapShot) shotAt(f, G, out, mine, 0);
+        if (SPR.pt) { const left = (f.ammo[G.k] || {}).mag | 0;
+          const Ig = SPR.gs || I; for (let k = 1; k <= left; k++) { const t = now + k * Ig, st = t - L; if (st > now + I + .001) break; if (st < now - .001 || t < SPR.pt + L + I * .5 || SPR.q.some(e => Math.abs(e.t - t) < I * .5)) continue;
+            SPR.q.push({ t, st, src: shotAt(f, G, outFor(f, .6), true, st) }); } }
+        SPR.q = SPR.q.filter(e => e.t > now - 1); return; }
+      shotAt(f, G, out, mine, 0); return;
     }
     bakeShot(G.k);
     if (G.sil) { hiss(out, .06, .22, 'lowpass', 1500); tone(out, 240, .04, 'square', .04, -90); return; }
@@ -6212,7 +6261,7 @@ const GAME = {
   });
   const cue = (name, fn) => on(name, (a, b, c, d) => { if (canHear()) fn(a, b, c, d); });
   cue('dry', f => tone(outFor(f), 320, .03, 'square', .05));
-  cue('reload', f => { const o = outFor(f, f === ear() ? .7 : 1); tone(o, 520, .04, 'square', .06, 0, .15); hiss(o, .05, .1, 'highpass', 2500, .15); tone(o, 380, .05, 'square', .07, 0, gun(f).rel * .62); hiss(o, .06, .12, 'highpass', 2000, gun(f).rel * .88); });
+  cue('reload', f => { const o = outFor(f, f === ear() ? .7 : 1), L = lag(), d = t => Math.max(0, t - L), r = gun(f).rel; tone(o, 520, .04, 'square', .06, 0, d(.15)); hiss(o, .05, .1, 'highpass', 2500, d(.15)); tone(o, 380, .05, 'square', .07, 0, d(r * .62)); hiss(o, .06, .12, 'highpass', 2000, d(r * .88)); });   // (started early by the earbuds' lateness, so the clicks land with the hands)
   cue('swap', f => { const o = outFor(f, f === ear() ? .6 : .8); hiss(o, .05, .1, 'highpass', 3000); tone(o, 700, .03, 'square', .03); });
   cue('melee', (f, heavy, S) => { const o = outFor(f); hiss(o, heavy ? .14 : .09, .16, 'bandpass', heavy ? 1500 : 2800, 0, 1.2); if (S) { tone(o, 180, .09, 'sine', .25, -90, .02); hiss(o, .05, .2, 'lowpass', 900, .02); } });
   // a slide: a gritty scrape that fades as it slows; a jump: a soft push-off
@@ -6288,7 +6337,11 @@ const GAME = {
   cue('plantStart', f => tone(outFor(f), 600, .1, 'square', .08)); cue('defuseStart', f => { const o = outFor(f); tone(o, 800, .08, 'square', .09); tone(o, 600, .08, 'square', .09, 0, .1); });
   cue('planted', () => { const o = outFor(null); [392, 554, 784].forEach((q, i) => tone(o, q, .2, 'triangle', .12, 0, i * .09)); });
   cue('defused', () => { const o = outFor(null); [523, 659, 784, 1047].forEach((q, i) => tone(o, q, .18, 'triangle', .12, 0, i * .07)); });
-  cue('beep', () => { if (M && M.planted) tone(outFor({ x: M.planted.x, y: 0, z: M.planted.z }, 1.4), 1850, .06, 'square', .09); });
+  cue('beep', () => {
+    if (!(M && M.planted)) return; const ac = K.ac, now = ac.currentTime, L = lag(), o = () => outFor({ x: M.planted.x, y: 0, z: M.planted.z }, 1.4);
+    const early = BEEP.q && Math.abs(BEEP.q.t - now) < .08; BEEP.q = null; if (!early) tone(o(), 1850, .06, 'square', .09);   // (unless this one was already started, early)
+    const nx = M.planted.beep; if (L && nx - L > .03) { const st = nx - L, src = ac.createOscillator(), a = ac.createGain(), T0 = now + st; src.type = 'square'; src.frequency.value = 1850; a.gain.setValueAtTime(.09, T0); a.gain.exponentialRampToValueAtTime(.0001, T0 + .06); src.connect(a).connect(o()); src.start(T0); src.stop(T0 + .08); BEEP.q = { t: now + nx, st: T0, src }; }
+  });
   cue('boom', (x, z) => { const o = outFor({ x, y: 0, z }, 1.6); hiss(o, 1.1, .7, 'lowpass', 500); tone(o, 60, .9, 'sine', .7, -35); hiss(o, .25, .4, 'bandpass', 1500); });
   cue('ping', (pg, f) => { if (pg.team !== me().team) return; const o = outFor(null); tone(o, 1320, .07, 'sine', .07); tone(o, 1760, .09, 'sine', .06, 0, .07); });
   cue('defuseHalf', f => { if (f.team !== me().team && f !== me()) return; tone(outFor(f), 990, .08, 'square', .05); });
@@ -7293,6 +7346,8 @@ const GAME = {
     }
     R.push((g, x, y, w) => fine(g, x, y, w, 'Field of view', fovH(), 90, 115, 1, v => { CFG.fov = v; }, v => Math.round(v) + '\u00b0'));
     R.push((g, x, y, w) => fine(g, x, y, w, 'Volume', K.save.mute ? 0 : CFG.vol == null ? 1 : CFG.vol, 0, 1, .05, v => { CFG.vol = v; if (K.save.mute && v > 0) { K.save.mute = false; K.persist(); } }, v => K.save.mute ? 'MUTED' : Math.round(v * 100) + '%'));   // (muted with the hub's sound button: turning it up turns sound back on)
+    R.push((g, x, y, w, wide) => { const L = Math.round(reportedLag() * 1000); tx(g, 'Sound sync', x, y + h / 2 - (wide ? 7 * u : 0), 17 * u, BONE, 'left'); if (wide) tx(g, L ? `for Bluetooth earbuds  ·  this device says ${L} ms` : 'for Bluetooth earbuds', x, y + h / 2 + 11 * u, 10.5 * u, DIM, 'left', 700);
+      choice(g, x + w * .42, y, w * .58, h, [['auto', 'AUTO'], [0, 'OFF'], [.15, '150 MS'], [.25, '250 MS'], [.35, '350 MS']], CFG.sync == null ? 'auto' : CFG.sync, v => { CFG.sync = v; }); });
     R.push((g, x, y, w, wide) => toggle(g, x, y, w, 'Show frame rate', !!CFG.fps, v => { CFG.fps = v; }, wide && 'frames a second, top right, while you play'));
     if (page) R.push((g, x, y, w) => { tx(g, 'Picture quality', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['auto', 'AUTO'], ['low', 'FAST'], ['high', 'SHARP']], CFG.quality, v => { if (v !== CFG.quality) toast('PICTURE QUALITY CHANGES ON THE NEXT LOAD'); CFG.quality = v; }); });
     return R;
@@ -8260,7 +8315,7 @@ const GAME = {
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
     team: () => ({ dropHeld, dropCharge, giveCharge, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
-    botMe: d => { me().bot = { diff: d }; me().local = false; }, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, VKF, animParts, aimArms, shotBuf: k => baked[k],
+    botMe: d => { me().bot = { diff: d }; me().local = false; }, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, VKF, animParts, aimArms, onEvent: on, audioCtx: () => K.ac, soundLag: () => lag(), shotBuf: k => baked[k],
   };
 })();
 
