@@ -155,7 +155,14 @@
     const pose = gd => {
       while (armMesh.children.length) { const c = armMesh.children[0]; armMesh.remove(c); if (c.geometry) c.geometry.dispose(); }
       const s = 1.08, a = .29, b = .27, knife = gd.k === 'knife';
-      gunHold.position.set(...(knife ? [.17, -.17, -.33] : gd.pistolHold ? [.03, -.04, -.47] : gd.k === 'stub' ? [.09, -.11, -.36] : [.118, -.07, -.255]));
+      // how far forward this body's chest reaches (armour, pouches) at the height the arms work: measured once, in the arms' frame.
+      // The holds were set for a slim chest (about 21.5 cm out); a bulkier one carries a long gun further out, so its stock, the
+      // grip and the arm across the chest stay in front of the armour rather than in it
+      if (pose.front == null) { G.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(arms.matrixWorld).invert(), v = new THREE.Vector3(); let fr = 0;
+        torso.traverse(o => { if (!o.isMesh || o.userData.px) return; for (let q = o; q; q = q.parent) if (q === arms) return; const P = o.geometry.attributes.position; for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld).applyMatrix4(inv); if (v.y > -.45 && v.y < .12 && Math.abs(v.x) < .2) fr = Math.min(fr, v.z); } });
+        pose.front = fr || -.215; }
+      const out = Math.min(0, pose.front + .215) * 1.3;   // (negative: further forward)
+      gunHold.position.set(...(knife ? [.17, -.17, -.33] : gd.pistolHold ? [.03, -.04, -.47] : gd.k === 'stub' ? [.09, -.11, -.36 + out] : [.118, -.07, -.255 + out]));
       const hold = gunHold.position, Rt = [hold.x + gd.grip[0] * s, hold.y + gd.grip[1] * s, hold.z + gd.grip[2] * s];
       let Lt = knife ? [-.2, -.34, -.2] : gd.pistolHold ? [Rt[0] - .05, Rt[1] - .015, Rt[2] + .005] : [hold.x + gd.sup[0] * s - .01, hold.y + gd.sup[1] * s, hold.z + gd.sup[2] * s];
       const SR = [.235 * w, 0, 0], SL = [-.235 * w, 0, 0];
