@@ -26,7 +26,7 @@
   const loadScript = u => new Promise((res, rej) => { const s = document.createElement('script'); s.src = u; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
   function canvasTex(w, h, fn, rep = [1, 1]) {
     const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h);
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); t.anisotropy = X ? X.aniso : 4; t.encoding = THREE.sRGBEncoding; return t;
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); t.anisotropy = X ? X.aniso : 4; t.encoding = THREE.sRGBEncoding; if (X && X.texLog) X.texLog.push(t); return t;
   }
   // a flat colour with fine grain: the base of most textures
   const grain = (g, w, h, base, amt, n = 4000) => { g.fillStyle = base; g.fillRect(0, 0, w, h); for (let i = 0; i < n; i++) { g.fillStyle = Math.random() < .5 ? `rgba(0,0,0,${amt * Math.random()})` : `rgba(255,255,255,${amt * .6 * Math.random()})`; g.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 2, 1 + Math.random() * 2); } };
@@ -58,7 +58,7 @@
     X.vmuzzle = new THREE.PointLight('#ffcf8a', 0, 2); X.vmuzzle.position.set(.1, -.05, -.8); X.vroot.add(X.vmuzzle);
     X.view = new THREE.Group(); X.vroot.add(X.view); X.viewGun = null; X.viewKey = '';
     addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
-    buildWorld(); buildSky(); buildFx(); warmShaders(); try { buildPortraits(); } catch (e) { console.warn(e); }
+    X.texLog = []; buildWorld(); buildSky(); X.mapTex = X.texLog; X.texLog = null; buildFx(); warmShaders(); try { buildPortraits(); } catch (e) { console.warn(e); }
   }
   function buildSky() {
     const TH = X.theme || { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'] }, S = TH.sky; if (X.dome) { X.scene.remove(X.dome); X.dome.material.map.dispose(); }

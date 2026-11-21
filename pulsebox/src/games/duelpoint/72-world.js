@@ -6,18 +6,19 @@
      sky is [overhead, middle, horizon]; extras is the scenery past the walls. */
   const THEMES = {
     harbor: { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'], fog: '#cfe3ee', far: 420, hemi: ['#dfeeff', '#8a7a66'], sun: ['#fff0d8', 1.3], tint: {} },
-    neon: { sky: ['#07061a', '#24124a', '#4a1f5e'], fog: '#2a1640', far: 260, hemi: ['#8a7cff', '#2a1a3a'], sun: ['#b9a8ff', .55], stars: 1, glow: 1, tint: { wall: '#6a6f8c', ground: '#5a5e70', steel: '#c8c8ff', crate: '#b6a4cc', steeltop: '#9a9ac8' }, steel: ['#ff3ea5', '#3df2ff', '#ffd23f', '#7c5cff', '#5a6290'] },
+    neon: { sky: ['#07061a', '#24124a', '#4a1f5e'], fog: '#2a1640', far: 260, hemi: ['#8a7cff', '#2a1a3a'], sun: ['#b9a8ff', .55], stars: 1, glow: 1, tint: { wall: '#6a6f8c', ground: '#5a5e70', steel: '#c8c8ff', crate: '#b6a4cc', steeltop: '#9a9ac8', dock: '#7c80a4' }, steel: ['#ff3ea5', '#3df2ff', '#ffd23f', '#7c5cff', '#5a6290'] },
     snow: { sky: ['#6f9ccc', '#b9d3ea', '#eef4f8'], fog: '#e9f0f5', far: 230, hemi: ['#f2f8ff', '#b8c4d0'], sun: ['#ffffff', 1.15], tint: { wall: '#eef3f7', ground: '#ffffff', crate: '#9a8a78', steeltop: '#ffffff' }, steel: ['#c0392b', '#3a7fa8', '#e0e6ea', '#5a7286'] },
-    desert: { sky: ['#4f8fd0', '#9cc6e8', '#f2dcb0'], fog: '#f0d9ae', far: 300, hemi: ['#fff1d6', '#b08a58'], sun: ['#ffe2b0', 1.45], tint: { wall: '#f0d29a', ground: '#f2d6a0', crate: '#c8a070', steeltop: '#e8d0a0' }, steel: ['#a0522d', '#c9a227', '#6b7f5a', '#8a6a48'] },
-    jungle: { sky: ['#4a8a7a', '#9fc9a8', '#cfe6c8'], fog: '#b7d4b0', far: 200, hemi: ['#d8f0d0', '#4a5a30'], sun: ['#fff4c8', 1.1], tint: { wall: '#a8b890', ground: '#9ab070', crate: '#b08a58', steeltop: '#a0b080' }, steel: ['#4f6b3a', '#7a5a3a', '#3a5a5a', '#8a8a4a'] },
-    lava: { sky: ['#1a0e0c', '#5a1e10', '#c2501e'], fog: '#5a2414', far: 220, hemi: ['#ff9a6a', '#2a1410'], sun: ['#ffb070', .9], glow: 1, tint: { wall: '#7a6a62', ground: '#6a5a54', crate: '#9a7e66', steel: '#b0a0a0', steeltop: '#8a7a74' }, steel: ['#ff6a1a', '#6a6a74', '#c9862e', '#8a3a22'] },
-    space: { sky: ['#000004', '#060a1e', '#141a3a'], fog: '#0a1028', far: 320, hemi: ['#bcd4ff', '#2a3044'], sun: ['#e8f0ff', 1.2], stars: 1, glow: 1, tint: { wall: '#d4dcea', ground: '#aab4c8', crate: '#8a96aa', steeltop: '#c8d0e0' }, steel: ['#e8eef6', '#38e8ff', '#ff8a3d', '#5a6680'] },
+    desert: { sky: ['#4f8fd0', '#9cc6e8', '#f2dcb0'], fog: '#f0d9ae', far: 300, hemi: ['#fff1d6', '#b08a58'], sun: ['#ffe2b0', 1.45], tint: { wall: '#f0d29a', ground: '#f2d6a0', crate: '#c8a070', steeltop: '#e8d0a0', dock: '#f0d8a4' }, steel: ['#a0522d', '#c9a227', '#6b7f5a', '#8a6a48'] },
+    jungle: { sky: ['#4a8a7a', '#9fc9a8', '#cfe6c8'], fog: '#b7d4b0', far: 200, hemi: ['#d8f0d0', '#4a5a30'], sun: ['#fff4c8', 1.1], tint: { wall: '#a8b890', ground: '#9ab070', crate: '#b08a58', steeltop: '#a0b080', dock: '#c4cca8' }, steel: ['#4f6b3a', '#7a5a3a', '#3a5a5a', '#8a8a4a'] },
+    lava: { sky: ['#1a0e0c', '#5a1e10', '#c2501e'], fog: '#5a2414', far: 220, hemi: ['#ff9a6a', '#2a1410'], sun: ['#ffb070', .9], glow: 1, tint: { wall: '#7a6a62', ground: '#6a5a54', crate: '#9a7e66', steel: '#b0a0a0', steeltop: '#8a7a74', dock: '#94847a' }, steel: ['#ff6a1a', '#6a6a74', '#c9862e', '#8a3a22'] },
+    space: { sky: ['#000004', '#060a1e', '#141a3a'], fog: '#0a1028', far: 320, hemi: ['#bcd4ff', '#2a3044'], sun: ['#e8f0ff', 1.2], stars: 1, glow: 1, tint: { wall: '#d4dcea', ground: '#aab4c8', crate: '#8a96aa', steeltop: '#c8d0e0', dock: '#dfe6f2' }, steel: ['#e8eef6', '#38e8ff', '#ff8a3d', '#5a6680'] },
   };
   // a new map: clear the old world away and build this one, with its sky and light
   function rebuildWorld() {
     if (!X) return;
     if (X.world) { X.scene.remove(X.world); X.world.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
-    fitSun(); buildWorld(); buildSky(); resetMini(); warmShaders();
+    if (X.mapTex) for (const t of X.mapTex) t.dispose();   // the last map's textures: let go, or every map played leaves a score of them on the graphics card
+    X.texLog = []; fitSun(); buildWorld(); buildSky(); X.mapTex = X.texLog; X.texLog = null; resetMini(); warmShaders();
   }
   // the sun and its shadow cover the whole map, whatever its size
   function fitSun() {
@@ -43,7 +44,7 @@
     const wallFace = (k, i, j, e, y0, y1, uv, shade, tint, out = 0) => {
       const x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS, n = [[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]][e];
       const a = e === 0 ? [x1 + out, z0] : e === 1 ? [x0 - out, z0] : e === 2 ? [x0, z1 + out] : [x0, z0 - out], b = e === 0 ? [x1 + out, z1] : e === 1 ? [x0 - out, z1] : e === 2 ? [x1, z1 + out] : [x1, z0 - out];
-      const ua = e < 2 ? a[1] : a[0], ub = e < 2 ? b[1] : b[0];
+      const fl = e === 0 || e === 3 ? -1 : 1, ua = fl * (e < 2 ? a[1] : a[0]), ub = fl * (e < 2 ? b[1] : b[0]);   // (a texture runs left to right as you look at the face, whichever way it faces: east and north faces had it mirrored, and lettering read backwards)
       quad(k, [[a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]]], n, [uv(ua, y0), uv(ub, y0), uv(ub, y1), uv(ua, y1)], shade, tint);
     };
     const hex = c => { const v = parseInt(c.slice(1), 16); return [(v >> 16 & 255) / 255, (v >> 8 & 255) / 255, (v & 255) / 255].map(q => Math.pow(q, 2.2)); };
@@ -125,7 +126,7 @@
       flat('wall', x0, z0, x1, z1, DOOR_H, -1, 4, [.6, .6, .6, .6]);
       const faces = across ? [[[x0, z0], [x1, z0], [0, 0, -1], 0, -1], [[x0, z1], [x1, z1], [0, 0, 1], 0, 1]] : [[[x0, z0], [x0, z1], [-1, 0, 0], -1, 0], [[x1, z0], [x1, z1], [1, 0, 0], 1, 0]];
       for (const [a, b, n, di, dj] of faces) {
-        const ua = across ? a[0] : a[1], ub = across ? b[0] : b[1];
+        const fl = n[0] > 0 || n[2] < 0 ? -1 : 1, ua = fl * (across ? a[0] : a[1]), ub = fl * (across ? b[0] : b[1]);
         quad('wall', [[a[0], DOOR_H, a[1]], [b[0], DOOR_H, b[1]], [b[0], WALL_H, b[1]], [a[0], WALL_H, a[1]]], n, [uvWall(ua, DOOR_H), uvWall(ub, DOOR_H), uvWall(ub, WALL_H), uvWall(ua, WALL_H)], [1, 1, 1, 1]);
         // seen from this side, the door leads to the area on the other side
         const mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2, to = areaAt(mx - n[0] * 3, mz - n[2] * 3); if (to) signs.push({ x: mx + n[0] * .02, z: mz + n[2] * .02, ry: Math.atan2(n[0], n[2]), a: to });
@@ -138,6 +139,7 @@
       // along the top and a skirting along the floor, and here and there the plaster broken away to show the brick
       // behind. Light enough that each map's tint carries its colour.
       wall: canvasTex(2048, 512, (g, w, h) => {
+        if (surfWall(MAP.theme, g, w, h)) return;   // (a theme with a wall of its own: see 71-surfaces)
         const sk = Math.round(h * .075), cop = Math.round(h * .045);
         const base = g.createLinearGradient(0, 0, 0, h); base.addColorStop(0, '#ece4d2'); base.addColorStop(.6, '#ddd3bd'); base.addColorStop(1, '#cdc1a8'); g.fillStyle = base; g.fillRect(0, 0, w, h);
         // soft painted mottling: wide, faint washes rather than speckle
@@ -168,10 +170,12 @@
         g.fillStyle = '#9c917c'; g.fillRect(0, h - sk, w, sk); g.fillStyle = 'rgba(255,250,236,.5)'; g.fillRect(0, h - sk, w, 3); g.fillStyle = 'rgba(50,40,28,.35)'; g.fillRect(0, h - sk - 4, w, 4);
         for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(60,50,36,${.05 + Math.random() * .1})`; g.fillRect(Math.random() * w, h - sk + 4 + Math.random() * (sk - 6), 6 + Math.random() * 30, 2 + Math.random() * 4); }
         for (let x = 0; x < w; x += 128) { g.fillStyle = 'rgba(60,50,36,.35)'; g.fillRect(x, h - sk, 2, sk); }
+        if (MAP.theme === 'harbor' || !MAP.theme) surfHarborExtra(g, w, h);
       }),
       // A floor (4 m square): stone slabs a metre deep and two long, laid in running bond, each a touch different in tone,
       // bevelled so light catches the near edge, with the odd crack, worn patch and a few slabs cut into four.
       ground: canvasTex(512, 512, (g, w, h) => {
+        if (surfGround(MAP.theme, g, w, h)) return;
         g.fillStyle = '#6e695f'; g.fillRect(0, 0, w, h);   // the grout between the slabs
         const slab = (x, y, sw, sh) => {
           const v = (Math.random() - .5) * 18, warm = Math.random() < .5 ? 4 : -2, c0 = `rgb(${190 + v + warm},${185 + v},${174 + v - warm})`, c1 = `rgb(${176 + v + warm},${171 + v},${160 + v - warm})`;
@@ -299,7 +303,7 @@
       const b = bags[k], geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(b.p, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(b.n, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2)); geo.setAttribute('color', new THREE.Float32BufferAttribute(b.c, 3)); geo.setIndex(b.i);
       const m = new THREE.Mesh(geo, TH.glow && k === 'band' ? new THREE.MeshBasicMaterial({ vertexColors: true }) : k === 'ice' ? new THREE.MeshPhongMaterial({ map: T.ice, vertexColors: true, shininess: 90, specular: LC('#c8ecff') })
-        : k === 'lowg' ? new THREE.MeshLambertMaterial({ map: T.lowg, vertexColors: true, emissive: LC('#3aa8d8'), emissiveMap: T.lowg, emissiveIntensity: .55 }) : new THREE.MeshLambertMaterial({ map: T[k] || null, vertexColors: true, color: LC(TH.tint[k] || '#ffffff') })); m.castShadow = sh && k !== 'band' && k !== 'deck'; m.receiveShadow = sh; W.add(m);
+        : k === 'lowg' ? new THREE.MeshLambertMaterial({ map: T.lowg, vertexColors: true, emissive: LC('#3aa8d8'), emissiveMap: T.lowg, emissiveIntensity: .55 }) : new THREE.MeshLambertMaterial({ map: T[k] || null, vertexColors: true, color: LC(surfOwn(MAP.theme, k) ? '#ffffff' : TH.tint[k] || '#ffffff') })); m.castShadow = sh && k !== 'band' && k !== 'deck'; m.receiveShadow = sh; W.add(m);
     }
     // the sites: every plantable cell painted on the floor, and on a map of two or three, big letters on the walls round each
     (X.siteTex || []).forEach(t => t.dispose()); X.siteTex = [];   // the last map's paint
