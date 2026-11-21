@@ -40,12 +40,40 @@
     X.smokeGM = new THREE.MeshLambertMaterial({ color: '#c4c8ce', transparent: true, opacity: .96, depthWrite: false });   // a grenade's cloud is grey, Vex's Veil is violet
     { const body = new THREE.MeshStandardMaterial({ color: '#59606b', metalness: .5, roughness: .45 }), band = new THREE.MeshBasicMaterial({ color: '#c3cad4' }); X.nadeMk = () => { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .13, 12), body); const t = new THREE.Mesh(new THREE.CylinderGeometry(.034, .034, .035, 10), band); t.position.y = .08; const l = new THREE.Mesh(new THREE.BoxGeometry(.012, .02, .09), body); l.position.set(.045, .05, 0); g.add(c, t, l); return g; }; X.nadeObjs = []; }
     X.wallM = new THREE.MeshLambertMaterial({ color: '#ffb347', emissive: '#a85a10', emissiveIntensity: .7, transparent: true, opacity: .88 }); X.walls = [];
-    // the charge: a squat device with a ring and a blinking light
-    const ch = X.charge = new THREE.Group(), dk = new THREE.MeshLambertMaterial({ color: '#2a2e38' });
-    const b = new THREE.Mesh(new THREE.CylinderGeometry(.2, .25, .26, 14), dk); b.position.y = .13; ch.add(b);
-    const rg = new THREE.Mesh(new THREE.TorusGeometry(.23, .025, 8, 20), new THREE.MeshLambertMaterial({ color: FOE })); rg.rotation.x = Math.PI / 2; rg.position.y = .2; ch.add(rg);
-    const an = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .4, 6), dk); an.position.set(.1, .44, 0); ch.add(an);
-    X.chargeLamp = new THREE.Mesh(new THREE.SphereGeometry(.06, 10, 8), new THREE.MeshBasicMaterial({ color: WARN })); X.chargeLamp.position.y = .31; ch.add(X.chargeLamp);
+    /* the charge: a six-sided base on three splayed feet, a canister wound with three glowing coils inside a cage of four
+       struts, a collar and a cap with the lamp under its guard, a keypad with a little screen, a carry handle and an aerial.
+       Built from plain shapes and then merged into one mesh per material (the lamp stays its own, to blink). */
+    const ch = X.charge = new THREE.Group(), dk = new THREE.MeshLambertMaterial({ color: LC('#3c414d') }), mt = new THREE.MeshPhongMaterial({ color: LC('#aeb4be'), shininess: 70, specular: LC('#666c78') }), pn = new THREE.MeshLambertMaterial({ color: LC('#5a606d') }), coil = new THREE.MeshBasicMaterial({ color: FOE }), scr = new THREE.MeshBasicMaterial({ color: '#7fe8d8' });
+    { const put = (geo, m, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); ch.add(o); return o; };
+      put(new THREE.CylinderGeometry(.24, .27, .05, 6), dk, 0, .045, 0); put(new THREE.CylinderGeometry(.2, .24, .02, 6), mt, 0, .08, 0);
+      for (let i = 0; i < 3; i++) { const a = i * TAU / 3 + .5; put(new THREE.BoxGeometry(.06, .03, .18), mt, Math.cos(a) * .27, .022, Math.sin(a) * .27, 0, -a + Math.PI / 2, 0); put(new THREE.CylinderGeometry(.04, .05, .02, 8), dk, Math.cos(a) * .35, .01, Math.sin(a) * .35); }
+      put(new THREE.CylinderGeometry(.13, .15, .24, 12), pn, 0, .2, 0);
+      for (let i = 0; i < 3; i++) put(new THREE.TorusGeometry(.146 - i * .005, .015, 6, 20), coil, 0, .125 + i * .075, 0, Math.PI / 2);
+      for (let i = 0; i < 4; i++) { const a = i * TAU / 4 + .78; put(new THREE.BoxGeometry(.03, .28, .03), mt, Math.cos(a) * .195, .21, Math.sin(a) * .195); }
+      put(new THREE.CylinderGeometry(.215, .215, .03, 12), dk, 0, .345, 0); put(new THREE.CylinderGeometry(.1, .165, .06, 10), pn, 0, .39, 0);
+      for (const ry of [0, Math.PI / 2]) put(new THREE.TorusGeometry(.078, .009, 5, 12, Math.PI), mt, 0, .42, 0, 0, ry, 0);   // the lamp's guard
+      put(new THREE.BoxGeometry(.12, .13, .03), dk, 0, .2, .16, -.12); put(new THREE.BoxGeometry(.085, .035, .012), scr, 0, .238, .176, -.12);
+      for (let i = 0; i < 6; i++) put(new THREE.BoxGeometry(.02, .016, .012), mt, -.03 + (i % 3) * .03, .2 - Math.floor(i / 3) * .028, .18, -.12);
+      put(new THREE.TorusGeometry(.06, .012, 6, 12, Math.PI), mt, 0, .2, -.16, 0, Math.PI / 2, -Math.PI / 2);   // the carry handle
+      put(new THREE.CylinderGeometry(.008, .008, .34, 5), dk, .13, .53, -.08); put(new THREE.SphereGeometry(.016, 8, 6), coil, .13, .705, -.08); }
+    X.chargeLamp = new THREE.Mesh(new THREE.SphereGeometry(.056, 12, 8), new THREE.MeshBasicMaterial({ color: WARN })); X.chargeLamp.position.y = .44; X.chargeLamp.userData.live = true; bake(ch, false); ch.add(X.chargeLamp);
+    /* the defuser: a hand unit clamped to the charge by a cable. A screen with a bar that fills as the defuse runs, three
+       lamps that come on by thirds, a dial, two probes. Held in your hands in first person, and by anyone you watch. */
+    { const dkD = new THREE.MeshLambertMaterial({ color: '#1e2129' }), mtD = mt, glv = new THREE.MeshLambertMaterial({ color: '#2a2d36' }), rub = new THREE.MeshLambertMaterial({ color: '#14161a' }), off = '#16323a';
+      const proto = new THREE.Group(), put = (geo, m, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); proto.add(o); return o; };
+      put(new THREE.BoxGeometry(.1, .045, .17), dkD, 0, 0, 0); for (const sx of [-1, 1]) put(new THREE.BoxGeometry(.014, .052, .15), mtD, sx * .056, 0, 0);
+      put(new THREE.BoxGeometry(.078, .004, .084), new THREE.MeshBasicMaterial({ color: '#06202a' }), 0, .0245, .022);
+      put(new THREE.CylinderGeometry(.014, .014, .012, 10), mtD, .03, .03, -.052); put(new THREE.BoxGeometry(.03, .008, .016), mtD, -.022, .027, -.052);
+      put(new THREE.BoxGeometry(.066, .024, .022), dkD, 0, 0, -.094); for (const sx of [-1, 1]) put(new THREE.CylinderGeometry(.0045, .003, .07, 6), mtD, sx * .02, 0, -.135, Math.PI / 2);
+      put(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0, -.012, .085), new THREE.Vector3(.035, -.07, .13), new THREE.Vector3(-.02, -.15, .03), new THREE.Vector3(0, -.2, -.14)]), 14, .0065, 5), rub, 0, 0, 0);
+      put(new THREE.CylinderGeometry(.004, .004, .07, 5), dkD, -.04, .055, .07);
+      bake(proto, false);
+      X.defuserMk = hands => { const g = proto.clone(), U = g.userData = { leds: [] };
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(.066, .006, .016).translate(.033, 0, 0), new THREE.MeshBasicMaterial({ color: YOU })); bar.position.set(-.033, .028, .048); g.add(bar); U.bar = bar;
+        for (let i = 0; i < 3; i++) { const l = new THREE.Mesh(new THREE.BoxGeometry(.014, .006, .014), new THREE.MeshBasicMaterial({ color: off })); l.position.set(-.022 + i * .022, .028, .012); g.add(l); U.leds.push(l); }
+        if (hands) for (const sx of [-1, 1]) { const h = new THREE.Mesh(new THREE.BoxGeometry(.03, .06, .11), glv); h.position.set(sx * .074, -.006, .01); g.add(h); const f = new THREE.Mesh(new THREE.BoxGeometry(.05, .024, .1), glv); f.position.set(sx * .046, -.034, .01); g.add(f); const arm = new THREE.Mesh(new THREE.CylinderGeometry(.03, .036, .34, 8), glv); arm.position.set(sx * .11, -.12, .16); arm.rotation.set(.9, 0, sx * -.25); g.add(arm); }
+        U.set = (q, t) => { bar.scale.x = Math.max(.001, cl(q, 0, 1)); U.leds.forEach((l, i) => l.material.color.set(q >= (i + 1) / 3 - .001 ? YOU : (q > i / 3 && Math.sin(t * 16) > 0 ? '#bff8ee' : off))); };
+        return g; }; }
     // its light is always in the scene, just dark: a light appearing mid-round changes the light count, and every lit material
     // would then rebuild its shader at once (the stutter you used to feel the moment the charge went down)
     X.chargePL = add(new THREE.PointLight(WARN, 0, 7)); X.chargePL.position.set(0, -20, 0); ch.visible = false; add(ch);
@@ -289,6 +317,9 @@
     if (!X.vcharge) { X.vcharge = X.chargeCopy(); X.vcharge.scale.setScalar(.42); X.vroot.add(X.vcharge); }
     { const q = P.alive && P.plant > 0 ? cl(P.plant / PLANT_T, 0, 1) : -1; X.vcharge.visible = q >= 0 && X.kneel > .3;
       if (q >= 0) { const s2 = sm(cl(q / .35, 0, 1)), d2 = sm(cl((q - .35) / .55, 0, 1)); X.vcharge.position.set(.03 + Math.sin(X.t * 9) * .003 * (1 - d2), lp(-.5, -.26, s2) - d2 * .3, -.66 - d2 * .12); X.vcharge.rotation.set(lp(.9, .45, s2) + d2 * .25, .35 - d2 * .3, 0); } }
+    if (!X.vdefuser) { X.vdefuser = X.defuserMk(true); X.vdefuser.visible = false; X.vroot.add(X.vdefuser); }
+    { const q = P.alive && P.defuse > 0 ? cl(P.defuse / DEFUSE_T, 0, 1) : -1; X.vdefuser.visible = q >= 0 && X.kneel > .3;
+      if (q >= 0) { const k = sm(cl((X.kneel - .3) / .7, 0, 1)); X.vdefuser.position.set(.005 + Math.sin(X.t * 11) * .0015, lp(-.42, -.2, k) + Math.sin(X.t * 2.3) * .004, -.4); X.vdefuser.rotation.set(.95, Math.sin(X.t * 1.7) * .03, 0); X.vdefuser.userData.set(q, X.t); } }
     // the off hand casts (see abHandFrame): the gun dips out of its way, further for a throw or a placing
     if (P.castT > 0) { const D = P.castD || .5, q = 1 - Math.max(0, P.castT) / D, c = Math.sin(Math.min(1, q) * Math.PI), dk = P.castK === 'throw' || P.castK === 'place' ? 1.25 : P.castK === 'dash' ? .5 : .9;
       X.view.position.y -= c * .08 * dk; X.view.position.x += c * .035 * dk; X.view.rotation.x -= c * .45 * dk; X.view.rotation.z += c * .3 * dk; }

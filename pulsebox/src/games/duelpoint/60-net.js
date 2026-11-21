@@ -28,7 +28,7 @@
     // a host running bots sends all its fighters in one message (up to eight fighters: far fewer messages through the relay)
     const out = [];
     for (const f of M.fs) if (!f.net && !f.gone) out.push({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
-      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
+      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? Math.max(.01, r2(f.plant)) : 0, df: f.defuse > 0 ? Math.max(.01, r2(f.defuse)) : 0, st: f.step > 0 ? 1 : 0, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
     for (const q of out) { const f = M.byKey[q.f], sk = (f.skins && f.skins[f.guns[f.slot]]) || 0, key = f.op + '|' + q.g + '|' + sk;
       if (full || f._sent !== key) { q.op = f.op; q.rt = f.rating || 0; q.sk = sk; f._sent = key; } if (full) q.dm = Math.round(f.stat.dmg);
       const iv = f.credits + '|' + (f.guns[1] || '') + '|' + (f.guns[2] || '') + '|' + (f.smokes | 0) + '|' + (f.ab.q | 0);   // what they have and what they can spend: for their team's armory
@@ -56,7 +56,7 @@
     switch (m.t) {
       case 's':
         { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && Math.hypot(sn[sn.length - 1].x - m.x, sn[sn.length - 1].z - m.z) > 6) sn.length = 0; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
-        if (m.rt) F.rating = m.rt; if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
+        if (m.rt) F.rating = m.rt; if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; { const pl = +m.pl || 0, df = +m.df || 0; F.plant = pl > 0 ? (F.plant > 0 && Math.abs(F.plant - pl) < .5 ? F.plant : pl) : 0; F.defuse = df > 0 ? (F.defuse > 0 && Math.abs(F.defuse - df) < .5 ? F.defuse : df) : 0; }   // (kept running between messages by netFollow; a message only corrects it when it has drifted) F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.c != null) { F.credits = +m.c || 0; F.guns[1] = GUNS[m.g1] ? m.g1 : null; F.guns[2] = GUNS[m.g2] ? m.g2 : 'pip'; F.smokes = m.sm | 0; F.ab.q = m.aq | 0; }   // their credits and loadout
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
@@ -92,6 +92,7 @@
     for (const k of ['flash', 'reveal', 'kick']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
     if (f.fireT > -1) f.fireT = (f.fireT || 0) - dt; settleSpray(f, gun(f), dt);   // (their spray, kept from their shots: a spectator's crosshair rides it)
     if (f.swing) { f.swing.t += dt; if (f.swing.t > .7) f.swing = null; }
+    if (f.plant > 0) f.plant = Math.min(PLANT_T, f.plant + dt); if (f.defuse > 0) f.defuse = Math.min(DEFUSE_T, f.defuse + dt);   // their plant or defuse runs on between messages
     const sn = f.snaps; if (!sn || !sn.length) return; const rt = M.time - (M.netDelay || .1); while (sn.length > 2 && sn[1].at <= rt) sn.shift();
     const a = sn[0], b = sn[1] || a, k = b === a || b.at - a.at < 1e-6 ? 1 : cl((rt - a.at) / (b.at - a.at), 0, 1.4);
     f.x = lp(a.x, b.x, k); f.y = lp(a.y, b.y, k); f.z = lp(a.z, b.z, k); f.yaw = a.yw + angDiff(b.yw, a.yw) * k; f.pitch = lp(a.pt, b.pt, k); f.vx = b.vx; f.vz = b.vz; f.walkT += Math.hypot(f.vx, f.vz) * dt;

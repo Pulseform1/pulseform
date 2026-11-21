@@ -331,6 +331,7 @@
     if (U.kn > .01) { const k = U.kn, work = f.defuse > 0 ? Math.sin(X.t * 13) * .07 : 0; U.torso.rotation.x -= .5 * k; U.head.rotation.x -= .3 * k; U.arms.rotation.x = lp(U.arms.rotation.x, -1.0 + work, k); U.arms.rotation.z = lp(U.arms.rotation.z, 0, k); U.arms.position.z = lp(U.arms.position.z, .05, k); }
     U.gunHold.visible = U.gunHold.visible && U.kn < .5;
     { const hold = f.alive && f.plant > 0; if (hold && !U.held) { U.held = X.chargeCopy(); U.held.scale.setScalar(.75); U.arms.add(U.held); } if (U.held) { U.held.visible = hold; if (hold) U.held.position.set(.03, -.2, -.4); } }
+    { const df = f.alive && f.defuse > 0; if (df && !U.dfu && X.defuserMk) { U.dfu = X.defuserMk(false); U.dfu.scale.setScalar(1.5); U.arms.add(U.dfu); } if (U.dfu) { U.dfu.visible = df; if (df) { U.dfu.position.set(.02, -.16, -.42); U.dfu.rotation.set(.5, 0, 0); U.dfu.userData.set(cl(f.defuse / DEFUSE_T, 0, 1), X.t); } } }
     if (f.alive) { U.rag = null; f.rag = null; U.dead = 0; A.rotation.x = 0; A.rotation.z = 0; A.position.y = f.y; }
     else ragdoll(f, A, U, dt);
   }

@@ -2133,7 +2133,7 @@ const GAME = {
     // a host running bots sends all its fighters in one message (up to eight fighters: far fewer messages through the relay)
     const out = [];
     for (const f of M.fs) if (!f.net && !f.gone) out.push({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
-      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
+      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? Math.max(.01, r2(f.plant)) : 0, df: f.defuse > 0 ? Math.max(.01, r2(f.defuse)) : 0, st: f.step > 0 ? 1 : 0, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
     for (const q of out) { const f = M.byKey[q.f], sk = (f.skins && f.skins[f.guns[f.slot]]) || 0, key = f.op + '|' + q.g + '|' + sk;
       if (full || f._sent !== key) { q.op = f.op; q.rt = f.rating || 0; q.sk = sk; f._sent = key; } if (full) q.dm = Math.round(f.stat.dmg);
       const iv = f.credits + '|' + (f.guns[1] || '') + '|' + (f.guns[2] || '') + '|' + (f.smokes | 0) + '|' + (f.ab.q | 0);   // what they have and what they can spend: for their team's armory
@@ -2161,7 +2161,7 @@ const GAME = {
     switch (m.t) {
       case 's':
         { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && Math.hypot(sn[sn.length - 1].x - m.x, sn[sn.length - 1].z - m.z) > 6) sn.length = 0; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
-        if (m.rt) F.rating = m.rt; if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
+        if (m.rt) F.rating = m.rt; if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; { const pl = +m.pl || 0, df = +m.df || 0; F.plant = pl > 0 ? (F.plant > 0 && Math.abs(F.plant - pl) < .5 ? F.plant : pl) : 0; F.defuse = df > 0 ? (F.defuse > 0 && Math.abs(F.defuse - df) < .5 ? F.defuse : df) : 0; }   // (kept running between messages by netFollow; a message only corrects it when it has drifted) F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.c != null) { F.credits = +m.c || 0; F.guns[1] = GUNS[m.g1] ? m.g1 : null; F.guns[2] = GUNS[m.g2] ? m.g2 : 'pip'; F.smokes = m.sm | 0; F.ab.q = m.aq | 0; }   // their credits and loadout
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
@@ -2197,6 +2197,7 @@ const GAME = {
     for (const k of ['flash', 'reveal', 'kick']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
     if (f.fireT > -1) f.fireT = (f.fireT || 0) - dt; settleSpray(f, gun(f), dt);   // (their spray, kept from their shots: a spectator's crosshair rides it)
     if (f.swing) { f.swing.t += dt; if (f.swing.t > .7) f.swing = null; }
+    if (f.plant > 0) f.plant = Math.min(PLANT_T, f.plant + dt); if (f.defuse > 0) f.defuse = Math.min(DEFUSE_T, f.defuse + dt);   // their plant or defuse runs on between messages
     const sn = f.snaps; if (!sn || !sn.length) return; const rt = M.time - (M.netDelay || .1); while (sn.length > 2 && sn[1].at <= rt) sn.shift();
     const a = sn[0], b = sn[1] || a, k = b === a || b.at - a.at < 1e-6 ? 1 : cl((rt - a.at) / (b.at - a.at), 0, 1.4);
     f.x = lp(a.x, b.x, k); f.y = lp(a.y, b.y, k); f.z = lp(a.z, b.z, k); f.yaw = a.yw + angDiff(b.yw, a.yw) * k; f.pitch = lp(a.pt, b.pt, k); f.vx = b.vx; f.vz = b.vz; f.walkT += Math.hypot(f.vx, f.vz) * dt;
@@ -3913,6 +3914,7 @@ const GAME = {
     if (U.kn > .01) { const k = U.kn, work = f.defuse > 0 ? Math.sin(X.t * 13) * .07 : 0; U.torso.rotation.x -= .5 * k; U.head.rotation.x -= .3 * k; U.arms.rotation.x = lp(U.arms.rotation.x, -1.0 + work, k); U.arms.rotation.z = lp(U.arms.rotation.z, 0, k); U.arms.position.z = lp(U.arms.position.z, .05, k); }
     U.gunHold.visible = U.gunHold.visible && U.kn < .5;
     { const hold = f.alive && f.plant > 0; if (hold && !U.held) { U.held = X.chargeCopy(); U.held.scale.setScalar(.75); U.arms.add(U.held); } if (U.held) { U.held.visible = hold; if (hold) U.held.position.set(.03, -.2, -.4); } }
+    { const df = f.alive && f.defuse > 0; if (df && !U.dfu && X.defuserMk) { U.dfu = X.defuserMk(false); U.dfu.scale.setScalar(1.5); U.arms.add(U.dfu); } if (U.dfu) { U.dfu.visible = df; if (df) { U.dfu.position.set(.02, -.16, -.42); U.dfu.rotation.set(.5, 0, 0); U.dfu.userData.set(cl(f.defuse / DEFUSE_T, 0, 1), X.t); } } }
     if (f.alive) { U.rag = null; f.rag = null; U.dead = 0; A.rotation.x = 0; A.rotation.z = 0; A.position.y = f.y; }
     else ragdoll(f, A, U, dt);
   }
@@ -6176,12 +6178,40 @@ const GAME = {
     X.smokeGM = new THREE.MeshLambertMaterial({ color: '#c4c8ce', transparent: true, opacity: .96, depthWrite: false });   // a grenade's cloud is grey, Vex's Veil is violet
     { const body = new THREE.MeshStandardMaterial({ color: '#59606b', metalness: .5, roughness: .45 }), band = new THREE.MeshBasicMaterial({ color: '#c3cad4' }); X.nadeMk = () => { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .13, 12), body); const t = new THREE.Mesh(new THREE.CylinderGeometry(.034, .034, .035, 10), band); t.position.y = .08; const l = new THREE.Mesh(new THREE.BoxGeometry(.012, .02, .09), body); l.position.set(.045, .05, 0); g.add(c, t, l); return g; }; X.nadeObjs = []; }
     X.wallM = new THREE.MeshLambertMaterial({ color: '#ffb347', emissive: '#a85a10', emissiveIntensity: .7, transparent: true, opacity: .88 }); X.walls = [];
-    // the charge: a squat device with a ring and a blinking light
-    const ch = X.charge = new THREE.Group(), dk = new THREE.MeshLambertMaterial({ color: '#2a2e38' });
-    const b = new THREE.Mesh(new THREE.CylinderGeometry(.2, .25, .26, 14), dk); b.position.y = .13; ch.add(b);
-    const rg = new THREE.Mesh(new THREE.TorusGeometry(.23, .025, 8, 20), new THREE.MeshLambertMaterial({ color: FOE })); rg.rotation.x = Math.PI / 2; rg.position.y = .2; ch.add(rg);
-    const an = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .4, 6), dk); an.position.set(.1, .44, 0); ch.add(an);
-    X.chargeLamp = new THREE.Mesh(new THREE.SphereGeometry(.06, 10, 8), new THREE.MeshBasicMaterial({ color: WARN })); X.chargeLamp.position.y = .31; ch.add(X.chargeLamp);
+    /* the charge: a six-sided base on three splayed feet, a canister wound with three glowing coils inside a cage of four
+       struts, a collar and a cap with the lamp under its guard, a keypad with a little screen, a carry handle and an aerial.
+       Built from plain shapes and then merged into one mesh per material (the lamp stays its own, to blink). */
+    const ch = X.charge = new THREE.Group(), dk = new THREE.MeshLambertMaterial({ color: LC('#3c414d') }), mt = new THREE.MeshPhongMaterial({ color: LC('#aeb4be'), shininess: 70, specular: LC('#666c78') }), pn = new THREE.MeshLambertMaterial({ color: LC('#5a606d') }), coil = new THREE.MeshBasicMaterial({ color: FOE }), scr = new THREE.MeshBasicMaterial({ color: '#7fe8d8' });
+    { const put = (geo, m, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); ch.add(o); return o; };
+      put(new THREE.CylinderGeometry(.24, .27, .05, 6), dk, 0, .045, 0); put(new THREE.CylinderGeometry(.2, .24, .02, 6), mt, 0, .08, 0);
+      for (let i = 0; i < 3; i++) { const a = i * TAU / 3 + .5; put(new THREE.BoxGeometry(.06, .03, .18), mt, Math.cos(a) * .27, .022, Math.sin(a) * .27, 0, -a + Math.PI / 2, 0); put(new THREE.CylinderGeometry(.04, .05, .02, 8), dk, Math.cos(a) * .35, .01, Math.sin(a) * .35); }
+      put(new THREE.CylinderGeometry(.13, .15, .24, 12), pn, 0, .2, 0);
+      for (let i = 0; i < 3; i++) put(new THREE.TorusGeometry(.146 - i * .005, .015, 6, 20), coil, 0, .125 + i * .075, 0, Math.PI / 2);
+      for (let i = 0; i < 4; i++) { const a = i * TAU / 4 + .78; put(new THREE.BoxGeometry(.03, .28, .03), mt, Math.cos(a) * .195, .21, Math.sin(a) * .195); }
+      put(new THREE.CylinderGeometry(.215, .215, .03, 12), dk, 0, .345, 0); put(new THREE.CylinderGeometry(.1, .165, .06, 10), pn, 0, .39, 0);
+      for (const ry of [0, Math.PI / 2]) put(new THREE.TorusGeometry(.078, .009, 5, 12, Math.PI), mt, 0, .42, 0, 0, ry, 0);   // the lamp's guard
+      put(new THREE.BoxGeometry(.12, .13, .03), dk, 0, .2, .16, -.12); put(new THREE.BoxGeometry(.085, .035, .012), scr, 0, .238, .176, -.12);
+      for (let i = 0; i < 6; i++) put(new THREE.BoxGeometry(.02, .016, .012), mt, -.03 + (i % 3) * .03, .2 - Math.floor(i / 3) * .028, .18, -.12);
+      put(new THREE.TorusGeometry(.06, .012, 6, 12, Math.PI), mt, 0, .2, -.16, 0, Math.PI / 2, -Math.PI / 2);   // the carry handle
+      put(new THREE.CylinderGeometry(.008, .008, .34, 5), dk, .13, .53, -.08); put(new THREE.SphereGeometry(.016, 8, 6), coil, .13, .705, -.08); }
+    X.chargeLamp = new THREE.Mesh(new THREE.SphereGeometry(.056, 12, 8), new THREE.MeshBasicMaterial({ color: WARN })); X.chargeLamp.position.y = .44; X.chargeLamp.userData.live = true; bake(ch, false); ch.add(X.chargeLamp);
+    /* the defuser: a hand unit clamped to the charge by a cable. A screen with a bar that fills as the defuse runs, three
+       lamps that come on by thirds, a dial, two probes. Held in your hands in first person, and by anyone you watch. */
+    { const dkD = new THREE.MeshLambertMaterial({ color: '#1e2129' }), mtD = mt, glv = new THREE.MeshLambertMaterial({ color: '#2a2d36' }), rub = new THREE.MeshLambertMaterial({ color: '#14161a' }), off = '#16323a';
+      const proto = new THREE.Group(), put = (geo, m, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); proto.add(o); return o; };
+      put(new THREE.BoxGeometry(.1, .045, .17), dkD, 0, 0, 0); for (const sx of [-1, 1]) put(new THREE.BoxGeometry(.014, .052, .15), mtD, sx * .056, 0, 0);
+      put(new THREE.BoxGeometry(.078, .004, .084), new THREE.MeshBasicMaterial({ color: '#06202a' }), 0, .0245, .022);
+      put(new THREE.CylinderGeometry(.014, .014, .012, 10), mtD, .03, .03, -.052); put(new THREE.BoxGeometry(.03, .008, .016), mtD, -.022, .027, -.052);
+      put(new THREE.BoxGeometry(.066, .024, .022), dkD, 0, 0, -.094); for (const sx of [-1, 1]) put(new THREE.CylinderGeometry(.0045, .003, .07, 6), mtD, sx * .02, 0, -.135, Math.PI / 2);
+      put(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0, -.012, .085), new THREE.Vector3(.035, -.07, .13), new THREE.Vector3(-.02, -.15, .03), new THREE.Vector3(0, -.2, -.14)]), 14, .0065, 5), rub, 0, 0, 0);
+      put(new THREE.CylinderGeometry(.004, .004, .07, 5), dkD, -.04, .055, .07);
+      bake(proto, false);
+      X.defuserMk = hands => { const g = proto.clone(), U = g.userData = { leds: [] };
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(.066, .006, .016).translate(.033, 0, 0), new THREE.MeshBasicMaterial({ color: YOU })); bar.position.set(-.033, .028, .048); g.add(bar); U.bar = bar;
+        for (let i = 0; i < 3; i++) { const l = new THREE.Mesh(new THREE.BoxGeometry(.014, .006, .014), new THREE.MeshBasicMaterial({ color: off })); l.position.set(-.022 + i * .022, .028, .012); g.add(l); U.leds.push(l); }
+        if (hands) for (const sx of [-1, 1]) { const h = new THREE.Mesh(new THREE.BoxGeometry(.03, .06, .11), glv); h.position.set(sx * .074, -.006, .01); g.add(h); const f = new THREE.Mesh(new THREE.BoxGeometry(.05, .024, .1), glv); f.position.set(sx * .046, -.034, .01); g.add(f); const arm = new THREE.Mesh(new THREE.CylinderGeometry(.03, .036, .34, 8), glv); arm.position.set(sx * .11, -.12, .16); arm.rotation.set(.9, 0, sx * -.25); g.add(arm); }
+        U.set = (q, t) => { bar.scale.x = Math.max(.001, cl(q, 0, 1)); U.leds.forEach((l, i) => l.material.color.set(q >= (i + 1) / 3 - .001 ? YOU : (q > i / 3 && Math.sin(t * 16) > 0 ? '#bff8ee' : off))); };
+        return g; }; }
     // its light is always in the scene, just dark: a light appearing mid-round changes the light count, and every lit material
     // would then rebuild its shader at once (the stutter you used to feel the moment the charge went down)
     X.chargePL = add(new THREE.PointLight(WARN, 0, 7)); X.chargePL.position.set(0, -20, 0); ch.visible = false; add(ch);
@@ -6425,6 +6455,9 @@ const GAME = {
     if (!X.vcharge) { X.vcharge = X.chargeCopy(); X.vcharge.scale.setScalar(.42); X.vroot.add(X.vcharge); }
     { const q = P.alive && P.plant > 0 ? cl(P.plant / PLANT_T, 0, 1) : -1; X.vcharge.visible = q >= 0 && X.kneel > .3;
       if (q >= 0) { const s2 = sm(cl(q / .35, 0, 1)), d2 = sm(cl((q - .35) / .55, 0, 1)); X.vcharge.position.set(.03 + Math.sin(X.t * 9) * .003 * (1 - d2), lp(-.5, -.26, s2) - d2 * .3, -.66 - d2 * .12); X.vcharge.rotation.set(lp(.9, .45, s2) + d2 * .25, .35 - d2 * .3, 0); } }
+    if (!X.vdefuser) { X.vdefuser = X.defuserMk(true); X.vdefuser.visible = false; X.vroot.add(X.vdefuser); }
+    { const q = P.alive && P.defuse > 0 ? cl(P.defuse / DEFUSE_T, 0, 1) : -1; X.vdefuser.visible = q >= 0 && X.kneel > .3;
+      if (q >= 0) { const k = sm(cl((X.kneel - .3) / .7, 0, 1)); X.vdefuser.position.set(.005 + Math.sin(X.t * 11) * .0015, lp(-.42, -.2, k) + Math.sin(X.t * 2.3) * .004, -.4); X.vdefuser.rotation.set(.95, Math.sin(X.t * 1.7) * .03, 0); X.vdefuser.userData.set(q, X.t); } }
     // the off hand casts (see abHandFrame): the gun dips out of its way, further for a throw or a placing
     if (P.castT > 0) { const D = P.castD || .5, q = 1 - Math.max(0, P.castT) / D, c = Math.sin(Math.min(1, q) * Math.PI), dk = P.castK === 'throw' || P.castK === 'place' ? 1.25 : P.castK === 'dash' ? .5 : .9;
       X.view.position.y -= c * .08 * dk; X.view.position.x += c * .035 * dk; X.view.rotation.x -= c * .45 * dk; X.view.rotation.z += c * .3 * dk; }
@@ -9596,7 +9629,7 @@ const GAME = {
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
     team: () => ({ dropHeld, dropCharge, giveCharge, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
-    botMe: d => { me().bot = { diff: d }; me().local = false; }, touchEdit: () => openTouchEdit(), get TE() { return TE; }, INS, INSPECT, startInspect, showInspect, WH, openWheel, spinWheel, wheelSlices, wheelDay, touchAt, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, VKF, animParts, aimArms, onEvent: on, audioCtx: () => K.ac, soundLag: () => lag(), shotBuf: k => baked[k],
+    botMe: d => { me().bot = { diff: d }; me().local = false; }, touchEdit: () => openTouchEdit(), get TE() { return TE; }, INS, INSPECT, startInspect, showInspect, sideOf: f => sideOf(f), plantAt, nextSpec, WH, openWheel, spinWheel, wheelSlices, wheelDay, touchAt, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, VKF, animParts, aimArms, onEvent: on, audioCtx: () => K.ac, soundLag: () => lag(), shotBuf: k => baked[k],
   };
 })();
 
