@@ -12,11 +12,11 @@ await p.addInitScript(() => { Object.defineProperty(Document.prototype, 'pointer
 await p.goto(URL0, { timeout: 120000 });
 await p.waitForFunction(() => typeof GAME !== 'undefined' && GAME.test && GAME.test.ready(), null, { timeout: 90000 }); await p.waitForTimeout(600);
 await p.click('#bPlay'); await p.waitForTimeout(900); await p.screenshot({ path: O + '/len-menu.png' });
-for (const w of [3, 4, 5, 6]) {
+for (const w of [3, 4, 5, 6, 9, 11]) {
   const r = await p.evaluate(w => { const t = GAME.test; if (t.M) t.toMenu(); t.CFG.win = w; t.CFG.sites = 1; t.menuPlay(1); t.skipLoad(); const M = t.M, seen = [];
     // decide each round in turn for alternating teams (so it runs the full length), and note who attacks
     let guard = 0;
-    while (!M.over && guard++ < 40) {
+    while (!M.over && guard++ < 60) {
       const r = M.round, att = t.st().fs[0].side, a = M.wins[0], c = M.wins[1];
       seen.push(att[0]);
       // the side that is behind wins each round until the tie at the end of the second half; then we take two in a row in overtime

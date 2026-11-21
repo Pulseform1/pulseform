@@ -291,8 +291,8 @@
         const c = SRC[j][i], k = j * GW + i, x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS, top = CH[k];
         if (c === 'c') {
           const q = .05, t = .16;
-          for (const [cx, cz] of [[x0 + q, z0 + q], [x1 - q, z0 + q], [x0 + q, z1 - q], [x1 - q, z1 - q]]) { bx(trimM, t, top, t, cx, top / 2, cz); bx(brM, t + .07, .2, t + .07, cx, top - .1, cz); bx(brM, t + .07, .16, t + .07, cx, .08, cz); }
-          for (const y of [top - .07, .08]) { bx(trimM, CS - .1, .13, t, (x0 + x1) / 2, y, z0 + q); bx(trimM, CS - .1, .13, t, (x0 + x1) / 2, y, z1 - q); bx(trimM, t, .13, CS - .1, x0 + q, y, (z0 + z1) / 2); bx(trimM, t, .13, CS - .1, x1 - q, y, (z0 + z1) / 2); }
+          for (const [cx, cz] of [[x0 + q, z0 + q], [x1 - q, z0 + q], [x0 + q, z1 - q], [x1 - q, z1 - q]]) { bx(trimM, t, top - .012, t, cx, (top - .012) / 2, cz); bx(brM, t + .07, .2, t + .07, cx, top - .08, cz); bx(brM, t + .07, .16, t + .07, cx, .08, cz); }   // (the bracket stands 2 cm proud of the lid, the post stops short of it: nothing lies flush with the lid to flicker against it)
+          for (const y of [top - .075, .08]) { bx(trimM, CS - .1, .13, t, (x0 + x1) / 2, y, z0 + q); bx(trimM, CS - .1, .13, t, (x0 + x1) / 2, y, z1 - q); bx(trimM, t, .13, CS - .1, x0 + q, y, (z0 + z1) / 2); bx(trimM, t, .13, CS - .1, x1 - q, y, (z0 + z1) / 2); }
         } else if (c === 'X') {
           const gi = group[k], rm = railM[gi % railM.length], E = ext[gi], longI = E[2] - E[0] >= E[3] - E[1];
           const out = [!isX(i + 1, j), !isX(i - 1, j), !isX(i, j + 1), !isX(i, j - 1)];   // east, west, south, north faces open
@@ -301,7 +301,7 @@
             if (!out[e]) continue; const ni = i + (e === 0 ? 1 : e === 1 ? -1 : 0), nj = j + (e === 2 ? 1 : e === 3 ? -1 : 0), nk = idx(ni, nj); if (nk >= 0 && CH[nk] >= top) continue;
             const alongX = e >= 2, fx = e === 0 ? x1 + o : e === 1 ? x0 - o : (x0 + x1) / 2, fz = e === 2 ? z1 + o : e === 3 ? z0 - o : (z0 + z1) / 2;
             // top and bottom rails
-            for (const y of [top - .09, .1]) bx(rm, alongX ? CS : .1, .18, alongX ? .1 : CS, fx, y, fz);
+            for (const y of [top - .1, .1]) bx(rm, alongX ? CS : .1, .18, alongX ? .1 : CS, fx, y, fz);   // (the top rail stops 1 cm under the roof, not flush with it)
             // a rib between containers every third cell along a side
             const along = alongX ? i : j; if (along % 3 === 0) bx(rm, alongX ? .12 : .1, top - .2, alongX ? .1 : .12, alongX ? x0 : fx, top / 2, alongX ? fz : z0);
             // the doors on the ends: two locking bars with their handles and keepers
@@ -312,8 +312,8 @@
           }
           // corner posts and cast corner blocks where two open faces meet
           for (const [ex, ez, cx, cz] of [[0, 2, x1, z1], [0, 3, x1, z0], [1, 2, x0, z1], [1, 3, x0, z0]]) if (out[ex] && out[ez]) {
-            const px = cx + (ex === 0 ? -.06 : .06), pz = cz + (ez === 2 ? -.06 : .06); bx(rm, .2, top, .2, px, top / 2, pz);
-            for (const y of [top - .13, .13]) bx(castM, .28, .26, .28, px, y, pz);
+            const px = cx + (ex === 0 ? -.06 : .06), pz = cz + (ez === 2 ? -.06 : .06); bx(rm, .2, top - .012, .2, px, (top - .012) / 2, pz);
+            for (const y of [top - .11, .13]) bx(castM, .28, .26, .28, px, y, pz);   // (the cast block stands 2 cm proud of the roof)
           }
         }
       }

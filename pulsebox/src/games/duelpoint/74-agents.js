@@ -163,6 +163,7 @@
         pose.front = fr || -.215; }
       const out = Math.min(0, pose.front + .215) * 1.3;   // (negative: further forward)
       gunHold.position.set(...(knife ? [.17, -.17, -.33] : gd.pistolHold ? [.03, -.04, -.47] : gd.k === 'stub' ? [.09, -.11, -.36 + out] : [.118, -.07, -.255 + out]));
+      if (!knife && !gd.pistolHold && !gd.dead && gd.rear != null) gunHold.position.z = Math.min(gunHold.position.z, pose.front - .03 - gd.rear);   // (a long stock: the whole gun comes forward until its back end is in front of the chest)
       const hold = gunHold.position, Rt = gd.dead ? gd.dead[0] : [hold.x + gd.grip[0] * s, hold.y + gd.grip[1] * s, hold.z + gd.grip[2] * s];   // (dead: the hands wherever the body left them)
       let Lt = gd.dead ? gd.dead[1] : knife ? [-.2, -.34, -.2] : gd.pistolHold ? [Rt[0] - .05, Rt[1] - .015, Rt[2] + .005] : [hold.x + gd.sup[0] * s - .01, hold.y + gd.sup[1] * s, hold.z + gd.sup[2] * s];
       const SR = [.235 * w, 0, 0], SL = [-.235 * w, 0, 0];
@@ -170,7 +171,7 @@
       T = armMesh;
       for (const [S, Tg, px] of [[SR, Rt, 1], [SL, Lt, -1]]) {
         const d = new THREE.Vector3(Tg[0] - S[0], Tg[1] - S[1], Tg[2] - S[2]), Ld = Math.min(d.length(), a + b - .005); d.normalize();
-        const x = (a * a - b * b + Ld * Ld) / (2 * Ld), h = Math.sqrt(Math.max(0, a * a - x * x)), pole = new THREE.Vector3(px * .55, -1, .25); pole.addScaledVector(d, -pole.dot(d)).normalize();
+        const x = (a * a - b * b + Ld * Ld) / (2 * Ld), h = Math.sqrt(Math.max(0, a * a - x * x)), pole = px > 0 ? new THREE.Vector3(.55, -1, .25) : new THREE.Vector3(-.9, -1, -.05); pole.addScaledVector(d, -pole.dot(d)).normalize();
         const E = [S[0] + d.x * x + pole.x * h, S[1] + d.y * x + pole.y * h, S[2] + d.z * x + pole.z * h], Hn = [S[0] + d.x * Ld, S[1] + d.y * Ld, S[2] + d.z * Ld];
         limb(S, E, .07, .058, M.suit); limb(E, Hn, .056, .044, M.suit); add(sph(.062, 10, 8), M.plate, E[0], E[1], E[2]).scale.set(1, 1, 1.05);   // upper arm, forearm, elbow pad
         const fa = new THREE.Vector3(Hn[0] - E[0], Hn[1] - E[1], Hn[2] - E[2]).normalize(), mid = [lp(E[0], Hn[0], .58), lp(E[1], Hn[1], .58), lp(E[2], Hn[2], .58)];
@@ -283,6 +284,12 @@
     root.traverse(o => { if (o.userData.isOL) o.visible = show; });
   }
   let agentWarmT = -1;
+  // how far a gun reaches back behind its hold (its stock, the back of its receiver): measured once on the gun as built
+  // (scale included) and kept on it, so pose() can keep the back end clear of the chest
+  function gunRear(gm) { if (gm.userData.rear != null) return; const prev = gm.parent; gm.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(gm.matrixWorld).invert(), sc = new THREE.Matrix4().makeScale(gm.scale.x, gm.scale.y, gm.scale.z), v = new THREE.Vector3(); let r = 0;
+    gm.traverse(o => { if (!o.isMesh || !o.geometry || o.userData.isOL || (o.material && o.material.transparent)) return; const P = o.geometry.attributes.position, mw = new THREE.Matrix4().multiplyMatrices(sc, new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld));
+      for (let i = 0; i < P.count; i += 2) { v.fromBufferAttribute(P, i).applyMatrix4(mw); if (v.y > -.2) r = Math.max(r, v.z); } });   // (not counting a magazine hanging low)
+    gm.userData.rear = r; }
   function updateAgent(f, dt) {
     let A = X.agents.get(f);
     if (!A || A.userData.op !== f.op) { if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); } A = agentModel(f); X.agents.set(f, A); }
@@ -291,12 +298,12 @@
     if ((U.gk !== fk || U.gsk !== fsk) && !U.deadArms) {   // a gun once built for this fighter is kept, outline and all: switching back to it costs nothing
       U.gsk = fsk; while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]);
       const GC = U.gunCache || (U.gunCache = new Map()), gkey = fk + '|' + fsk; let gm = GC.get(gkey);
-      if (!gm) { gm = gunModel(fk, { cast: false, flash: true, skin: fsk }); gm.scale.setScalar(1.08); gm.userData.cachedGun = true; GC.set(gkey, gm); if (GC.size > 6) GC.delete(GC.keys().next().value); }
+      if (!gm) { gm = gunModel(fk, { cast: false, flash: true, skin: fsk }); gm.scale.setScalar(1.08); gm.userData.cachedGun = true; gunRear(gm); GC.set(gkey, gm); if (GC.size > 6) GC.delete(GC.keys().next().value); }
       else { GC.delete(gkey); GC.set(gkey, gm); gm.traverse(o => { if (o.userData.isOL) o.visible = !!U.olOn; }); }
       U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
     // and the guns in its other slots are built ahead, one gun a frame across the whole field, so a swap or a buy never builds one mid-fight
     if (agentWarmT !== X.t && f.guns) for (const sl of [1, 2, 3]) { const k = f.guns[sl]; if (!k || !GUNS[k]) continue; const sk2 = skinFor(f, k) || '', GC = U.gunCache || (U.gunCache = new Map());
-      if (GC.has(k + '|' + sk2)) continue; agentWarmT = X.t; const g2 = gunModel(k, { cast: false, flash: true, skin: sk2 }); g2.scale.setScalar(1.08); g2.userData.cachedGun = true;
+      if (GC.has(k + '|' + sk2)) continue; agentWarmT = X.t; const g2 = gunModel(k, { cast: false, flash: true, skin: sk2 }); g2.scale.setScalar(1.08); g2.userData.cachedGun = true; gunRear(g2);
       g2.traverse(o => { if (o.isMesh && o.geometry && !(o.material && o.material.transparent)) olNormals(o.geometry); }); GC.set(k + '|' + sk2, g2); if (GC.size > 6) GC.delete(GC.keys().next().value); break; }
     A.visible = !M || duelOk(viewer(), f); A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;   // (a Duel Field hides those in it from everyone else, and everyone else from them)
     { const P = M ? me() : null, foeSide = !!P && f.team !== P.team, op = f.cloak > 0 && f.alive ? (foeSide ? .07 : .35) : 1; U.cop = lp(U.cop == null ? 1 : U.cop, op, Math.min(1, dt * 10));

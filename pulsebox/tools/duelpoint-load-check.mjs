@@ -11,7 +11,7 @@ async function open(tag) {
   await p.addInitScript(() => { Object.defineProperty(Document.prototype, 'pointerLockElement', { get() { return document.getElementById('cv'); } }); Element.prototype.requestPointerLock = function () {}; try { localStorage.setItem('pbx-mp-name', 'L' + Math.floor(Math.random() * 90 + 10)); } catch (e) {} });
   await p.goto('file://' + path.resolve('public/games/duelpoint.html'), { timeout: 120000 });
   await p.waitForFunction(() => typeof GAME !== 'undefined' && GAME.test && GAME.test.ready(), null, { timeout: 90000 }); await p.waitForTimeout(500);
-  await p.click('#bPlay'); await p.waitForTimeout(600); return p;
+  await p.click('#bPlay'); await p.evaluate(() => { GAME.test.UI.noSel = true; }); await p.waitForTimeout(600); return p;
 }
 const H = await open('host'), C = await open('friend');
 await H.evaluate(() => { GAME.test.openParty(); MP.create(); }); await H.waitForFunction(() => MP.online(), null, { timeout: 20000 });

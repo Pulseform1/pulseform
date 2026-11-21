@@ -12,7 +12,7 @@ async function open(tag) {
   p.on('pageerror', e => errs.push(tag + ': ' + e.message + ' @ ' + (e.stack || '').split('\n').slice(1, 3).join(' | ')));
   await p.addInitScript(() => { Object.defineProperty(Document.prototype, 'pointerLockElement', { get() { return document.getElementById('cv'); } }); Element.prototype.requestPointerLock = function () {}; try { localStorage.setItem('pbx-mp-name', 'Q' + Math.floor(Math.random() * 90 + 10)); } catch (e) {} });
   await p.goto(URL0, { timeout: 120000 }); await p.waitForFunction(() => typeof GAME !== 'undefined' && GAME.test && GAME.test.ready(), null, { timeout: 90000 }); await p.waitForTimeout(600);
-  await p.click('#bPlay'); await p.waitForTimeout(900); return p;
+  await p.click('#bPlay'); await p.evaluate(() => { GAME.test.UI.noSel = true; }); await p.waitForTimeout(900); return p;
 }
 const T = (p, fn, a) => p.evaluate(fn, a), wait = ms => new Promise(r => setTimeout(r, ms));
 const H = await open('host'), C = await open('friend');

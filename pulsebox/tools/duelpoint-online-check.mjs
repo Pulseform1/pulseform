@@ -17,7 +17,7 @@ async function open(tag, name) {
     window.__pings = 0; const s0 = WebSocket.prototype.send; WebSocket.prototype.send = function (d) { if (/mp-ping|mp-hb/.test(String(d))) window.__pings++; return s0.call(this, d); };
   }, name);
   await p.goto(URL0); await p.waitForFunction(() => typeof GAME !== 'undefined' && GAME.test && GAME.test.ready(), null, { timeout: 60000 }); await p.waitForTimeout(600);
-  await p.click('#bPlay'); await p.waitForTimeout(800);
+  await p.click('#bPlay'); await p.evaluate(() => { GAME.test.UI.noSel = true; }); await p.waitForTimeout(800);
   return p;
 }
 // a dropped connection may linger on the server unseen (it never closed); the game notices its silence within 7 s, so wait for states, not a fixed time

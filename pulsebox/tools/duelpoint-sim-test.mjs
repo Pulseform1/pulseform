@@ -226,7 +226,7 @@ function tagDefusePingChecks() {
 // the kill arrives from another device; a slide keeps your aim steadier than a run
 function firstToNovaSlideChecks() {
   let I = idle(); T.setInput(() => I); const was = T.CFG.win;
-  for (const w of [3, 4, 5, 6]) { T.CFG.win = w; T.seed(4); T.startMatch({ mode: 'bot', diff: 0, map: 0 }); T.skipLoad();
+  for (const w of [3, 4, 5, 6, 9, 11]) { T.CFG.win = w; T.seed(4); T.startMatch({ mode: 'bot', diff: 0, map: 0 }); T.skipLoad();
     const side = n => { T.startRound(n); return T.sideOf(T.me()); }, s1 = side(1), sHalf = side(w - 1), sNext = side(w);
     ok(T.WIN === w && T.HALF() === w - 1 && s1 === sHalf && sNext !== s1, `first to ${w}: you keep your side for ${w - 1} rounds, then attackers and defenders swap`, `${s1} … round ${w - 1} ${sHalf}, round ${w} ${sNext}`); }
   T.CFG.win = was;

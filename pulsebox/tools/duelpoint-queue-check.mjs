@@ -14,7 +14,7 @@ async function open(tag, name) {
   p.on('pageerror', e => errs.push(tag + ': ' + e.message));
   await p.addInitScript(n => { Object.defineProperty(Document.prototype, 'pointerLockElement', { get() { return document.getElementById('cv'); } }); Element.prototype.requestPointerLock = function () {}; try { localStorage.setItem('pbx-mp-name', n); } catch (e) {} }, name);
   await p.goto(URL0, { waitUntil: 'domcontentloaded', timeout: 120000 }); await p.waitForFunction(() => typeof GAME !== 'undefined' && GAME.test && GAME.test.ready(), null, { timeout: 120000 }); await p.waitForTimeout(500);
-  await p.click('#bPlay'); await p.waitForTimeout(600); return p;
+  await p.click('#bPlay'); await p.evaluate(() => { GAME.test.UI.noSel = true; }); await p.waitForTimeout(600); return p;
 }
 const st = p => p.evaluate(() => { const t = GAME.test, M = t.M; return { screen: t.screen, q: t.QUE.mode, found: !!t.QUE.found, online: MP.online(), code: MP.code, inMatch: !!(M && M.online && t.screen === 'play'), humans: M && M.online ? M.fs.filter(f => !f.bot && !f.isBot).length : 0, bots: M && M.online ? M.fs.filter(f => f.bot || f.isBot).length : 0, team: M && M.online ? M.fs[0].team : null, who: M && M.online ? M.fs.map(f => f.name + ':' + f.team + (f.net ? 'n' : '') + (f.bot ? 'b' : '')).join(' ') : '', size: M && M.online ? M.fs.length : 0 }; });
 // each device sees itself on side 0, so compare who is with whom: every device must agree, with n a side

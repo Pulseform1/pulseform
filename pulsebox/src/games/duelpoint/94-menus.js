@@ -187,7 +187,7 @@
   }
   function drawPlay(g, V, W, H, u) {
     const touch = isTouch(), t = performance.now() / 1000, mode = lobbyMode(), ranked = mode === 'ranked', online = mode === 'online', practice = mode === 'practice';
-    const L = V.x0 + 60 / pxPer() + 20 * u, R = V.x1 - 24 * u, T = V.y0 + 22 * u, B = V.y1 - 16 * u, mid = 640;
+    const L = V.x0 + 60 / pxPer() + 20 * u, R = V.x1 - 24 * u, T = V.y0 + 22 * u, B = V.y1 - 16 * u, fp = cl((R - L) * .25, 220 * u, 300 * u), fx = R - fp, mid = (L + fx - 20 * u) / 2;   // (fx: the friends column)
     { const gr = g.createRadialGradient(mid, (T + B) / 2, H * .15, mid, (T + B) / 2, W * .7); gr.addColorStop(0, 'rgba(7,9,13,.25)'); gr.addColorStop(1, 'rgba(7,9,13,.8)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); }
     // the kinds of match
     { g.font = `900 ${fitPx(g, 15 * u)}px ${FONT}`; const pad = 20 * u, ws = LOBBY_MODES.map(([, n]) => g.measureText(n).width + pad * 2), tot = ws.reduce((a, b) => a + b, 0); let x = mid - tot / 2; const ty = T + 12 * u;
@@ -201,7 +201,7 @@
     // the team
     const n = practice ? 1 : online ? (CFG.oq === 2 ? 2 : 1) : teamSize(CFG.size), stripH = practice ? 0 : tapH(44, 44), startH = tapH(62, 54);
     const startY = B - startH, stripY = startY - 14 * u - stripH, cy0 = T + 70 * u, cy1 = (practice ? startY : stripY) - 16 * u;
-    let ch = Math.min(470 * u, cy1 - cy0), cw = ch * .45; const gap = 16 * u, maxW = R - L; if (n * cw + (n - 1) * gap > maxW) { cw = (maxW - (n - 1) * gap) / n; ch = Math.min(ch, cw / .45); }
+    let ch = Math.min(470 * u, cy1 - cy0), cw = ch * .45; const gap = 16 * u, maxW = fx - 20 * u - L; if (n * cw + (n - 1) * gap > maxW) { cw = (maxW - (n - 1) * gap) / n; ch = Math.min(ch, cw / .45); }
     const cy = cy0 + (cy1 - cy0 - ch) / 2, order = [0, 1, -1, 2, -2].slice(0, n), art = menuHero(), mc = myCard(), diffN = CFG.diff === 'auto' ? (ranked ? DIFF[botLevelFor(rankStrength(CFG.size))].n : rankName(STATS.rating)) : DIFF[CFG.diff].n;
     order.forEach((slot, i) => { const x = mid - cw / 2 + slot * (cw + gap);
       if (i === 0) lobbyCard(g, x, cy, cw, ch, u, { me: true, op: CFG.op, art, name: (MP.name || 'You').toUpperCase(), title: mc.title, lv: mc.lv, banner: mc.banner, hover: 'CHANGE OPERATIVE', fn: () => openSelect(null) }, t);
@@ -212,27 +212,50 @@
         : [['TEAM SIZE', [[1, '1V1'], [2, '2V2'], [3, '3V3'], [4, '4V4'], [5, '5V5']], teamSize(CFG.size), v => { CFG.size = v; }],
           ...(ranked ? [] : [['ROUNDS', MATCH_LENS.map(k => [k, 'FIRST TO ' + k]), winOf(CFG.win), v => { CFG.win = v; }]]),
           ['BOTS', [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }]];
-      const pw = Math.min(176 * u, (maxW - 560 * u) / items.length), pg = 10 * u, tot = items.length * pw + (items.length - 1) * pg; let x = mid - tot / 2;
+      const pw = Math.min(176 * u, (maxW - 20 * u) / items.length - 10 * u), pg = 10 * u, tot = items.length * pw + (items.length - 1) * pg; let x = mid - tot / 2;
       for (const [nm, opts, cur, set] of items) { stepPill(g, x, stripY, pw, stripH, u, nm, opts, cur, set); x += pw + pg; } }
     // START
-    { const sw = Math.min(380 * u, maxW - 560 * u), sx = mid - sw / 2, searching = online && QUE.mode;
+    { const sw = Math.min(400 * u, maxW - 40 * u), sx = mid - sw / 2, searching = online && QUE.mode;
       const label = searching ? 'CANCEL' : 'START', sub = searching ? `SEARCHING ${QUE.mode}V${QUE.mode}  ·  ${Math.floor((performance.now() - QUE.t0) / 60000)}:${String(Math.floor((performance.now() - QUE.t0) / 1000) % 60).padStart(2, '0')}`
         : practice ? 'THE RANGE' : online ? `${CFG.oq === 2 ? '2V2' : '1V1'}  ·  ONLINE` : `${LOBBY_MODES.find(m => m[0] === mode)[1]}  ·  ${vsLabel(CFG.size)}  ·  ${diffN.toUpperCase()} BOTS`;
       const go = () => { if (searching) return queueStop(); if (practice) return play({ mode: 'range' }); if (online) return queueStart(CFG.oq === 2 ? 2 : 1); menuPlay(teamSize(CFG.size)); };
       btn(g, sx, startY, sw, startH, label, go, { on: true, fill: searching ? GOLD : FOE, solid: true, col: INK, px: Math.min(30 * u, startH * .44), sub }); zones[zones.length - 1].prime = true;
       g.save(); g.beginPath(); if (g.roundRect) g.roundRect(sx, startY, sw, startH, Math.min(10, startH / 4)); else g.rect(sx, startY, sw, startH); g.clip();
       const k = (t * .45) % 1.6 - .3, shx = sx + k * sw, gr = g.createLinearGradient(shx - 50 * u, 0, shx + 50 * u, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, 'rgba(255,255,255,.22)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(sx, startY, sw, startH); g.restore(); }
-    // the corners: today and the pass on the left; your rank and friends on the right
-    const sw0 = Math.min(380 * u, maxW - 560 * u), cwL = Math.min(250 * u, mid - sw0 / 2 - 14 * u - L), cwR = Math.min(250 * u, R - (mid + sw0 / 2) - 14 * u), cwid = Math.min(cwL, cwR), ch2 = Math.max(startH + 14 * u + stripH, 56 * u + tapH(36, 40)), by = B - ch2;
-    if (cwid > 150 * u) {
-      { const P = myPass(), tier = passTier(), frac = tier >= PASS_TIERS ? 1 : (P.xp % PASS_XP) / PASS_XP, se = seasonNow(), C = myChallenges().filter(c => !c.weekly).slice(0, 3), hot = zone(L, by, cwid, ch2, () => { UI.panel = 'pass'; click(); });
-        rr(g, L, by, cwid, ch2, 10, 'rgba(12,16,22,.8)', hot ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.12)', 1.5);
-        tx(g, `SEASON ${se.n}  ·  TIER ${tier}`, L + 12 * u, by + 16 * u, 10.5 * u, GOLD, 'left', 900); rr(g, L + 12 * u, by + 27 * u, cwid - 24 * u, 5 * u, 2.5 * u, 'rgba(255,255,255,.08)'); if (frac > 0) rr(g, L + 12 * u, by + 27 * u, Math.max(5 * u, (cwid - 24 * u) * frac), 5 * u, 2.5 * u, GOLD);
-        const rh2 = (touch ? 21 : 17) * u, rows = Math.max(0, Math.min(C.length, Math.floor((ch2 - 44 * u) / rh2))); C.slice(0, rows).forEach((c, i) => { const yy = by + 48 * u + i * rh2; g.font = `700 ${fitPx(g, 10 * u)}px ${FONT}`; const cnt = `${c.at}/${c.n}`; g.font = `800 ${fitPx(g, 9.5 * u)}px ${FONT}`; const cntW = g.measureText(cnt).width; g.font = `700 ${fitPx(g, 10 * u)}px ${FONT}`; let s2 = (c.done ? '✓ ' : '') + c.words; const room = cwid - 24 * u - cntW - 10 * u; if (g.measureText(s2).width > room) { while (s2.length > 4 && g.measureText(s2 + '…').width > room) s2 = s2.slice(0, -1); s2 += '…'; } tx(g, s2, L + 12 * u, yy, 10 * u, c.done ? DIM : '#c9cfd8', 'left', 700); tx(g, `${c.at}/${c.n}`, L + cwid - 12 * u, yy, 9.5 * u, DIM, 'right', 800); }); }
-      { const rx = R - cwid, S = rankedOf(CFG.size), pl = placed(S), hr = zone(rx, by, cwid, ch2 - tapH(36, 40) - 10 * u, () => { UI.rankScale = teamSize(CFG.size); click(); });
-        rr(g, rx, by, cwid, ch2, 10, 'rgba(12,16,22,.8)', hr ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.12)', 1.5); tierBadge(g, rx + 26 * u, by + 26 * u, 14 * u, S.rv, pl);
-        tx(g, 'RANK  ' + vsLabel(CFG.size), rx + 48 * u, by + 18 * u, 10 * u, DIM, 'left', 900); tx(g, pl ? rankLabel(S.rv).toUpperCase() : `PLACING ${S.n}/${PLACE_N}`, rx + 48 * u, by + 35 * u, 13 * u, pl ? rankOf(S.rv).T.col : BONE, 'left', 900);
-        const bh = tapH(36, 40); btn(g, rx + 10 * u, by + ch2 - bh - 10 * u, cwid - 20 * u, bh, MP.online() ? 'BACK TO PARTY  ·  ' + MP.code : 'PLAY WITH FRIENDS', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 12 * u }); } }
+    // the right-hand column: friends (most of it), your rank, the season and today's challenges
+    { const colH = B - T + 6 * u, y0 = T - 6 * u, rkH = 50 * u, seH = Math.min(112 * u, Math.max(70 * u, colH * .2)), gp = 10 * u, frH = colH - rkH - seH - gp * 2;
+      // friends
+      { const on = MP.online(), ps = on ? MP.players() : [], hot = zone(fx, y0, fp, frH, () => openParty());
+        g.save(); rr(g, fx, y0, fp, frH, 12, null, null); g.clip(); g.fillStyle = 'rgba(10,22,24,.9)'; g.fillRect(fx, y0, fp, frH);
+        { const gr = g.createRadialGradient(fx + fp * .5, y0 + frH, 10, fx + fp * .5, y0 + frH * .7, frH * .9); gr.addColorStop(0, 'rgba(53,224,200,.32)'); gr.addColorStop(1, 'rgba(53,224,200,0)'); g.fillStyle = gr; g.fillRect(fx, y0, fp, frH); }
+        g.globalAlpha = .06; g.fillStyle = YOU; for (let i = -2; i < 6; i++) { const bx = fx + i * 60 * u + (t * 8 * u) % (60 * u); g.beginPath(); g.moveTo(bx, y0 + frH); g.lineTo(bx + frH * .5, y0); g.lineTo(bx + frH * .5 + 18 * u, y0); g.lineTo(bx + 18 * u, y0 + frH); g.closePath(); g.fill(); } g.globalAlpha = 1; g.restore();
+        rr(g, fx, y0, fp, frH, 12, null, hot ? YOU : 'rgba(53,224,200,.45)', hot ? 2.5 : 1.5); g.fillStyle = YOU; g.fillRect(fx + 12, y0, fp - 24, 3 * u);
+        let yy = y0 + 28 * u; tx(g, 'PLAY WITH FRIENDS', fx + 16 * u, yy, Math.min(19 * u, fp * .072), BONE, 'left', 900); yy += 20 * u;
+        { g.font = `800 ${fitPx(g, 10.5 * u)}px ${FONT}`; const sub = on ? [`YOUR PARTY  ·  CODE ${MP.code}`, `CODE ${MP.code}`] : ['Up to 10 players  ·  your teams, your rules', 'Up to 10 players', '1v1 to 5v5'], s3 = sub.find(q => g.measureText(q).width <= fp - 32 * u) || sub[sub.length - 1]; tx(g, s3, fx + 16 * u, yy, 10.5 * u, on ? GOLD : '#9fd8cf', 'left', 800); } yy += 18 * u;
+        // the seats: you, your friends, and the empty ones waiting
+        const bh1 = tapH(48, 46), bh2 = tapH(36, 40), btnH = on ? bh1 : bh1 + 8 * u + bh2, seatRoom = y0 + frH - 14 * u - btnH - 12 * u - yy, sz = Math.min(46 * u, (fp - 32 * u - 4 * 8 * u) / 5), rows = seatRoom >= sz * 2 + 10 * u ? 2 : seatRoom >= sz ? 1 : 0;
+        if (rows) { const sy = yy + (seatRoom - (rows * sz + (rows - 1) * 10 * u)) / 2; for (let i = 0; i < rows * 5; i++) { const cx = fx + 16 * u + (i % 5) * (sz + 8 * u) + sz / 2, cyy = sy + Math.floor(i / 5) * (sz + 10 * u) + sz / 2, p = on ? ps[i] : i === 0 ? { me: true } : null;
+          g.beginPath(); g.arc(cx, cyy, sz / 2, 0, TAU); g.fillStyle = p ? 'rgba(14,18,26,.95)' : 'rgba(255,255,255,.04)'; g.fill(); g.strokeStyle = p ? YOU : 'rgba(159,216,207,.35)'; g.lineWidth = 1.5; if (!p) g.setLineDash([4, 4]); g.stroke(); g.setLineDash([]);
+          if (p) { const op = p.me || (on && p.id === MP.id) ? CFG.op : (PARTY.prof.get(p.id) || {}).op || 'vex'; g.save(); g.beginPath(); g.arc(cx, cyy, sz / 2 - 2, 0, TAU); g.clip(); portraitTile(g, op, cx - sz / 2, cyy - sz / 2, sz, sz, { r: 0 }); g.restore();
+            if (on && p.id === MP.hostId) tx(g, '★', cx + sz * .36, cyy - sz * .34, 10 * u, GOLD, 'center', 900); }
+          else tx(g, '+', cx, cyy + 1, sz * .42, 'rgba(159,216,207,.7)', 'center', 700); } }
+        // what to do
+        let by2 = y0 + frH - 14 * u - btnH;
+        if (on) btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'OPEN YOUR PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: `${ps.length} IN  ·  ${PARTY.set.sites === 1 ? 'ONE SITE' : 'TWO SITES'}  ·  ${vsLabel(PARTY.set.size)}` });
+        else { btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'CREATE A PARTY', () => { openParty(); if (MP.name && MP.name !== 'You') MP.create(); }, { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: 'invite with a code or a link' }); by2 += bh1 + 8 * u;
+          btn(g, fx + 14 * u, by2, fp - 28 * u, bh2, 'JOIN WITH A CODE', () => openParty(), { px: Math.min(13 * u, fp * .05), edge: 'rgba(53,224,200,.6)' }); } }
+      // your rank at this size
+      { const ry = y0 + frH + gp, S = rankedOf(CFG.size), pl = placed(S), hr = zone(fx, ry, fp, rkH, () => { UI.rankScale = teamSize(CFG.size); click(); });
+        rr(g, fx, ry, fp, rkH, 10, 'rgba(12,16,22,.85)', hr ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.12)', 1.5); tierBadge(g, fx + 26 * u, ry + rkH / 2, 14 * u, S.rv, pl);
+        tx(g, 'RANK  ' + vsLabel(CFG.size), fx + 48 * u, ry + 17 * u, 10 * u, DIM, 'left', 900); tx(g, pl ? rankLabel(S.rv).toUpperCase() : `PLACING ${S.n}/${PLACE_N}`, fx + 48 * u, ry + 34 * u, 13 * u, pl ? rankOf(S.rv).T.col : BONE, 'left', 900);
+        tx(g, hr ? 'LADDER →' : 'LADDER', fx + fp - 12 * u, ry + rkH / 2, 10 * u, hr ? BONE : DIM, 'right', 900); }
+      // the season and today
+      { const sy0 = y0 + frH + gp + rkH + gp, P = myPass(), tier = passTier(), frac = tier >= PASS_TIERS ? 1 : (P.xp % PASS_XP) / PASS_XP, se = seasonNow(), C = myChallenges().filter(c => !c.weekly).slice(0, 3), hot = zone(fx, sy0, fp, seH, () => { UI.panel = 'pass'; click(); });
+        rr(g, fx, sy0, fp, seH, 10, 'rgba(12,16,22,.85)', hot ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.12)', 1.5);
+        tx(g, `SEASON ${se.n}  ·  TIER ${tier}`, fx + 12 * u, sy0 + 16 * u, 10.5 * u, GOLD, 'left', 900); rr(g, fx + 12 * u, sy0 + 27 * u, fp - 24 * u, 5 * u, 2.5 * u, 'rgba(255,255,255,.08)'); if (frac > 0) rr(g, fx + 12 * u, sy0 + 27 * u, Math.max(5 * u, (fp - 24 * u) * frac), 5 * u, 2.5 * u, GOLD);
+        const rh2 = (touch ? 21 : 17) * u, rws = Math.max(0, Math.min(C.length, Math.floor((seH - 44 * u) / rh2)));
+        C.slice(0, rws).forEach((c, i) => { const yy = sy0 + 48 * u + i * rh2, cnt = `${c.at}/${c.n}`; g.font = `800 ${fitPx(g, 9.5 * u)}px ${FONT}`; const cntW = g.measureText(cnt).width; g.font = `700 ${fitPx(g, 10 * u)}px ${FONT}`; let s2 = (c.done ? '✓ ' : '') + c.words; const room = fp - 24 * u - cntW - 10 * u;
+          if (g.measureText(s2).width > room) { while (s2.length > 4 && g.measureText(s2 + '…').width > room) s2 = s2.slice(0, -1); s2 += '…'; } tx(g, s2, fx + 12 * u, yy, 10 * u, c.done ? DIM : '#c9cfd8', 'left', 700); tx(g, cnt, fx + fp - 12 * u, yy, 9.5 * u, DIM, 'right', 800); }); } }
     if (!touch) tx(g, 'TIP  ·  ' + MENU_TIPS[Math.floor(t / 8) % MENU_TIPS.length], mid, B + 9 * u, 9.5 * u, DIM, 'center', 700);
   }
   function drawSettings(g, V, W, u) {

@@ -121,11 +121,13 @@
     for (const t of [0, 1]) for (let n = seats.filter(s => s.team === t).length; n < size; n++) bot(t);
     return seats;
   }
+  function beginOnline(cfg, roster) { startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff, win: cfg.win, ranked: !!cfg.ranked }); emit('matchStart'); }
   Object.assign(MP.opts, {
     max: 10, min: 2, bots: 0, solo: false, onClose: () => { if (screen !== 'menu') toMenu(); }, sub: 'Create a room and send your friends the code. Two to ten players.',
     config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: pick(mapPool(CFG.sites)), sites: CFG.sites, win: winOf(CFG.win), team: CFG.team, botDiff: CFG.diff === 'auto' ? diffFor(STATS.rating).i : CFG.diff,
       names: [...BOT_NAMES].sort(() => R() - .5), ops: [...Object.keys(OPS)].sort(() => R() - .5) }),
-    onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff, win: cfg.win, ranked: !!cfg.ranked }); emit('matchStart'); },
+    // a party's match opens on agent select first (95-select), everyone picking together; the match starts from there
+    onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; if (cfg.teams && !cfg.noSel && typeof openOnlineSelect === 'function') openOnlineSelect(cfg, roster); else beginOnline(cfg, roster); },
     onMsg: netMsg,
     // someone's connection dropped: they get DC_WAIT seconds to come back (their game rejoins the room by itself) before
     // they count as gone. Gone: in a duel you win; in a team game they drop out. If the host dropped, the room's next
