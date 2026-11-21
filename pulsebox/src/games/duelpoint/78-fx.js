@@ -167,22 +167,34 @@
   /* ---- reload and inspect, choreographed: keyframes [q, dx, dy, dz, rx, ry, rz] over the action (0..1), eased between,
      added on top of where the gun is held. One track per kind of weapon. */
   const VKF = {
+    /* a reload is held where you can watch it: the gun out in front, tipped muzzle-up and rolled so the magazine well
+       faces you, low and to the left of centre, clear of the HUD; then rolled the other way to show the hand on the
+       charging handle or the slide */
     reload: {
-      rifle: [[0, 0, 0, 0, 0, 0, 0], [.1, -.06, .085, -.02, .1, .32, -.58], [.2, -.065, .07, -.01, .06, .34, -.66], [.3, -.07, .1, -.03, .14, .3, -.72], [.6, -.07, .1, -.03, .12, .3, -.7], [.74, -.06, .12, -.02, .1, .28, -.62], [.79, -.055, .15, -.04, .2, .28, -.6], [.86, -.03, .07, 0, .05, .05, .32], [.93, -.02, .05, .02, .02, -.06, .38], [1, 0, 0, 0, 0, 0, 0]],
-      sidearm: [[0, 0, 0, 0, 0, 0, 0], [.12, -.04, .07, -.01, .05, .36, -.52], [.24, -.045, .085, 0, .2, .36, -.56], [.6, -.045, .07, -.01, .05, .34, -.5], [.74, -.04, .09, -.02, .1, .3, -.45], [.79, -.035, .11, -.03, .2, .3, -.42], [.88, -.01, .05, .03, -.25, .05, .1], [1, 0, 0, 0, 0, 0, 0]],
-      shotgun: [[0, 0, 0, 0, 0, 0, 0], [.1, -.05, .07, -.02, .05, .3, -1.15], [.85, -.05, .075, -.02, .05, .3, -1.15], [.92, -.01, .03, .05, .05, .05, -.1], [1, 0, 0, 0, 0, 0, 0]],
-      sniper: [[0, 0, 0, 0, 0, 0, 0], [.12, -.07, .09, -.02, .12, .22, .48], [.5, -.07, .095, -.02, .12, .22, .5], [.78, -.06, .12, -.03, .2, .2, .45], [.86, -.03, .06, 0, .05, .05, .62], [.95, -.01, .03, .01, .02, 0, .2], [1, 0, 0, 0, 0, 0, 0]],
+      rifle: [[0, 0, 0, 0, 0, 0, 0], [.1, -.09, .11, -.14, .3, .35, -.6], [.19, -.09, .096, -.14, .27, .35, -.64], [.26, -.09, .11, -.14, .3, .35, -.6], [.68, -.09, .11, -.14, .3, .35, -.6], [.76, -.09, .125, -.14, .33, .35, -.58], [.83, -.06, .09, -.1, .18, .3, .12], [.92, -.06, .08, -.09, .16, .3, .16], [1, 0, 0, 0, 0, 0, 0]],
+      sidearm: [[0, 0, 0, 0, 0, 0, 0], [.1, -.057, .1, -.124, .45, .3, -.5], [.19, -.057, .088, -.124, .42, .3, -.54], [.26, -.057, .1, -.124, .45, .3, -.5], [.68, -.057, .1, -.124, .45, .3, -.5], [.76, -.057, .118, -.124, .5, .3, -.48], [.84, -.04, .075, -.1, .22, .5, .12], [.93, -.03, .06, -.08, .18, .45, .1], [1, 0, 0, 0, 0, 0, 0]],
+      shotgun: [[0, 0, 0, 0, 0, 0, 0], [.1, -.09, .12, -.14, .32, .35, -.78], [.84, -.09, .125, -.14, .32, .35, -.78], [.92, -.03, .05, -.06, .08, .1, -.1], [1, 0, 0, 0, 0, 0, 0]],
+      sniper: [[0, 0, 0, 0, 0, 0, 0], [.1, -.1, .1, -.2, .25, .3, -.5], [.19, -.1, .088, -.2, .22, .3, -.54], [.26, -.1, .1, -.2, .25, .3, -.5], [.68, -.1, .1, -.2, .25, .3, -.5], [.76, -.1, .115, -.2, .28, .3, -.48], [.84, -.05, .06, -.12, .12, .15, .2], [.95, -.02, .03, -.04, .04, .05, .12], [1, 0, 0, 0, 0, 0, 0]],
+      stub: [[0, 0, 0, 0, 0, 0, 0], [.12, -.06, .1, -.12, .28, .3, -.45], [.74, -.06, .1, -.12, .28, .3, -.45], [.84, -.04, .08, -.07, .12, .2, -.15], [.92, -.02, .05, -.02, .2, .05, 0], [1, 0, 0, 0, 0, 0, 0]],
+      revolver: [[0, 0, 0, 0, 0, 0, 0], [.1, -.05, .1, -.12, .5, .25, -.35], [.3, -.05, .11, -.12, .62, .25, -.35], [.44, -.05, .095, -.12, .32, .3, -.42], [.78, -.05, .095, -.12, .32, .3, -.42], [.88, -.03, .08, -.08, .12, .2, .3], [.95, -.01, .04, -.02, .05, .05, -.1], [1, 0, 0, 0, 0, 0, 0]],
     },
     inspect: {
-      rifle: [[0, 0, 0, 0, 0, 0, 0], [.14, -.04, .045, -.09, .05, .95, .28], [.3, -.04, .05, -.1, -.02, 1.08, .4], [.44, -.03, .06, -.1, -.1, .3, -1.25], [.6, -.03, .06, -.1, -.16, .05, -1.42], [.72, -.01, .075, -.07, .55, .12, -.05], [.86, 0, .055, -.05, .45, .02, .05], [1, 0, 0, 0, 0, 0, 0]],
+      rifle: [[0, 0, 0, 0, 0, 0, 0], [.14, -.04, .045, -.09, .05, .95, .28], [.3, -.04, .05, -.1, -.02, 1.08, .4], [.44, .01, .05, -.14, -.1, .3, -.95], [.6, .01, .05, -.14, -.16, .08, -1.05], [.72, -.01, .075, -.07, .55, .12, -.05], [.86, 0, .055, -.05, .45, .02, .05], [1, 0, 0, 0, 0, 0, 0]],
       sidearm: [[0, 0, 0, 0, 0, 0, 0], [.14, -.05, .05, -.08, .05, .9, .3], [.3, -.05, .055, -.09, 0, 1.05, .35], [.48, -.06, .07, -.08, .12, -.5, -.5], [.64, -.06, .07, -.08, -.02, -.7, -.62], [.78, -.02, .08, -.06, .5, .05, -.2], [.9, 0, .04, -.03, .3, 0, 0], [1, 0, 0, 0, 0, 0, 0]],
       sniper: [[0, 0, 0, 0, 0, 0, 0], [.16, -.05, .05, -.08, .04, .85, .25], [.36, -.05, .06, -.1, -.05, 1, .35], [.56, -.04, .07, -.1, .5, .3, .1], [.72, -.03, .065, -.08, .55, -.1, -.2], [.88, -.01, .04, -.04, .3, 0, 0], [1, 0, 0, 0, 0, 0, 0]],
-      shotgun: [[0, 0, 0, 0, 0, 0, 0], [.16, -.04, .05, -.09, .05, .9, .3], [.34, -.04, .055, -.1, -.05, 1.05, .45], [.52, -.03, .06, -.09, -.1, .3, -1.2], [.68, -.02, .065, -.08, .45, .1, -.1], [.86, 0, .04, -.04, .3, 0, 0], [1, 0, 0, 0, 0, 0, 0]],
-      melee: [[0, 0, 0, 0, 0, 0, 0], [.12, -.02, .03, -.04, .2, .6, .4], [.3, -.02, .03, -.04, .2, .6, .4 - TAU * 2], [.42, -.02, .18, -.06, .1, .4, -TAU * 2.5], [.54, -.02, .03, -.04, .25, .7, -TAU * 3], [.74, 0, .05, -.05, .6, .1, -TAU * 3], [.9, 0, .02, -.02, .2, 0, -TAU * 3], [1, 0, 0, 0, 0, 0, -TAU * 3]],
+      shotgun: [[0, 0, 0, 0, 0, 0, 0], [.16, -.04, .05, -.09, .05, .9, .3], [.34, -.04, .055, -.1, -.05, 1.05, .45], [.52, .01, .05, -.13, -.1, .3, -.95], [.68, -.02, .065, -.08, .45, .1, -.1], [.86, 0, .04, -.04, .3, 0, 0], [1, 0, 0, 0, 0, 0, 0]],
+      melee: [[0, 0, 0, 0, 0, 0, 0], [.14, -.05, .05, -.05, .15, .55, .45], [.28, -.05, .06, -.06, .1, .65, .5], [.62, -.05, .07, -.06, .1, .5, .3], [.78, -.03, .06, -.05, .45, .15, -.25], [.9, -.01, .03, -.02, .2, .05, -.05], [1, 0, 0, 0, 0, 0, 0]],
     },
   };
   const INSP_D = 3.4;
-  const vkfKind = (G, kind) => G.melee ? (kind === 'inspect' ? 'melee' : 'rifle') : G.cat === 'Sidearm' ? 'sidearm' : G.cat === 'Shotgun' ? 'shotgun' : G.cat === 'Sniper' ? 'sniper' : 'rifle';
+  // the knife's swings, [q, dx, dy, dz, rx, ry, rz] on top of how it is held: a slash from the right, one from the left, the stab
+  const KNIFE = {
+    r: [[0, 0, 0, 0, 0, 0, 0], [.18, .09, .07, .04, -.25, -.55, .55], [.42, -.24, .07, -.16, 0, 1.0, -.85], [.6, -.3, .02, -.1, .1, 1.2, -1.0], [1, 0, 0, 0, 0, 0, 0]],
+    l: [[0, 0, 0, 0, 0, 0, 0], [.18, -.2, .08, 0, -.15, .95, -.5], [.42, .08, .08, -.16, -.05, -.35, .6], [.6, .12, .03, -.1, .05, -.5, .8], [1, 0, 0, 0, 0, 0, 0]],
+    stab: [[0, 0, 0, 0, 0, 0, 0], [.3, .05, -.03, .13, -.05, -.15, .1], [.45, -.08, .06, -.22, -.12, -.22, .25], [.62, -.08, .055, -.2, -.12, -.22, .25], [1, 0, 0, 0, 0, 0, 0]],
+  };
+  function kfAt(K, q) { if (q <= 0) return K[0].slice(1); for (let i = 1; i < K.length; i++) if (q <= K[i][0]) { const a = K[i - 1], b = K[i], u = (q - a[0]) / (b[0] - a[0]), e = u * u * (3 - 2 * u); return a.slice(1).map((v, j) => v + (b[j + 1] - v) * e); } return K[K.length - 1].slice(1); }
+  const vkfKind = (G, kind) => G.melee ? (kind === 'inspect' ? 'melee' : 'rifle') : kind === 'reload' && G.k === 'stub' ? 'stub' : kind === 'reload' && G.k === 'hammer' ? 'revolver' : kind === 'reload' && G.k === 'thresher' ? 'rifle' : G.cat === 'Sidearm' ? 'sidearm' : G.cat === 'Shotgun' ? 'shotgun' : G.cat === 'Sniper' ? 'sniper' : 'rifle';
   function vkf(kind, G, q) {
     const K = VKF[kind][vkfKind(G, kind)] || VKF[kind].rifle; if (q <= 0) return K[0].slice(1);
     for (let i = 1; i < K.length; i++) if (q <= K[i][0]) { const a = K[i - 1], b = K[i], u = (q - a[0]) / (b[0] - a[0]), e = u * u * (3 - 2 * u); return a.slice(1).map((v, j) => v + (b[j + 1] - v) * e); }
@@ -253,13 +265,14 @@
     { const bo = X.viewGun.userData.bore; X.mflash.position.set(0, bo ? bo.y : .025, -(X.viewGun.userData.len || .5) - .03); } X.mflash.visible = X.flashT > 0 && !G.melee; X.mflash.rotation.z = Math.random() * 3; X.mflash.scale.setScalar(G.cat === 'Sniper' || G.cat === 'Shotgun' ? 1.5 : G.cat === 'Sidearm' ? .8 : 1);
     viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / INSP_D : -1 });
     { const pb = X.viewGun.userData.parts.boltL; if (pb) { X.view.rotation.z += pb.rotation.z * .14; X.view.position.y -= pb.rotation.z * .012; } }   // working a bolt rolls the rifle
-    X.viewGun.rotation.z = G.melee && X.drawT > 0 ? (1 - sm(cl(dq, 0, 1))) * TAU : 0;   // the knife flips into the hand
+    // the knife turns over in the fingers as it is drawn, and twice when you look it over: the blade rolls about its own
+    // length while the hand and arm stay where they are (the hand is turned back by the same amount)
+    { const rh = X.viewGun.userData.parts.rhand, iqk = X.inspT > 0 ? 1 - X.inspT / INSP_D : -1, spin = !G.melee ? 0 : X.drawT > 0 ? (1 - sm(cl(dq, 0, 1))) * TAU : iqk > 0 ? sm(cl((iqk - .28) / .34, 0, 1)) * TAU * 2 : 0;
+      X.viewGun.rotation.z = spin; if (rh && G.melee) rh.rotation.z = -spin; }
     if (G.melee) { X.view.rotation.x += .28; X.view.rotation.y += .5; X.view.rotation.z -= .2; }
-    if (P.swing) {
-      const d = P.swing.heavy ? .55 : .32, q = Math.min(1, P.swing.t / d);
-      if (P.swing.heavy) { const wind = q < .35 ? q / .35 : 1, th = q < .35 ? 0 : Math.sin((q - .35) / .65 * Math.PI); X.view.position.z += wind * .06 * (1 - th) - th * .16; X.view.position.y += .03 * wind; X.view.position.x -= .06 * th; X.view.rotation.x += .25 * wind - .35 * th; }
-      else { const sd = P.swing.side, a = q < .22 ? q / .22 : 1, sw = q < .22 ? 0 : Math.sin(Math.min(1, (q - .22) / .5) * Math.PI / 2), k = a * (q > .72 ? 1 - (q - .72) / .28 : 1);
-        X.view.position.x += k * (sd > 0 ? lp(.06, -.22, sw) : lp(-.2, .08, sw)); X.view.position.y += k * (.05 - .07 * sw); X.view.position.z -= k * .04; X.view.rotation.y += sd * k * lp(-.5, .8, sw); X.view.rotation.z += sd * k * lp(.7, -.6, sw); X.view.rotation.x -= k * .15; }
+    if (P.swing) {   // a slash winds up to one side, cuts across and follows through; a stab draws back to the hip and drives straight in
+      const d = P.swing.heavy ? .55 : .32, q = Math.min(1, P.swing.t / d), k = kfAt(P.swing.heavy ? KNIFE.stab : P.swing.side > 0 ? KNIFE.r : KNIFE.l, q);
+      X.view.position.x += k[0]; X.view.position.y += k[1]; X.view.position.z += k[2]; X.view.rotation.x += k[3]; X.view.rotation.y += k[4]; X.view.rotation.z += k[5];
     }
     if (X.inspT > 0) { if (P.reloadT > 0 || P.kick > 0) X.inspT = 0; else X.inspT -= dt; }
     if (X.inspT > 0) { const k = vkf('inspect', G, 1 - X.inspT / INSP_D); X.view.position.x += k[0]; X.view.position.y += k[1]; X.view.position.z += k[2]; X.view.rotation.x += k[3]; X.view.rotation.y += k[4]; X.view.rotation.z += k[5]; }
@@ -311,7 +324,7 @@
     X.renderer.render(X.scene, cam);
     if (X.view.visible) {   // your gun, over the world, with its own depth
       X.vroot.position.copy(cam.position); X.vroot.quaternion.copy(cam.quaternion); updateCasings(dt); updateDrops(dt); X.vmuzzle.intensity = X.flashT > 0 ? 3 : 0;
-      const ac = X.renderer.autoClear; X.renderer.autoClear = false; X.renderer.clearDepth(); X.renderer.render(X.vscene, cam); X.renderer.autoClear = ac;
+      aimArms(X.viewGun); const ac = X.renderer.autoClear; X.renderer.autoClear = false; X.renderer.clearDepth(); X.renderer.render(X.vscene, cam); X.renderer.autoClear = ac;
     }
   }
 

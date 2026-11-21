@@ -352,7 +352,7 @@
       if (o.backup !== false) { rbox(.02, .014, .012, m.dark, 0, top + .016, hz + .03, .002); rbox(.004, .012, .004, m.dark, 0, top + .028, hz + .03, .001); rbox(.022, .014, .014, m.dark, 0, top + .016, rb - .03, .002); }
       if (o.counter) counter(.03, .06, hw);
       if (o.laser) { rbox(.02, .024, .052, m.poly, -.038, BY, hz + .09, .004); disc(.007, -.038, BY + .004, hz + .0635, m.red); disc(.005, -.038, BY - .006, hz + .0635, m.lamp); rbox(.012, .01, .02, m.dark, -.03, BY, hz + .09, .002); }
-      ACC = 0; Object.assign(A, { fam: 'long', rf, rb, top, hw, hz, sb: rb });
+      ACC = 0; Object.assign(A, { fam: 'long', rf, rb, top, hw, hz, sb: rb, sideHandle: o.sideHandle ? 1 : 0 });
       // charging handle (moves when you rack it) and the magazine (comes out when you reload)
       T = parts.bolt = group(0, 0, 0); if (o.sideHandle) { rbox(.012, .012, .03, m.steel, -hw - .004, .032, .0, .003); rbox(.016, .01, .01, o.lower || m.fin, -hw - .012, .032, -.012, .003); } else { rbox(.034, .008, .022, m.dark, 0, top + .003, rb - .006, .002); rbox(.056, .008, .01, m.dark, 0, top + .003, rb + .002, .002); }
       T = parts.mag = group(0, -.058, -.127);
@@ -431,11 +431,11 @@
     else if (k === 'stub') {   // sawn-off double: two short barrels that break open, a wooden forend and a bird's-head grip
       len = .36; port = null; sight = .06; Object.assign(A, { fam: 'stub', by: .032 });
       side([[-.07, .052], [.04, .052], ['q', .062, .046, .058, .02], [.048, -.004], [-.07, -.004]], .058, m.metal, 0, .008);
-      side([[-.075, .016], [-.24, .016], ['q', -.252, .004, -.238, -.02], [-.075, -.024]], .05, m.fin, 0, .01);
       side([[.004, -.002], [.05, .004], ['q', .1, -.026, .094, -.096], ['q', .09, -.126, .062, -.12], ['q', .034, -.114, .03, -.07], [.018, -.03]], .036, m.fin, 0, .012);
       guardLoop(-.035, -.006); for (const sx of [-.011, .011]) side([[.03, .05], [.044, .072], [.052, .066], [.042, .05]], .008, m.steel, sx, .002); pin(.02, -.05, .058, .005);
       decal('STUB', '12 GA · 2 RD', .07, .0175, .0292, .03, -.008);
       T = parts.brk = group(0, .02, -.06);
+      side([[-.015, -.004], [-.18, -.004], ['q', -.192, -.016, -.178, -.04], [-.015, -.044]], .05, m.fin, 0, .01);   // the forend, on the barrels (it tips down with them)
       for (const sx of [-.0148, .0148]) { lathe([[-.3, .0098], [-.3, .0152], [-.29, .0158], [-.02, .0158], [0, .0145], [0, .008]], m.steel, .012, sx, 16); disc(.0098, sx, .012, -.3005, m.hole); } setBore(.032, -.36, .031);
       rbox(.06, .012, .022, m.dark, 0, .012, -.283, .004); rbox(.005, .007, .262, m.metal, 0, .0295, -.14, .002); add(new THREE.SphereGeometry(.0036, 8, 6), m.brass, 0, .0355, -.29);
       T = G; sup = [0, -.034, -.16];   // both hands: the left one cups the wooden forend under the barrels
@@ -523,31 +523,37 @@
       const HM = gmats.hands[op.col] || (gmats.hands[op.col] = (() => { const gl = m.glove.clone(), sl = m.sleeve.clone(), c = new THREE.Color(op.col);
         gl.color.set('#6a707c').lerp(c, .16).convertSRGBToLinear(); sl.color.set('#262c38').lerp(c, .42).convertSRGBToLinear(); gl.name = sl.name = 'hand'; return { glove: gl, sleeve: sl }; })());
       const arm = (par, x, y, z, rx, ry, l) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(rx, ry, 0); par.add(g); const was = T; T = g;
-        lathe([[-.03, .03], [-.03, .037], [.0, .04], [.02, .043], [.03, .046], [l, .056], [l, .02]], HM.sleeve, 0, 0, 14); lathe([[.012, .0445], [.012, .0475], [.04, .0485], [.04, .046]], band, 0, 0, 14); T = was; };
+        lathe([[-.03, .03], [-.03, .037], [.0, .04], [.02, .043], [.03, .046], [l, .056], [l, .02]], HM.sleeve, 0, 0, 14); lathe([[.012, .0445], [.012, .0475], [.04, .0485], [.04, .046]], band, 0, 0, 14); T = was; return g; };
       const fingers = (n, x, y0, z, w, dy, mat = HM.glove) => { for (let i = 0; i < n; i++) rbox(w, .0155, .019, mat, x, y0 - i * dy, z, .0065); };
-      const RH = T = group(grip[0], grip[1], grip[2], k === 'knife' ? 0 : -.25);
-      if (k === 'knife') { rbox(.013, .05, .074, HM.glove, .019, -.002, 0, .005); rbox(.013, .04, .07, HM.glove, -.018, -.006, 0, .005); for (let i = 0; i < 4; i++) rbox(.042, .017, .0165, HM.glove, 0, -.024, -.027 + i * .018, .0065); rbox(.012, .013, .04, HM.glove, -.011, .02, -.022, .005); rbox(.006, .024, .04, band, .0265, -.004, .012, .002); arm(T, .006, -.02, .045, 1.1, -.3, .42); }
-      else { rbox(.014, .074, .054, HM.glove, .0215, 0, .002, .006); rbox(.046, .072, .016, HM.glove, .002, 0, .03, .006); fingers(4, -.002, .027, -.029, .05, .0178); rbox(.014, .018, .05, HM.glove, -.0215, .032, -.012, .006); rbox(.0065, .03, .034, band, .0292, .004, .008, .002); rbox(.02, .012, .03, m.rubber, .024, .03, .004, .003); arm(T, .01, -.036, .034, .7, -.2, .42); }
+      const RH = parts.rhand = T = group(grip[0], grip[1], grip[2], k === 'knife' ? 0 : -.25);
+      if (k === 'knife') { rbox(.013, .05, .074, HM.glove, .019, -.002, 0, .005); rbox(.013, .04, .07, HM.glove, -.018, -.006, 0, .005); for (let i = 0; i < 4; i++) rbox(.042, .017, .0165, HM.glove, 0, -.024, -.027 + i * .018, .0065); rbox(.012, .013, .04, HM.glove, -.011, .02, -.022, .005); rbox(.006, .024, .04, band, .0265, -.004, .012, .002); parts.rarm = arm(T, .006, -.02, .045, 1.1, -.3, .42); }
+      else { rbox(.014, .074, .054, HM.glove, .0215, 0, .002, .006); rbox(.046, .072, .016, HM.glove, .002, 0, .03, .006); fingers(4, -.002, .027, -.029, .05, .0178); rbox(.014, .018, .05, HM.glove, -.0215, .032, -.012, .006); rbox(.0065, .03, .034, band, .0292, .004, .008, .002); rbox(.02, .012, .03, m.rubber, .024, .03, .004, .003); parts.rarm = arm(T, .012, -.036, .034, .7, .1, .42); }   // (the trigger arm: up from your right)
       if (k !== 'knife' && pistolHold) {
         // a pistol in both hands: the support hand closes round the grip, in the grip's own frame so it follows its angle.
         // Palm flat on the left panel, heel of the hand behind, four fingers wrapped over the trigger hand's in front of
         // the grip, the thumb laid forward along the frame
-        const LH = parts.lhand = new THREE.Group(); LH.userData.p0 = LH.position.clone(); RH.add(LH); T = LH;
+        const LH = parts.lhand = group(grip[0], grip[1], grip[2], -.25); LH.userData.wrap = 1; T = LH;   // (in the grip's own tilted frame, like the trigger hand)
         rbox(.013, .066, .058, HM.glove, -.0305, -.014, -.004, .006);   // palm
         rbox(.022, .046, .02, HM.glove, -.025, -.022, .026, .006);   // heel
         fingers(4, .002, .016, -.047, .058, .0172);   // fingers over the trigger hand's
         rbox(.012, .015, .052, HM.glove, -.0305, .034, -.026, .005);   // thumb, forward along the frame
         rbox(.0065, .028, .03, band, -.0385, -.03, .016, .002);
-        arm(T, -.034, -.046, .03, .75, .5, .38);
+        parts.larm = arm(T, -.066, -.046, .04, .6, -.6, .4);   // the support arm reaches in from your left side (its cuff clear of the grip)
+        if (k === 'hammer') { const sl = new THREE.Group(); sl.position.set(.012, .03, -.03); sl.rotation.x = Math.PI / 2 + .25; T.add(sl); const was = T; T = sl; for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; const c = vtube(.0052, -.016, .016, m.brass, Math.cos(a) * .014, Math.sin(a) * .014); c.userData.live = true; } vtube(.006, -.004, .02, m.dark, 0, 0).userData.live = true; T = was; sl.visible = false; parts.hshell = sl; }
       } else if (k !== 'knife') {
         T = parts.lhand = group(sup[0], sup[1], sup[2], pistolHold ? .3 : 0);
-        rbox(.056, .018, .08, HM.glove, 0, 0, 0, .007); rbox(.014, .044, .07, HM.glove, -.032, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, HM.glove, -.034, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, HM.glove, .032, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
-        arm(T, -.02, -.012, .034, .5, .55, pistolHold ? .38 : .55);
+        // a left hand, palm up under the gun: the thumb up the near (left) side, the fingers wrapped up the far side, set
+        // wide enough to clear a handguard or a pump; its forearm reaches in from your left side
+        rbox(.064, .018, .08, HM.glove, 0, 0, 0, .007); rbox(.014, .044, .07, HM.glove, .037, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, HM.glove, .039, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, HM.glove, -.037, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
+        parts.larm = arm(T, -.046, -.04, .024, .42, -.75, .55);   // (set low and to the left, so the cuff stays clear of what the hand holds and of the gun behind it)
         if (k === 'breaker') { const sh = vtube(.0095, -.021, .021, m.shell, 0, 0); sh.rotation.x = Math.PI / 2; sh.position.set(-.012, .03, 0); sh.userData.live = true; sh.visible = false; parts.hshell = sh; }
+        if (k === 'stub') { const sl = new THREE.Group(); sl.position.set(-.004, .034, -.01); T.add(sl); const was = T; T = sl; for (const sx of [-.011, .011]) { const sh = vtube(.0095, -.021, .021, gmats('breaker').shell, 0, 0); sh.rotation.x = Math.PI / 2; sh.position.set(sx, 0, 0); sh.userData.live = true; } T = was; sl.visible = false; parts.hshell = sl; }
       }
       T = G;
     }
     bake(G, cast);
+    if (parts.mag) { G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(parts.mag); parts.mag.userData.bot = bb.min.y - parts.mag.position.y; parts.mag.userData.hw = (bb.max.x - bb.min.x) / 2; }
+    if (parts.bolt && A.fam === 'long' && !parts.boltL) parts.bolt.userData.grab = A.sideHandle ? [-(A.hw || .022) - .012, .032, -.006, .058] : [0, (A.top || .06) + .003, (A.rb || .1), (A.hw || .022) + .054];
     G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.line = line; G.userData.bore = bore;
     if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, bore ? bore.y : .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
     return G;
@@ -604,8 +610,9 @@
     const U = Gm.userData, pp = U.parts, A = P.ammo[G.k] || { mag: 0 };
     const st = P.fireT > 0 ? 60 / G.rpm - P.fireT : 9, shotT = st >= 0 ? st : 9, r = P.reloadT > 0 ? 1 - P.reloadT / G.rel : -1, win = (a, b) => cl((r - a) / (b - a), 0, 1);
     const dq = ex.draw == null ? -1 : ex.draw, rack = dq < 0 ? 0 : Math.sin(sm(dq) * Math.PI), iq = ex.insp == null ? -1 : ex.insp, ib = iq < 0 ? 0 : sm(cl(Math.sin(cl((iq - .3) / .45, 0, 1) * Math.PI) * 1.4, 0, 1));
-    if (pp.slide) pp.slide.position.z = Math.max(shotT < .08 ? (1 - shotT / .08) * .03 : 0, A.mag === 0 && r < 0 ? .03 : 0, rack * .032, ib * .012, r > .86 ? Math.sin(win(.86, .97) * Math.PI) * .03 : 0);
-    if (pp.bolt) pp.bolt.position.z = (shotT < .05 ? (1 - shotT / .05) * .012 : 0) + (r > .82 ? Math.sin(win(.82, .97) * Math.PI) * .05 : 0) + rack * .05;
+    if (r < 0) P._dry = A.mag === 0; else if (r < .02) P._dry = P._dry || A.mag === 0;
+    if (pp.slide) pp.slide.position.z = Math.max(shotT < .08 ? (1 - shotT / .08) * .03 : 0, A.mag === 0 && r < 0 ? .03 : 0, ib * .012, r >= 0 && P._dry ? (1 - sm(win(.86, .9))) * .03 : 0);
+    if (pp.bolt) pp.bolt.position.z = (shotT < .05 ? (1 - shotT / .05) * .012 : 0) + (r > .85 ? Math.sin(win(.85, .95) * Math.PI) * .05 : 0) + rack * .05;
     if (pp.pump) { const s = cl((shotT - .16) / .36, 0, 1); pp.pump.position.z = Math.max(Math.sin(s * Math.PI) * .085, r > .85 ? Math.sin(win(.85, 1) * Math.PI) * .085 : 0, rack * .085, ib * .04); }
     if (pp.boltL) { const s = cl((shotT - (G.k === 'kite' ? .12 : .28)) / (G.k === 'kite' ? .45 : .8), 0, 1), s2 = r > .8 ? win(.8, 1) : 0, s3 = dq < 0 ? 0 : cl(dq, 0, .999), q = Math.max(s, s2, s3), lift = q <= 0 || q >= 1 ? 0 : q < .2 ? q / .2 : q > .8 ? (1 - q) / .2 : 1, back = q < .2 || q > .8 ? 0 : Math.sin((q - .2) / .6 * Math.PI);
       pp.boltL.rotation.z = Math.max(sm(cl(lift, 0, 1)), ib) * 1.1; pp.boltL.position.z = pp.boltL.userData.z0 + back * .075; }
@@ -620,29 +627,69 @@
       if (pp.trig) pp.trig.rotation.x = -(shotT < .08 ? 1 : shotT < .14 ? 1 - (shotT - .08) / .06 : 0) * .38;
     }
     if (pp.rims) {   // spent brass is punched out, fresh rounds go in
-      const out = r >= .2 && r < .45; if (fp && out && !P._droppedR) { P._droppedR = 1; dropMag(pp.rims); } if (r < .18) P._droppedR = 0; pp.rims.visible = !out;
+      const out = r >= .2 && r < .62; if (fp && out && !P._droppedR) { P._droppedR = 1; dropMag(pp.rims); } if (r < .18) P._droppedR = 0; pp.rims.visible = !out;
     }
-    let gone = false;
-    if (pp.mag) {   // out a little, gone (dropped), a fresh one rises from below and is pushed home
+    /* A reload, in order: the support hand leaves the gun and takes hold of the magazine; pulls it and lets it fall; goes
+       down for a fresh one and brings it up; pushes it home; then works the charging handle or the slide, and goes back to
+       where it holds the gun. Each kind of gun keeps to the same beats with its own parts (shells, a cylinder, barrels). */
+    let gone = false, out = 0;
+    if (pp.mag) {
       const y0 = pp.mag.userData.p0.y, z0 = pp.mag.userData.p0.z, tilt0 = G.cat === 'Sidearm' ? -.25 : G.k === 'hornet' || G.k === 'gnat' ? .05 : 0;
-      let out = 0; if (r >= 0) out = r < .22 ? sm(win(0, .22)) * .09 : r < .42 ? .36 : r < .78 ? lp(.36, 0, sm(win(.42, .78))) : 0;
-      out = Math.max(out, ib * .05); gone = r >= .22 && r < .42;
-      if (fp && gone && !P._dropped) { P._dropped = 1; dropMag(pp.mag); } if (r < .2) P._dropped = 0;
+      if (r >= 0) out = r < .13 ? 0 : r < .2 ? sm(win(.13, .2)) * .1 : r < .42 ? .42 : r < .7 ? lp(.42, .035, sm(win(.42, .7))) : r < .76 ? lp(.035, 0, win(.7, .76)) : 0;
+      out = Math.max(out, ib * .05); gone = r >= .2 && r < .42;
+      if (fp && gone && !P._dropped) { P._dropped = 1; dropMag(pp.mag); } if (r < .18) P._dropped = 0;
       pp.mag.visible = !gone; pp.mag.position.y = y0 - out; pp.mag.position.z = z0 + Math.min(out, .09) * .4; pp.mag.rotation.x = tilt0 + Math.min(out, .09) * 3;
     }
-    if (pp.lhand && G.cat !== 'Sidearm') {
-      // where it rests: on the handguard, or riding the pump (the reload moves it from there and back)
-      const p0 = pp.lhand.userData.p0, pz = p0.z + (pp.pump ? pp.pump.position.z : 0); let h = 0, tx = p0.x, ty = p0.y, tz = pz;
-      if (G.k === 'breaker') { h = r < 0 ? 0 : sm(win(.05, .2)) * (1 - sm(win(.85, 1))); const ph = (r * 5) % 1; tx = -.005; ty = -.075 + Math.sin(ph * Math.PI) * .03; tz = -.06 - ph * .02; if (pp.hshell) pp.hshell.visible = h > .5 && ph < .55; }
-      else if (pp.mag && r >= 0) { h = sm(win(.12, .22)) * (1 - sm(win(.82, .92))); const mp = pp.mag.position; tx = mp.x - .01; ty = mp.y - .06 + (r > .76 && r < .84 ? Math.sin(win(.76, .84) * Math.PI) * .03 : 0); tz = mp.z; }
-      if (pp.hshell && G.k !== 'breaker') pp.hshell.visible = false; else if (pp.hshell && r < 0) pp.hshell.visible = false;
-      pp.lhand.position.set(lp(p0.x, tx, h), lp(p0.y, ty, h), lp(pz, tz, h));
+    if (pp.lhand) {
+      /* The support hand never passes through the gun: each move is a route of straight legs that takes it clear first
+         (down off the handguard, so the fingers come out from round it), then round the gun's left side or underneath,
+         then in to where it is going. OUT is how far left is clear of any gun with the hand's own width to spare. */
+      const LH = pp.lhand, p0 = LH.userData.p0, S = [p0.x, p0.y, p0.z + (pp.pump ? pp.pump.position.z : 0)], OUT = -.115; let shell = false;
+      if (pp.brk) { const a = pp.brk.rotation.x, bp = pp.brk.userData.p0, dy = S[1] - bp.y, dz = S[2] - bp.z; S[1] = bp.y + dy * Math.cos(a) - dz * Math.sin(a); S[2] = bp.z + dy * Math.sin(a) + dz * Math.cos(a); LH.rotation.x = a; }   // (a break-open: the hand on the forend goes down with the barrels)
+      let pos = S;
+      const along = (pts, h) => { const n = pts.length - 1, f = cl(h, 0, 1) * n, i = Math.min(n - 1, Math.floor(f)), u = f - i, a = pts[i], c = pts[i + 1]; return [lp(a[0], c[0], u), lp(a[1], c[1], u), lp(a[2], c[2], u)]; };
+      const under = (A2, B2) => { const low = Math.min(A2[1], B2[1]) - .06; return [A2, [A2[0], low, A2[2]], [B2[0], low, B2[2]], B2]; };   // both ends below the gun: dip, cross, rise
+      const round = (A2, B2) => [A2, [A2[0], A2[1] - .05, A2[2]], [OUT, A2[1] - .05, A2[2]], [OUT, B2[1], B2[2]], B2];   // from under the gun to its side or top: down, out to the left, along, in
+      const rev = pts => pts.slice().reverse(), fetch = (a, c, d, e) => sm(win(a, c)) * (1 - sm(win(d, e)));
+      const gb = pp.bolt && pp.bolt.userData.grab, Hh = gb ? [gb[0] - gb[3], gb[1] - .045, gb[2] + .005 + pp.bolt.position.z] : null;
+      if (r >= 0 && LH.userData.wrap && pp.mag) {   // a pistol: the hand slides down the grip's own line onto the magazine (its fingers pass in front of the grip, never through it), then back up into its hold
+        const d = (.075 + out) * fetch(.03, .12, .78, .87); pos = [p0.x - .004 * Math.min(1, d / .075), p0.y - d * .969, p0.z + d * .247];
+      } else if (r >= 0 && LH.userData.wrap && pp.cyl) {   // a revolver: out to the left and up under the open cylinder, away below for a ring of fresh rounds, back to drop them in
+        const c = pp.cyl.position, T2 = [c.x - .03, c.y - .058 + (r > .56 && r < .66 ? Math.sin(win(.56, .66) * Math.PI) * .012 : 0), c.z + .02], rt = [S, [S[0] - .078, S[1] - .03, S[2]], [T2[0] - .048, T2[1] - .03, T2[2]], T2];   // (straight out to the left first: its fingers come away along the front of the grip, under the trigger guard)
+        pos = r < .16 ? along(rt, sm(win(.05, .16))) : r < .84 ? along([T2, [T2[0] - .02, T2[1] - .32, T2[2] + .05]], fetch(.26, .36, .48, .58)) : along(rev(rt), sm(win(.84, .95))); shell = r > .44 && r < .63;
+      } else if (r >= 0 && G.k === 'stub') {   // a break-open: round the left of the gun to above the open breech with two shells, thumbed in one after the other
+        const push = r > .58 && r < .72 ? Math.abs(Math.sin(win(.58, .72) * Math.PI * 2)) : 0, T2 = [-.04, .092 - push * .012, -.005 - push * .03], rt = round(S, T2);
+        pos = r < .34 ? along(rt, sm(win(.25, .34))) : r < .72 ? along([T2, [OUT, T2[1], T2[2]], [OUT, T2[1] - .38, T2[2] + .05]], fetch(.34, .42, .46, .56)) : along(rev(rt), sm(win(.72, .8))); shell = r > .44 && r < .68; LH.rotation.x = pp.brk.rotation.x * (1 - fetch(.25, .34, .72, .8));   // (level while it loads)
+      } else if (r >= 0 && G.k === 'breaker') {   // a tube magazine: shells thumbed in one at a time, underneath, just ahead of the trigger guard
+        const ph = (r * 5) % 1, T2 = [-.004, -.09 + Math.sin(ph * Math.PI) * .028, -.128 - ph * .02], rt = under(S, T2);
+        pos = r < .2 ? along(rt, sm(win(.05, .2))) : r < .85 ? T2 : along(rev(rt), sm(win(.85, 1))); shell = r > .12 && r < .84 && ph < .55;
+      } else if (r >= 0 && pp.mag) {   // a box magazine: under its base to pull it and to push the fresh one home; then round the left of the receiver to the charging handle
+        const mp = pp.mag.position, bot = pp.mag.userData.bot || -.1, slim = (pp.mag.userData.hw || .02) < .026, Mg = [mp.x - .004, mp.y + bot - (slim ? .013 : .058) + (r > .76 && r < .84 ? Math.sin(win(.76, .84) * Math.PI) * .02 : 0), mp.z + .004];
+        if (r < .12) pos = along(under(S, Mg), sm(win(.03, .12))); else if (r < .77) pos = Mg;
+        else if (Hh) pos = r < .85 ? along([Mg, [Mg[0], Mg[1] - .06, Mg[2]], [OUT, Mg[1] - .06, Mg[2]], [OUT, Hh[1], Hh[2]], Hh], sm(win(.77, .85))) : r < .95 ? Hh : along(rev(round(S, Hh)), sm(win(.95, 1)));
+        else pos = along(rev(under(S, Mg)), sm(win(.77, .87)));
+      }
+      // drawing a long gun: the same hand chambers it (beside the receiver, on the charging handle) and settles into its hold
+      if (r < 0 && dq >= 0 && Hh) pos = dq < .22 ? along(round(S, Hh), sm(cl(dq / .22, 0, 1))) : dq < .72 ? Hh : along(rev(round(S, Hh)), sm(cl((dq - .72) / .28, 0, 1)));
+      // looking the gun over: the support hand lets go (straight off the gun first) and drops out of the way while it is turned about
+      if (r < 0 && iq > 0) { const hi = sm(cl(iq / .12, 0, 1)) * (1 - sm(cl((iq - .84) / .14, 0, 1))), off = LH.userData.wrap ? [S[0] - .012, S[1] - .13 * .969, S[2] + .13 * .247] : [S[0], S[1] - .13, S[2]]; pos = along([S, off, [off[0] - .08, off[1] - .3, off[2] + .12]], hi); }
+      if (pp.hshell) pp.hshell.visible = shell;
+      LH.position.set(pos[0], pos[1], pos[2]);
     }
     // the skin's own effects: its reload (and a Mythic's inspect) on your gun, in the store, and a lighter one on a rival's
     if (U.line) skinFx(Gm, P, G, r, iq, dt, fp, fp || !!ex.show);
     if (pp.counter && pp.counter.last !== A.mag) { const { c, t } = pp.counter, g = c.getContext('2d'); pp.counter.last = A.mag; g.fillStyle = '#05080c'; g.fillRect(0, 0, 64, 44); const low = A.mag <= G.mag * .25; g.fillStyle = low ? WARN : GUNS[G.k].col; g.font = '700 30px "Chakra Petch", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(A.mag).padStart(2, '0'), 32, 20); g.fillRect(6, 38, 52 * A.mag / G.mag, 3); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(6 + 52 * A.mag / G.mag, 38, 52 * (1 - A.mag / G.mag), 3); t.needsUpdate = true; }
   }
   function viewAnim(P, G, dt, ex) { animParts(X.viewGun, P, G, dt, true, ex); }
+  /* Your forearms point at where your elbows are: down to your left and down to your right, just behind the view, however
+     the gun is turned and wherever the hands have gone. So the support arm always reaches in from your left side, steeply
+     when its hand is close to you, and neither arm swings about like part of the gun when it is tipped over to reload. */
+  const ELBOW = [[-.2, -.5, -.05], [.32, -.5, .05]]; let _ae = null, _az = null;
+  function aimArms(Gm) {
+    const pp = Gm && Gm.userData.parts; if (!pp || !X || !X.vroot) return; if (!_ae) { _ae = new THREE.Vector3(); _az = new THREE.Vector3(0, 0, 1); }
+    X.vroot.updateMatrixWorld(true);
+    [pp.larm, pp.rarm].forEach((arm, i) => { if (!arm) return; _ae.set(ELBOW[i][0], ELBOW[i][1], ELBOW[i][2]); X.vroot.localToWorld(_ae); arm.parent.worldToLocal(_ae); _ae.sub(arm.position); if (_ae.lengthSq() > 1e-6) arm.quaternion.setFromUnitVectors(_az, _ae.normalize()); });
+  }
   // the spent magazine: a copy falls away and tumbles out of view
   function dropMag(mag) {
     if (!X.drops) X.drops = []; X.vroot.updateMatrixWorld(true);
