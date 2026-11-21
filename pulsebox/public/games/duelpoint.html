@@ -3436,13 +3436,26 @@ const GAME = {
     // the beams and lamps under the roofs, merged into one mesh per material; each lamp throws a pool of warm light on the floor
     // (painted on, not a real light: a real one per lamp made every surface in view pay for twenty lights)
     const RG = new THREE.Group(), pools = []; W.add(RG);
-    for (const rf of ROOFS) {
-      const x0 = rf.r[0] * CS, z0 = rf.r[1] * CS, x1 = (rf.r[2] + 1) * CS, z1 = (rf.r[3] + 1) * CS;
-      flat('roof', x0, z0, x1, z1, rf.h, -1, 2, [.8, .8, .8, .8]); flat('roof', x0, z0 - CS, x1, z1 + CS, rf.h + .3, 1, 2, [1, 1, 1, 1]);
-      for (const xx of [x0, x1]) quad('roof', [[xx, rf.h, z0], [xx, rf.h, z1], [xx, rf.h + .3, z1], [xx, rf.h + .3, z0]], [xx === x0 ? -1 : 1, 0, 0], [[0, 0], [3, 0], [3, .15], [0, .15]], [.9, .9, .9, .9]);
-      for (let x = x0 + 2; x < x1; x += 4) {
-        const beam = new THREE.Mesh(new THREE.BoxGeometry(.22, .26, z1 - z0), beamM); beam.position.set(x, rf.h - .13, (z0 + z1) / 2); RG.add(beam);
-        if ((x - x0 - 2) % 8 === 0) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(.5, .08, .2), lampM); lamp.position.set(x, rf.h - .31, (z0 + z1) / 2); RG.add(lamp); pools.push([x, (z0 + z1) / 2]); }
+    // A covered area is often drawn as several roof pieces side by side: they are joined into one ceiling, cell by cell,
+    // with an edge only where the ceiling ends and every beam running the same way (across the area's short span).
+    const RH = new Float32Array(NC); for (const rf of ROOFS) for (let j = rf.r[1]; j <= rf.r[3]; j++) for (let i = rf.r[0]; i <= rf.r[2]; i++) { const k = idx(i, j); if (k >= 0) RH[k] = rf.h; }
+    const seen = new Uint8Array(NC);
+    for (let k0 = 0; k0 < NC; k0++) {
+      if (!RH[k0] || seen[k0]) continue; const h = RH[k0], cells = [k0]; seen[k0] = 1; let i0 = 1e9, i1 = -1, j0 = 1e9, j1 = -1;
+      for (let q = 0; q < cells.length; q++) { const k = cells[q], i = k % GW, j = Math.floor(k / GW); i0 = Math.min(i0, i); i1 = Math.max(i1, i); j0 = Math.min(j0, j); j1 = Math.max(j1, j);
+        for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(i + di, j + dj); if (nk >= 0 && !seen[nk] && RH[nk] === h) { seen[nk] = 1; cells.push(nk); } } }
+      const alongX = i1 - i0 >= j1 - j0;   // beams stand every 2 cells along the long way, each spanning the short way
+      for (const k of cells) {
+        const i = k % GW, j = Math.floor(k / GW), x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS;
+        flat('roof', x0, z0, x1, z1, h, -1, 2, [.8, .8, .8, .8]); flat('roof', x0, z0, x1, z1, h + .3, 1, 2, [1, 1, 1, 1]);
+        const edge = (di, dj) => { const nk = idx(i + di, j + dj); return nk < 0 || RH[nk] !== h; };
+        if (edge(-1, 0)) quad('roof', [[x0, h, z0], [x0, h, z1], [x0, h + .3, z1], [x0, h + .3, z0]], [-1, 0, 0], [[0, 0], [.5, 0], [.5, .15], [0, .15]], [.9, .9, .9, .9]);
+        if (edge(1, 0)) quad('roof', [[x1, h, z1], [x1, h, z0], [x1, h + .3, z0], [x1, h + .3, z1]], [1, 0, 0], [[0, 0], [.5, 0], [.5, .15], [0, .15]], [.9, .9, .9, .9]);
+        if (edge(0, -1)) quad('roof', [[x1, h, z0], [x0, h, z0], [x0, h + .3, z0], [x1, h + .3, z0]], [0, 0, -1], [[0, 0], [.5, 0], [.5, .15], [0, .15]], [.9, .9, .9, .9]);
+        if (edge(0, 1)) quad('roof', [[x0, h, z1], [x1, h, z1], [x1, h + .3, z1], [x0, h + .3, z1]], [0, 0, 1], [[0, 0], [.5, 0], [.5, .15], [0, .15]], [.9, .9, .9, .9]);
+        const n = alongX ? i - i0 : j - j0; if (n % 2) continue;
+        const beam = new THREE.Mesh(alongX ? new THREE.BoxGeometry(.22, .26, CS) : new THREE.BoxGeometry(CS, .26, .22), beamM); beam.position.set(alongX ? x1 : (x0 + x1) / 2, h - .13, alongX ? (z0 + z1) / 2 : z1); RG.add(beam);
+        if (n % 4 === 0 && (alongX ? j === Math.round((j0 + j1) / 2) : i === Math.round((i0 + i1) / 2))) { const lamp = new THREE.Mesh(alongX ? new THREE.BoxGeometry(.5, .08, .2) : new THREE.BoxGeometry(.2, .08, .5), lampM); const lx = alongX ? x1 : (x0 + x1) / 2, lz = alongX ? (z0 + z1) / 2 : z1; lamp.position.set(lx, h - .31, lz); RG.add(lamp); pools.push([lx, lz]); }
       }
     }
     bake(RG, false);
@@ -8248,7 +8261,8 @@ const GAME = {
     if (c === 'KeyB' && canBuy()) return openArmory(!UI.armory);
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
-    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyC') readyAb(P, 'c'); else if (c === 'KeyQ') readyAb(P, 'q'); else if (c === 'KeyE') readyAb(P, 'e'); else if (c === 'KeyX') readyAb(P, 'x');   // ready it (the key again puts it away); a click uses it else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) startInspect(P);
+    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyC') readyAb(P, 'c'); else if (c === 'KeyQ') readyAb(P, 'q'); else if (c === 'KeyE') readyAb(P, 'e'); else if (c === 'KeyX') readyAb(P, 'x');   // ready it (the key again puts it away); a click uses it
+    else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) startInspect(P);
     else if (c === 'KeyT') dropHeld(P); else if (c === 'KeyH') dropCharge(P); else if (c === 'KeyJ') ping(P);   // drop the gun in your hand, or the charge, for a teammate
   }
   if (typeof document !== 'undefined') {

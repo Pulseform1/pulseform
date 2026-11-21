@@ -80,7 +80,8 @@
     if (c === 'KeyB' && canBuy()) return openArmory(!UI.armory);
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
-    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyC') readyAb(P, 'c'); else if (c === 'KeyQ') readyAb(P, 'q'); else if (c === 'KeyE') readyAb(P, 'e'); else if (c === 'KeyX') readyAb(P, 'x');   // ready it (the key again puts it away); a click uses it else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) startInspect(P);
+    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyC') readyAb(P, 'c'); else if (c === 'KeyQ') readyAb(P, 'q'); else if (c === 'KeyE') readyAb(P, 'e'); else if (c === 'KeyX') readyAb(P, 'x');   // ready it (the key again puts it away); a click uses it
+    else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) startInspect(P);
     else if (c === 'KeyT') dropHeld(P); else if (c === 'KeyH') dropCharge(P); else if (c === 'KeyJ') ping(P);   // drop the gun in your hand, or the charge, for a teammate
   }
   if (typeof document !== 'undefined') {
