@@ -264,7 +264,8 @@
 
   // once a frame: pulse the pads, run the belts, move the gates, crack and drop the walls, and step the life
   function mechFrame(dt) {
-    const Z = X.mech; if (!Z || !M) return; Z.t += dt; const T = Z.t;
+    const Z = X.mech; if (!Z) return; Z.t += dt; const T = Z.t;
+    if (!M) { for (const fn of Z.life) fn(T, dt); return; }   // behind the menus and agent select the world still lives: ships at sea, birds, planes (until they run they all sit at the origin, in each other)
     if (Z.windT) Z.windT.value = T;
     Z.tps.forEach((p, i) => { const s = 1 + Math.sin(T * 3 + i) * .06; p.ring.scale.setScalar(s); p.colm.material.opacity = .12 + Math.sin(T * 2.2 + i) * .05; p.halo.position.y = .3 + ((T * .6 + i * .3) % 1) * 2.6; p.halo.material.opacity = .8 * (1 - ((T * .6 + i * .3) % 1)); p.out.rotation.z = -T * .8; });
     Z.pads.forEach((p, i) => { p.base.rotation.z = T * 1.5; p.arrow.material.opacity = .55 + Math.sin(T * 6 + i) * .35; p.lift.material.opacity = .08 + Math.max(0, Math.sin(T * 3 + i)) * .1; });
