@@ -103,7 +103,7 @@
   function drawStore(g, V, W, u) {
     const items = dailyStore(), left = storeLeft(), hh = Math.floor(left / 3600000), mm = Math.floor(left / 60000) % 60, ss = Math.floor(left / 1000) % 60, x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 96 * u;
     tx(g, 'STORE', x0, V.y0 + 46 * u, 40 * u, BONE, 'left', 900); tx(g, `New skins in ${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`, x0 + 4 * u, V.y0 + 78 * u, 13 * u, DIM, 'left', 700);
-    coinTag(g, V.x1 - 386 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 250 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'CODE', enterCode, { px: 13 * u }); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'LOCKER', () => { UI.panel = 'locker'; SH.show = null; }, { px: 13 * u });
+    coinTag(g, V.x1 - 506 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 370 * u, V.y0 + 28 * u, 110 * u, 36 * u, wheelReady() ? 'DAILY SPIN ●' : 'DAILY SPIN', openWheel, { px: 13 * u, col: wheelReady() ? GOLD : BONE, edge: wheelReady() ? GOLD : null }); btn(g, V.x1 - 250 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'CODE', enterCode, { px: 13 * u }); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'LOCKER', () => { UI.panel = 'locker'; SH.show = null; }, { px: 13 * u });
     if (SH.msg && performance.now() - SH.msg.t0 < 3200 && !SH.show) tx(g, SH.msg.s, V.x1 - 20 * u, V.y0 + 82 * u, 14 * u, SH.msg.good ? YOU : WARN, 'right', 800);
     const gw = V.x1 - x0 - 40 * u, gh = V.y1 - top - 70 * u, fw = gw * .35, cols = 4, gap = 12 * u, gx = x0 + fw + 16 * u, cw = (gw - fw - 16 * u - (cols - 1) * gap) / cols, ch = (gh - gap) / 2;
     paragonCard(g, items[0], x0, top, fw, gh, u, left);

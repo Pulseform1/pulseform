@@ -6813,6 +6813,7 @@ const GAME = {
     else tone(o, 660, .2, 'triangle', .1, 330);
   });
   // a skin unlocked: a fanfare that grows with the rarity
+  cue('wheelTick', () => { if (canHear()) tone(outFor(null), 1500, .025, 'square', .03); });   // the wheel's pointer clicking over a slice
   cue('unlock', sk => { const o = outFor(null), t = sk.R.tier, notes = [523, 659, 784, 1046, 1318, 1568].slice(0, 3 + t);
     notes.forEach((f, i) => { tone(o, f, .5 + t * .1, 'triangle', .1, 0, i * .09); tone(o, f * 2, .35, 'sine', .04, 0, i * .09 + .02); });
     hiss(o, .6 + t * .2, .08, 'highpass', 6000, .05); if (t >= 3) { tone(o, 98, 1, 'sine', .3, -20, 0); hiss(o, 1.2, .1, 'bandpass', 2400, .3, 2); } });
@@ -7904,7 +7905,7 @@ const GAME = {
     g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
     // the tabs sit between the name and your card, each as wide as its word: when they do not fit, less space round each,
     // then no name (a narrow phone), then the two long words shortened
-    const cardX = V.x1 - 300 * u; g.font = `900 ${fitPx(g, 13 * u)}px ${FONT}`;
+    const cardX = V.x1 - 352 * u; g.font = `900 ${fitPx(g, 13 * u)}px ${FONT}`;   // (room for the daily spin's wheel beside your card)
     let logo = true, pad = 14 * u, names = MENU_TABS.map(t => t[1]);
     const left = () => logo ? x0 + 148 * u : x0 + 4 * u, room = () => cardX - 8 * u - left(), widths = () => names.map(n => g.measureText(n).width + pad * 2), need = () => widths().reduce((a, b) => a + b, 0);
     if (need() > room()) pad = 7 * u; if (need() > room()) logo = false; if (need() > room()) names = MENU_TABS.map(([k, n]) => ({ crosshair: 'XHAIR', settings: 'SETUP' })[k] || n);
@@ -7912,6 +7913,12 @@ const GAME = {
     const ws = widths(); let x = left() + Math.max(0, Math.min((room() - need()) / 2, 640 - need() / 2 - left()));
     MENU_TABS.forEach(([k], i) => { const tw = ws[i], n = names[i], on = UI.panel === k, hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
       tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, 13 * u, on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + pad, V.y0 + h - 4 * u, tw - pad * 2, 3 * u); } x += tw; });
+    // the daily spin: a little wheel beside your card, with a dot while today's spin is waiting
+    { const s = 40 * u, wx = V.x1 - 342 * u, wy = V.y0 + 8 * u, hot = zone(wx, wy, s, s, openWheel), ready = wheelReady(), c = wx + s / 2, cy2 = wy + s / 2, rr2 = s * .38, t2 = K.t || 0;
+      rr(g, wx, wy, s, s, 8, hot ? 'rgba(255,214,102,.18)' : 'rgba(255,255,255,.05)', hot || ready ? GOLD : 'rgba(239,233,220,.2)', 1.5);
+      const cols = ['#a7b1bd', '#4fa3ff', '#b56bff', '#ffb020', '#ff5ac8', '#c6ff3a']; for (let i = 0; i < 6; i++) { const a0 = t2 * (ready ? .8 : 0) + i * TAU / 6; g.beginPath(); g.moveTo(c, cy2); g.arc(c, cy2, rr2, a0, a0 + TAU / 6); g.closePath(); g.fillStyle = cols[i]; g.fill(); }
+      g.fillStyle = INK; g.beginPath(); g.arc(c, cy2, rr2 * .3, 0, TAU); g.fill(); g.fillStyle = GOLD; g.beginPath(); g.moveTo(c, wy + 4 * u); g.lineTo(c - 4 * u, wy - 1 * u); g.lineTo(c + 4 * u, wy - 1 * u); g.closePath(); g.fill();
+      if (ready) { g.fillStyle = FOE; g.beginPath(); g.arc(wx + s - 4 * u, wy + 5 * u, 5 * u, 0, TAU); g.fill(); } }
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
     // your photo, your name and the operative you play (your rank is on the career page and the play page: click it there for the ladder)
     { const op = OPS[CFG.op] || OPS.vex; tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 21 * u, 13 * u, BONE, 'left', 900); tx(g, op.n, px + 50 * u, V.y0 + 38 * u, 10 * u, op.col, 'left', 800); }
@@ -8460,7 +8467,7 @@ const GAME = {
   function drawStore(g, V, W, u) {
     const items = dailyStore(), left = storeLeft(), hh = Math.floor(left / 3600000), mm = Math.floor(left / 60000) % 60, ss = Math.floor(left / 1000) % 60, x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 96 * u;
     tx(g, 'STORE', x0, V.y0 + 46 * u, 40 * u, BONE, 'left', 900); tx(g, `New skins in ${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`, x0 + 4 * u, V.y0 + 78 * u, 13 * u, DIM, 'left', 700);
-    coinTag(g, V.x1 - 386 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 250 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'CODE', enterCode, { px: 13 * u }); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'LOCKER', () => { UI.panel = 'locker'; SH.show = null; }, { px: 13 * u });
+    coinTag(g, V.x1 - 506 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 370 * u, V.y0 + 28 * u, 110 * u, 36 * u, wheelReady() ? 'DAILY SPIN ●' : 'DAILY SPIN', openWheel, { px: 13 * u, col: wheelReady() ? GOLD : BONE, edge: wheelReady() ? GOLD : null }); btn(g, V.x1 - 250 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'CODE', enterCode, { px: 13 * u }); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'LOCKER', () => { UI.panel = 'locker'; SH.show = null; }, { px: 13 * u });
     if (SH.msg && performance.now() - SH.msg.t0 < 3200 && !SH.show) tx(g, SH.msg.s, V.x1 - 20 * u, V.y0 + 82 * u, 14 * u, SH.msg.good ? YOU : WARN, 'right', 800);
     const gw = V.x1 - x0 - 40 * u, gh = V.y1 - top - 70 * u, fw = gw * .35, cols = 4, gap = 12 * u, gx = x0 + fw + 16 * u, cw = (gw - fw - 16 * u - (cols - 1) * gap) / cols, ch = (gh - gap) / 2;
     paragonCard(g, items[0], x0, top, fw, gh, u, left);
@@ -8562,6 +8569,88 @@ const GAME = {
     if (UI.panel === 'store') { if (SH.show) return drawShow(g, V, W, H, u); g.fillStyle = 'rgba(8,10,14,.82)'; g.fillRect(V.x0, V.y0, W, H); drawStore(g, V, W, u); }
     else { let gr = g.createLinearGradient(V.x0, 0, V.x0 + W * .62, 0); gr.addColorStop(0, 'rgba(8,10,14,.95)'); gr.addColorStop(1, 'rgba(8,10,14,.35)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); drawLocker(g, V, W, u); }
     btn(g, V.x1 - 250 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'BACK', () => { UI.panel = 'home'; SH.show = null; if (UI.returnTo === 'party') { UI.returnTo = null; screen = 'party'; } }, { px: 13 * u });
+  }
+  /* ---------- 96 the daily spin: a wheel of skins, one spin a day ----------
+     Thirteen slices, every one a skin you do not have yet: four Common, three Rare, two Epic, two Legendary, a Mythic and
+     a Paragon. The slices are the same size; the odds go by rarity (Common 40%, Rare 28%, Epic 18%, Legendary 10%, Mythic
+     3%, Paragon 1%) and are shown under the wheel. Your wheel is dealt fresh each day (seeded by the day and a number of
+     your own, so it stays put if you reload). The prize is decided and saved the moment you press SPIN (a reload half way
+     cannot change it); the wheel then runs down onto it. A new spin at midnight, your time. */
+  const WHEEL_ODDS = { common: .40, rare: .28, epic: .18, legendary: .10, mythic: .03, paragon: .01 };
+  const WHEEL_ORDER = ['common', 'rare', 'epic', 'common', 'legendary', 'rare', 'common', 'mythic', 'epic', 'rare', 'common', 'legendary', 'paragon'];
+  const WH = { open: false, spin: null, prize: null };   // spin: { from, to, t0, T }; prize: the skin won today, shown after the spin
+  const wheelDay = (now = Date.now()) => { const d = new Date(now); return Math.floor((now - d.getTimezoneOffset() * 60000) / 86400000); };
+  const wheelReady = () => STATS.spun !== wheelDay();
+  const wheelLeft = () => { const d = new Date(); d.setHours(24, 0, 0, 0); return d.getTime() - Date.now(); };
+  // today's slices: a skin for each, of its slice's rarity, none you own and no two alike
+  function wheelSlices(day = wheelDay()) {
+    // dealt once a day and kept (with the settings), so winning a slice's skin does not change what the wheel shows
+    if (STATS.wheel && STATS.wheel.day === day && Array.isArray(STATS.wheel.s) && STATS.wheel.s.length === WHEEL_ORDER.length) return STATS.wheel.s;
+    if (STATS.wsalt == null) STATS.wsalt = Math.floor(Math.random() * 1e9);
+    let s = (day * 2654435761 ^ STATS.wsalt) >>> 0; const r = () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const out = [], lines = Object.keys(LINES), counts = {}; for (const q of WHEEL_ORDER) counts[q] = (counts[q] || 0) + 1;
+    for (const tier of WHEEL_ORDER) {
+      const pool = lines.filter(l => LINES[l].r === tier); let id = null;
+      for (let tries = 0; tries < 60 && !id; tries++) { const c = skinId(pool[Math.floor(r() * pool.length)], r() < .12 ? 'knife' : SKIN_GUNS[Math.floor(r() * (SKIN_GUNS.length - 1))]); if (!out.some(q => q.id === c) && (!STATS.skins.includes(c) || tries > 50)) id = c; }
+      out.push({ id, r: tier, w: WHEEL_ODDS[tier] / counts[tier] });
+    }
+    STATS.wheel = { day, s: out }; saveAll(); return out;
+  }
+  function openWheel() { WH.open = true; WH.spin = null; if (!wheelReady() && STATS.spunId) WH.prize = STATS.spunId; else WH.prize = null; click(); }
+  function spinWheel() {
+    if (!wheelReady() || WH.spin) return;
+    const sl = wheelSlices(), tot = sl.reduce((a, q) => a + q.w, 0); let x = Math.random() * tot, i = 0; for (; i < sl.length - 1; i++) { x -= sl[i].w; if (x <= 0) break; }
+    const prize = sl[i].id, sk = skinOfId(prize), have = STATS.skins.includes(prize);
+    // decided and kept now: the skin (or, if you somehow had it already, its price back in coins), and today's spin used
+    if (!have) STATS.skins.push(prize); else STATS.coins += Math.round(skinPrice(prize) / 2);
+    STATS.spun = wheelDay(); STATS.spunId = prize; saveAll(true);
+    // the wheel runs down onto it: the slice's middle (give or take) under the pointer, after five or six turns
+    const n = sl.length, a = TAU / n, mid = (i + .5) * a + (Math.random() - .5) * a * .6, from = WH.rot || 0, to = from + TAU * (5 + Math.floor(Math.random() * 2)) + ((TAU - mid - from % TAU) % TAU + TAU) % TAU;
+    WH.spin = { from, to, t0: performance.now(), T: 5.2 }; WH.prize = null; WH.won = { id: prize, dup: have }; click();
+  }
+  function drawWheel(g) {
+    const V = K.view, u = uiScale(), W = V.x1 - V.x0, H = V.y1 - V.y0, now = performance.now();
+    g.fillStyle = 'rgba(6,8,12,.9)'; g.fillRect(V.x0, V.y0, W, H); zone(V.x0, V.y0, W, H, () => {});   // (takes every press under it)
+    tx(g, 'DAILY SPIN', V.x0 + (isTouch() ? 92 : 40) * u, V.y0 + 40 * u, 30 * u, BONE, 'left', 900);
+    btn(g, V.x1 - 150 * u, V.y0 + 20 * u, 130 * u, tapH(40), 'CLOSE', () => { WH.open = false; WH.spin = null; }, { px: 15 * u });
+    const bh0 = tapH(40), sl = wheelSlices(), n = sl.length, R = Math.max(60 * u, Math.min(250 * u, (H - 70 * u - 24 * u - 34 * u - 22 * u - bh0 - 14 * u) / 2)), cx = 640, cy = V.y0 + 70 * u + R + 24 * u, a = TAU / n;   // (sized to leave room for what is under it)
+    // the spin: an ease-out over its time; when it stops, the prize
+    if (WH.spin) { const k = Math.min(1, (now - WH.spin.t0) / 1000 / WH.spin.T), e = 1 - Math.pow(1 - k, 3.4); WH.rot = WH.spin.from + (WH.spin.to - WH.spin.from) * e;
+      const tick = Math.floor(WH.rot / a); if (tick !== WH.tick) { WH.tick = tick; emit('wheelTick'); }
+      if (k >= 1) { WH.prize = WH.won.id; WH.dup = WH.won.dup; WH.spin = null; const sk = skinOfId(WH.prize); if (sk) emit('unlock', sk); } }
+    const rot = WH.rot || 0;
+    // the slices, each in its rarity's colour, its skin's picture near the rim
+    for (let i = 0; i < n; i++) {
+      const q = sl[i], sk = q.id && skinOfId(q.id), col = RARITY[q.r].col, a0 = -Math.PI / 2 + rot + i * a, a1 = a0 + a, won = WH.prize && q.id === WH.prize;
+      g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R, a0, a1); g.closePath(); const gr = g.createRadialGradient(cx, cy, R * .2, cx, cy, R); gr.addColorStop(0, 'rgba(14,18,26,.95)'); gr.addColorStop(1, col + (won ? 'cc' : '55')); g.fillStyle = gr; g.fill();
+      g.strokeStyle = 'rgba(239,233,220,.25)'; g.lineWidth = 1.5; g.stroke();
+      if (q.r === 'paragon' || q.r === 'mythic') { g.save(); g.clip(); g.strokeStyle = col; g.globalAlpha = .35 + .25 * Math.sin(now / 300 + i); g.lineWidth = 3 * u; g.beginPath(); g.arc(cx, cy, R - 4 * u, a0, a1); g.stroke(); g.restore(); }
+      const am = a0 + a / 2, ic = sk ? gunIcon(sk.k, q.id) : null, iw = R * .34, ih = iw * 150 / 480, ix = cx + Math.cos(am) * R * .66, iy = cy + Math.sin(am) * R * .66;
+      if (ic) { g.save(); g.translate(ix, iy); g.rotate(am); g.drawImage(ic, -iw / 2, -ih / 2, iw, ih); g.restore(); }
+      // (the label is turned with its slice, so its size is set here: the HUD's text helper reads the scale off the turn)
+      { const lpx = fitPx(g, Math.min(10 * u, R * .05)); g.save(); g.translate(cx + Math.cos(am) * R * .9, cy + Math.sin(am) * R * .9); g.rotate(am + Math.PI / 2); g.font = `900 ${lpx}px ${FONT}`; g.fillStyle = col; g.textAlign = 'center'; g.textBaseline = 'middle';
+        const room = R * .9 * a * .86, lab = [RARITY[q.r].n.toUpperCase(), { common: 'COMMON', rare: 'RARE', epic: 'EPIC', legendary: 'LEGEND', mythic: 'MYTHIC', paragon: 'PARAGON' }[q.r], { common: 'COM', rare: 'RARE', epic: 'EPIC', legendary: 'LEG', mythic: 'MYTH', paragon: 'PARA' }[q.r]].find(l => g.measureText(l).width <= room);   // (a small wheel: a shorter word)
+        if (lab) g.fillText(lab, 0, 0); g.restore(); }
+    }
+    g.strokeStyle = GOLD; g.lineWidth = 4 * u; g.beginPath(); g.arc(cx, cy, R + 3 * u, 0, TAU); g.stroke();
+    // the pointer at the top
+    g.fillStyle = GOLD; g.beginPath(); g.moveTo(cx, cy - R + 18 * u); g.lineTo(cx - 16 * u, cy - R - 16 * u); g.lineTo(cx + 16 * u, cy - R - 16 * u); g.closePath(); g.fill();
+    // the hub: SPIN, or the time to the next one
+    const hr = R * .24, ready = wheelReady() && !WH.spin;
+    g.fillStyle = ready ? FOE : 'rgba(14,18,26,.96)'; g.beginPath(); g.arc(cx, cy, hr, 0, TAU); g.fill(); g.strokeStyle = GOLD; g.lineWidth = 3 * u; g.stroke();
+    if (ready) { zone(cx - hr, cy - hr, hr * 2, hr * 2, spinWheel); tx(g, 'SPIN', cx, cy, hr * .42, INK, 'center', 900); }
+    else if (!WH.spin) { const s = Math.floor(wheelLeft() / 1000); tx(g, 'NEXT', cx, cy - hr * .22, hr * .2, DIM, 'center', 900); tx(g, `${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`, cx, cy + hr * .12, hr * .26, BONE, 'center', 900); }
+    // the odds, under the wheel; or what you won
+    const by = cy + R + 34 * u;
+    if (WH.prize) {
+      const sk = skinOfId(WH.prize); if (sk) {
+        tx(g, (WH.dup ? 'ALREADY YOURS: ' + Math.round(skinPrice(WH.prize) / 2) + ' COINS BACK  ·  ' : 'YOU WON  ·  ') + skinName(WH.prize).toUpperCase(), cx, by, 18 * u, sk.R.col, 'center', 900);
+        const bw = 150 * u, bh = bh0, y2 = by + 22 * u, eq = STATS.equip[sk.k] === WH.prize;
+        btn(g, cx - bw * 1.5 - 12 * u, y2, bw, bh, eq ? 'EQUIPPED' : 'EQUIP', () => { STATS.equip[sk.k] = WH.prize; saveAll(true); }, { on: eq, fill: YOU, px: 15 * u });
+        btn(g, cx - bw / 2, y2, bw, bh, 'SEE IT', () => { const id = WH.prize; WH.open = false; screen = 'menu'; UI.panel = 'store'; SH.reveal = { id, t0: performance.now() }; SH.show = null; }, { px: 15 * u });
+        btn(g, cx + bw / 2 + 12 * u, y2, bw, bh, 'CLOSE', () => { WH.open = false; }, { px: 15 * u });
+      }
+    } else tx(g, Object.entries(WHEEL_ODDS).map(([k, p]) => `${RARITY[k].n} ${Math.round(p * 100)}%`).join('   ·   '), cx, by, 12 * u, DIM, 'center', 800);
   }
   /* ---------- 97 party: play with friends ----------
      Make a party (or join one with its 4-letter code or an invite link), see who is in on two team columns with their
@@ -8926,7 +9015,7 @@ const GAME = {
     tickA = cl(acc * 60, 0, 1);
     if (M.over && M.mode === 'demo') startMatch({ mode: 'demo' });
   };
-  GAME.esc = () => { if (UI.tedit) { closeTouchEdit(); return true; } if (UI.rankScale) { UI.rankScale = null; return true; }
+  GAME.esc = () => { if (UI.tedit) { closeTouchEdit(); return true; } if (WH.open) { if (!WH.spin) WH.open = false; return true; } if (UI.rankScale) { UI.rankScale = null; return true; }
     if (screen === 'select') { selectKey('Escape'); return true; }
     if (screen === 'party') { if (!MP.online()) { screen = 'menu'; UI.panel = 'home'; } return true; }
     if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker')) { if (SH.reveal) SH.reveal = null; else if (SH.show) SH.show = null; else UI.panel = 'home'; return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
@@ -8940,6 +9029,7 @@ const GAME = {
     if (K.bot && !DEMO) return;
     if (screen !== 'party') hideBoxes();
     if (screen === 'menu') drawMenu(g); else if (screen === 'party') drawParty(g); else if (screen === 'select') drawSelect(g); else if (screen === 'play' && M) drawHud(g); else if (screen === 'over' && M) drawOver(g);
+    if (WH.open && screen === 'menu') drawWheel(g);   // the daily spin, over the menu
     if (UI.tedit) drawTouchEdit(g);   // (over everything, taking every press)
     if (screen !== 'play' || UI.armory || UI.opts) drawNav(g);
     drawCursor(g);
@@ -8971,7 +9061,7 @@ const GAME = {
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
     team: () => ({ dropHeld, dropCharge, giveCharge, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
-    botMe: d => { me().bot = { diff: d }; me().local = false; }, touchEdit: () => openTouchEdit(), get TE() { return TE; }, touchAt, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, VKF, animParts, aimArms, onEvent: on, audioCtx: () => K.ac, soundLag: () => lag(), shotBuf: k => baked[k],
+    botMe: d => { me().bot = { diff: d }; me().local = false; }, touchEdit: () => openTouchEdit(), get TE() { return TE; }, WH, openWheel, spinWheel, wheelSlices, wheelDay, touchAt, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, VKF, animParts, aimArms, onEvent: on, audioCtx: () => K.ac, soundLag: () => lag(), shotBuf: k => baked[k],
   };
 })();
 

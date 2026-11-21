@@ -80,7 +80,7 @@
     g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
     // the tabs sit between the name and your card, each as wide as its word: when they do not fit, less space round each,
     // then no name (a narrow phone), then the two long words shortened
-    const cardX = V.x1 - 300 * u; g.font = `900 ${fitPx(g, 13 * u)}px ${FONT}`;
+    const cardX = V.x1 - 352 * u; g.font = `900 ${fitPx(g, 13 * u)}px ${FONT}`;   // (room for the daily spin's wheel beside your card)
     let logo = true, pad = 14 * u, names = MENU_TABS.map(t => t[1]);
     const left = () => logo ? x0 + 148 * u : x0 + 4 * u, room = () => cardX - 8 * u - left(), widths = () => names.map(n => g.measureText(n).width + pad * 2), need = () => widths().reduce((a, b) => a + b, 0);
     if (need() > room()) pad = 7 * u; if (need() > room()) logo = false; if (need() > room()) names = MENU_TABS.map(([k, n]) => ({ crosshair: 'XHAIR', settings: 'SETUP' })[k] || n);
@@ -88,6 +88,12 @@
     const ws = widths(); let x = left() + Math.max(0, Math.min((room() - need()) / 2, 640 - need() / 2 - left()));
     MENU_TABS.forEach(([k], i) => { const tw = ws[i], n = names[i], on = UI.panel === k, hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
       tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, 13 * u, on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + pad, V.y0 + h - 4 * u, tw - pad * 2, 3 * u); } x += tw; });
+    // the daily spin: a little wheel beside your card, with a dot while today's spin is waiting
+    { const s = 40 * u, wx = V.x1 - 342 * u, wy = V.y0 + 8 * u, hot = zone(wx, wy, s, s, openWheel), ready = wheelReady(), c = wx + s / 2, cy2 = wy + s / 2, rr2 = s * .38, t2 = K.t || 0;
+      rr(g, wx, wy, s, s, 8, hot ? 'rgba(255,214,102,.18)' : 'rgba(255,255,255,.05)', hot || ready ? GOLD : 'rgba(239,233,220,.2)', 1.5);
+      const cols = ['#a7b1bd', '#4fa3ff', '#b56bff', '#ffb020', '#ff5ac8', '#c6ff3a']; for (let i = 0; i < 6; i++) { const a0 = t2 * (ready ? .8 : 0) + i * TAU / 6; g.beginPath(); g.moveTo(c, cy2); g.arc(c, cy2, rr2, a0, a0 + TAU / 6); g.closePath(); g.fillStyle = cols[i]; g.fill(); }
+      g.fillStyle = INK; g.beginPath(); g.arc(c, cy2, rr2 * .3, 0, TAU); g.fill(); g.fillStyle = GOLD; g.beginPath(); g.moveTo(c, wy + 4 * u); g.lineTo(c - 4 * u, wy - 1 * u); g.lineTo(c + 4 * u, wy - 1 * u); g.closePath(); g.fill();
+      if (ready) { g.fillStyle = FOE; g.beginPath(); g.arc(wx + s - 4 * u, wy + 5 * u, 5 * u, 0, TAU); g.fill(); } }
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
     // your photo, your name and the operative you play (your rank is on the career page and the play page: click it there for the ladder)
     { const op = OPS[CFG.op] || OPS.vex; tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 21 * u, 13 * u, BONE, 'left', 900); tx(g, op.n, px + 50 * u, V.y0 + 38 * u, 10 * u, op.col, 'left', 800); }

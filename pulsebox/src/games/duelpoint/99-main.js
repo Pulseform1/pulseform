@@ -61,7 +61,7 @@
     tickA = cl(acc * 60, 0, 1);
     if (M.over && M.mode === 'demo') startMatch({ mode: 'demo' });
   };
-  GAME.esc = () => { if (UI.tedit) { closeTouchEdit(); return true; } if (UI.rankScale) { UI.rankScale = null; return true; }
+  GAME.esc = () => { if (UI.tedit) { closeTouchEdit(); return true; } if (WH.open) { if (!WH.spin) WH.open = false; return true; } if (UI.rankScale) { UI.rankScale = null; return true; }
     if (screen === 'select') { selectKey('Escape'); return true; }
     if (screen === 'party') { if (!MP.online()) { screen = 'menu'; UI.panel = 'home'; } return true; }
     if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker')) { if (SH.reveal) SH.reveal = null; else if (SH.show) SH.show = null; else UI.panel = 'home'; return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
@@ -75,6 +75,7 @@
     if (K.bot && !DEMO) return;
     if (screen !== 'party') hideBoxes();
     if (screen === 'menu') drawMenu(g); else if (screen === 'party') drawParty(g); else if (screen === 'select') drawSelect(g); else if (screen === 'play' && M) drawHud(g); else if (screen === 'over' && M) drawOver(g);
+    if (WH.open && screen === 'menu') drawWheel(g);   // the daily spin, over the menu
     if (UI.tedit) drawTouchEdit(g);   // (over everything, taking every press)
     if (screen !== 'play' || UI.armory || UI.opts) drawNav(g);
     drawCursor(g);
@@ -106,6 +107,6 @@
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
     team: () => ({ dropHeld, dropCharge, giveCharge, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
-    botMe: d => { me().bot = { diff: d }; me().local = false; }, touchEdit: () => openTouchEdit(), get TE() { return TE; }, touchAt, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, VKF, animParts, aimArms, onEvent: on, audioCtx: () => K.ac, soundLag: () => lag(), shotBuf: k => baked[k],
+    botMe: d => { me().bot = { diff: d }; me().local = false; }, touchEdit: () => openTouchEdit(), get TE() { return TE; }, WH, openWheel, spinWheel, wheelSlices, wheelDay, touchAt, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, VKF, animParts, aimArms, onEvent: on, audioCtx: () => K.ac, soundLag: () => lag(), shotBuf: k => baked[k],
   };
 })();
