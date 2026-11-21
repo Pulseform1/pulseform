@@ -20,7 +20,7 @@ function mats(tex) {
     glass: new THREE.MeshStandardMaterial({ color: 0x102a3a, metalness: 1, roughness: .05, emissive: 0x0a1820, emissiveIntensity: .4 }),
     black: new THREE.MeshStandardMaterial({ color: 0x060606, roughness: .9 }),
     // a fiber-optic front sight: unlit, so it reads in shade and at dusk (the rear sights are plain)
-    fiberR: new THREE.MeshBasicMaterial({ color: 0x5dff7a }), fiberF: new THREE.MeshBasicMaterial({ color: 0xff8a1a }),
+    fiberR: new THREE.MeshStandardMaterial({ color: 0x3f7a48, roughness: .5 }), fiberF: new THREE.MeshBasicMaterial({ color: 0xff8a1a }),
     cork: new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: .9 }),
     line: new THREE.LineBasicMaterial({ color: 0xe8e4d8, transparent: true, opacity: .7 }),
   };

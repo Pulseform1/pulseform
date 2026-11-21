@@ -56,7 +56,7 @@ if (params.get('q')) G.settings.quality = params.get('q');
 
 // ---------- renderer ----------
 const canvas = $('#game');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', stencil: false });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance', stencil: false });   // (opaque: leaf edges leave pixels part see-through, and some screens show those as bright green dots)
 // shader error checks read each compile's log, which makes the browser finish compiling there and then (a freeze); only
 // with ?debug=1
 renderer.debug.checkShaderErrors = params.get('debug') === '1';

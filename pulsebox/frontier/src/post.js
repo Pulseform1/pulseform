@@ -39,10 +39,15 @@ const DESPECKLE = {
   #else
   vec3 seen( vec3 c ) { return c; }   // (the last pass: already what the screen shows)
   #endif
+  #ifdef LINEAR
+  #define SOLID( a ) a
+  #else
+  #define SOLID( a ) 1.0   // (the screen gets every pixel solid: a part see-through one can show up as a bright dot)
+  #endif
   void main() {
     vec4 base = texture2D( tDiffuse, vUv ); vec3 c = seen( base.rgb );
     float green = smoothstep( 0.008, 0.03, c.g - max( c.r, c.b ) );
-    if ( green <= 0.0 ) { gl_FragColor = base; return; }
+    if ( green <= 0.0 ) { gl_FragColor = vec4( base.rgb, SOLID( base.a ) ); return; }
     // each neighbour: how different it looks, and the two brightest of them (how bright they look, and their light as stored)
     vec3 sum = vec3( 0.0 ); float md = 9.0, s1 = 0.0, s2 = 0.0, r1 = 0.0, r2 = 0.0;
     for ( int j = -1; j <= 1; j++ ) for ( int i = -1; i <= 1; i++ ) {
@@ -57,7 +62,7 @@ const DESPECKLE = {
     // brightest, so a thin blade or twig (two bright neighbours, along its length) keeps its look.
     float lc = dot( c, vec3( 0.3, 0.59, 0.11 ) ), rc = dot( base.rgb, vec3( 0.3, 0.59, 0.11 ) );
     float glint = smoothstep( 0.02, 0.06, lc - s2 ), f = min( 1.0, r2 / max( rc, 1e-5 ) );
-    gl_FragColor = vec4( mix( base.rgb * mix( 1.0, f, green * glint ), sum / 8.0, green * lone ), base.a );
+    gl_FragColor = vec4( mix( base.rgb * mix( 1.0, f, green * glint ), sum / 8.0, green * lone ), SOLID( base.a ) );
   }`,
 };
 const GRADE = {
@@ -81,6 +86,13 @@ const GRADE = {
   }`,
 };
 
+// the glow is for the sun, fire, lanterns and sparks: a green pixel (a sunlit leaf or blade) is kept out of it, so it can never
+// swell into a glowing green blot or square. Natural colours are untouched: this only decides what feeds the glow.
+function noGreenGlow(bloom) {
+  const m = bloom.materialHighPassFilter, o = 'float v = luminance( texel.xyz );';
+  if (!m || !m.fragmentShader.includes(o)) return;
+  m.fragmentShader = m.fragmentShader.replace(o, 'float v = luminance( texel.xyz ) * ( 1.0 - smoothstep( 0.04, 0.16, ( texel.g - max( texel.r, texel.b ) ) / max( texel.g, 1e-4 ) ) );'); m.needsUpdate = true;
+}
 export class Post {
   constructor(renderer, scene, camera, quality) {
     this.r = renderer; this.scene = scene; this.cam = camera; this.on = false; this._v = new THREE.Vector3();
@@ -98,7 +110,7 @@ export class Post {
     // low graphics: both clean-ups, and nothing else (no glow, sun shafts or grade)
     if (q === 'low') { this.bloom = this.shafts = this.grade = null; c.addPass(new OutputPass()); c.addPass(this.despeckle2); this.resize(); return; }
     // Medium: the glow worked at half size and fewer steps for the sun's rays, which is most of the cost on built-in graphics
-    const half = this.half = q === 'high' ? 1 : .5; this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x * half, size.y * half), q === 'high' ? .42 : .32, .55, .88); c.addPass(this.bloom);
+    const half = this.half = q === 'high' ? 1 : .5; this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x * half, size.y * half), q === 'high' ? .42 : .32, .55, .88); noGreenGlow(this.bloom); c.addPass(this.bloom);
     this.shafts = new ShaderPass({ ...SHAFTS, defines: { SAMPLES: q === 'high' ? 22 : 12 } }); c.addPass(this.shafts);
     c.addPass(new OutputPass());
     this.grade = new ShaderPass(GRADE); c.addPass(this.grade); c.addPass(this.despeckle2);

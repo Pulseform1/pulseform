@@ -48,7 +48,7 @@ export class Drone {
       add(new THREE.CylinderGeometry(.02, .02, .05, 8), grey, x, .15, z); add(new THREE.CylinderGeometry(.09, .09, .006, 16), prop, x, .18, z);
       add(new THREE.BoxGeometry(.012, .1, .012), dark, x * .55, .05, z * .55);
     }
-    add(new THREE.SphereGeometry(.012, 6, 4), new THREE.MeshBasicMaterial({ color: 0x5dff7a }), .13, .12, -.09); add(new THREE.SphereGeometry(.012, 6, 4), new THREE.MeshBasicMaterial({ color: 0xff8a1a }), -.13, .12, -.09);
+    add(new THREE.SphereGeometry(.012, 6, 4), new THREE.MeshStandardMaterial({ color: 0x2f6a3a, roughness: .6 }), .13, .12, -.09); add(new THREE.SphereGeometry(.012, 6, 4), new THREE.MeshBasicMaterial({ color: 0xff8a1a }), -.13, .12, -.09);
     g.scale.setScalar(1.6); g.visible = false; this.scene.add(g); return g;
   }
   showModel(on) { if (!this.model) this.model = this.buildModel(); const L = this.landed; this.model.visible = on && !!L; if (on && L) { this.model.position.set(L.x, L.y, L.z); this.model.rotation.y = L.yaw; } }

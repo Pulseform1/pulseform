@@ -262,8 +262,7 @@ export function speciesAssets(name) {
     const fur = furTexture(), strands = strandTexture();
     MATS = { skin: new THREE.MeshStandardMaterial({ map: fur.map, normalMap: fur.normal, normalScale: new THREE.Vector2(.6, .6), vertexColors: true, roughness: .9, metalness: 0 }), antler: new THREE.MeshStandardMaterial({ color: 0x8a7458, roughness: .75 }), horn: new THREE.MeshStandardMaterial({ color: 0x1a1612, roughness: .4 }),
       fan: new THREE.MeshStandardMaterial({ color: 0x4a3420, roughness: .8, side: THREE.DoubleSide }), wing: new THREE.MeshStandardMaterial({ color: 0x8a8278, roughness: .8 }), goatHair: new THREE.MeshStandardMaterial({ color: 0xe0d8c6, roughness: 1 }),
-      eye: new THREE.MeshStandardMaterial({ color: 0x0a0806, roughness: .05, metalness: .3 }), tooth: new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: .35 }), mouth: new THREE.MeshStandardMaterial({ color: 0x4a1612, roughness: .5 }),
-      shine: new THREE.SpriteMaterial({ color: 0xd8ff9a, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }) };
+      eye: new THREE.MeshStandardMaterial({ color: 0x0a0806, roughness: .05, metalness: .3 }), tooth: new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: .35 }), mouth: new THREE.MeshStandardMaterial({ color: 0x4a1612, roughness: .5 }) };
     // the fur shells: the skin pushed out along its normals by a fraction of each spot's fur length; each shell keeps only
     // the hairs long enough to reach it, darker at the root
     MATS.shells = [];
