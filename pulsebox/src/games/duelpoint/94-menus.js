@@ -74,7 +74,7 @@
   /* The menus: a bar along the top (PLAY, AGENTS, STORE, LOCKER, CROSSHAIR, CAREER, SETTINGS, and your card: operative, name, rank,
      rating, coins) over whichever page is open. PLAY: pick the mode (STANDARD, two sites; SWIFT, one site), the team size
      and the bots, then the big PLAY button takes you to agent select. Friends go through the party. */
-  const MENU_TABS = [['home', 'PLAY'], ['agents', 'AGENTS'], ['store', 'STORE'], ['locker', 'LOCKER'], ['crosshair', 'CROSSHAIR'], ['career', 'CAREER'], ['settings', 'SETTINGS']];
+  const MENU_TABS = [['home', 'PLAY'], ['agents', 'AGENTS'], ['store', 'STORE'], ['pass', 'PASS'], ['locker', 'LOCKER'], ['crosshair', 'CROSSHAIR'], ['career', 'CAREER'], ['settings', 'SETTINGS']];
   function drawTopBar(g, V, u) {
     const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u;
     g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
@@ -85,6 +85,7 @@
     const left = () => logo ? x0 + 148 * u : x0 + 4 * u, room = () => cardX - 8 * u - left(), widths = () => names.map(n => g.measureText(n).width + pad * 2), need = () => widths().reduce((a, b) => a + b, 0);
     if (need() > room()) pad = 7 * u; if (need() > room()) logo = false; if (need() > room()) names = MENU_TABS.map(([k, n]) => ({ crosshair: 'XHAIR', settings: 'SETUP' })[k] || n);
     if (logo) { g.fillStyle = FOE; g.fillRect(x0, V.y0 + 17 * u, 4 * u, 22 * u); tx(g, 'DUELPOINT', x0 + 12 * u, V.y0 + h / 2 + 1, 19 * u, BONE, 'left', 900); }
+    g.font = `900 ${fitPx(g, 13 * u)}px ${FONT}`;   // (the tabs' own size again: the name just drawn left a bigger one set)
     const ws = widths(); let x = left() + Math.max(0, Math.min((room() - need()) / 2, 640 - need() / 2 - left()));
     MENU_TABS.forEach(([k], i) => { const tw = ws[i], n = names[i], on = UI.panel === k, hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
       tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, 13 * u, on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + pad, V.y0 + h - 4 * u, tw - pad * 2, 3 * u); } x += tw; });
@@ -96,7 +97,7 @@
       if (ready) { g.fillStyle = FOE; g.beginPath(); g.arc(wx + s - 4 * u, wy + 5 * u, 5 * u, 0, TAU); g.fill(); } }
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
     // your photo, your name and the operative you play (your rank is on the career page and the play page: click it there for the ladder)
-    { const op = OPS[CFG.op] || OPS.vex; tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 21 * u, 13 * u, BONE, 'left', 900); tx(g, op.n, px + 50 * u, V.y0 + 38 * u, 10 * u, op.col, 'left', 800); }
+    { const op = OPS[CFG.op] || OPS.vex; tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 21 * u, 13 * u, BONE, 'left', 900); const lv = myLevel(), ls = 'LV ' + lv; tx(g, ls, px + 50 * u, V.y0 + 38 * u, 10 * u, lvCol(lv), 'left', 900); const lw = g.measureText(ls).width; tx(g, '·  ' + op.n, px + 56 * u + lw, V.y0 + 38 * u, 10 * u, op.col, 'left', 800); }
     coinTag(g, V.x1 - 22 * u, V.y0 + h / 2, 17 * u, STATS.coins);
     return h;
   }
@@ -114,6 +115,7 @@
     if (UI.panel === 'settings') return drawSettings(g, VN, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, VN, W, u);
     if (UI.panel === 'career') return drawCareer(g, VN, W, u);
+    if (UI.panel === 'pass') return drawPass(g, VN, W, u);
     drawPlay(g, VN, W, H2, u);
   }
   // a little plan for a mode card: the site diamonds with their letters, joined by lanes
@@ -354,13 +356,15 @@
 
   // a coin count: a little gold disc and the number, right-aligned at x
   function coinTag(g, x, y, px, n) {
-    const s = String(n); g.font = `800 ${px}px ${FONT}`; const w = g.measureText(s).width;
+    const s = String(n); px = fitPx(g, px); g.font = `800 ${px}px ${FONT}`; const w = g.measureText(s).width;   // (the size the words will really be drawn at, so the coin sits clear of them)
     tx(g, s, x, y, px, COIN, 'right', 800);
     const cx = x - w - px * .75; g.fillStyle = COIN; g.beginPath(); g.arc(cx, y, px * .48, 0, TAU); g.fill(); g.strokeStyle = '#8a6210'; g.lineWidth = px * .1; g.beginPath(); g.arc(cx, y, px * .3, 0, TAU); g.stroke();
   }
   function drawOver(g) {
+    if (M.prog && !(M.overStage | 0)) return drawLineup(g); if (M.prog && M.overStage === 1) return drawRewards(g);   // (93-after: the line-up, then what the match paid, then this)
     const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), P = me(), F = foe(), won = M.over.won;
     g.fillStyle = 'rgba(12,16,22,.78)'; g.fillRect(V.x0, V.y0, W, H);
+    if (M.prog) btn(g, V.x0 + (isTouch() ? 92 : 24) * u, V.y0 + 20 * u, 130 * u, tapH(36), '‹ REWARDS', () => { M.overStage = 1; M.overT = performance.now() - 5000; }, { px: 13 * u });
     tx(g, won ? 'VICTORY' : 'DEFEAT', 640, V.y0 + 90 * u, 84 * u, won ? YOU : FOE); tx(g, `${M.wins[0]}  –  ${M.wins[1]}`, 640, V.y0 + 170 * u, 44 * u, BONE);
     if (M.over.why === 'left') tx(g, M.fs.length > 2 ? 'The other team left the match' : 'Your rival left the match', 640, V.y0 + 212 * u, 15 * u, DIM);
     else if (M.over.why === 'dropped') tx(g, 'You lost the connection to the room, and could not get back in', 640, V.y0 + 212 * u, 15 * u, DIM);

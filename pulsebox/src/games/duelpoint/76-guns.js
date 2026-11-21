@@ -594,7 +594,7 @@
     if ((iconT -= dt) > 0) return; iconT = .12;
     if (iconQ.length) { const [k, id] = iconQ.shift(); gunIcon(k, id, true); return; }
     // then the locker's turntable, drawn once out of sight (this frame's own picture covers it), so its lighting is ready
-    if (!X.gsWarm && screen === 'menu' && UI.panel === 'home') { X.gsWarm = 1; const was = UI.panel; UI.panel = 'locker'; try { renderGunShow(0); } catch (e) {} UI.panel = was; }
+    if (!X.gsWarm && screen === 'menu' && UI.panel === 'home') { X.gsWarm = 1; const was = UI.panel, wv = SH.lview; UI.panel = 'locker'; SH.lview = 'gun'; try { renderGunShow(0); } catch (e) {} UI.panel = was; SH.lview = wv; }
   }
   // spent brass flying out of the ejection port (first person only)
   const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};

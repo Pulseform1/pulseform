@@ -211,6 +211,8 @@
   });
   // a skin unlocked: a fanfare that grows with the rarity
   cue('wheelTick', () => { if (canHear()) tone(outFor(null), 1500, .025, 'square', .03); });   // the wheel's pointer clicking over a slice
+  cue('levelUp', () => { const o = outFor(null); [659, 880, 1175, 1760].forEach((f, i) => { tone(o, f, .32, 'triangle', .09, 0, i * .08); tone(o, f * 2, .2, 'sine', .03, 0, i * .08 + .02); }); });
+  cue('passUp', () => { const o = outFor(null); [523, 784, 1046, 1568].forEach((f, i) => tone(o, f, .5, 'triangle', .09, 0, i * .1)); hiss(o, .7, .07, 'highpass', 6000, .05); });
   cue('unlock', sk => { const o = outFor(null), t = sk.R.tier, notes = [523, 659, 784, 1046, 1318, 1568].slice(0, 3 + t);
     notes.forEach((f, i) => { tone(o, f, .5 + t * .1, 'triangle', .1, 0, i * .09); tone(o, f * 2, .35, 'sine', .04, 0, i * .09 + .02); });
     hiss(o, .6 + t * .2, .08, 'highpass', 6000, .05); if (t >= 3) { tone(o, 98, 1, 'sine', .3, -20, 0); hiss(o, 1.2, .1, 'bandpass', 2400, .3, 2); } });

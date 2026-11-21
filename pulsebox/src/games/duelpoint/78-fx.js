@@ -234,7 +234,9 @@
   function renderFrame(dt) {
     if (!X || !ready) return; const cam = X.camera; X.t += dt; X.frameN = (X.frameN || 0) + 1; iconsAhead(dt); audioFrame(); tunePixels(dt); skinTick(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; } mechFrame(dt);
     const live = M && (screen === 'play' || (screen === 'over' && posed)) && !loadingNow();
+    if (X.lu && X.lu.fakes.length && !(screen === 'over' && M && M.prog && !(M.overStage | 0))) lineupEnd();
     if (!live) {   // behind the menus: a slow flight round the site
+      if (screen === 'over' && M && M.prog && !(M.overStage | 0) && renderLineup(dt)) return;
       if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker') && renderGunShow(dt)) return;
       if (screen === 'select' && UI.sel) { for (const g of X.smokes) g.visible = false; for (const o of X.nadeObjs) o.visible = false; for (const w of X.walls) w.visible = false; return renderSelect(dt); }
       const a = X.t * .06 + 2.4, k = MW / 64; cam.position.set(MW / 2 + 9 * k + Math.cos(a) * 30 * k, 19 * k, MH / 2 - 1 + Math.sin(a) * 26 * k); cam.rotation.set(0, 0, 0); cam.lookAt(MW / 2 + 6 * k, 0, MH / 2 - 1); cam.fov = 55; cam.updateProjectionMatrix();

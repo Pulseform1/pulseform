@@ -275,9 +275,10 @@
      a whole team of three or more in a round) and a clutch (the last one standing against two or more, who wins the round). */
   const roundsPlayed = () => M ? Math.max(1, M.wins[0] + M.wins[1] + (M.phase === 'end' || M.over ? 0 : 1)) : 1;
   const csOf = f => { const s = f.stat; return Math.round(((s.dmg | 0) + 150 * s.k + (s.mb | 0) + 50 * (s.fk | 0) + 25 * ((s.pl | 0) + (s.df | 0))) / roundsPlayed()); };
-  on('kill', (v, by) => {
+  on('kill', (v, by, head, wk) => {
     if (!M || !by || !v || v === by || by.team === v.team || M.mode === 'range') return; const s = by.stat;
-    s.rk = (s.rk || 0) + 1; if (s.rk > 1) s.mb = (s.mb || 0) + 50; if (!M.fk) { M.fk = by.key; s.fk = (s.fk || 0) + 1; emit('firstKill', by, v); }
+    s.rk = (s.rk || 0) + 1; if (s.rk > 1) s.mb = (s.mb || 0) + 50; if (s.rk === 3) s.mk = (s.mk || 0) + 1;   // (mk: rounds with three kills)
+    { const c = GUNS[wk] ? GUNS[wk].cat : 'Utility'; s.cat = s.cat || {}; s.cat[c] = (s.cat[c] || 0) + 1; }   // kills by kind of weapon, for the challenges if (!M.fk) { M.fk = by.key; s.fk = (s.fk || 0) + 1; emit('firstKill', by, v); }
     const foes = M.fs.filter(q => q.team === v.team && !q.gone); if (foes.length >= 3 && s.rk >= foes.length && foes.every(q => !q.alive)) emit('ace', by);
     if (!M.clutch) for (const t of [0, 1]) { const up = M.fs.filter(q => q.team === t && q.alive), them = M.fs.filter(q => q.team !== t && q.alive); if (up.length === 1 && them.length >= 2) M.clutch = { key: up[0].key, team: t, vs: them.length }; }
   });
@@ -348,7 +349,7 @@
     if (key === 'bastionq') { const w = d.ax ? { x0: d.x - .3, x1: d.x + .3, z0: d.z - 2.6, z1: d.z + 2.6 } : { x0: d.x - 2.6, x1: d.x + 2.6, z0: d.z - .3, z1: d.z + .3 }; w.t = 12; w.grow = 0; M.walls.push(w); emit('wall', w); }
     if (key === 'bastione') f.heal = { t: 3 };
     kitApply(f, key, d);
-    emit('ability', f, k);
+    f.stat.ab = (f.stat.ab || 0) + 1; emit('ability', f, k);
   }
   /* ---------- pings: mark where you are looking for your team (middle click or J); it shows in the world and on the minimap ---------- */
   function ping(f, remote, at) {
@@ -578,7 +579,7 @@
     return yawTo(f.x, f.z, q[0], q[1]);
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.dlog = {}; M.fk = null; M.clutch = null; for (const f of M.fs) f.stat.rk = 0; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
+    M.round = n; M.phase = 'buy'; M.dlog = {}; M.fk = null; M.clutch = null; for (const f of M.fs) { f.stat.rk = 0; f.stat.d0 = f.stat.dmg || 0; f.stat.k0 = f.stat.k | 0; } M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
     const ot = otRound(n), decider = ot > 0;   // overtime: everyone gets the same credits every round
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {

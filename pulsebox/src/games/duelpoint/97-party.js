@@ -7,7 +7,7 @@
   const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null, qs: null };   // qs: the host's world search, as the rest of the party sees it   // want: who asked to switch sides; pick: the host's first pick of a trade
   const myId = () => MP.id;
   function openParty() { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; }
-  function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join(''), qt: QUE.found ? QUE.tok : undefined }; }
+  function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join(''), cd: cardCode(), qt: QUE.found ? QUE.tok : undefined }; }
   function sendProfile(force) { if (!MP.online()) return; const p = partyProfile(), key = JSON.stringify(p); if (!force && key === PARTY.sent) return; PARTY.sent = key; PARTY.prof.set(myId(), p); MP.send(Object.assign({ t: 'lprof' }, p)); }
   // the host keeps everyone on a team: newcomers go to the shorter side, and nobody stays on a team that has no room
   function hostTeams() {
@@ -27,7 +27,7 @@
   MP.opts.onStatus = s => { PARTY.status = s; };
   // lobby messages; anything else is the match's
   function partyMsg(m) {
-    if (m.t === 'lprof') { const rk = {}; if (m.rk && typeof m.rk === 'object') for (const k of RQ) rk[k] = cl(+m.rk[k] || 0, 0, 4000); PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd, rk, rkp: typeof m.rkp === 'string' ? m.rkp.slice(0, 5) : '', qt: typeof m.qt === 'string' ? m.qt.slice(0, 16) : '' }); return true; }
+    if (m.t === 'lprof') { const rk = {}; if (m.rk && typeof m.rk === 'object') for (const k of RQ) rk[k] = cl(+m.rk[k] || 0, 0, 4000); PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd, rk, rkp: typeof m.rkp === 'string' ? m.rkp.slice(0, 5) : '', cd: typeof m.cd === 'string' ? m.cd.slice(0, 40) : '', qt: typeof m.qt === 'string' ? m.qt.slice(0, 16) : '' }); return true; }
     if (m.t === 'lteam') { if (m.from === MP.hostId) { PARTY.teams = m.teams || {}; PARTY.set = Object.assign(PARTY.set, m.set || {}); if (Array.isArray(m.want)) PARTY.want = new Set(m.want.map(String).slice(0, 10)); } return true; }
     if (m.t === 'lswap') { if (MP.isHost()) { swapTeam(m.from, true); } return true; }
     // the host searching the world for a match for the whole party, and the match it found
@@ -132,8 +132,12 @@
         const pr = p.id === me2 ? partyProfile() : PARTY.prof.get(p.id) || { op: 'vex', rt: 0, rd: false }, isHost = p.id === MP.hostId, ready = isHost || pr.rd;
         const hot = host && zone(cx, y, colW, cardH, () => hostClick(p.id)), picked = host && PARTY.pick === p.id, wants = PARTY.want.has(String(p.id));
         rr(g, cx, y, colW, cardH, 8, picked ? 'rgba(255,214,102,.16)' : p.id === me2 ? 'rgba(24,30,42,.96)' : 'rgba(14,18,26,.92)', picked ? GOLD : hot ? col : p.id === me2 ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.14)', p.id === me2 || hot || picked ? 2 : 1); g.fillStyle = col; g.fillRect(cx, y, 4 * u, cardH);
+        // their card: the banner behind it, their level beside the name, their title after the operative (26-progress)
+        const cd = p.id === me2 ? myCard() : pr.cd ? cardFrom(pr.cd) : { lv: 0, title: '', banner: 'plain' };
+        if (cd.banner !== 'plain' && !picked) { g.save(); g.globalAlpha = .6; bannerBg(g, cx + 4 * u, y + 1.5, colW - 5.5 * u, cardH - 3, cd.banner, 7); g.restore(); }
         portraitTile(g, pr.op, cx + 10 * u, y + 8 * u, cardH - 16 * u, cardH - 16 * u, { r: 5 });
-        const nx = cx + cardH + 4 * u; tx(g, p.name.toUpperCase() + (p.id === me2 ? '  (YOU)' : ''), nx, y + 26 * u * k, 16 * u * Math.max(.85, k), BONE, 'left', 900); { const clash = opClash(p, ps); tx(g, (OPS[pr.op] || OPS.vex).n + (clash ? (p.id === me2 ? '  ·  TAKEN, PICK ANOTHER' : '  ·  TAKEN') : ''), nx, y + 48 * u * k, 12 * u, clash ? WARN : (OPS[pr.op] || OPS.vex).col, 'left', 800); }
+        const nx = cx + cardH + 4 * u, nm0 = p.name.toUpperCase() + (p.id === me2 ? '  (YOU)' : ''), npx = 16 * u * Math.max(.85, k); tx(g, nm0, nx, y + 26 * u * k, npx, BONE, 'left', 900);
+        if (cd.lv) { g.font = `900 ${fitPx(g, npx)}px ${FONT}`; const nw = g.measureText(nm0).width; if (nx + nw + 70 * u < cx + colW - 150 * u) lvChip(g, nx + nw + 10 * u, y + 26 * u * k, cd.lv, 10.5 * u); else lvChip(g, nx + (p.id === MP.hostId ? 44 * u : 0), y + 70 * u * k, cd.lv, 9.5 * u); }   // (a long name: on the line under the operative) { const clash = opClash(p, ps); tx(g, (OPS[pr.op] || OPS.vex).n + (clash ? (p.id === me2 ? '  ·  TAKEN, PICK ANOTHER' : '  ·  TAKEN') : cd.title ? '  ·  ' + cd.title.toUpperCase() : ''), nx, y + 48 * u * k, 12 * u, clash ? WARN : (OPS[pr.op] || OPS.vex).col, 'left', 800); }
         if (isHost) tx(g, 'HOST', nx, y + 70 * u * k, 10 * u, GOLD, 'left', 900);
         { const mine = p.id === me2, rv = mine ? rankedOf(S2.size).rv : (pr.rk || {})[String(S2.size)] || 0, on = mine ? placed(rankedOf(S2.size)) : (pr.rkp || '')[S2.size - 1] === '1';   // the rank at this team size
           tierBadge(g, cx + colW - 30 * u, y + 30 * u * k, 13 * u * Math.max(.8, k), rv, on); tx(g, on ? rankLabel(rv).toUpperCase() : 'UNRANKED', cx + colW - 52 * u, y + 26 * u * k, 11 * u, on ? rankOf(rv).T.col : DIM, 'right', 800); tx(g, vsLabel(S2.size) + (on ? '  ' + rankOf(rv).rp + ' RP' : ''), cx + colW - 52 * u, y + 44 * u * k, 11 * u, BONE, 'right', 700); }

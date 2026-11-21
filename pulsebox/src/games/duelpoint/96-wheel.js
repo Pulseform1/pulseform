@@ -8,7 +8,9 @@
   const WHEEL_ORDER = ['common', 'rare', 'epic', 'common', 'legendary', 'rare', 'common', 'mythic', 'epic', 'rare', 'common', 'legendary', 'paragon'];
   const WH = { open: false, spin: null, prize: null };   // spin: { from, to, t0, T }; prize: the skin won today, shown after the spin
   const wheelDay = (now = Date.now()) => { const d = new Date(now); return Math.floor((now - d.getTimezoneOffset() * 60000) / 86400000); };
-  const wheelReady = () => STATS.spun !== wheelDay();
+  const wheelReady = () => STATS.spun !== wheelDay() || (STATS.spins | 0) > 0;   // today's spin, or a bonus one from the season pass
+  // a bonus spin after today's: the wheel is dealt again, so nothing on it is something you have just won
+  function wheelFresh() { if (STATS.spun === wheelDay() && (STATS.spins | 0) > 0 && STATS.wheel && STATS.wheel.s.some(q => STATS.skins.includes(q.id))) { STATS.wsalt = Math.floor(Math.random() * 1e9); STATS.wheel = null; wheelSlices(); } }
   const wheelLeft = () => { const d = new Date(); d.setHours(24, 0, 0, 0); return d.getTime() - Date.now(); };
   // today's slices: a skin for each, of its slice's rarity, none you own and no two alike
   function wheelSlices(day = wheelDay()) {
@@ -24,14 +26,14 @@
     }
     STATS.wheel = { day, s: out }; saveAll(); return out;
   }
-  function openWheel() { WH.open = true; WH.spin = null; if (!wheelReady() && STATS.spunId) WH.prize = STATS.spunId; else WH.prize = null; click(); }
+  function openWheel() { WH.open = true; WH.spin = null; wheelFresh(); if (!wheelReady() && STATS.spunId) WH.prize = STATS.spunId; else WH.prize = null; click(); }
   function spinWheel() {
-    if (!wheelReady() || WH.spin) return;
+    if (!wheelReady() || WH.spin) return; if (WH.prize) { WH.prize = null; wheelFresh(); }
     const sl = wheelSlices(), tot = sl.reduce((a, q) => a + q.w, 0); let x = Math.random() * tot, i = 0; for (; i < sl.length - 1; i++) { x -= sl[i].w; if (x <= 0) break; }
     const prize = sl[i].id, sk = skinOfId(prize), have = STATS.skins.includes(prize);
     // decided and kept now: the skin (or, if you somehow had it already, its price back in coins), and today's spin used
     if (!have) STATS.skins.push(prize); else STATS.coins += Math.round(skinPrice(prize) / 2);
-    STATS.spun = wheelDay(); STATS.spunId = prize; saveAll(true);
+    if (STATS.spun === wheelDay()) STATS.spins = Math.max(0, (STATS.spins | 0) - 1); else STATS.spun = wheelDay(); STATS.spunId = prize; saveAll(true);
     // the wheel runs down onto it: the slice's middle (give or take) under the pointer, after five or six turns
     const n = sl.length, a = TAU / n, mid = (i + .5) * a + (Math.random() - .5) * a * .6, from = WH.rot || 0, to = from + TAU * (5 + Math.floor(Math.random() * 2)) + ((TAU - mid - from % TAU) % TAU + TAU) % TAU;
     WH.spin = { from, to, t0: performance.now(), T: 5.2 }; WH.prize = null; WH.won = { id: prize, dup: have }; click();
@@ -66,7 +68,7 @@
     // the hub: SPIN, or the time to the next one
     const hr = R * .24, ready = wheelReady() && !WH.spin;
     g.fillStyle = ready ? FOE : 'rgba(14,18,26,.96)'; g.beginPath(); g.arc(cx, cy, hr, 0, TAU); g.fill(); g.strokeStyle = GOLD; g.lineWidth = 3 * u; g.stroke();
-    if (ready) { zone(cx - hr, cy - hr, hr * 2, hr * 2, spinWheel); tx(g, 'SPIN', cx, cy, hr * .42, INK, 'center', 900); }
+    if (ready) { const bonus = STATS.spun === wheelDay(); zone(cx - hr, cy - hr, hr * 2, hr * 2, spinWheel); tx(g, 'SPIN', cx, cy - (bonus ? hr * .12 : 0), hr * .42, INK, 'center', 900); if (bonus) tx(g, `BONUS ×${STATS.spins | 0}`, cx, cy + hr * .32, hr * .2, INK, 'center', 900); }
     else if (!WH.spin) { const s = Math.floor(wheelLeft() / 1000); tx(g, 'NEXT', cx, cy - hr * .22, hr * .2, DIM, 'center', 900); tx(g, `${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`, cx, cy + hr * .12, hr * .26, BONE, 'center', 900); }
     // the odds, under the wheel; or what you won
     const by = cy + R + 34 * u;

@@ -609,6 +609,137 @@ const GAME = {
   }
   // the match history: the last twenty, newest first
   function logMatch(e) { STATS.hist = STATS.hist || []; STATS.hist.unshift(e); if (STATS.hist.length > 20) STATS.hist.length = 20; }
+  /* ---------- 26 progress: your level, the season pass, daily and weekly challenges ----------
+     Everything here is earned by playing (bot matches and online alike; not the range). Nothing is bought with money.
+     XP comes from a match (matchXp) and from challenges; every point of it goes both to your LEVEL (which never
+     resets and shows on your card) and to the SEASON PASS.
+     The pass: seasons run eight weeks; thirty tiers of 1000 XP; a reward on every tier of the free track (coins, a bonus
+     spin of the daily wheel, a title or a card banner, and skins at 5, 15 and 30), and a second reward on every tier of
+     the premium track, which is unlocked with coins you have earned (PASS_PRICE). Rewards are granted the moment a tier
+     is reached (premium ones when it is unlocked, for every tier already passed). A skin you already own pays half its
+     price in coins instead. The rewards are the same for everyone in a season (seeded by its number).
+     Challenges: three a day (new at midnight, your time) and three a week (new on Monday), the same for everyone. Each
+     counts what you did in the matches you finish, and pays XP once when it is done.
+     Pure data and rules, so the simulation tests can run them; the screens are in 95-pass. */
+  const xpForLevel = l => Math.min(3000, 800 + 150 * (l - 1));
+  function levelOf(xp) { let l = 1, x = Math.max(0, xp | 0); while (x >= xpForLevel(l) && l < 999) { x -= xpForLevel(l); l++; } return { l, into: x, need: xpForLevel(l) }; }
+  const myLevel = () => levelOf(STATS.xp | 0).l;
+  const prng = seed => { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+  const localDay = (now = Date.now()) => Math.floor((now - new Date(now).getTimezoneOffset() * 60000) / 86400000), localWeek = (now = Date.now()) => Math.floor((localDay(now) + 3) / 7);
+  /* ---- the season ---- */
+  const SEASON_DAYS = 56, SEASON_EPOCH = Date.UTC(2026, 10, 16), PASS_TIERS = 30, PASS_XP = 1000, PASS_PRICE = 3000;
+  const SEASON_NAMES = ['Emberfall', 'Deep Current', 'Night Shift', 'Glasswind', 'Ironbloom', 'Starwake'];
+  const seasonNow = (now = Date.now()) => { const i = Math.max(0, Math.floor((now - SEASON_EPOCH) / (SEASON_DAYS * 864e5))); return { i, n: i + 1, name: SEASON_NAMES[i % SEASON_NAMES.length], left: SEASON_EPOCH + (i + 1) * SEASON_DAYS * 864e5 - now }; };
+  // card banners: [dark, light, accent]; 'plain' is everyone's
+  const BANNERS = { plain: ['#12161e', '#232a36', '#8d97a6'], ember: ['#2a0c06', '#8a2a0c', '#ff8a3d'], tide: ['#06202e', '#0e5a78', '#5ad8ff'], violet: ['#170a2e', '#4a2a8a', '#b48aff'], gold: ['#2a1e06', '#8a6a14', '#ffd23f'], frost: ['#0e1c2a', '#4a7a9a', '#cfeeff'],
+    toxic: ['#0c1e0a', '#2a6a1c', '#9aff4a'], rose: ['#2a0a1a', '#8a2a5a', '#ff8ac0'], steel: ['#14181e', '#4a5460', '#dfe6ee'], aurora: ['#06201e', '#1c6a5a', '#7dffc8'], dusk: ['#1e0e2a', '#7a3a5a', '#ffb07a'], carbon: ['#0a0a0c', '#2a2a30', '#ff5a4d'] };
+  const TITLES = ['Rookie', 'Sharpshooter', 'Site Keeper', 'First Blood', 'Clutch Artist', 'Night Owl', 'Deadeye', 'Anchor', 'Entry', 'Lurker', 'Tactician', 'Ace', 'Iron Nerve', 'Ghost', 'Vanguard', 'Marksman', 'Storm Caller', 'The Wall', 'Quick Draw', 'Unbroken', 'Veteran', 'Headhunter', 'Pathfinder', 'Legend'];
+  // a season's thirty tiers: [{ f: reward, p: reward }]. A reward: { t: 'coins', n } | { t: 'skin', id } | { t: 'title', s } | { t: 'banner', k } | { t: 'spin' }
+  const PASS_CACHE = {};
+  function passRewards(si = seasonNow().i) {
+    if (PASS_CACHE[si]) return PASS_CACHE[si];
+    const r = prng(9001 + si * 7919), lines = Object.keys(LINES), take = (arr, used) => { let x; for (let k = 0; k < 40; k++) { x = arr[Math.floor(r() * arr.length)]; if (!used.has(x)) break; } used.add(x); return x; };
+    const usedL = new Set(), usedT = new Set(), usedB = new Set(['plain']), gunOf = knife => knife ? 'knife' : SKIN_GUNS[Math.floor(r() * (SKIN_GUNS.length - 1))];
+    const skin = (rar, knife) => ({ t: 'skin', id: skinId(take(lines.filter(l => LINES[l].r === rar), usedL), gunOf(knife)) }), title = () => ({ t: 'title', s: take(TITLES, usedT) }), banner = () => ({ t: 'banner', k: take(Object.keys(BANNERS), usedB) }), coins = n => ({ t: 'coins', n }), spin = () => ({ t: 'spin' });
+    const F = { 5: () => skin('rare'), 8: spin, 10: title, 15: () => skin('epic'), 18: spin, 20: banner, 25: title, 28: spin, 30: () => skin('legendary') };
+    const P = { 3: banner, 6: () => skin('rare'), 9: title, 12: () => skin('epic'), 15: spin, 18: () => skin('epic', true), 21: banner, 24: () => skin('legendary'), 27: title, 30: () => skin('mythic') };
+    const out = []; for (let t = 1; t <= PASS_TIERS; t++) out.push({ f: F[t] ? F[t]() : coins(100 + 10 * Math.floor(t / 3) * 5), p: P[t] ? P[t]() : coins(200 + 25 * Math.floor(t / 3) * 4) });
+    return PASS_CACHE[si] = out;
+  }
+  const rewardName = rw => rw.t === 'coins' ? `${rw.n} coins` : rw.t === 'skin' ? skinName(rw.id) : rw.t === 'title' ? `Title: ${rw.s}` : rw.t === 'banner' ? `Banner: ${rw.k[0].toUpperCase() + rw.k.slice(1)}` : 'Bonus spin';
+  // your pass for the season running now (a new season starts it afresh)
+  function myPass() { const s = seasonNow(); if (!STATS.pass || STATS.pass.s !== s.i) STATS.pass = { s: s.i, xp: 0, prem: false, f: 0, p: 0 }; return STATS.pass; }
+  const passTier = () => Math.min(PASS_TIERS, Math.floor(myPass().xp / PASS_XP));
+  function giveReward(rw) {
+    if (rw.t === 'coins') STATS.coins = (STATS.coins | 0) + rw.n;
+    else if (rw.t === 'skin') { if (STATS.skins.includes(rw.id)) { const n = Math.round(skinPrice(rw.id) / 2); STATS.coins = (STATS.coins | 0) + n; return { t: 'coins', n, was: rw }; } STATS.skins.push(rw.id); }
+    else if (rw.t === 'title') { STATS.titles = STATS.titles || []; if (!STATS.titles.includes(rw.s)) STATS.titles.push(rw.s); if (!STATS.title) STATS.title = rw.s; }
+    else if (rw.t === 'banner') { STATS.banners = STATS.banners || []; if (!STATS.banners.includes(rw.k)) STATS.banners.push(rw.k); if (!STATS.banner || STATS.banner === 'plain') STATS.banner = rw.k; }
+    else if (rw.t === 'spin') STATS.spins = (STATS.spins | 0) + 1;
+    return rw;
+  }
+  // grant whatever the pass now owes: returns [{ tier, prem, rw }] for the screen to show
+  function passGrant() {
+    const p = myPass(), tier = passTier(), R = passRewards(p.s), got = [];
+    for (let t = p.f + 1; t <= tier; t++) got.push({ tier: t, prem: false, rw: giveReward(R[t - 1].f) }); p.f = Math.max(p.f, tier);
+    if (p.prem) { for (let t = p.p + 1; t <= tier; t++) got.push({ tier: t, prem: true, rw: giveReward(R[t - 1].p) }); p.p = Math.max(p.p, tier); }
+    return got;
+  }
+  function buyPremium() { const p = myPass(); if (p.prem || (STATS.coins | 0) < PASS_PRICE) return null; STATS.coins -= PASS_PRICE; p.prem = true; return passGrant(); }
+  /* ---- challenges ---- [key, words ({n} is the goal), goals to pick from, XP] */
+  const CH_DAILY = [['k', 'Get {n} kills', [12, 16, 20], 500], ['hs', 'Get {n} headshot kills', [5, 7], 500], ['win', 'Win {n} matches', [1, 2], 600], ['rw', 'Win {n} rounds', [6, 8], 500], ['obj', 'Plant or defuse the charge {n} times', [2, 3], 500], ['dmg', 'Deal {n} damage', [1500, 2200], 500],
+    ['fk', 'Get the first kill of {n} rounds', [2, 3], 500], ['m', 'Play {n} matches', [2, 3], 400], ['Rifle', 'Get {n} kills with rifles', [8, 10], 500], ['SMG', 'Get {n} kills with SMGs', [6], 500], ['Sidearm', 'Get {n} kills with sidearms', [5], 500], ['Shotgun', 'Get {n} kills with shotguns', [4], 500],
+    ['Sniper', 'Get {n} kills with snipers', [4], 500], ['Heavy', 'Get {n} kills with the heavy gun', [5], 500], ['Melee', 'Get {n} kill with the knife', [1], 600], ['mk', 'Get 3 kills in one round, {n} times', [1], 600], ['ab', 'Use abilities {n} times', [10, 14], 400]];
+  const CH_WEEKLY = [['k', 'Get {n} kills', [80, 100], 2500], ['win', 'Win {n} matches', [5, 7], 3000], ['hs', 'Get {n} headshot kills', [30], 2500], ['rw', 'Win {n} rounds', [35], 2500], ['obj', 'Plant or defuse the charge {n} times', [10], 2500], ['dmg', 'Deal {n} damage', [12000], 2500],
+    ['m', 'Play {n} matches', [10], 2000], ['cl', 'Win {n} clutches (last one standing)', [2], 3000], ['fk', 'Get the first kill of {n} rounds', [12], 2500], ['mk', 'Get 3 kills in one round, {n} times', [4], 3000]];
+  // (no two of a kind on one day: one about a class of weapon at most, one about kills at most)
+  const CH_KIND = { Rifle: 'gun', SMG: 'gun', Sidearm: 'gun', Shotgun: 'gun', Sniper: 'gun', Heavy: 'gun', Melee: 'gun', k: 'kills', hs: 'kills', mk: 'kills', win: 'win', rw: 'win' };
+  function pickChallenges(pool, seed, tag) { const r = prng(seed), left = pool.slice(), out = [], kinds = new Set(); while (out.length < 3 && left.length) { const [k, words, goals, xp] = left.splice(Math.floor(r() * left.length), 1)[0], n = goals[Math.floor(r() * goals.length)], kind = CH_KIND[k] || k; if (kinds.has(kind)) continue; kinds.add(kind); out.push({ id: tag + seed + k, k, n, xp, words: words.replace('{n}', n.toLocaleString('en-US')).replace(/^Win 1 matches/, 'Win a match').replace(', 1 times', '').replace('Get 1 kill with', 'Get a kill with').replace(/^Play 1 matches/, 'Play a match') }); } return out; }
+  const dailyChallenges = (day = localDay()) => pickChallenges(CH_DAILY, 5000 + day, 'd'), weeklyChallenges = (wk = localWeek()) => pickChallenges(CH_WEEKLY, 300 + wk, 'w');
+  // your progress on today's and this week's (old days and weeks are cleared away)
+  function myChallenges() {
+    const day = localDay(), wk = localWeek(), C = STATS.ch = STATS.ch || { d: day, w: wk, p: {}, done: {} };
+    if (C.d !== day || C.w !== wk) { const keep = new Set([...(C.d === day ? dailyChallenges(day) : []), ...(C.w === wk ? weeklyChallenges(wk) : [])].map(c => c.id)); for (const o of [C.p, C.done]) for (const k of Object.keys(o)) if (!keep.has(k)) delete o[k]; C.d = day; C.w = wk; }
+    const row = (c, weekly) => Object.assign({}, c, { weekly, at: Math.min(c.n, C.p[c.id] | 0), done: !!C.done[c.id] });
+    return [...dailyChallenges(day).map(c => row(c, false)), ...weeklyChallenges(wk).map(c => row(c, true))];
+  }
+  // what a finished match counts toward them: T is the match's tally (see matchTally). Returns { xp, done: [challenge] }
+  function challengeProgress(T) {
+    const list = myChallenges(), C = STATS.ch, out = { xp: 0, done: [], moved: [] };
+    for (const c of list) { if (c.done) continue; const add = T[c.k] | 0; if (!add) continue; const v = Math.min(c.n, (C.p[c.id] | 0) + add); C.p[c.id] = v; out.moved.push(Object.assign({}, c, { from: c.at, at: v }));
+      if (v >= c.n) { C.done[c.id] = 1; out.xp += c.xp; out.done.push(c); } }
+    return out;
+  }
+  // a match, counted: P is you, Mx the match, mine your plants and defuses (the rest is in your match stats)
+  function matchTally(P, Mx, won, mine = {}) {
+    const T = { m: 1, k: P.stat.k | 0, hs: P.stat.hs | 0, win: won ? 1 : 0, rw: Mx.wins[0] | 0, obj: (mine.plants | 0) + (mine.defuses | 0), dmg: Math.round(P.stat.dmg || 0), fk: P.stat.fk | 0, cl: P.stat.cl | 0, mk: P.stat.mk | 0, ab: P.stat.ab | 0 };
+    for (const [cat, n] of Object.entries(P.stat.cat || {})) T[cat] = n; return T;
+  }
+  // the XP a match pays: rows for the screen, and the total
+  function matchXp(P, Mx, won, extra = {}) {
+    const rows = [], add = (label, n) => { if (n) rows.push([label, Math.round(n)]); };
+    add('Match played', 150); add(`${P.stat.k} kill${P.stat.k === 1 ? '' : 's'}`, P.stat.k * 12); add(`${Mx.wins[0]} round${Mx.wins[0] === 1 ? '' : 's'} won`, Mx.wins[0] * 25); if (won) add('Victory', 200);
+    { const o = (extra.plants | 0) + (extra.defuses | 0); add(`${o} plant${o === 1 ? '' : 's'} and defuse${o === 1 ? '' : 's'}`, o * 20); }
+    let sub = rows.reduce((a, r) => a + r[1], 0); const lvl = Mx.online ? 1.1 : [.7, .9, 1, 1.1][cl(extra.botLevel == null ? 1 : extra.botLevel, 0, 3)];
+    const total = Math.round(sub * lvl); if (lvl !== 1) rows.push([Mx.online ? 'Online match' : 'Bot level', total - sub]);
+    return { rows, total };
+  }
+  /* a finished match, paid out: XP to your level and the pass, challenges moved on, pass rewards granted. Returns what
+     the rewards screen shows: { xp: { rows, total }, level: [before, after] (each { l, into, need }), pass: { tier0, tier1,
+     xp0, xp1 }, ch: { moved, done }, got: [{ tier, prem, rw }] } */
+  function payProgress(P, Mx, won, mine = {}) {
+    const xp = matchXp(P, Mx, won, mine), ch = challengeProgress(matchTally(P, Mx, won, mine)); for (const c of ch.done) xp.rows.push([(c.weekly ? 'Weekly: ' : 'Daily: ') + c.words, c.xp]); xp.total += ch.xp;
+    const acct0 = STATS.xp | 0, lv0 = levelOf(acct0), p = myPass(), tier0 = passTier(), xp0 = p.xp;
+    STATS.xp = acct0 + xp.total; p.xp += xp.total;
+    return { xp, acct: [acct0, STATS.xp], level: [lv0, levelOf(STATS.xp)], pass: { tier0, tier1: passTier(), xp0, xp1: p.xp }, ch, got: passGrant() };
+  }
+  // a bot's card: a level and (now and then) a title, from its name, so it is the same every time you meet it
+  function botCard(name, rating = 1000) { let h = 7; for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; const r = prng(h); return { lv: Math.max(1, Math.round((rating - 500) / 28 + r() * 14)), title: r() < .4 ? TITLES[Math.floor(r() * TITLES.length)] : '', banner: r() < .35 ? Object.keys(BANNERS)[1 + Math.floor(r() * (Object.keys(BANNERS).length - 1))] : 'plain' }; }
+  // your own card, as others see it
+  const myCard = () => ({ lv: myLevel(), title: STATS.title || '', banner: BANNERS[STATS.banner] ? STATS.banner : 'plain' });
+  // a card as it travels between devices ('level|title number|banner'), and read back with nothing trusted
+  const cardCode = () => { const c = myCard(); return c.lv + '|' + TITLES.indexOf(c.title) + '|' + c.banner; };
+  const cardFrom = s => { const [a, b, c] = String(s || '').slice(0, 40).split('|'); return { lv: cl(a | 0, 1, 999), title: TITLES[+b] || '', banner: BANNERS[c] ? c : 'plain' }; };
+  const cardOf = f => f === me() ? myCard() : f.bot || f.isBot ? botCard(f.name, f.rating || 1000) : f.card || { lv: 0, title: '', banner: 'plain' };
+  /* the awards under the line-up when a match ends: everyone gets the thing they did best. The best combat score on the
+     winning side is the match's MVP (and, in a team match, the best on the other side its team's); then each award goes
+     to whoever leads it among those still without one. Returns a Map: fighter key → { title, line, top } */
+  function matchAwards(fs, winTeam) {
+    const L = fs.filter(f => !f.gone), out = new Map(), s = f => f.stat, plural = (n, w, ws) => n + ' ' + (n === 1 ? w : ws || w + 's');
+    const give = (title, val, line, min, pool, top) => { const c = (pool || L).filter(f => !out.has(f.key)).map(f => [f, val(f)]).filter(q => q[1] >= min).sort((a, b) => b[1] - a[1] || csOf(b[0]) - csOf(a[0]))[0]; if (c) out.set(c[0].key, { title, line: line(c[1]), top: !!top }); };
+    give('MATCH MVP', csOf, v => v + ' combat score', 0, L.filter(f => f.team === winTeam), true);
+    if (L.filter(f => f.team !== winTeam).length > 1) give('TEAM MVP', csOf, v => v + ' combat score', 0, L.filter(f => f.team !== winTeam));
+    give('SHARPSHOOTER', f => s(f).k >= 4 ? Math.round(100 * s(f).hs / s(f).k) : 0, v => v + '% headshots', 40);
+    give('FIRST BLOOD', f => s(f).fk | 0, v => plural(v, 'first kill'), 1);
+    give('CLUTCH', f => s(f).cl | 0, v => plural(v, 'clutch', 'clutches') + ' won', 1);
+    give('SITE EXPERT', f => (s(f).pl | 0) + (s(f).df | 0), v => plural(v, 'plant or defuse', 'plants and defuses'), 1);
+    give('TRIPLE THREAT', f => s(f).mk | 0, v => plural(v, 'round') + ' with 3 kills', 1);
+    give('TOP FRAGGER', f => s(f).k, v => plural(v, 'kill'), 2);
+    give('HEAVY HITTER', f => Math.round(s(f).dmg || 0), v => v + ' damage', 1);
+    give('HARD TO KILL', f => 1000 - s(f).d, v => plural(1000 - v, 'death'), 0);
+    for (const f of L) if (!out.has(f.key)) out.set(f.key, { title: 'IN THE FIGHT', line: csOf(f) + ' combat score', top: false });
+    return out;
+  }
   /* ---------- 29 maps: the hand-drawn maps (all but Saltworks), written by tools/duelpoint-maps.mjs: edit them there ---------- */
   const MAP_DEFS = [
     {k: 'neonrow', n: 'Neon Row', theme: 'neon', mech: 'tele', roundT: 90, tag: 'A neon strip of noodle bars and arcades, and a maze of back alleys behind it.', tip: 'Two teleporters link the Back Alleys and the Boulevard half way along: the Laundry one drops you at the Billboards, the Billboards one in Steam Alley. Both ends are loud.', src: ['############################################', '#######################....................#', '#######################...............DDDD.#', '#######################.....#########.DDDD.#', '##T####################.oooc#########......#', '#.............c.........ooo.###########..###', '#........X.......X.....XoXo.#########....###', '#................c.....Xooo.#########....###', '#...###################.ooo............77###', '#..c###################.ooooooooooc....88###', '#...##########..........oooooooXooo..PPPP###', '#...##########..........cooooooXooo..PPPP###', '#...##########..###..##.ooooocooooo..PPPP###', '#.X.##########..#....##......X.......PPPP###', '#...##########.....c.#########.#############', '#...##########..#..............#############', '#...##########..#........c.....#############', '#c..##########..#..#########################', '#...#######.....#..#########################', '#...#######.....#..#########################', '#...#######..T###..#########################', '#...#######..####..#########################', '#......c###..####..#########################', '#.......###..####..#########################', '#..AAAA.#..........#########################', '#..AAAA.#..........#########################', '#............###############################', '#c...........###############################', '############################################'], roofs: [{r: [28, 1, 35, 2], h: 3}, {r: [14, 12, 15, 17], h: 3}, {r: [21, 15, 30, 15], h: 3}, {r: [21, 16, 24, 16], h: 3}, {r: [26, 16, 30, 16], h: 3}, {r: [13, 24, 18, 25], h: 3}], doors: [[36, 1, 36, 2], [22, 5, 22, 7], [39, 5, 40, 5], [22, 10, 22, 11], [30, 14, 30, 14], [8, 26, 8, 27]], tps: [[2, 4, 15, 16, 0], [13, 20, 3, 6, -1.5707963267948966]], areas: [{k: 'aspawn', n: 'Depot', r: [1, 22, 8, 27], col: '#8a9a5b', lane: 'any'}, {k: 'blvd', n: 'Boulevard', r: [1, 8, 3, 21], col: '#ff3ea5', lane: 'blvd'}, {k: 'corner', n: 'Billboards', r: [1, 4, 4, 7], col: '#ffd23f', lane: 'blvd'}, {k: 'mile', n: 'Neon Mile', r: [5, 5, 21, 7], col: '#c06bff', lane: 'blvd'}, {k: 'arch', n: 'Neon Arch', r: [22, 5, 22, 7], col: '#e05fd0', lane: 'blvd'}, {k: 'mouth', n: 'Alley Mouth', r: [9, 24, 12, 27], col: '#3df2ff', lane: 'alleys'}, {k: 'laundry', n: 'Laundry', r: [11, 18, 15, 23], col: '#4fb0c6', lane: 'alleys'}, {k: 'steam', n: 'Steam Alley', r: [14, 12, 15, 17], col: '#6f8fd8', lane: 'alleys'}, {k: 'nalley', n: 'Neon Alley', r: [14, 10, 21, 11], col: '#2aa7a0', lane: 'alleys'}, {k: 'adoor', n: 'Alley Door', r: [22, 10, 22, 11], col: '#5ad1b0', lane: 'alleys'}, {k: 'overpass', n: 'Overpass', r: [13, 24, 18, 25], col: '#b5523f', lane: 'kitchen'}, {k: 'bstreet', n: 'Back Street', r: [17, 17, 18, 23], col: '#c9862e', lane: 'kitchen'}, {k: 'court', n: 'Steam Court', r: [16, 12, 20, 16], col: '#d9a441', lane: 'kitchen'}, {k: 'kitchen', n: 'Kitchen', r: [21, 14, 30, 16], col: '#e07b39', lane: 'kitchen'}, {k: 'site', n: 'Plaza', r: [23, 1, 36, 13], col: '#ff8a3d', lane: 'any'}, {k: 'arcade', n: 'Arcade', r: [23, 1, 27, 3], col: '#f2a3c8', lane: 'any'}, {k: 'signs', n: 'Signs', r: [28, 1, 36, 2], col: '#a07ad8', lane: 'any'}, {k: 'ramp', n: 'Ramp', r: [37, 5, 40, 9], col: '#8d6bb0', lane: 'any'}, {k: 'terrace', n: 'Noodle Bar', r: [37, 10, 40, 13], col: '#7bd88f', lane: 'any'}, {k: 'dspawn', n: 'Garage', r: [37, 1, 42, 4], col: '#4f7fb0', lane: 'any'}], routes: {blvd: [[2, 20.5], [2.5, 6.5], [22.5, 6.5]], alleys: [[9.5, 25.5], [12, 18.5], [15, 11], [22.5, 10.5]], kitchen: [[9.5, 25.5], [17.5, 24.5], [18.5, 15], [30.5, 14.5]], tele: [[9.5, 25.5], [13.5, 20.5], [22.5, 6.5]], tele2: [[2, 20.5], [2.5, 4.5], [22.5, 10.5]]}, holds: [{p: [26.5, 7.5], look: [22.5, 10.5], lane: 'alleys', s: 0}, {p: [25.5, 13.5], look: [22.5, 10.5], lane: 'alleys', s: 0}, {p: [33.5, 9.5], look: [30.5, 14.5], lane: 'kitchen', s: 0}, {p: [30.5, 10.5], look: [30.5, 14.5], lane: 'kitchen', s: 0}, {p: [28.36792452830189, 9.801886792452835], look: [22.5, 6.5], lane: 'any', s: 0}]},
@@ -1161,9 +1292,10 @@ const GAME = {
      a whole team of three or more in a round) and a clutch (the last one standing against two or more, who wins the round). */
   const roundsPlayed = () => M ? Math.max(1, M.wins[0] + M.wins[1] + (M.phase === 'end' || M.over ? 0 : 1)) : 1;
   const csOf = f => { const s = f.stat; return Math.round(((s.dmg | 0) + 150 * s.k + (s.mb | 0) + 50 * (s.fk | 0) + 25 * ((s.pl | 0) + (s.df | 0))) / roundsPlayed()); };
-  on('kill', (v, by) => {
+  on('kill', (v, by, head, wk) => {
     if (!M || !by || !v || v === by || by.team === v.team || M.mode === 'range') return; const s = by.stat;
-    s.rk = (s.rk || 0) + 1; if (s.rk > 1) s.mb = (s.mb || 0) + 50; if (!M.fk) { M.fk = by.key; s.fk = (s.fk || 0) + 1; emit('firstKill', by, v); }
+    s.rk = (s.rk || 0) + 1; if (s.rk > 1) s.mb = (s.mb || 0) + 50; if (s.rk === 3) s.mk = (s.mk || 0) + 1;   // (mk: rounds with three kills)
+    { const c = GUNS[wk] ? GUNS[wk].cat : 'Utility'; s.cat = s.cat || {}; s.cat[c] = (s.cat[c] || 0) + 1; }   // kills by kind of weapon, for the challenges if (!M.fk) { M.fk = by.key; s.fk = (s.fk || 0) + 1; emit('firstKill', by, v); }
     const foes = M.fs.filter(q => q.team === v.team && !q.gone); if (foes.length >= 3 && s.rk >= foes.length && foes.every(q => !q.alive)) emit('ace', by);
     if (!M.clutch) for (const t of [0, 1]) { const up = M.fs.filter(q => q.team === t && q.alive), them = M.fs.filter(q => q.team !== t && q.alive); if (up.length === 1 && them.length >= 2) M.clutch = { key: up[0].key, team: t, vs: them.length }; }
   });
@@ -1234,7 +1366,7 @@ const GAME = {
     if (key === 'bastionq') { const w = d.ax ? { x0: d.x - .3, x1: d.x + .3, z0: d.z - 2.6, z1: d.z + 2.6 } : { x0: d.x - 2.6, x1: d.x + 2.6, z0: d.z - .3, z1: d.z + .3 }; w.t = 12; w.grow = 0; M.walls.push(w); emit('wall', w); }
     if (key === 'bastione') f.heal = { t: 3 };
     kitApply(f, key, d);
-    emit('ability', f, k);
+    f.stat.ab = (f.stat.ab || 0) + 1; emit('ability', f, k);
   }
   /* ---------- pings: mark where you are looking for your team (middle click or J); it shows in the world and on the minimap ---------- */
   function ping(f, remote, at) {
@@ -1464,7 +1596,7 @@ const GAME = {
     return yawTo(f.x, f.z, q[0], q[1]);
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.dlog = {}; M.fk = null; M.clutch = null; for (const f of M.fs) f.stat.rk = 0; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
+    M.round = n; M.phase = 'buy'; M.dlog = {}; M.fk = null; M.clutch = null; for (const f of M.fs) { f.stat.rk = 0; f.stat.d0 = f.stat.dmg || 0; f.stat.k0 = f.stat.k | 0; } M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
     const ot = otRound(n), decider = ot > 0;   // overtime: everyone gets the same credits every round
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {
@@ -2135,7 +2267,7 @@ const GAME = {
     for (const f of M.fs) if (!f.net && !f.gone) out.push({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
       al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? Math.max(.01, r2(f.plant)) : 0, df: f.defuse > 0 ? Math.max(.01, r2(f.defuse)) : 0, st: f.step > 0 ? 1 : 0, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
     for (const q of out) { const f = M.byKey[q.f], sk = (f.skins && f.skins[f.guns[f.slot]]) || 0, key = f.op + '|' + q.g + '|' + sk;
-      if (full || f._sent !== key) { q.op = f.op; q.rt = f.rating || 0; q.sk = sk; f._sent = key; } if (full) q.dm = Math.round(f.stat.dmg);
+      if (full || f._sent !== key) { q.op = f.op; q.rt = f.rating || 0; q.sk = sk; f._sent = key; } if (full) { q.dm = Math.round(f.stat.dmg); if (f === me()) q.cd = cardCode(); }
       const iv = f.credits + '|' + (f.guns[1] || '') + '|' + (f.guns[2] || '') + '|' + (f.smokes | 0) + '|' + (f.ab.q | 0);   // what they have and what they can spend: for their team's armory
       if (full || f._iv !== iv) { q.c = f.credits; q.g1 = f.guns[1] || ''; q.g2 = f.guns[2] || ''; q.sm = f.smokes | 0; q.aq = f.ab.q | 0; f._iv = iv; } }
     for (const q of out) { for (const k of ['sc', 'pl', 'df', 'st', 'sp', 'sd']) if (!q[k]) delete q[k]; }   // zeros are the default: leave them out
@@ -2161,7 +2293,7 @@ const GAME = {
     switch (m.t) {
       case 's':
         { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && Math.hypot(sn[sn.length - 1].x - m.x, sn[sn.length - 1].z - m.z) > 6) sn.length = 0; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
-        if (m.rt) F.rating = m.rt; if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; { const pl = +m.pl || 0, df = +m.df || 0; F.plant = pl > 0 ? (F.plant > 0 && Math.abs(F.plant - pl) < .5 ? F.plant : pl) : 0; F.defuse = df > 0 ? (F.defuse > 0 && Math.abs(F.defuse - df) < .5 ? F.defuse : df) : 0; }   // (kept running between messages by netFollow; a message only corrects it when it has drifted) F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
+        if (m.rt) F.rating = m.rt; if (m.cd) F.card = cardFrom(m.cd); if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; { const pl = +m.pl || 0, df = +m.df || 0; F.plant = pl > 0 ? (F.plant > 0 && Math.abs(F.plant - pl) < .5 ? F.plant : pl) : 0; F.defuse = df > 0 ? (F.defuse > 0 && Math.abs(F.defuse - df) < .5 ? F.defuse : df) : 0; }   // (kept running between messages by netFollow; a message only corrects it when it has drifted) F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.c != null) { F.credits = +m.c || 0; F.guns[1] = GUNS[m.g1] ? m.g1 : null; F.guns[2] = GUNS[m.g2] ? m.g2 : 'pip'; F.smokes = m.sm | 0; F.ab.q = m.aq | 0; }   // their credits and loadout
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
@@ -4638,7 +4770,7 @@ const GAME = {
     if ((iconT -= dt) > 0) return; iconT = .12;
     if (iconQ.length) { const [k, id] = iconQ.shift(); gunIcon(k, id, true); return; }
     // then the locker's turntable, drawn once out of sight (this frame's own picture covers it), so its lighting is ready
-    if (!X.gsWarm && screen === 'menu' && UI.panel === 'home') { X.gsWarm = 1; const was = UI.panel; UI.panel = 'locker'; try { renderGunShow(0); } catch (e) {} UI.panel = was; }
+    if (!X.gsWarm && screen === 'menu' && UI.panel === 'home') { X.gsWarm = 1; const was = UI.panel, wv = SH.lview; UI.panel = 'locker'; SH.lview = 'gun'; try { renderGunShow(0); } catch (e) {} UI.panel = was; SH.lview = wv; }
   }
   // spent brass flying out of the ejection port (first person only)
   const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};
@@ -6372,7 +6504,9 @@ const GAME = {
   function renderFrame(dt) {
     if (!X || !ready) return; const cam = X.camera; X.t += dt; X.frameN = (X.frameN || 0) + 1; iconsAhead(dt); audioFrame(); tunePixels(dt); skinTick(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; } mechFrame(dt);
     const live = M && (screen === 'play' || (screen === 'over' && posed)) && !loadingNow();
+    if (X.lu && X.lu.fakes.length && !(screen === 'over' && M && M.prog && !(M.overStage | 0))) lineupEnd();
     if (!live) {   // behind the menus: a slow flight round the site
+      if (screen === 'over' && M && M.prog && !(M.overStage | 0) && renderLineup(dt)) return;
       if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker') && renderGunShow(dt)) return;
       if (screen === 'select' && UI.sel) { for (const g of X.smokes) g.visible = false; for (const o of X.nadeObjs) o.visible = false; for (const w of X.walls) w.visible = false; return renderSelect(dt); }
       const a = X.t * .06 + 2.4, k = MW / 64; cam.position.set(MW / 2 + 9 * k + Math.cos(a) * 30 * k, 19 * k, MH / 2 - 1 + Math.sin(a) * 26 * k); cam.rotation.set(0, 0, 0); cam.lookAt(MW / 2 + 6 * k, 0, MH / 2 - 1); cam.fov = 55; cam.updateProjectionMatrix();
@@ -7370,6 +7504,8 @@ const GAME = {
   });
   // a skin unlocked: a fanfare that grows with the rarity
   cue('wheelTick', () => { if (canHear()) tone(outFor(null), 1500, .025, 'square', .03); });   // the wheel's pointer clicking over a slice
+  cue('levelUp', () => { const o = outFor(null); [659, 880, 1175, 1760].forEach((f, i) => { tone(o, f, .32, 'triangle', .09, 0, i * .08); tone(o, f * 2, .2, 'sine', .03, 0, i * .08 + .02); }); });
+  cue('passUp', () => { const o = outFor(null); [523, 784, 1046, 1568].forEach((f, i) => tone(o, f, .5, 'triangle', .09, 0, i * .1)); hiss(o, .7, .07, 'highpass', 6000, .05); });
   cue('unlock', sk => { const o = outFor(null), t = sk.R.tier, notes = [523, 659, 784, 1046, 1318, 1568].slice(0, 3 + t);
     notes.forEach((f, i) => { tone(o, f, .5 + t * .1, 'triangle', .1, 0, i * .09); tone(o, f * 2, .35, 'sine', .04, 0, i * .09 + .02); });
     hiss(o, .6 + t * .2, .08, 'highpass', 6000, .05); if (t >= 3) { tone(o, 98, 1, 'sine', .3, -20, 0); hiss(o, 1.2, .1, 'bandpass', 2400, .3, 2); } });
@@ -7994,7 +8130,7 @@ const GAME = {
       else if (q.rating && slim) { rankBadge(g, x + cw - 22 * u, y + 26 * u, 12 * u, q.rating); tx(g, String(q.rating), x + cw - 22 * u, y + 56 * u, 11 * u, BONE, 'center', 700); }
       else if (q.rating) { rankBadge(g, x + cw - 24 * u, y + 28 * u, 13 * u, q.rating); tx(g, rankName(q.rating).toUpperCase(), x + cw - 42 * u, y + 24 * u, 11 * u, RANK_COL[diffFor(q.rating).i], 'right', 800); tx(g, String(q.rating), x + cw - 42 * u, y + 42 * u, 13 * u, BONE, 'right', 700); }
       else tx(g, '—', x + cw - 24 * u, y + 30 * u, 14 * u, DIM, 'center');
-      tx(g, q.bot ? 'BOT' : q.net && !q.isBot ? 'PLAYER' : q === P ? 'YOU' : 'BOT', x + 74 * u, y + 60 * u, 10 * u, DIM, 'left', 800);
+      { const cd = cardOf(q), lw = cd.lv ? lvChip(g, x + 74 * u, y + 60 * u, cd.lv, 9 * u) + 6 * u : 0; fitTx(g, (q.bot ? 'BOT' : q.net && !q.isBot ? 'PLAYER' : q === P ? 'YOU' : 'BOT') + (cd.title && !slim ? '  ·  ' + cd.title.toUpperCase() : ''), x + 74 * u + lw, y + 60 * u, 10 * u, DIM, 'left', 800, cw - 80 * u - lw); }
       g.restore();
     };
     mine.forEach((q, i) => card(q, V.x0 + m + i * (cw + gp), YOU, i)); theirs.forEach((q, i) => card(q, V.x1 - m - (i + 1) * (cw + gp) + gp, FOE, i + 1));
@@ -8201,7 +8337,7 @@ const GAME = {
     // the connection: yours dropped (the game keeps going while it gets back in), or someone else's
     if (M.online && (M.dropped || MP.rejoining)) { const p = .6 + .4 * Math.sin(K.t * 6); rr(g, 640 - 170 * u, 118 * u, 340 * u, 34 * u, 8, 'rgba(12,16,22,.85)', GOLD, 1.5); tx(g, 'CONNECTION LOST · RECONNECTING', 640, 135 * u, 14 * u, GOLD, 'center', 900); g.globalAlpha = 1; void p; }
     else if (M.online) { const dc = M.fs.find(f => f.dc && !f.gone); if (dc) { const left = Math.max(0, Math.ceil(DC_WAIT - (M.time - dc.dc))); tx(g, `${dc.name.toUpperCase()} LOST CONNECTION · WAITING ${left} s`, 640, 135 * u, 14 * u, GOLD, 'center', 900); } }
-    if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
+    if (M.phase === 'end' && M.last && !M.over) drawRoundEnd(g, V, u, demo);   // (93-after: the result, and your team's round)
     if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { const ty = Math.max(200, V.y0 + 132 * u + tapH(46) + 34 * u); { const ot = otRound(M.round), mp = !ot && Math.max(...M.wins) === WIN_ROUNDS - 1; tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : suddenDeath(M.round) ? 'SUDDEN DEATH' : ot ? 'OVERTIME ' + ot : mp ? 'MATCH POINT' : 'ROUND ' + M.round, 640, ty, 34 * u, ot || mp ? GOLD : BONE); } tx(g, side === 'att' ? (twoSites() ? 'ATTACK  ·  ' + siteWords() : 'ATTACK') : (twoSites() ? 'DEFEND  ·  ' + siteWords('and') : 'DEFEND'), 640, ty + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
     if (P !== me()) {   // spectating a teammate: who, their health and shield, their gun, and the others you could switch to
       const w = 420 * u, y = V.y1 - 156 * u, mates = M.fs.filter(f => f !== me() && f.team === me().team && f.alive), G2 = gun(P);
@@ -8267,6 +8403,120 @@ const GAME = {
       g.fillStyle = 'rgba(239,233,220,.5)'; g.beginPath(); g.arc(s.x0 + Math.cos(a) * L, s.y0 + Math.sin(a) * L, 27 * u * ss, 0, TAU); g.fill();
     }
     else if (me().alive) { const x = V.x0 + 170 * u, y = V.y1 - 150 * u, ss = touchSize('move'); g.setLineDash([6 * u, 8 * u]); g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 2 * u; g.beginPath(); g.arc(x, y, 62 * u * ss, 0, TAU); g.stroke(); g.setLineDash([]); tx(g, 'MOVE', x, y, 13 * u, 'rgba(239,233,220,.45)'); tx(g, 'push far to sprint', x, y + (20 + 62 * ss) * u, 11 * u, 'rgba(239,233,220,.35)'); }
+  }
+  /* ---------- 93 after: what you see when a round ends, and when the match does ----------
+     A round: the result in a band, and under it your team for that round (kills, damage, who fell), so the pause before
+     the next one tells you something.
+     The match: first the line-up, every operative standing in a row (your team on the left) with what each did best
+     under them; then, when you click on, what the match paid: coins, XP, your level, the season pass, the challenges
+     it moved and any pass rewards; and from there the full scoreboard, another match, or the menu. */
+  // ---- a round's end
+  function drawRoundEnd(g, V, u, demo) {
+    const won = M.last.wi === 0, c = won ? YOU : FOE, W = V.x1 - V.x0, P = me();
+    if (demo) { g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT`, 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); return; }
+    if (!M.last.t0) M.last.t0 = performance.now(); const t = (performance.now() - M.last.t0) / 1000, a = smooth(cl(t / .25, 0, 1)), k = Math.min(u, 1.2);
+    // (a big moment's band, an ace or a clutch, has the same place: while it is up this sits under it, then slides back)
+    const want = SWEEP ? 226 * u - 92 * k : 0; M.last.off = M.last.off == null ? want : lp(M.last.off, want, .18); const top = V.y0 + 92 * k + M.last.off;
+    g.save(); g.globalAlpha = a;
+    { const gr = g.createLinearGradient(V.x0, 0, V.x1, 0), bc = won ? '53,224,200' : '244,63,63'; gr.addColorStop(0, `rgba(${bc},0)`); gr.addColorStop(.3, `rgba(${bc},.2)`); gr.addColorStop(.7, `rgba(${bc},.2)`); gr.addColorStop(1, `rgba(${bc},0)`); g.fillStyle = 'rgba(8,10,14,.5)'; g.fillRect(V.x0, top, W, 66 * k); g.fillStyle = gr; g.fillRect(V.x0, top, W, 66 * k); g.fillStyle = c; g.fillRect(640 - 150 * k * a, top + 64 * k, 300 * k * a, 2 * k); }
+    tx(g, won ? 'ROUND WON' : 'ROUND LOST', 640, top + 24 * k, 34 * k, c, 'center', 900); tx(g, `${WHY[M.last.why].toUpperCase()}   ·   ${M.wins[0]} – ${M.wins[1]}`, 640, top + 50 * k, 12 * k, BONE, 'center', 800);
+    // your team this round (one against one: the two of you)
+    const mine = M.fs.filter(f => f.team === P.team && !f.gone), list = mine.length > 1 ? mine : [P, ...M.fs.filter(f => f.team !== P.team && !f.gone)], rk = f => (f.stat.k | 0) - (f.stat.k0 | 0), rd = f => Math.max(0, Math.round((f.stat.dmg || 0) - (f.stat.d0 || 0)));
+    const best = list.slice().sort((x, y) => rd(y) + rk(y) * 150 - rd(x) - rk(x) * 150)[0], n = list.length, gp = 8 * k, cw = Math.min(196 * k, (W - 60 * k) / n - gp), ch = 54 * k, x0 = 640 - (n * (cw + gp) - gp) / 2, y = top + 74 * k;
+    list.forEach((f, i) => { const x = x0 + i * (cw + gp), a2 = smooth(cl((t - .15 - i * .07) / .25, 0, 1)), col = f.team === P.team ? YOU : FOE, top2 = f === best && (rk(f) || rd(f)) && n > 1; g.save(); g.globalAlpha = a * a2; g.translate(0, (1 - a2) * 10 * k);
+      rr(g, x, y, cw, ch, 6, 'rgba(10,13,18,.86)', top2 ? GOLD : f === P ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', top2 ? 1.5 : 1); g.fillStyle = col; g.fillRect(x, y, 3 * k, ch);
+      portraitTile(g, f.op, x + 7 * k, y + 5 * k, ch - 10 * k, ch - 10 * k, { r: 4, dead: !f.alive }); const nx = x + ch + 2 * k, room = cw - ch - 8 * k;
+      fitTx(g, f.name.toUpperCase(), nx, y + 16 * k, 12 * k, f === P ? YOU : BONE, 'left', 900, room - (top2 ? 34 * k : 0)); if (top2) tx(g, 'BEST', x + cw - 7 * k, y + 16 * k, 9 * k, GOLD, 'right', 900);
+      if (cw * scrPx(g) < 150) fitTx(g, `${rk(f)} K  ·  ${rd(f)} DMG`, nx, y + 37 * k, 11 * k, BONE, 'left', 800, room);   // (a small card: one line)
+      else { tx(g, String(rk(f)), nx, y + 37 * k, 17 * k, BONE, 'left', 900); g.font = `900 ${fitPx(g, 17 * k)}px ${FONT}`; const kw = g.measureText(String(rk(f))).width; tx(g, rk(f) === 1 ? 'KILL' : 'KILLS', nx + kw + 4 * k, y + 39 * k, 8.5 * k, DIM, 'left', 900);
+        tx(g, String(rd(f)), x + cw - 30 * k, y + 37 * k, 14 * k, BONE, 'right', 800); tx(g, 'DMG', x + cw - 7 * k, y + 39 * k, 8.5 * k, DIM, 'right', 900); }
+      g.restore(); });
+    g.restore();
+  }
+  // ---- the line-up
+  function lineupScene() {
+    if (X.lu) return X.lu; const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(24, 1, .1, 80); scene.background = new THREE.Color('#0a0d12');
+    scene.add(new THREE.HemisphereLight('#e6ecff', '#2a2622', .75));
+    const key = new THREE.DirectionalLight('#fff1dc', 1.25); key.position.set(-2.5, 5, 6); scene.add(key, key.target);
+    const fill = new THREE.DirectionalLight('#9fc4ff', .35); fill.position.set(3, 2, 4); scene.add(fill, fill.target);
+    const la = new THREE.PointLight(YOU, 2.2, 14), lb = new THREE.PointLight(FOE, 2.2, 14); la.position.set(-3.2, 2.4, -2.6); lb.position.set(3.2, 2.4, -2.6); scene.add(la, lb);
+    // the floor: a dark stage that falls away into the backdrop, a line of light along the row
+    { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), gr = g.createRadialGradient(128, 128, 10, 128, 128, 128); gr.addColorStop(0, '#2a3140'); gr.addColorStop(.55, '#151a22'); gr.addColorStop(1, '#0a0d12'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+      const fl = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c) })); fl.rotation.x = -Math.PI / 2; scene.add(fl); }
+    return X.lu = { scene, cam, la, lb, fakes: [], M: null, pts: [] };
+  }
+  function lineupEnd() { const S = X && X.lu; if (!S) return; for (const k of S.fakes) { const A = X.agents.get(k); if (A) { if (A.parent) A.parent.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); X.agents.delete(k); } } S.fakes = []; S.M = null; S.pts = []; }
+  function renderLineup(dt) {
+    const S = lineupScene(), P = me(), cam = S.cam;
+    if (S.M !== M) { lineupEnd(); S.M = M; S.t0 = performance.now();
+      // your team on the left, best in the middle of the screen; the rivals on the right, best nearest the middle
+      const by = (a, b) => csOf(b) - csOf(a), mine = M.fs.filter(f => f.team === P.team && !f.gone).sort(by).reverse(), theirs = M.fs.filter(f => f.team !== P.team && !f.gone).sort(by);
+      S.order = [...mine, ...theirs]; S.nMine = mine.length;
+      S.fakes = S.order.map((f, i) => { const k = fighter({ op: f.op, key: 'lu' + i, name: f.name, team: P.team }), g1 = f.guns[1] || null; k.guns = { 1: g1, 2: f.guns[2] || 'pip', 3: 'knife' }; k.slot = g1 ? 1 : 2; k.skins = f.skins || {}; k.src = f; return k; }); }
+    const n = S.fakes.length, asp = innerWidth / innerHeight, gap = n > 2 ? .7 : .5, Hv = Math.max(n <= 4 ? 4 : 5.2, ((n - 1) * .74 + gap + 1.5) / asp), Wv = Hv * asp, sp = Math.min(1.05, (Wv - 1.5 - gap) / Math.max(1, n - 1)), D = Hv / 2 / Math.tan(12 * D2R), t = (performance.now() - S.t0) / 1000;
+    cam.aspect = asp; cam.fov = 24; cam.position.set(0, 1.25, D); cam.lookAt(0, Hv * .115, 0); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+    const total = (n - 1) * sp + gap; S.pts = [];
+    S.fakes.forEach((k, i) => { const x = -total / 2 + i * sp + (i >= S.nMine ? gap : 0), pop = smooth(cl((t - .1 - i * .09) / .35, 0, 1));
+      Object.assign(k, { x, y: 0, z: 0, px: x, py: 0, pz: 0, vx: 0, vz: 0, yaw: yawTo(x, 0, x * .55, D), pitch: 0, alive: true, walkT: 0, crouch: 0 });
+      updateAgent(k, dt); const A = X.agents.get(k); if (!A) return; if (A.parent !== S.scene) S.scene.add(A); A.visible = pop > 0; A.scale.setScalar(.7 + .3 * pop); A.position.set(x, 0, 0);
+      const v = new THREE.Vector3(x, 0, 0).project(cam), h = new THREE.Vector3(x, 1.9, 0).project(cam), V = K.view; S.pts.push({ f: k.src, x: lp(V.x0, V.x1, (v.x + 1) / 2), y: lp(V.y0, V.y1, (1 - v.y) / 2), yh: lp(V.y0, V.y1, (1 - h.y) / 2), a: pop }); });
+    S.la.position.x = -total / 4 - 1; S.lb.position.x = total / 4 + 1; S.la.color.set(M.over.won ? YOU : '#3a4a5a'); S.lb.color.set(M.over.won ? '#5a3a3a' : FOE);
+    X.renderer.render(S.scene, cam); return true;
+  }
+  const overNext = () => { M.overStage = (M.overStage | 0) + 1; M.overT = performance.now(); click(); };
+  function drawLineup(g) {
+    const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), P = me(), won = M.over.won, S = X.lu, t = (performance.now() - (M.overT || 0)) / 1000;
+    { const gr = g.createLinearGradient(0, V.y0, 0, V.y0 + 150 * u); gr.addColorStop(0, 'rgba(8,10,14,.9)'); gr.addColorStop(1, 'rgba(8,10,14,0)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, 150 * u); }
+    const hy = V.y0 + Math.min(58 * u, H * .09); tx(g, won ? 'VICTORY' : 'DEFEAT', 640, hy, Math.min(56 * u, H * .09), won ? YOU : FOE, 'center', 900); tx(g, `${M.wins[0]}  –  ${M.wins[1]}`, 640, hy + Math.min(44 * u, H * .068), Math.min(24 * u, H * .04), BONE, 'center', 900);
+    if (M.over.why === 'left') tx(g, M.fs.length > 2 ? 'The other team left the match' : 'Your rival left the match', 640, hy + 72 * u, 12 * u, DIM);
+    if (!M.awards) M.awards = matchAwards(M.fs, won ? P.team : 1 - P.team);
+    if (S && S.pts.length) { const n = S.pts.length, step = n > 1 ? Math.abs(S.pts[1].x - S.pts[0].x) : 220 * u, pw = cl(step - 6 * u, 60 * u, 190 * u), tiny = pw < 104 * u, bh0 = tapH(44);
+      // a plate under each: name, award, what earned it, then level and kills / deaths. Lines are never closer than they can be read
+      const lh = Math.max(19 * u, 13.5 / pxPer()), px = Math.min(13 * u, pw * .13);
+      S.pts.forEach(q => { const f = q.f, A = M.awards.get(f.key) || { title: '', line: '' }, col = f.team === P.team ? YOU : FOE, x = q.x - pw / 2, y = q.y + 8 * u, room = V.y1 - bh0 - 18 * u - y, rows = room >= lh * 4 + 10 * u ? 4 : room >= lh * 3 + 10 * u ? 3 : 2, ph = rows * lh + 10 * u, c = cardOf(f); if (room < lh * 2 + 10 * u) return;
+        g.save(); g.globalAlpha = q.a; g.translate(0, (1 - q.a) * 14 * u);
+        rr(g, x, y, pw, ph, 6, 'rgba(10,13,18,.9)', A.top ? GOLD : f === P ? 'rgba(239,233,220,.55)' : 'rgba(239,233,220,.16)', A.top ? 2 : 1); g.fillStyle = col; g.fillRect(x, y, pw, 3 * u);
+        let ly = y + 6 * u + lh / 2; fitTx(g, f.name.toUpperCase(), q.x, ly, px, f === P ? YOU : BONE, 'center', 900, pw - 10 * u); ly += lh;
+        fitTx(g, (A.top ? '★ ' : '') + A.title, q.x, ly, px, A.top ? GOLD : '#dfe6ee', 'center', 900, pw - 8 * u); ly += lh;
+        if (rows >= 3) { fitTx(g, A.line, q.x, ly, Math.min(10.5 * u, pw * .1), DIM, 'center', 800, pw - 8 * u); ly += lh; }
+        if (rows >= 4) { const kd = `${f.stat.k} / ${f.stat.d}`; if (c.lv && !tiny) { tx(g, 'LV ' + c.lv, x + 9 * u, ly, 10.5 * u, lvCol(c.lv), 'left', 900); tx(g, kd, x + pw - 9 * u, ly, 11 * u, BONE, 'right', 800); } else tx(g, kd, q.x, ly, 11 * u, BONE, 'center', 800); }
+        g.restore(); }); }
+    // on, when you are ready (anywhere on the screen, once the line-up has settled)
+    if (t > .7) zone(V.x0, V.y0, W, H, overNext);
+    const bw = 220 * u, bh = tapH(44); btn(g, 640 - bw / 2, V.y1 - bh - 10 * u, bw, bh, 'CONTINUE', overNext, { on: true, fill: FOE, px: 16 * u });
+  }
+  // ---- what the match paid
+  function drawRewards(g) {
+    const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), won = M.over.won, R = M.prog, t = (performance.now() - (M.overT || 0)) / 1000, e = smooth(cl((t - .3) / 1.6, 0, 1));
+    g.fillStyle = 'rgba(8,11,16,.86)'; g.fillRect(V.x0, V.y0, W, H);
+    const top = V.y0 + 18 * u; tx(g, 'MATCH REWARDS', 640, top + 20 * u, 30 * u, BONE, 'center', 900); tx(g, `${won ? 'VICTORY' : 'DEFEAT'}   ·   ${M.wins[0]} – ${M.wins[1]}`, 640, top + 48 * u, 13 * u, won ? YOU : FOE, 'center', 900);
+    const bh = tapH(46), y0 = top + 70 * u, y1 = V.y1 - bh - 26 * u, gp = 14 * u, cw = Math.min(330 * u, (W - 40 * u - gp * 2) / 3), x0 = 640 - (cw * 3 + gp * 2) / 2, ph = y1 - y0;
+    const panel = (i, head, col) => { const x = x0 + i * (cw + gp); rr(g, x, y0, cw, ph, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, head, x + 14 * u, y0 + 20 * u, 12 * u, col, 'left', 900); return x; };
+    const rowsIn = (x, rows, yA, yB, tot) => { const rh = cl((yB - yA) / Math.max(1, rows.length), 13 * u, 22 * u), n = Math.floor((yB - yA) / rh); rows.slice(0, n).forEach(([a, b], i) => { const y = yA + i * rh + rh / 2, a2 = cl((t - .2 - i * .1) / .25, 0, 1); g.save(); g.globalAlpha = a2; fitTx(g, a, x + 14 * u, y, Math.min(12 * u, rh * .62), '#c9cfd8', 'left', 700, cw - 84 * u); tx(g, (b >= 0 ? '+' : '') + b, x + cw - 14 * u, y, Math.min(12 * u, rh * .62), b >= 0 ? BONE : WARN, 'right', 800); g.restore(); }); };
+    // coins
+    { const x = panel(0, 'COINS', COIN), P2 = M.pay || { rows: [], total: 0 }; coinTag(g, x + cw - 14 * u, y0 + 54 * u, 30 * u, '+' + Math.round(P2.total * e)); rowsIn(x, P2.rows, y0 + 84 * u, y1 - 34 * u);
+      tx(g, 'YOU HAVE', x + 14 * u, y1 - 18 * u, 10 * u, DIM, 'left', 900); coinTag(g, x + cw - 14 * u, y1 - 18 * u, 15 * u, STATS.coins); }
+    // XP and your level
+    { const x = panel(1, 'XP', YOU), now = lp(R.acct[0], R.acct[1], e), L = levelOf(Math.round(now)), up = L.l > R.level[0].l; tx(g, '+' + Math.round(R.xp.total * e), x + cw - 14 * u, y0 + 54 * u, 30 * u, YOU, 'right', 800);
+      if (L.l > (R.lvShown || R.level[0].l)) { R.lvShown = L.l; R.lvT = performance.now(); emit('levelUp'); }
+      rowsIn(x, R.xp.rows, y0 + 84 * u, y1 - 72 * u);
+      const ly = y1 - 52 * u, fl = R.lvT ? cl(1 - (performance.now() - R.lvT) / 900, 0, 1) : 0; lvChip(g, x + 14 * u, ly, L.l, 13 * u); if (up) tx(g, 'LEVEL UP', x + cw - 14 * u, ly, (12 + 4 * fl) * u, GOLD, 'right', 900); else tx(g, 'LEVEL', x + cw - 14 * u, ly, 10 * u, DIM, 'right', 900);
+      g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x + 14 * u, ly + 18 * u, cw - 28 * u, 7 * u); g.fillStyle = fl > 0 ? GOLD : lvCol(L.l); g.fillRect(x + 14 * u, ly + 18 * u, (cw - 28 * u) * L.into / L.need, 7 * u);
+      tx(g, `${L.into} / ${L.need} XP`, x + cw - 14 * u, ly + 37 * u, 10 * u, DIM, 'right', 800); }
+    // the season pass, its rewards, the challenges
+    { const S = seasonNow(), x = panel(2, `SEASON ${S.n} PASS`, GOLD), px = lp(R.pass.xp0, R.pass.xp1, e), tier = Math.min(PASS_TIERS, Math.floor(px / PASS_XP)), into = tier >= PASS_TIERS ? PASS_XP : px % PASS_XP;
+      tx(g, 'TIER ' + tier, x + cw - 14 * u, y0 + 20 * u, 12 * u, BONE, 'right', 900); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x + 14 * u, y0 + 38 * u, cw - 28 * u, 7 * u); g.fillStyle = GOLD; g.fillRect(x + 14 * u, y0 + 38 * u, (cw - 28 * u) * into / PASS_XP, 7 * u);
+      tx(g, tier >= PASS_TIERS ? 'COMPLETE' : `${Math.round(into)} / ${PASS_XP} XP TO TIER ${tier + 1}`, x + cw - 14 * u, y0 + 56 * u, 10 * u, DIM, 'right', 800);
+      let y = y0 + 72 * u; const got = R.got.filter(q => q.tier <= tier || e >= 1);
+      if (R.got.length) { tx(g, 'UNLOCKED', x + 14 * u, y + 6 * u, 10 * u, GOLD, 'left', 900); y += 16 * u; const n = Math.min(R.got.length, 4), tw = (cw - 28 * u - (n - 1) * 6 * u) / n, th = Math.min(74 * u, (y1 - y) * .42);
+        R.got.slice(0, n).forEach((q, i) => { const on = got.includes(q); g.save(); g.globalAlpha = on ? 1 : .25; rewardTile(g, q.rw, x + 14 * u + i * (tw + 6 * u), y, tw, th, u, on ? 'got' : 'far'); g.restore(); }); y += th + 6 * u;
+        if (R.got.length > n) { tx(g, `+ ${R.got.length - n} more, on the PASS page`, x + 14 * u, y + 6 * u, 10 * u, DIM, 'left', 800); y += 16 * u; } y += 4 * u; }
+      const mv = R.ch.moved; if (mv.length && y + 44 * u < y1) { tx(g, 'CHALLENGES', x + 14 * u, y + 6 * u, 10 * u, DIM, 'left', 900); y += 16 * u; const rh = cl((y1 - 10 * u - y) / Math.min(mv.length, 4) - 5 * u, 24 * u, 40 * u), n = Math.max(0, Math.floor((y1 - 6 * u - y) / (rh + 5 * u)));
+        mv.slice().sort((a, b) => (b.at >= b.n) - (a.at >= a.n)).slice(0, n).forEach((c, i) => challengeRow(g, c, x + 10 * u, y + i * (rh + 5 * u), cw - 20 * u, rh, u, lp(c.from, c.at, e))); }
+      else if (!R.got.length && !mv.length) para(g, 'Challenges and pass rewards are on the PASS page.', x + 14 * u, y + 14 * u, cw - 28 * u, 11 * u, DIM); }
+    const bw = Math.min(210 * u, (W - 60 * u) / 3 - 10 * u), by = V.y1 - bh - 12 * u;
+    btn(g, 640 - bw * 1.5 - 10 * u, by, bw, bh, M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); openParty(); } else play(soloOpts()); }, { on: true, fill: FOE, px: 16 * u });
+    btn(g, 640 - bw / 2, by, bw, bh, 'SCOREBOARD', overNext, { px: 16 * u }); btn(g, 640 + bw / 2 + 10 * u, by, bw, bh, 'MENU', toMenu, { px: 16 * u });
   }
   /* ---------- 93 ranked on screen: tier emblems, the queue on the play screen, the career page, the result after a match ---------- */
   // a tier's emblem: a cut gem in the tier's colour, deeper and more faceted the higher it is, with one to three bars under it
@@ -8456,7 +8706,7 @@ const GAME = {
   /* The menus: a bar along the top (PLAY, AGENTS, STORE, LOCKER, CROSSHAIR, CAREER, SETTINGS, and your card: operative, name, rank,
      rating, coins) over whichever page is open. PLAY: pick the mode (STANDARD, two sites; SWIFT, one site), the team size
      and the bots, then the big PLAY button takes you to agent select. Friends go through the party. */
-  const MENU_TABS = [['home', 'PLAY'], ['agents', 'AGENTS'], ['store', 'STORE'], ['locker', 'LOCKER'], ['crosshair', 'CROSSHAIR'], ['career', 'CAREER'], ['settings', 'SETTINGS']];
+  const MENU_TABS = [['home', 'PLAY'], ['agents', 'AGENTS'], ['store', 'STORE'], ['pass', 'PASS'], ['locker', 'LOCKER'], ['crosshair', 'CROSSHAIR'], ['career', 'CAREER'], ['settings', 'SETTINGS']];
   function drawTopBar(g, V, u) {
     const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u;
     g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
@@ -8467,6 +8717,7 @@ const GAME = {
     const left = () => logo ? x0 + 148 * u : x0 + 4 * u, room = () => cardX - 8 * u - left(), widths = () => names.map(n => g.measureText(n).width + pad * 2), need = () => widths().reduce((a, b) => a + b, 0);
     if (need() > room()) pad = 7 * u; if (need() > room()) logo = false; if (need() > room()) names = MENU_TABS.map(([k, n]) => ({ crosshair: 'XHAIR', settings: 'SETUP' })[k] || n);
     if (logo) { g.fillStyle = FOE; g.fillRect(x0, V.y0 + 17 * u, 4 * u, 22 * u); tx(g, 'DUELPOINT', x0 + 12 * u, V.y0 + h / 2 + 1, 19 * u, BONE, 'left', 900); }
+    g.font = `900 ${fitPx(g, 13 * u)}px ${FONT}`;   // (the tabs' own size again: the name just drawn left a bigger one set)
     const ws = widths(); let x = left() + Math.max(0, Math.min((room() - need()) / 2, 640 - need() / 2 - left()));
     MENU_TABS.forEach(([k], i) => { const tw = ws[i], n = names[i], on = UI.panel === k, hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
       tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, 13 * u, on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + pad, V.y0 + h - 4 * u, tw - pad * 2, 3 * u); } x += tw; });
@@ -8478,7 +8729,7 @@ const GAME = {
       if (ready) { g.fillStyle = FOE; g.beginPath(); g.arc(wx + s - 4 * u, wy + 5 * u, 5 * u, 0, TAU); g.fill(); } }
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
     // your photo, your name and the operative you play (your rank is on the career page and the play page: click it there for the ladder)
-    { const op = OPS[CFG.op] || OPS.vex; tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 21 * u, 13 * u, BONE, 'left', 900); tx(g, op.n, px + 50 * u, V.y0 + 38 * u, 10 * u, op.col, 'left', 800); }
+    { const op = OPS[CFG.op] || OPS.vex; tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 21 * u, 13 * u, BONE, 'left', 900); const lv = myLevel(), ls = 'LV ' + lv; tx(g, ls, px + 50 * u, V.y0 + 38 * u, 10 * u, lvCol(lv), 'left', 900); const lw = g.measureText(ls).width; tx(g, '·  ' + op.n, px + 56 * u + lw, V.y0 + 38 * u, 10 * u, op.col, 'left', 800); }
     coinTag(g, V.x1 - 22 * u, V.y0 + h / 2, 17 * u, STATS.coins);
     return h;
   }
@@ -8496,6 +8747,7 @@ const GAME = {
     if (UI.panel === 'settings') return drawSettings(g, VN, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, VN, W, u);
     if (UI.panel === 'career') return drawCareer(g, VN, W, u);
+    if (UI.panel === 'pass') return drawPass(g, VN, W, u);
     drawPlay(g, VN, W, H2, u);
   }
   // a little plan for a mode card: the site diamonds with their letters, joined by lanes
@@ -8736,13 +8988,15 @@ const GAME = {
 
   // a coin count: a little gold disc and the number, right-aligned at x
   function coinTag(g, x, y, px, n) {
-    const s = String(n); g.font = `800 ${px}px ${FONT}`; const w = g.measureText(s).width;
+    const s = String(n); px = fitPx(g, px); g.font = `800 ${px}px ${FONT}`; const w = g.measureText(s).width;   // (the size the words will really be drawn at, so the coin sits clear of them)
     tx(g, s, x, y, px, COIN, 'right', 800);
     const cx = x - w - px * .75; g.fillStyle = COIN; g.beginPath(); g.arc(cx, y, px * .48, 0, TAU); g.fill(); g.strokeStyle = '#8a6210'; g.lineWidth = px * .1; g.beginPath(); g.arc(cx, y, px * .3, 0, TAU); g.stroke();
   }
   function drawOver(g) {
+    if (M.prog && !(M.overStage | 0)) return drawLineup(g); if (M.prog && M.overStage === 1) return drawRewards(g);   // (93-after: the line-up, then what the match paid, then this)
     const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), P = me(), F = foe(), won = M.over.won;
     g.fillStyle = 'rgba(12,16,22,.78)'; g.fillRect(V.x0, V.y0, W, H);
+    if (M.prog) btn(g, V.x0 + (isTouch() ? 92 : 24) * u, V.y0 + 20 * u, 130 * u, tapH(36), '‹ REWARDS', () => { M.overStage = 1; M.overT = performance.now() - 5000; }, { px: 13 * u });
     tx(g, won ? 'VICTORY' : 'DEFEAT', 640, V.y0 + 90 * u, 84 * u, won ? YOU : FOE); tx(g, `${M.wins[0]}  –  ${M.wins[1]}`, 640, V.y0 + 170 * u, 44 * u, BONE);
     if (M.over.why === 'left') tx(g, M.fs.length > 2 ? 'The other team left the match' : 'Your rival left the match', 640, V.y0 + 212 * u, 15 * u, DIM);
     else if (M.over.why === 'dropped') tx(g, 'You lost the connection to the room, and could not get back in', 640, V.y0 + 212 * u, 15 * u, DIM);
@@ -8821,6 +9075,112 @@ const GAME = {
     const sw = one - 12 * u - x0;
     fine(g, x0, y, sw, TE_NAME[TE.sel] || '', touchSize(TE.sel), .6, 1.7, .05, v => set(TE.sel, { s: v }), v => Math.round(v * 100) + '%');
     tx(g, 'Drag a button to move it  ·  the one you touch is sized above', (V.x0 + V.x1) / 2, y + bh + 30 * u, 12.5 * u, DIM, 'center', 700);
+  }
+  /* ---------- 95 the PASS page: the season's track, the challenges, and your card ----------
+     The rules are in 26-progress; this draws them. The track is two rows of tiles (free above, premium below), a column
+     per tier, paged with the arrows and opening on the tier you are at. Under it: today's and this week's challenges, and
+     your card as others see it in a lobby (banner, title, level), with a button each to change the title and the banner. */
+  const PS = { off: null, toast: null };   // off: the first tier on screen (null: follow your tier); toast: { t0, got } after unlocking premium
+  // a card banner: its two colours behind a card, with slanted bars in its accent
+  function bannerBg(g, x, y, w, h, key, r = 8) {
+    const B = BANNERS[key] || BANNERS.plain; g.save(); rr(g, x, y, w, h, r, null, null); g.clip();
+    const gr = g.createLinearGradient(x, y, x + w, y + h); gr.addColorStop(0, B[0]); gr.addColorStop(1, B[1]); g.fillStyle = gr; g.fillRect(x, y, w, h);
+    if (key !== 'plain' && BANNERS[key]) { g.globalAlpha *= .2; g.fillStyle = B[2]; for (let i = 0; i < 4; i++) { const bx = x + w * (.5 + i * .14); g.beginPath(); g.moveTo(bx, y + h); g.lineTo(bx + h * .6, y); g.lineTo(bx + h * .6 + w * .05, y); g.lineTo(bx + w * .05, y + h); g.closePath(); g.fill(); } }
+    g.restore();
+  }
+  // a level, in a pill; its colour steps up at 10, 25 and 50. Returns how wide it came out
+  const lvCol = lv => lv >= 50 ? GOLD : lv >= 25 ? '#b48aff' : lv >= 10 ? YOU : '#c9cfd8';
+  function lvChip(g, x, y, lv, px, align = 'left') {
+    const s = 'LV ' + lv; px = fitPx(g, px); g.font = `900 ${px}px ${FONT}`; const w = g.measureText(s).width + px * 1.1, h = px * 1.7, x0 = align === 'right' ? x - w : align === 'center' ? x - w / 2 : x, col = lvCol(lv);
+    rr(g, x0, y - h / 2, w, h, h / 2, 'rgba(8,10,14,.78)', col, 1.5); tx(g, s, x0 + w / 2, y + px * .04, px, col, 'center', 900); return w;
+  }
+  const bannerName = k => k[0].toUpperCase() + k.slice(1);
+  // what a reward is, drawn small: a tile for the track, and for the list on the rewards screen. st: 'got' | 'next' | 'far' | 'lock'
+  function rewardTile(g, rw, x, y, w, h, u, st) {
+    const sk = rw.t === 'skin' ? skinOfId(rw.id) : null, col = sk ? sk.R.col : rw.t === 'coins' ? COIN : rw.t === 'spin' ? GOLD : rw.t === 'title' ? BONE : (BANNERS[rw.k] || BANNERS.plain)[2], got = st === 'got', cx = x + w / 2, iy = y + h * .4, t = K.t || 0;
+    rr(g, x, y, w, h, 6, got ? 'rgba(26,32,44,.96)' : st === 'next' ? 'rgba(18,22,30,.94)' : 'rgba(12,16,22,.86)', got ? col : st === 'next' ? 'rgba(239,233,220,.4)' : 'rgba(239,233,220,.12)', got || st === 'next' ? 1.5 : 1);
+    g.save(); g.globalAlpha *= got ? 1 : st === 'lock' ? .45 : st === 'next' ? .95 : .7; rr(g, x, y, w, h, 6, null, null); g.clip();
+    if (sk) { const gr = g.createLinearGradient(x, y + h, x, y); gr.addColorStop(0, sk.R.col + '44'); gr.addColorStop(.7, sk.R.col + '00'); g.fillStyle = gr; g.fillRect(x, y, w, h);
+      const ic = gunIcon(sk.k, rw.id); if (ic) { const iw = w - 8 * u, ih = Math.min(h * .5, iw * ic.height / ic.width), iw2 = ih * ic.width / ic.height; g.drawImage(ic, cx - iw2 / 2, iy - ih / 2, iw2, ih); } g.fillStyle = col; g.fillRect(x, y + h - 3 * u, w, 3 * u); }
+    else if (rw.t === 'coins') { const r = h * .17; g.fillStyle = COIN; g.beginPath(); g.arc(cx, iy, r, 0, TAU); g.fill(); g.strokeStyle = '#8a6210'; g.lineWidth = r * .2; g.beginPath(); g.arc(cx, iy, r * .62, 0, TAU); g.stroke(); }
+    else if (rw.t === 'spin') { const r = h * .2, cols = ['#a7b1bd', '#4fa3ff', '#b56bff', '#ffb020', '#ff5ac8', '#c6ff3a']; for (let i = 0; i < 6; i++) { const a0 = t * .5 + i * TAU / 6; g.beginPath(); g.moveTo(cx, iy); g.arc(cx, iy, r, a0, a0 + TAU / 6); g.closePath(); g.fillStyle = cols[i]; g.fill(); } g.fillStyle = INK; g.beginPath(); g.arc(cx, iy, r * .3, 0, TAU); g.fill(); }
+    else if (rw.t === 'banner') bannerBg(g, x + w * .14, iy - h * .16, w * .72, h * .32, rw.k, 4);
+    else { g.strokeStyle = 'rgba(239,233,220,.5)'; g.lineWidth = 1.5; const bw = w * .7, bh = h * .26; g.strokeRect(cx - bw / 2, iy - bh / 2, bw, bh); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(cx - bw / 2, iy - bh / 2, bw, bh); fitTx(g, rw.s.toUpperCase(), cx, iy + 1, 10 * u, BONE, 'center', 900, bw - 6 * u); }
+    const lab = rw.t === 'coins' ? String(rw.n) : sk ? skinName(rw.id) : rw.t === 'spin' ? 'Bonus spin' : rw.t === 'title' ? 'Title' : bannerName(rw.k) + ' banner';
+    fitTx(g, lab, cx, y + h - Math.max(11 * u, h * .14), Math.min(11 * u, h * .14), col, 'center', 800, w - 8 * u);
+    if (sk && h > 78 * u) fitTx(g, sk.R.n.toUpperCase(), cx, y + 10 * u, 8.5 * u, col, 'center', 900, w - 8 * u);
+    g.restore();
+    if (got) { const r = 8 * u, bx = x + w - r - 3 * u, by = y + r + 3 * u; g.fillStyle = YOU; g.beginPath(); g.arc(bx, by, r, 0, TAU); g.fill(); g.strokeStyle = INK; g.lineWidth = 2 * u; g.beginPath(); g.moveTo(bx - r * .45, by); g.lineTo(bx - r * .1, by + r * .38); g.lineTo(bx + r * .5, by - r * .35); g.stroke(); }
+    if (st === 'lock') { const bx = x + w - 11 * u, by = y + 12 * u, s = 5 * u; g.strokeStyle = GOLD; g.lineWidth = 1.5 * u; g.beginPath(); g.arc(bx, by - s * .5, s * .55, Math.PI, 0); g.stroke(); g.fillStyle = GOLD; g.fillRect(bx - s * .9, by - s * .5, s * 1.8, s * 1.4); }
+  }
+  // "5H 12M", "3D 4H", "42M"
+  const timeLeft = ms => { const m = Math.max(0, Math.floor(ms / 60000)), d = Math.floor(m / 1440), h = Math.floor(m / 60) % 24; return d ? `${d}D ${h}H` : h ? `${h}H ${m % 60}M` : `${m}M`; };
+  const midnightIn = () => { const d = new Date(); d.setHours(24, 0, 0, 0); return d.getTime() - Date.now(); };
+  const mondayIn = () => { const d = new Date(); d.setHours(24, 0, 0, 0); while (d.getDay() !== 1) d.setDate(d.getDate() + 1); return d.getTime() - Date.now(); };
+  // a challenge's row: the words, how far, a bar, what it pays
+  function challengeRow(g, c, x, y, w, h, u, from) {
+    const done = c.done || c.at >= c.n, col = done ? YOU : c.weekly ? '#b48aff' : GOLD, k = cl((from != null ? from : c.at) / c.n, 0, 1), count = `${Math.round(k * c.n).toLocaleString('en-US')} / ${c.n.toLocaleString('en-US')}`;
+    rr(g, x, y, w, h, 6, done ? 'rgba(53,224,200,.08)' : 'rgba(12,16,22,.82)', done ? 'rgba(53,224,200,.5)' : 'rgba(239,233,220,.12)', 1); g.fillStyle = col; g.fillRect(x, y, 3 * u, h);
+    if (h * scrPx(g) < 31) {   // a short row (a phone): one line of words, the count and the XP beside them, the bar along the bottom edge
+      const px = Math.min(11.5 * u, h * .46), cy = y + h * .44, xp = done ? '✓ DONE' : `+${c.xp} XP`; g.font = `900 ${fitPx(g, px)}px ${FONT}`; const xw = g.measureText(xp).width, cw2 = g.measureText(count).width;
+      g.font = `800 ${fitPx(g, px)}px ${FONT}`; const fits = g.measureText(c.words).width <= w - 36 * u - xw - cw2;   // (the count gives way to the words: the bar says the same)
+      tx(g, xp, x + w - 8 * u, cy, px, col, 'right', 900); if (fits) tx(g, count, x + w - 16 * u - xw, cy, px, DIM, 'right', 800); fitTx(g, c.words, x + 10 * u, cy, px, done ? '#c9cfd8' : BONE, 'left', 800, w - 26 * u - xw - (fits ? cw2 + 10 * u : 0));
+      g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x + 3 * u, y + h - 3 * u, w - 3 * u, 3 * u); g.fillStyle = col; g.fillRect(x + 3 * u, y + h - 3 * u, (w - 3 * u) * k, 3 * u); return; }
+    const px = Math.min(12 * u, h * .36), rw2 = 74 * u; fitTx(g, c.words, x + 12 * u, y + h * .36, px, done ? '#c9cfd8' : BONE, 'left', 800, w - rw2 - 20 * u);
+    tx(g, done ? '✓ DONE' : `+${c.xp} XP`, x + w - 10 * u, y + h * .36, Math.min(11 * u, h * .32), col, 'right', 900);
+    const bx = x + 12 * u, bw = w - 24 * u - 64 * u, by = y + h * .72; g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(bx, by - 2 * u, bw, 4 * u); g.fillStyle = col; g.fillRect(bx, by - 2 * u, bw * k, 4 * u);
+    tx(g, count, x + w - 10 * u, by, Math.min(10 * u, h * .28), DIM, 'right', 800);
+  }
+  // a player's card, as a lobby shows it: banner, picture, name, title, level
+  function playerCard(g, x, y, w, h, u, o) {
+    bannerBg(g, x, y, w, h, o.banner, 8); rr(g, x, y, w, h, 8, null, o.edge || 'rgba(239,233,220,.3)', 1.5);
+    portraitTile(g, o.op, x + 6 * u, y + 6 * u, h - 12 * u, h - 12 * u, { r: 5 }); const nx = x + h + 2 * u, B = BANNERS[o.banner] || BANNERS.plain;
+    fitTx(g, String(o.name).toUpperCase(), nx, y + h * .32, Math.min(16 * u, h * .28), BONE, 'left', 900, w - h - 70 * u);
+    fitTx(g, o.title ? o.title.toUpperCase() : (OPS[o.op] || OPS.vex).n, nx, y + h * .66, Math.min(11 * u, h * .2), o.title ? B[2] : (OPS[o.op] || OPS.vex).col, 'left', 800, w - h - 70 * u);
+    if (o.lv) lvChip(g, x + w - 10 * u, y + h / 2, o.lv, Math.min(12 * u, h * .22), 'right');
+  }
+  function drawPass(g, V, W, u) {
+    const x0 = V.x0 + 60 / pxPer() + 20 * u, x1 = V.x1 - 24 * u, S = seasonNow(), p = myPass(), tier = passTier(), R = passRewards(p.s), full = tier >= PASS_TIERS, into = full ? PASS_XP : p.xp % PASS_XP, top = V.y0 + 14 * u;
+    // the season, and how long it has left
+    tx(g, `SEASON ${S.n}`, x0, top + 18 * u, 30 * u, BONE, 'left', 900); g.font = `900 ${fitPx(g, 30 * u)}px ${FONT}`; const sw = g.measureText(`SEASON ${S.n}`).width;
+    tx(g, S.name.toUpperCase(), x0 + sw + 14 * u, top + 20 * u, 16 * u, GOLD, 'left', 900); g.font = `900 ${fitPx(g, 16 * u)}px ${FONT}`; tx(g, 'ENDS IN ' + timeLeft(S.left), x0 + sw + 28 * u + g.measureText(S.name.toUpperCase()).width, top + 21 * u, 11 * u, DIM, 'left', 900);
+    // your tier, the way to the next, and the premium track
+    const yb = top + 50 * u, pw = Math.min(250 * u, (x1 - x0) * .32), ph = tapH(30), barX = x0 + 92 * u, barW = x1 - pw - 16 * u - barX - 96 * u;
+    tx(g, full ? 'TIER 30' : 'TIER ' + tier, x0, yb, 15 * u, BONE, 'left', 900); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(barX, yb - 4 * u, barW, 8 * u); g.fillStyle = GOLD; g.fillRect(barX, yb - 4 * u, barW * into / PASS_XP, 8 * u);
+    tx(g, full ? 'COMPLETE' : `${into} / ${PASS_XP} XP`, barX + barW + 10 * u, yb, 11 * u, DIM, 'left', 800);
+    const py = top + 2 * u;   // (top right, beside the season's name: a phone's taller button stays clear of the track)
+    if (p.prem) { rr(g, x1 - pw, py, pw, ph, 6, 'rgba(255,214,102,.14)', GOLD, 1.5); tx(g, '★ PREMIUM UNLOCKED', x1 - pw / 2, py + ph / 2, 12 * u, GOLD, 'center', 900); }
+    else { const can = (STATS.coins | 0) >= PASS_PRICE; btn(g, x1 - pw, py, pw, ph, can ? `UNLOCK PREMIUM  ·  ${PASS_PRICE} COINS` : `PREMIUM  ·  ${PASS_PRICE} COINS`, () => { const got = buyPremium(); if (got) { PS.toast = { t0: performance.now(), got }; saveAll(true); emit('passUp'); } }, { on: can, fill: GOLD, off: !can, px: 12 * u, edge: GOLD }); }
+    // the track
+    const yt = yb + 24 * u, avail = V.y1 - 10 * u - yt, botH = cl(avail * .34, 124 * u, 190 * u), hd = 22 * u, th = cl((avail - botH - 14 * u - hd - 6 * u) / 2, 48 * u, 116 * u), gut = 62 * u, gap = 6 * u;
+    const colW = cl(th * 1.2, 92 * u, 136 * u), n = Math.max(2, Math.min(PASS_TIERS, Math.floor((x1 - x0 - gut + gap) / (colW + gap)))), cw = (x1 - x0 - gut + gap) / n - gap;
+    if (PS.off == null) PS.off = Math.floor(Math.min(tier, PASS_TIERS - 1) / n) * n; PS.off = cl(PS.off, 0, Math.max(0, PASS_TIERS - n));
+    btn(g, x0, yt, 28 * u, hd, '‹', () => { PS.off = Math.max(0, PS.off - n); }, { px: 15 * u, off: PS.off <= 0 }); btn(g, x0 + 30 * u, yt, 28 * u, hd, '›', () => { PS.off = Math.min(PASS_TIERS - n, PS.off + n); }, { px: 15 * u, off: PS.off >= PASS_TIERS - n });
+    tx(g, 'FREE', x0 + gut / 2 - 3 * u, yt + hd + 6 * u + th / 2, 10 * u, BONE, 'center', 900); tx(g, 'PREMIUM', x0 + gut / 2 - 3 * u, yt + hd + 12 * u + th * 1.5, 9 * u, GOLD, 'center', 900);
+    for (let i = 0; i < n; i++) { const t = PS.off + i + 1; if (t > PASS_TIERS) break; const x = x0 + gut + i * (cw + gap), reached = t <= tier, next = t === tier + 1;
+      // the tier's number on a line that fills as you go
+      g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x - gap / 2, yt + hd - 4 * u, cw + gap, 3 * u); g.fillStyle = GOLD; g.fillRect(x - gap / 2, yt + hd - 4 * u, (cw + gap) * (reached ? 1 : next ? into / PASS_XP : 0), 3 * u);
+      tx(g, String(t), x + cw / 2, yt + hd / 2 - 3 * u, 12 * u, reached ? GOLD : next ? BONE : DIM, 'center', 900);
+      rewardTile(g, R[t - 1].f, x, yt + hd + 6 * u, cw, th, u, t <= p.f ? 'got' : next ? 'next' : 'far');
+      rewardTile(g, R[t - 1].p, x, yt + hd + 12 * u + th, cw, th, u, !p.prem ? 'lock' : t <= p.p ? 'got' : next ? 'next' : 'far');
+      for (const [rw, yy] of [[R[t - 1].f, yt + hd + 6 * u], [R[t - 1].p, yt + hd + 12 * u + th]]) if (rw.t === 'skin') zone(x, yy, cw, th, () => { UI.returnTo = 'pass'; UI.panel = 'store'; SH.show = rw.id; click(); }); }
+    // under it: today's challenges, this week's, and your card
+    const y2 = yt + hd + 12 * u + th * 2 + 14 * u, bh = V.y1 - 10 * u - y2, cg = 14 * u, colw = (x1 - x0 - cg * 2) / 3, list = myChallenges(), rh = cl((bh - 20 * u) / 3 - 5 * u, 26 * u, 46 * u);
+    [['DAILY CHALLENGES', 'NEW IN ' + timeLeft(midnightIn()), list.filter(c => !c.weekly), GOLD], ['WEEKLY CHALLENGES', 'NEW IN ' + timeLeft(mondayIn()), list.filter(c => c.weekly), '#b48aff']].forEach(([head, when, cs, col], k) => {
+      const x = x0 + k * (colw + cg); fitTx(g, head, x, y2 + 8 * u, 11 * u, col, 'left', 900, colw * .6); tx(g, when, x + colw, y2 + 8 * u, 9.5 * u, DIM, 'right', 800);
+      cs.forEach((c, i) => challengeRow(g, c, x, y2 + 20 * u + i * (rh + 5 * u), colw, rh, u)); });
+    // your card
+    { const x = x0 + 2 * (colw + cg), L = levelOf(STATS.xp | 0), c = myCard(), chh = cl(bh - 20 * u - 30 * u - tapH(26), 40 * u, 66 * u);
+      tx(g, 'YOUR CARD', x, y2 + 8 * u, 11 * u, DIM, 'left', 900); tx(g, `${L.into} / ${L.need} XP TO LEVEL ${L.l + 1}`, x + colw, y2 + 8 * u, 9.5 * u, DIM, 'right', 800);
+      playerCard(g, x, y2 + 20 * u, colw, chh, u, { name: MP.name || 'You', op: CFG.op, lv: c.lv, title: c.title, banner: c.banner });
+      const ly = y2 + 20 * u + chh + 8 * u; g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x, ly, colw, 5 * u); g.fillStyle = lvCol(L.l); g.fillRect(x, ly, colw * L.into / L.need, 5 * u);
+      const ts = ['', ...(STATS.titles || [])], bs = ['plain', ...(STATS.banners || []).filter(k => BANNERS[k] && k !== 'plain')], by2 = ly + 12 * u, bw2 = (colw - 8 * u) / 2, bh2 = Math.max(tapH(26), 0);
+      if (by2 + bh2 <= V.y1 - 4 * u) {
+        btn(g, x, by2, bw2, bh2, 'TITLE: ' + (c.title || 'none').toUpperCase(), () => { STATS.title = ts[(ts.indexOf(STATS.title || '') + 1) % ts.length]; saveAll(true); }, { px: 10.5 * u, off: ts.length < 2 });
+        btn(g, x + bw2 + 8 * u, by2, bw2, bh2, 'BANNER: ' + bannerName(c.banner).toUpperCase(), () => { STATS.banner = bs[(bs.indexOf(c.banner) + 1) % bs.length]; saveAll(true); }, { px: 10.5 * u, off: bs.length < 2 }); } }
+    // premium, just unlocked: what it handed over
+    if (PS.toast) { const t = (performance.now() - PS.toast.t0) / 1000, got = PS.toast.got; if (t > 5) PS.toast = null; else { const a = smooth(cl(t / .25, 0, 1)) * smooth(cl((5 - t) / .4, 0, 1)), w = Math.min(560 * u, x1 - x0), h = 64 * u, x = 640 - w / 2, y = V.y0 + 90 * u; g.save(); g.globalAlpha = a;
+      rr(g, x, y, w, h, 10, 'rgba(20,16,6,.97)', GOLD, 2); tx(g, 'PREMIUM UNLOCKED', 640, y + 22 * u, 18 * u, GOLD, 'center', 900); fitTx(g, got.length ? `${got.length} reward${got.length === 1 ? '' : 's'} from the tiers you have passed: ` + got.slice(0, 4).map(q => rewardName(q.rw)).join(', ') + (got.length > 4 ? ' …' : '') : 'Its rewards arrive as you climb the tiers.', 640, y + 46 * u, 11 * u, BONE, 'center', 700, w - 24 * u); g.restore(); } }
   }
   /* ---------- 95 agent select: pick and lock in an operative before a match ----------
      The match's map is chosen first and loaded, so the operative you are looking at stands on it. Your bot teammate
@@ -8926,7 +9286,7 @@ const GAME = {
      at the press of a button). Buying one plays a reveal in the rarity's colour and puts it on the gun at once.
      LOCKER: every weapon, the skins you own for it (rarest first, a page at a time), and what it is wearing now. Prices
      are in coins, which matches pay (see the results screen). */
-  const SH = { show: null, reveal: null, locker: 'vesper', msg: null, spin: 0, hov: null, demo: null, insp: null, lpage: 0 };
+  const SH = { show: null, reveal: null, locker: 'vesper', lview: 'grid', lsel: null, msg: null, spin: 0, hov: null, demo: null, insp: null, lpage: 0 };
   function gunShowScene() {
     if (X.gs) return X.gs; const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(28, 1, .02, 30);
     scene.add(new THREE.HemisphereLight('#ffffff', '#4a5260', 1.25));
@@ -8937,7 +9297,7 @@ const GAME = {
   }
   // the skin under preview (or being revealed), turning in the middle of the screen, a little left of centre
   function renderGunShow(dt) {
-    const id = SH.reveal ? SH.reveal.id : SH.show || (UI.panel === 'locker' ? (STATS.equip[SH.locker] || 'std:' + SH.locker) : null); if (!id) return false;
+    const id = SH.reveal ? SH.reveal.id : SH.show || (UI.panel === 'locker' && SH.lview === 'gun' ? (SH.lsel || STATS.equip[SH.locker] || 'std:' + SH.locker) : null); if (!id) return false;   // (the locker's loadout grid has no gun turning behind it)
     const S = gunShowScene(), sk = skinOfId(id), k = sk ? sk.k : id.split(':')[1];
     if (S.key !== id) { if (S.pivot) { S.scene.remove(S.pivot); disposeGun(S.model); } S.model = gunModel(k, { skin: sk ? id : null }); S.pivot = new THREE.Group(); S.pivot.add(S.model); S.scene.add(S.pivot); S.key = id; S.model.userData.kitAnims = null; S.fake = null;
       const bb = new THREE.Box3().setFromObject(S.model), c = bb.getCenter(new THREE.Vector3()), sz = bb.getSize(new THREE.Vector3()); S.model.position.copy(c).negate(); S.size = Math.max(sz.z, sz.y * 2.2, .25); S.t0 = performance.now();
@@ -8955,8 +9315,8 @@ const GAME = {
     { if (rv && rt > 1.9 && !rv.shown && sk && INSPECT[sk.line]) { rv.shown = true; showInspect(id); }
       const I = SH.insp && SH.insp.id === id && sk && INSPECT[sk.line] ? SH.insp : null, iq = I ? (I.hold != null ? I.hold : (performance.now() - I.t0) / 1000 / INSPECT[sk.line].dur) : -1;
       if (I && iq < 1) insFrame(S.model, S.scene, sk.line, Math.max(0, iq), dt, GUNS[k], S.cam.position); else { if (I) SH.insp = null; if (INS.rig && INS.rig.gun === S.model) insEnd(); } }
-    const W = innerWidth, H = innerHeight, cam = S.cam; cam.aspect = W / H; cam.fov = 26; const d = S.size / (2 * Math.tan(13 * D2R)) * (UI.panel === 'locker' && !rv ? 1.35 : rv ? 1.05 : 1.08);
-    cam.position.set(0, S.size * .06, d); cam.lookAt(0, 0, 0); cam.setViewOffset(W, H, rv ? 0 : W * (UI.panel === 'locker' ? -.14 : .17), rv ? -H * .04 : 0, W, H); cam.updateProjectionMatrix();
+    const W = innerWidth, H = innerHeight, cam = S.cam; cam.aspect = W / H; cam.fov = 26; const d = S.size / (2 * Math.tan(13 * D2R)) * (UI.panel === 'locker' && !rv ? 1.5 : rv ? 1.05 : 1.08);
+    cam.position.set(0, S.size * .06, d); cam.lookAt(0, 0, 0); cam.setViewOffset(W, H, rv ? 0 : W * (UI.panel === 'locker' ? .19 : .17), rv ? -H * .04 : UI.panel === 'locker' ? -H * .02 : 0, W, H);   // (left of the middle: the panel, or the locker's cards, are on the right) cam.updateProjectionMatrix();
     S.rim.color.set(sk ? sk.R.col : '#9fd8ff');
     S.scene.background = new THREE.Color(rv && sk ? sk.R.col : '#0b0e13').lerp(new THREE.Color('#07090c'), rv ? .82 : 0);
     X.renderer.render(S.scene, cam); cam.clearViewOffset(); return true;
@@ -9093,7 +9453,7 @@ const GAME = {
       if (INSPECT[sk.line]) { const playing = SH.insp && SH.insp.id === id; btn(g, px + (L.rl && sk.k !== 'knife' ? 195 * u : 0), yb, 185 * u, 38 * u, playing ? 'INSPECTING…' : 'WATCH THE INSPECT', () => showInspect(id), { px: 12 * u, edge: sk.R.col + 'aa', off: !!busy }); } }
     if (own) { const on = STATS.equip[sk.k] === id; btn(g, bx, by, 380 * u, 60 * u, on ? 'EQUIPPED' : 'EQUIP', () => equipSkin(sk.k, on ? null : id), { on: !on, fill: YOU, solid: true, col: INK, px: 22 * u, sub: on ? 'press again to take it off' : '' }); }
     else { const can = STATS.coins >= price; btn(g, bx, by, 380 * u, 60 * u, `BUY  ·  ${price}`, () => buySkin(id), { on: can, fill: sk.R.col, solid: can, col: can ? INK : BONE, px: 22 * u, sub: can ? `you have ${STATS.coins}` : `${STATS.coins} coins` }); }
-    btn(g, bx, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; }, { px: 13 * u }); btn(g, bx + 195 * u, by + 70 * u, 185 * u, 40 * u, 'TRY IN THE RANGE', () => tryInRange(id), { px: 12 * u });
+    btn(g, bx, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; if (UI.returnTo === 'pass') { UI.returnTo = null; UI.panel = 'pass'; } }, { px: 13 * u }); btn(g, bx + 195 * u, by + 70 * u, 185 * u, 40 * u, 'TRY IN THE RANGE', () => tryInRange(id), { px: 12 * u });
     if (SH.msg && performance.now() - SH.msg.t0 < 2200) tx(g, SH.msg.s, px + 190 * u, by - 18 * u, 14 * u, WARN, 'center', 800);
   }
   function drawReveal(g, V, W, H, u) {   // the unlock: a burst in the rarity's colour, the gun spinning down, its name
@@ -9109,33 +9469,63 @@ const GAME = {
     if (t > 1.2) btn(g, 640 - 110 * u, V.y1 - 100 * u, 220 * u, 52 * u, 'NICE', () => { SH.reveal = null; }, { on: true, fill: col, solid: true, col: INK, px: 20 * u });
     g.restore();
   }
+  /* The locker is your loadout. First the whole of it: every weapon by its class, each tile wearing what you have put
+     on it. Press one for that weapon alone: it turns in the middle of the screen, its skins are cards down the right
+     (the factory finish first, then yours, rarest first); press a card to see it on the gun, EQUIP to wear it. */
+  const LOCKER_COLS = [[['SIDEARMS', 'Sidearm']], [['SMGS', 'SMG'], ['SHOTGUNS', 'Shotgun']], [['RIFLES', 'Rifle']], [['SNIPERS', 'Sniper'], ['HEAVY', 'Heavy'], ['MELEE', 'Melee']]];
+  const lockerName = k => k === 'knife' ? 'KNIFE' : GUNS[k].n.toUpperCase();
   function drawLocker(g, V, W, u) {
-    const x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 96 * u, k = SH.locker;
-    tx(g, 'LOCKER', x0, V.y0 + 46 * u, 40 * u, BONE, 'left', 900); tx(g, `${STATS.skins.length} skin${STATS.skins.length === 1 ? '' : 's'} owned`, x0 + 4 * u, V.y0 + 78 * u, 13 * u, DIM, 'left', 700);
+    if (SH.lview === 'gun') return drawLockerGun(g, V, W, u);
+    const x0 = V.x0 + 60 / pxPer() + 20 * u, x1 = V.x1 - 24 * u, top = V.y0 + 92 * u, t = X ? X.t : 0;
+    tx(g, 'LOCKER', x0, V.y0 + 46 * u, 40 * u, BONE, 'left', 900); g.font = `900 ${fitPx(g, 40 * u)}px ${FONT}`; const tw0 = g.measureText('LOCKER').width;
+    tx(g, `YOUR LOADOUT  ·  ${STATS.skins.length} SKIN${STATS.skins.length === 1 ? '' : 'S'}`, x0 + tw0 + 16 * u, V.y0 + 52 * u, 11 * u, DIM, 'left', 900);
     coinTag(g, V.x1 - 266 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'STORE', () => { UI.panel = 'store'; }, { px: 13 * u });
-    // the weapons, a column of tiles each showing what it wears
-    const tw = 168 * u, cols = 2, rows = Math.ceil(SKIN_GUNS.length / cols), th = cl((V.y1 - 8 * u - top) / rows - 6 * u, 30 * u, 46 * u), ty = th / (46 * u);   // the tiles close up to fit a short screen
-    SKIN_GUNS.forEach((gk, i) => { const x = x0 + (i % cols) * (tw + 8 * u), y = top + Math.floor(i / cols) * (th + 6 * u), on = gk === k, eq = STATS.equip[gk], sk = skinOfId(eq), hot = zone(x, y, tw, th, () => { if (SH.locker !== gk) SH.lpage = 0; SH.locker = gk; click(); });
-      rr(g, x, y, tw, th, 6, on ? 'rgba(24,30,42,.96)' : 'rgba(12,16,22,.82)', on ? YOU : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.12)', on ? 2 : 1); if (sk) { g.fillStyle = sk.R.col; g.fillRect(x, y + th - 3 * u, tw, 3 * u); }
-      const nm = gk === 'knife' ? 'KNIFE' : GUNS[gk].n.toUpperCase(); g.font = `800 ${fitPx(g, 12 * u)}px ${FONT}`; const nw = Math.max(g.measureText(nm).width, (g.font = `700 ${fitPx(g, 10 * u)}px ${FONT}`, g.measureText(sk ? sk.L.n : 'Standard').width));
-      const ic = gunIcon(gk, eq || null); if (ic) { const iw = Math.max(0, Math.min(tw * .5, tw - 10 * u - nw - 10 * u)), ih = Math.min(th - 6 * u, iw * ic.height / ic.width), iw2 = ih * ic.width / ic.height; if (iw2 > 8 * u) g.drawImage(ic, x + tw - iw2 - 4 * u, y + (th - ih) / 2, iw2, ih); }   // (the picture takes the room the name leaves)
-      tx(g, gk === 'knife' ? 'KNIFE' : GUNS[gk].n.toUpperCase(), x + 10 * u, y + th / 2 - 7 * u * ty, 12 * u, BONE, 'left', 800); tx(g, sk ? sk.L.n : 'Standard', x + 10 * u, y + th / 2 + 9 * u * ty, 10 * u, sk ? sk.R.col : DIM, 'left', 700); });
-    // its skins: standard, then each one you own, rarest first (Paragons at the top), a page at a time
-    const mine = skinSort(STATS.skins.filter(id => skinOfId(id) && skinOfId(id).k === k)), rx = x0 + cols * (tw + 8 * u) + 20 * u, rw = Math.min(360 * u, V.x1 - rx - 30 * u), t = X ? X.t : 0;
-    const list = [null, ...mine], h2 = 44 * u, per = Math.max(3, Math.floor((V.y1 - 70 * u - (top + 24 * u)) / (h2 + 6 * u))), pages = Math.ceil(list.length / per); SH.lpage = cl(SH.lpage || 0, 0, pages - 1);
-    tx(g, (k === 'knife' ? 'KNIFE' : GUNS[k].n.toUpperCase()) + '  ·  SKINS' + (mine.length ? `  ·  ${mine.length}` : ''), rx, top + 8 * u, 13 * u, DIM, 'left', 900);
-    let y = top + 24 * u; for (const id of list.slice(SH.lpage * per, SH.lpage * per + per)) { const sk = skinOfId(id), on = (STATS.equip[k] || null) === id, par = sk && sk.R.tier >= 5, hot = zone(rx, y, rw, h2, () => equipSkin(k, id));
-      rr(g, rx, y, rw, h2, 6, on ? 'rgba(53,224,200,.14)' : par ? 'rgba(20,24,16,.9)' : 'rgba(12,16,22,.82)', on ? YOU : hot ? 'rgba(239,233,220,.5)' : par ? prism(t, y) : 'rgba(239,233,220,.12)', on || par ? 2 : 1); if (sk) { g.fillStyle = par ? prism(t, y * 2) : sk.R.col; g.fillRect(rx, y, 4 * u, h2); }
-      if (sk) { const ic = gunIcon(k, id); if (ic) { const iw = Math.min(110 * u, rw * .34), ih = iw * ic.height / ic.width; g.drawImage(ic, rx + rw - iw - (on ? 84 : 10) * u, y + (h2 - ih) / 2, iw, ih); } }
-      tx(g, sk ? sk.L.n : 'Standard', rx + 16 * u, y + 17 * u, 14 * u, BONE, 'left', 800); tx(g, sk ? sk.R.n : 'The factory finish', rx + 16 * u, y + 32 * u, 10 * u, par ? prism(t, 40, 70) : sk ? sk.R.col : DIM, 'left', 700); if (on) tx(g, 'EQUIPPED', rx + rw - 12 * u, y + h2 / 2, 11 * u, YOU, 'right', 900); y += h2 + 6 * u; }
-    if (pages > 1) { const py = V.y1 - 62 * u; btn(g, rx, py, 44 * u, 34 * u, '‹', () => { SH.lpage = Math.max(0, SH.lpage - 1); }, { px: 18 * u, off: SH.lpage === 0 }); btn(g, rx + rw - 44 * u, py, 44 * u, 34 * u, '›', () => { SH.lpage = Math.min(pages - 1, SH.lpage + 1); }, { px: 18 * u, off: SH.lpage >= pages - 1 });
-      tx(g, `PAGE ${SH.lpage + 1} OF ${pages}`, rx + rw / 2, py + 17 * u, 11 * u, DIM, 'center', 800); }
-    if (!mine.length) para(g, 'No skins yet. New ones every 3 hours.', rx, y + 16 * u, rw, 12 * u, DIM);
+    const gap = 10 * u, hh = 20 * u, tg = 6 * u, cw = (x1 - x0 - gap * 3) / 4, availH = V.y1 - 10 * u - top;
+    LOCKER_COLS.forEach((secs, ci) => {
+      const lists = secs.map(([, cat]) => SKIN_GUNS.filter(k => GUNS[k].cat === cat)), nT = lists.reduce((a, l) => a + l.length, 0), th = cl((availH - secs.length * hh - (nT - secs.length) * tg - (secs.length - 1) * 8 * u) / nT, 30 * u, 124 * u), x = x0 + ci * (cw + gap); let y = top;
+      secs.forEach(([head], si) => { tx(g, head, x + 2 * u, y + hh / 2 - 2 * u, 11 * u, DIM, 'left', 900); g.fillStyle = 'rgba(239,233,220,.14)'; g.font = `900 ${fitPx(g, 11 * u)}px ${FONT}`; const hw = g.measureText(head).width; g.fillRect(x + hw + 10 * u, y + hh / 2 - 2 * u, cw - hw - 10 * u, 1); y += hh;
+        for (const gk of lists[si]) { const eq = STATS.equip[gk], sk = skinOfId(eq), par = sk && sk.R.tier >= 5, col = par ? prism(t, y) : sk ? sk.R.col : null, own = STATS.skins.filter(id => { const q = skinOfId(id); return q && q.k === gk; }).length;
+          const hot = zone(x, y, cw, th, () => { SH.locker = gk; SH.lview = 'gun'; SH.lsel = null; SH.lpage = 0; SH.insp = null; SH.demo = null; click(); });
+          rr(g, x, y, cw, th, 7, hot ? 'rgba(28,34,46,.96)' : 'rgba(13,17,24,.9)', hot ? BONE : col ? col + (par ? '' : 'aa') : 'rgba(239,233,220,.14)', hot || col ? 1.5 : 1);
+          g.save(); rr(g, x, y, cw, th, 7, null, null); g.clip();
+          if (col) { const gr = g.createLinearGradient(x, y + th, x + cw * .5, y); gr.addColorStop(0, (par ? prism(t, y, 50) : sk.R.col + '55')); gr.addColorStop(par ? .5 : .8, 'rgba(0,0,0,0)'); g.globalAlpha = par ? .35 : 1; g.fillStyle = gr; g.fillRect(x, y, cw, th); g.globalAlpha = 1; g.fillStyle = col; g.fillRect(x, y + th - 3 * u, cw, 3 * u); }
+          // the weapon, as large as the tile lets it be, to the right of its name
+          g.font = `900 ${fitPx(g, 12 * u)}px ${FONT}`; const nm = lockerName(gk), nw = Math.max(g.measureText(nm).width, (g.font = `700 ${fitPx(g, 10 * u)}px ${FONT}`, g.measureText(sk ? sk.L.n : 'Standard').width)), tall = th > 70 * u;
+          const ic = gunIcon(gk, eq || null); if (ic) { const room = tall ? cw - 16 * u : cw - nw - 40 * u, ih = Math.min(tall ? th - 40 * u : th - 8 * u, room * ic.height / ic.width), iw = ih * ic.width / ic.height; if (iw > 10 * u) g.drawImage(ic, tall ? x + (cw - iw) / 2 : x + cw - iw - 8 * u, tall ? y + 14 * u + (th - 40 * u - ih) / 2 + 6 * u : y + (th - ih) / 2 + (hot ? -1 : 0), iw, ih); }
+          if (tall) { tx(g, nm, x + 10 * u, y + 14 * u, 12 * u, BONE, 'left', 900); tx(g, sk ? sk.L.n : 'Standard', x + 10 * u, y + th - 14 * u, 10.5 * u, col || DIM, 'left', 800); if (own) tx(g, own + (own === 1 ? ' SKIN' : ' SKINS'), x + cw - 10 * u, y + th - 14 * u, 9 * u, DIM, 'right', 900); }
+          else { tx(g, nm, x + 10 * u, y + th / 2 - Math.min(8 * u, th * .2), 12 * u, BONE, 'left', 900); tx(g, sk ? sk.L.n : 'Standard', x + 10 * u, y + th / 2 + Math.min(8 * u, th * .22), 10 * u, col || DIM, 'left', 800); }
+          g.restore(); y += th + tg; }
+        y += 8 * u - tg; });
+    });
+  }
+  function drawLockerGun(g, V, W, u) {
+    const x0 = V.x0 + 60 / pxPer() + 20 * u, x1 = V.x1 - 24 * u, k = SH.locker, std = 'std:' + k, eqId = STATS.equip[k] || std, sel = SH.lsel || eqId, sk = skinOfId(sel), t = X ? X.t : 0, par = sk && sk.R.tier >= 5, col = par ? prism(t, 0) : sk ? sk.R.col : '#c9cfd8';
+    btn(g, x0, V.y0 + 24 * u, 150 * u, tapH(36), '‹  LOADOUT', () => { SH.lview = 'grid'; SH.lsel = null; SH.insp = null; SH.demo = null; }, { px: 13 * u });
+    const ty = V.y0 + 24 * u + tapH(36) + 34 * u; tx(g, lockerName(k), x0, ty, 38 * u, BONE, 'left', 900); tx(g, (k === 'knife' ? 'Melee' : GUNS[k].cat).toUpperCase(), x0 + 2 * u, ty + 30 * u, 11 * u, DIM, 'left', 900);
+    // its skins, as cards down the right
+    const mine = skinSort(STATS.skins.filter(id => skinOfId(id) && skinOfId(id).k === k)), list = [std, ...mine], rw = Math.min(430 * u, W * .36), rx = x1 - rw, top = V.y0 + 92 * u, cg = 8 * u, cw = (rw - cg) / 2, ch = cl((V.y1 - 62 * u - top - 22 * u) / 4 - cg, 44 * u, 96 * u), rows = Math.max(1, Math.floor((V.y1 - 58 * u - top - 22 * u + cg) / (ch + cg))), per = rows * 2, pages = Math.ceil(list.length / per); SH.lpage = cl(SH.lpage || 0, 0, pages - 1);
+    tx(g, 'SKINS' + (mine.length ? `  ·  ${mine.length} OWNED` : ''), rx, top + 8 * u, 11 * u, DIM, 'left', 900);
+    list.slice(SH.lpage * per, SH.lpage * per + per).forEach((id, i) => { const q = skinOfId(id), x = rx + (i % 2) * (cw + cg), y = top + 22 * u + Math.floor(i / 2) * (ch + cg), on = id === sel, eq = id === eqId, p2 = q && q.R.tier >= 5, c2 = p2 ? prism(t, y) : q ? q.R.col : '#8d97a6';
+      const hot = zone(x, y, cw, ch, () => { if (SH.lsel === id || (!SH.lsel && id === eqId)) { if (!eq) equipSkin(k, q ? id : null); } else { SH.lsel = id; SH.insp = null; SH.demo = null; click(); } });
+      rr(g, x, y, cw, ch, 7, on ? 'rgba(30,36,50,.97)' : 'rgba(13,17,24,.9)', on ? BONE : hot ? 'rgba(239,233,220,.5)' : q ? c2 + (p2 ? '' : '88') : 'rgba(239,233,220,.14)', on ? 2 : 1); g.save(); rr(g, x, y, cw, ch, 7, null, null); g.clip();
+      if (q) { const gr = g.createLinearGradient(x, y + ch, x, y); gr.addColorStop(0, p2 ? prism(t, y, 45) : q.R.col + '44'); gr.addColorStop(.75, 'rgba(0,0,0,0)'); g.globalAlpha = p2 ? .4 : 1; g.fillStyle = gr; g.fillRect(x, y, cw, ch); g.globalAlpha = 1; g.fillStyle = c2; g.fillRect(x, y + ch - 3 * u, cw, 3 * u); }
+      const ic = gunIcon(k, q ? id : null); if (ic) { const ih = Math.min(ch - 30 * u, (cw - 14 * u) * ic.height / ic.width), iw = ih * ic.width / ic.height; if (ih > 8 * u) g.drawImage(ic, x + (cw - iw) / 2, y + 5 * u + (ch - 30 * u - ih) / 2, iw, ih); }
+      fitTx(g, q ? q.L.n : 'Standard', x + 8 * u, y + ch - 14 * u, 11.5 * u, q ? c2 : BONE, 'left', 800, cw - (eq ? 78 : 16) * u); if (eq) tx(g, '✓ EQUIPPED', x + cw - 8 * u, y + ch - 14 * u, 9 * u, YOU, 'right', 900);
+      g.restore(); });
+    if (pages > 1) { const py = V.y1 - 50 * u; btn(g, rx, py, 44 * u, 34 * u, '‹', () => { SH.lpage = Math.max(0, SH.lpage - 1); }, { px: 18 * u, off: SH.lpage === 0 }); btn(g, rx + rw - 44 * u, py, 44 * u, 34 * u, '›', () => { SH.lpage = Math.min(pages - 1, SH.lpage + 1); }, { px: 18 * u, off: SH.lpage >= pages - 1 }); tx(g, `PAGE ${SH.lpage + 1} OF ${pages}`, rx + rw / 2, py + 17 * u, 11 * u, DIM, 'center', 800); }
+    else if (!mine.length) para(g, 'No skins for this one yet. The store changes every 3 hours, and the daily spin and the season pass hand them out too.', rx, top + 34 * u + ch, rw, 12 * u, DIM);
+    // under the gun: what is on show, and the buttons
+    const bw = Math.min(250 * u, (rx - x0 - 30 * u) / 2), bh = tapH(46), by = V.y1 - bh - 18 * u, isEq = sel === eqId, busy = !!(SH.insp || SH.demo);
+    tx(g, sk ? sk.R.n.toUpperCase() : 'FACTORY FINISH', x0, by - 54 * u, 11 * u, col, 'left', 900); fitTx(g, sk ? sk.L.n.toUpperCase() : 'STANDARD', x0, by - 28 * u, 26 * u, BONE, 'left', 900, rx - x0 - 30 * u);
+    if (isEq) { rr(g, x0, by, bw, bh, Math.min(10, bh / 4), 'rgba(53,224,200,.1)', YOU, 1.5); tx(g, '✓ EQUIPPED', x0 + bw / 2, by + bh / 2, 15 * u, YOU, 'center', 900); } else btn(g, x0, by, bw, bh, 'EQUIP', () => equipSkin(k, sk ? sel : null), { on: true, fill: YOU, px: 17 * u });
+    if (sk && INSPECT[sk.line]) btn(g, x0 + bw + 10 * u, by, bw, bh, SH.insp ? 'INSPECTING…' : 'WATCH THE INSPECT', () => showInspect(sel), { px: 12.5 * u, edge: sk.R.col + 'aa', off: busy });
+    else if (sk && sk.L.rl && k !== 'knife') btn(g, x0 + bw + 10 * u, by, bw, bh, SH.demo ? 'RELOADING…' : 'WATCH THE RELOAD', () => { SH.demo = { id: sel, t0: performance.now() }; }, { px: 12.5 * u, edge: sk.R.col + 'aa', off: busy });
   }
   function drawShop(g, V, W, H, u) {
     if (SH.reveal) return drawReveal(g, V, W, H, u);
     if (UI.panel === 'store') { if (SH.show) return drawShow(g, V, W, H, u); g.fillStyle = 'rgba(8,10,14,.82)'; g.fillRect(V.x0, V.y0, W, H); drawStore(g, V, W, u); }
-    else { let gr = g.createLinearGradient(V.x0, 0, V.x0 + W * .62, 0); gr.addColorStop(0, 'rgba(8,10,14,.95)'); gr.addColorStop(1, 'rgba(8,10,14,.35)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); drawLocker(g, V, W, u); }
+    else if (SH.lview === 'gun') { let gr = g.createLinearGradient(V.x0, 0, V.x0 + W * .3, 0); gr.addColorStop(0, 'rgba(8,10,14,.7)'); gr.addColorStop(1, 'rgba(8,10,14,0)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W * .3, H); gr = g.createLinearGradient(V.x0 + W * .52, 0, V.x1, 0); gr.addColorStop(0, 'rgba(8,10,14,0)'); gr.addColorStop(.35, 'rgba(8,10,14,.86)'); g.fillStyle = gr; g.fillRect(V.x0 + W * .52, V.y0, W * .48, H); drawLocker(g, V, W, u); }
+    else { g.fillStyle = 'rgba(8,10,14,.84)'; g.fillRect(V.x0, V.y0, W, H); drawLocker(g, V, W, u); }
     btn(g, V.x1 - 250 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'BACK', () => { UI.panel = 'home'; SH.show = null; if (UI.returnTo === 'party') { UI.returnTo = null; screen = 'party'; } }, { px: 13 * u });
   }
   /* ---------- 96 the daily spin: a wheel of skins, one spin a day ----------
@@ -9148,7 +9538,9 @@ const GAME = {
   const WHEEL_ORDER = ['common', 'rare', 'epic', 'common', 'legendary', 'rare', 'common', 'mythic', 'epic', 'rare', 'common', 'legendary', 'paragon'];
   const WH = { open: false, spin: null, prize: null };   // spin: { from, to, t0, T }; prize: the skin won today, shown after the spin
   const wheelDay = (now = Date.now()) => { const d = new Date(now); return Math.floor((now - d.getTimezoneOffset() * 60000) / 86400000); };
-  const wheelReady = () => STATS.spun !== wheelDay();
+  const wheelReady = () => STATS.spun !== wheelDay() || (STATS.spins | 0) > 0;   // today's spin, or a bonus one from the season pass
+  // a bonus spin after today's: the wheel is dealt again, so nothing on it is something you have just won
+  function wheelFresh() { if (STATS.spun === wheelDay() && (STATS.spins | 0) > 0 && STATS.wheel && STATS.wheel.s.some(q => STATS.skins.includes(q.id))) { STATS.wsalt = Math.floor(Math.random() * 1e9); STATS.wheel = null; wheelSlices(); } }
   const wheelLeft = () => { const d = new Date(); d.setHours(24, 0, 0, 0); return d.getTime() - Date.now(); };
   // today's slices: a skin for each, of its slice's rarity, none you own and no two alike
   function wheelSlices(day = wheelDay()) {
@@ -9164,14 +9556,14 @@ const GAME = {
     }
     STATS.wheel = { day, s: out }; saveAll(); return out;
   }
-  function openWheel() { WH.open = true; WH.spin = null; if (!wheelReady() && STATS.spunId) WH.prize = STATS.spunId; else WH.prize = null; click(); }
+  function openWheel() { WH.open = true; WH.spin = null; wheelFresh(); if (!wheelReady() && STATS.spunId) WH.prize = STATS.spunId; else WH.prize = null; click(); }
   function spinWheel() {
-    if (!wheelReady() || WH.spin) return;
+    if (!wheelReady() || WH.spin) return; if (WH.prize) { WH.prize = null; wheelFresh(); }
     const sl = wheelSlices(), tot = sl.reduce((a, q) => a + q.w, 0); let x = Math.random() * tot, i = 0; for (; i < sl.length - 1; i++) { x -= sl[i].w; if (x <= 0) break; }
     const prize = sl[i].id, sk = skinOfId(prize), have = STATS.skins.includes(prize);
     // decided and kept now: the skin (or, if you somehow had it already, its price back in coins), and today's spin used
     if (!have) STATS.skins.push(prize); else STATS.coins += Math.round(skinPrice(prize) / 2);
-    STATS.spun = wheelDay(); STATS.spunId = prize; saveAll(true);
+    if (STATS.spun === wheelDay()) STATS.spins = Math.max(0, (STATS.spins | 0) - 1); else STATS.spun = wheelDay(); STATS.spunId = prize; saveAll(true);
     // the wheel runs down onto it: the slice's middle (give or take) under the pointer, after five or six turns
     const n = sl.length, a = TAU / n, mid = (i + .5) * a + (Math.random() - .5) * a * .6, from = WH.rot || 0, to = from + TAU * (5 + Math.floor(Math.random() * 2)) + ((TAU - mid - from % TAU) % TAU + TAU) % TAU;
     WH.spin = { from, to, t0: performance.now(), T: 5.2 }; WH.prize = null; WH.won = { id: prize, dup: have }; click();
@@ -9206,7 +9598,7 @@ const GAME = {
     // the hub: SPIN, or the time to the next one
     const hr = R * .24, ready = wheelReady() && !WH.spin;
     g.fillStyle = ready ? FOE : 'rgba(14,18,26,.96)'; g.beginPath(); g.arc(cx, cy, hr, 0, TAU); g.fill(); g.strokeStyle = GOLD; g.lineWidth = 3 * u; g.stroke();
-    if (ready) { zone(cx - hr, cy - hr, hr * 2, hr * 2, spinWheel); tx(g, 'SPIN', cx, cy, hr * .42, INK, 'center', 900); }
+    if (ready) { const bonus = STATS.spun === wheelDay(); zone(cx - hr, cy - hr, hr * 2, hr * 2, spinWheel); tx(g, 'SPIN', cx, cy - (bonus ? hr * .12 : 0), hr * .42, INK, 'center', 900); if (bonus) tx(g, `BONUS ×${STATS.spins | 0}`, cx, cy + hr * .32, hr * .2, INK, 'center', 900); }
     else if (!WH.spin) { const s = Math.floor(wheelLeft() / 1000); tx(g, 'NEXT', cx, cy - hr * .22, hr * .2, DIM, 'center', 900); tx(g, `${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`, cx, cy + hr * .12, hr * .26, BONE, 'center', 900); }
     // the odds, under the wheel; or what you won
     const by = cy + R + 34 * u;
@@ -9229,7 +9621,7 @@ const GAME = {
   const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null, qs: null };   // qs: the host's world search, as the rest of the party sees it   // want: who asked to switch sides; pick: the host's first pick of a trade
   const myId = () => MP.id;
   function openParty() { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; }
-  function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join(''), qt: QUE.found ? QUE.tok : undefined }; }
+  function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join(''), cd: cardCode(), qt: QUE.found ? QUE.tok : undefined }; }
   function sendProfile(force) { if (!MP.online()) return; const p = partyProfile(), key = JSON.stringify(p); if (!force && key === PARTY.sent) return; PARTY.sent = key; PARTY.prof.set(myId(), p); MP.send(Object.assign({ t: 'lprof' }, p)); }
   // the host keeps everyone on a team: newcomers go to the shorter side, and nobody stays on a team that has no room
   function hostTeams() {
@@ -9249,7 +9641,7 @@ const GAME = {
   MP.opts.onStatus = s => { PARTY.status = s; };
   // lobby messages; anything else is the match's
   function partyMsg(m) {
-    if (m.t === 'lprof') { const rk = {}; if (m.rk && typeof m.rk === 'object') for (const k of RQ) rk[k] = cl(+m.rk[k] || 0, 0, 4000); PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd, rk, rkp: typeof m.rkp === 'string' ? m.rkp.slice(0, 5) : '', qt: typeof m.qt === 'string' ? m.qt.slice(0, 16) : '' }); return true; }
+    if (m.t === 'lprof') { const rk = {}; if (m.rk && typeof m.rk === 'object') for (const k of RQ) rk[k] = cl(+m.rk[k] || 0, 0, 4000); PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd, rk, rkp: typeof m.rkp === 'string' ? m.rkp.slice(0, 5) : '', cd: typeof m.cd === 'string' ? m.cd.slice(0, 40) : '', qt: typeof m.qt === 'string' ? m.qt.slice(0, 16) : '' }); return true; }
     if (m.t === 'lteam') { if (m.from === MP.hostId) { PARTY.teams = m.teams || {}; PARTY.set = Object.assign(PARTY.set, m.set || {}); if (Array.isArray(m.want)) PARTY.want = new Set(m.want.map(String).slice(0, 10)); } return true; }
     if (m.t === 'lswap') { if (MP.isHost()) { swapTeam(m.from, true); } return true; }
     // the host searching the world for a match for the whole party, and the match it found
@@ -9354,8 +9746,12 @@ const GAME = {
         const pr = p.id === me2 ? partyProfile() : PARTY.prof.get(p.id) || { op: 'vex', rt: 0, rd: false }, isHost = p.id === MP.hostId, ready = isHost || pr.rd;
         const hot = host && zone(cx, y, colW, cardH, () => hostClick(p.id)), picked = host && PARTY.pick === p.id, wants = PARTY.want.has(String(p.id));
         rr(g, cx, y, colW, cardH, 8, picked ? 'rgba(255,214,102,.16)' : p.id === me2 ? 'rgba(24,30,42,.96)' : 'rgba(14,18,26,.92)', picked ? GOLD : hot ? col : p.id === me2 ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.14)', p.id === me2 || hot || picked ? 2 : 1); g.fillStyle = col; g.fillRect(cx, y, 4 * u, cardH);
+        // their card: the banner behind it, their level beside the name, their title after the operative (26-progress)
+        const cd = p.id === me2 ? myCard() : pr.cd ? cardFrom(pr.cd) : { lv: 0, title: '', banner: 'plain' };
+        if (cd.banner !== 'plain' && !picked) { g.save(); g.globalAlpha = .6; bannerBg(g, cx + 4 * u, y + 1.5, colW - 5.5 * u, cardH - 3, cd.banner, 7); g.restore(); }
         portraitTile(g, pr.op, cx + 10 * u, y + 8 * u, cardH - 16 * u, cardH - 16 * u, { r: 5 });
-        const nx = cx + cardH + 4 * u; tx(g, p.name.toUpperCase() + (p.id === me2 ? '  (YOU)' : ''), nx, y + 26 * u * k, 16 * u * Math.max(.85, k), BONE, 'left', 900); { const clash = opClash(p, ps); tx(g, (OPS[pr.op] || OPS.vex).n + (clash ? (p.id === me2 ? '  ·  TAKEN, PICK ANOTHER' : '  ·  TAKEN') : ''), nx, y + 48 * u * k, 12 * u, clash ? WARN : (OPS[pr.op] || OPS.vex).col, 'left', 800); }
+        const nx = cx + cardH + 4 * u, nm0 = p.name.toUpperCase() + (p.id === me2 ? '  (YOU)' : ''), npx = 16 * u * Math.max(.85, k); tx(g, nm0, nx, y + 26 * u * k, npx, BONE, 'left', 900);
+        if (cd.lv) { g.font = `900 ${fitPx(g, npx)}px ${FONT}`; const nw = g.measureText(nm0).width; if (nx + nw + 70 * u < cx + colW - 150 * u) lvChip(g, nx + nw + 10 * u, y + 26 * u * k, cd.lv, 10.5 * u); else lvChip(g, nx + (p.id === MP.hostId ? 44 * u : 0), y + 70 * u * k, cd.lv, 9.5 * u); }   // (a long name: on the line under the operative) { const clash = opClash(p, ps); tx(g, (OPS[pr.op] || OPS.vex).n + (clash ? (p.id === me2 ? '  ·  TAKEN, PICK ANOTHER' : '  ·  TAKEN') : cd.title ? '  ·  ' + cd.title.toUpperCase() : ''), nx, y + 48 * u * k, 12 * u, clash ? WARN : (OPS[pr.op] || OPS.vex).col, 'left', 800); }
         if (isHost) tx(g, 'HOST', nx, y + 70 * u * k, 10 * u, GOLD, 'left', 900);
         { const mine = p.id === me2, rv = mine ? rankedOf(S2.size).rv : (pr.rk || {})[String(S2.size)] || 0, on = mine ? placed(rankedOf(S2.size)) : (pr.rkp || '')[S2.size - 1] === '1';   // the rank at this team size
           tierBadge(g, cx + colW - 30 * u, y + 30 * u * k, 13 * u * Math.max(.8, k), rv, on); tx(g, on ? rankLabel(rv).toUpperCase() : 'UNRANKED', cx + colW - 52 * u, y + 26 * u * k, 11 * u, on ? rankOf(rv).T.col : DIM, 'right', 800); tx(g, vsLabel(S2.size) + (on ? '  ' + rankOf(rv).rp + ' RP' : ''), cx + colW - 52 * u, y + 44 * u * k, 11 * u, BONE, 'right', 700); }
@@ -9544,7 +9940,9 @@ const GAME = {
     if (M.mode === 'range') return; const P = me();
     STATS.matches++; if (won) STATS.wins++; STATS.kills += P.stat.k; STATS.heads += P.stat.hs;
     // the adaptive bot follows a rating: beat it and the next one is sharper, lose and it eases off
-    { const lvl = M.auto ? diffFor(M.rating).i : (M.fs.find(f => f.team !== P.team && f.bot) || { bot: { diff: 1 } }).bot.diff; M.pay = matchCoins(P, M, won, { plants: M.myPlants, defuses: M.myDefuses, botLevel: lvl }); STATS.coins += M.pay.total; M.payT = performance.now(); }
+    { const lvl = M.auto ? diffFor(M.rating).i : (M.fs.find(f => f.team !== P.team && f.bot) || { bot: { diff: 1 } }).bot.diff; M.pay = matchCoins(P, M, won, { plants: M.myPlants, defuses: M.myDefuses, botLevel: lvl }); STATS.coins += M.pay.total; M.payT = performance.now();
+      // XP for your level and the season pass, the challenges it moved, and whatever the pass now hands over (93-after shows it)
+      M.prog = payProgress(P, M, won, { plants: M.myPlants, defuses: M.myDefuses, botLevel: lvl }); M.overStage = 0; M.overT = performance.now(); M.awards = null; }
     // ranked: the other side's strength (people by their rank, bots by their level), the score, and how you played
     { const mine = M.fs.filter(f => f.team === P.team), them = M.fs.filter(f => f.team !== P.team && !f.gone), lvl = M.botDiff === 'auto' || M.botDiff == null ? 1 : +M.botDiff;
       const opp = them.length ? them.reduce((s, f) => s + (f.bot || f.isBot ? botRV(f.bot ? f.bot.diff : lvl) : f.rk != null ? +f.rk : rankStrength(M.size)), 0) / them.length : rankStrength(M.size);
@@ -9586,7 +9984,7 @@ const GAME = {
   GAME.esc = () => { if (UI.tedit) { closeTouchEdit(); return true; } if (WH.open) { if (!WH.spin) WH.open = false; return true; } if (UI.rankScale) { UI.rankScale = null; return true; }
     if (screen === 'select') { selectKey('Escape'); return true; }
     if (screen === 'party') { if (!MP.online()) { screen = 'menu'; UI.panel = 'home'; } return true; }
-    if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker')) { if (SH.reveal) SH.reveal = null; else if (SH.show) SH.show = null; else UI.panel = 'home'; return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
+    if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker')) { if (SH.reveal) SH.reveal = null; else if (SH.show) { SH.show = null; if (UI.returnTo === 'pass') { UI.returnTo = null; UI.panel = 'pass'; } } else if (UI.panel === 'locker' && SH.lview === 'gun') { SH.lview = 'grid'; SH.lsel = null; } else UI.panel = 'home'; return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
   GAME.draw = g => {
     const now = performance.now(), dt = Math.min(.1, (now - (lastDraw || now)) / 1000), V = K.view; lastDraw = now; if (dt > 0) UI.fps = UI.fps ? lp(UI.fps, 1 / dt, .05) : 1 / dt;
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, g.canvas.width, g.canvas.height); g.restore();
@@ -9624,7 +10022,7 @@ const GAME = {
   };
   // for the browser tests
   GAME.test = {
-    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get ptr() { return ptr; }, mech: () => ({ TPS, PADS, GATES, BRKS, VENTS, navCells, GRASS, ICE, LOWG, BELT, GW, GH, NC, hAt, los, setGate, setWall }), hurt: (v, n, by, h) => applyDamage(v, n, by, h, 'vesper'), get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
+    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, PS, STATS, seasonNow, myPass, passTier, passRewards, buyPremium, myChallenges, levelOf, myCard, overNext, matchAwards, payProgress, get ptr() { return ptr; }, mech: () => ({ TPS, PADS, GATES, BRKS, VENTS, navCells, GRASS, ICE, LOWG, BELT, GW, GH, NC, hAt, los, setGate, setWall }), hurt: (v, n, by, h) => applyDamage(v, n, by, h, 'vesper'), get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),

@@ -308,7 +308,7 @@
       else if (q.rating && slim) { rankBadge(g, x + cw - 22 * u, y + 26 * u, 12 * u, q.rating); tx(g, String(q.rating), x + cw - 22 * u, y + 56 * u, 11 * u, BONE, 'center', 700); }
       else if (q.rating) { rankBadge(g, x + cw - 24 * u, y + 28 * u, 13 * u, q.rating); tx(g, rankName(q.rating).toUpperCase(), x + cw - 42 * u, y + 24 * u, 11 * u, RANK_COL[diffFor(q.rating).i], 'right', 800); tx(g, String(q.rating), x + cw - 42 * u, y + 42 * u, 13 * u, BONE, 'right', 700); }
       else tx(g, '—', x + cw - 24 * u, y + 30 * u, 14 * u, DIM, 'center');
-      tx(g, q.bot ? 'BOT' : q.net && !q.isBot ? 'PLAYER' : q === P ? 'YOU' : 'BOT', x + 74 * u, y + 60 * u, 10 * u, DIM, 'left', 800);
+      { const cd = cardOf(q), lw = cd.lv ? lvChip(g, x + 74 * u, y + 60 * u, cd.lv, 9 * u) + 6 * u : 0; fitTx(g, (q.bot ? 'BOT' : q.net && !q.isBot ? 'PLAYER' : q === P ? 'YOU' : 'BOT') + (cd.title && !slim ? '  ·  ' + cd.title.toUpperCase() : ''), x + 74 * u + lw, y + 60 * u, 10 * u, DIM, 'left', 800, cw - 80 * u - lw); }
       g.restore();
     };
     mine.forEach((q, i) => card(q, V.x0 + m + i * (cw + gp), YOU, i)); theirs.forEach((q, i) => card(q, V.x1 - m - (i + 1) * (cw + gp) + gp, FOE, i + 1));
@@ -515,7 +515,7 @@
     // the connection: yours dropped (the game keeps going while it gets back in), or someone else's
     if (M.online && (M.dropped || MP.rejoining)) { const p = .6 + .4 * Math.sin(K.t * 6); rr(g, 640 - 170 * u, 118 * u, 340 * u, 34 * u, 8, 'rgba(12,16,22,.85)', GOLD, 1.5); tx(g, 'CONNECTION LOST · RECONNECTING', 640, 135 * u, 14 * u, GOLD, 'center', 900); g.globalAlpha = 1; void p; }
     else if (M.online) { const dc = M.fs.find(f => f.dc && !f.gone); if (dc) { const left = Math.max(0, Math.ceil(DC_WAIT - (M.time - dc.dc))); tx(g, `${dc.name.toUpperCase()} LOST CONNECTION · WAITING ${left} s`, 640, 135 * u, 14 * u, GOLD, 'center', 900); } }
-    if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
+    if (M.phase === 'end' && M.last && !M.over) drawRoundEnd(g, V, u, demo);   // (93-after: the result, and your team's round)
     if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { const ty = Math.max(200, V.y0 + 132 * u + tapH(46) + 34 * u); { const ot = otRound(M.round), mp = !ot && Math.max(...M.wins) === WIN_ROUNDS - 1; tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : suddenDeath(M.round) ? 'SUDDEN DEATH' : ot ? 'OVERTIME ' + ot : mp ? 'MATCH POINT' : 'ROUND ' + M.round, 640, ty, 34 * u, ot || mp ? GOLD : BONE); } tx(g, side === 'att' ? (twoSites() ? 'ATTACK  ·  ' + siteWords() : 'ATTACK') : (twoSites() ? 'DEFEND  ·  ' + siteWords('and') : 'DEFEND'), 640, ty + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
     if (P !== me()) {   // spectating a teammate: who, their health and shield, their gun, and the others you could switch to
       const w = 420 * u, y = V.y1 - 156 * u, mates = M.fs.filter(f => f !== me() && f.team === me().team && f.alive), G2 = gun(P);

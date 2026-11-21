@@ -13,7 +13,7 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
+  return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, xpForLevel, levelOf, seasonNow, passRewards, myPass, passTier, passGrant, buyPremium, giveReward, dailyChallenges, weeklyChallenges, myChallenges, challengeProgress, matchTally, matchXp, payProgress, botCard, cardFrom, matchAwards, csOf, PASS_TIERS, PASS_XP, PASS_PRICE, TITLES, BANNERS, CH_DAILY, CH_WEEKLY, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     hitboxes, headOf, castShot, viewDir, BRKS, BRKX, setWall, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, gunStats, dmgAt, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
@@ -422,6 +422,55 @@ function skinChecks() {
   ok(avg >= 120 && avg <= 260 && avg < big / 2.5, 'an ordinary loss pays a fair amount, far less', `${avg} coins`);
 }
 // the loading screen: the first LOAD_T seconds of a match, added to round 1's buy phase; nothing can be bought under it
+function progressChecks() {
+  section('levels, the season pass and challenges');
+  const S = T.STATS, keep = JSON.stringify(S), fake = (k, hs, d, x = {}) => ({ key: 'p', team: 0, stat: Object.assign({ k, hs, d, dmg: k * 140, shots: 100, hits: 30 }, x) }), Mx = (w, on) => ({ wins: [w, 2], online: !!on });
+  ok(T.levelOf(0).l === 1 && T.levelOf(799).l === 1 && T.levelOf(800).l === 2 && T.levelOf(800 + 950).l === 3, 'level 2 at 800 XP, level 3 at 950 more', JSON.stringify(T.levelOf(1750)));
+  ok(T.xpForLevel(40) === 3000 && T.xpForLevel(5) === 1400, 'each level asks a little more, up to 3000');
+  const strong = T.matchXp(fake(18, 7, 9), Mx(5), true, { plants: 2, botLevel: 2 }).total, weak = T.matchXp(fake(3, 0, 10), Mx(1), false, { botLevel: 1 }).total;
+  ok(strong > 600 && strong < 900 && weak > 150 && weak < strong / 2, 'a strong match pays about 700 XP, a poor one about a third', `${strong}, ${weak}`);
+  // the season: 56 days from 16 November 2026, thirty tiers, the same rewards for everyone
+  const t0 = Date.UTC(2026, 10, 16), s0 = T.seasonNow(t0 + 1000), s1 = T.seasonNow(t0 + 56 * 864e5 + 1000);
+  ok(s0.n === 1 && s1.n === 2 && s0.name !== s1.name && Math.round(s0.left / 864e5) === 56, 'a season is eight weeks, then the next begins', `${s0.name} → ${s1.name}`);
+  const R = T.passRewards(0), R2 = T.passRewards(0), R1 = T.passRewards(1), skins = R.flatMap(r => [r.f, r.p]).filter(r => r.t === 'skin');
+  ok(R.length === 30 && R.every(r => r.f && r.p) && JSON.stringify(R) === JSON.stringify(R2), 'thirty tiers, a free and a premium reward on each, the same every time');
+  ok(skins.length === 8 && skins.every(r => T.skinOfId(r.id)) && new Set(skins.map(r => r.id.split(':')[0])).size === 8, 'eight skins on the track, each a real one of a different line', skins.map(r => r.id).join(' '));
+  ok(T.skinOfId(R[29].f.id).R.tier === 3 && T.skinOfId(R[29].p.id).R.tier === 4, 'tier 30 is a Legendary on the free track and a Mythic on the premium one');
+  ok(JSON.stringify(R) !== JSON.stringify(R1), 'the next season has different rewards');
+  ok(R.flatMap(r => [r.f, r.p]).every(r => (r.t === 'coins' && r.n > 0) || (r.t === 'skin') || (r.t === 'title' && T.TITLES.includes(r.s)) || (r.t === 'banner' && T.BANNERS[r.k] && r.k !== 'plain') || r.t === 'spin'), 'every reward is something real');
+  // earning it
+  Object.assign(S, { xp: 0, coins: 0, skins: [], titles: [], banners: [], title: '', banner: '', spins: 0, pass: null, ch: null });
+  const now = Date.now(), realNow = Date.now; Date.now = () => t0 + 3 * 864e5 + 12 * 36e5;   // (a fixed day inside season 1)
+  const p = T.myPass(); ok(p.xp === 0 && T.passTier() === 0 && !p.prem, 'a fresh pass starts at tier 0, free');
+  p.xp = 5200; const got = T.passGrant();
+  ok(got.length === 5 && got.every(q => !q.prem) && p.f === 5 && S.coins > 0 && S.skins.length === 1, '5200 pass XP is tier 5: five free rewards granted, the Rare skin among them', got.map(q => q.rw.t).join(' '));
+  ok(T.passGrant().length === 0, 'nothing is granted twice');
+  ok(T.buyPremium() === null, 'premium cannot be unlocked without the coins'); S.coins = 5000; const pg = T.buyPremium();
+  ok(pg && pg.length === 5 && pg.every(q => q.prem) && S.coins >= 2000 && p.prem && p.p === 5, 'unlocking premium costs 3000 coins and hands over the five tiers already passed', pg.map(q => q.rw.t).join(' '));
+  { const id = R[5].p.id; S.skins.push(id); const c0 = S.coins; p.xp = 6000; const g6 = T.passGrant(), dup = g6.find(q => q.prem); ok(dup && dup.rw.t === 'coins' && dup.rw.was && S.coins - c0 >= T.skinPrice(id) / 2, 'a skin you already own pays half its price in coins instead', JSON.stringify(dup.rw).slice(0, 60)); }
+  // challenges
+  const D = T.dailyChallenges(20000), D2 = T.dailyChallenges(20000), D3 = T.dailyChallenges(20001), Wk = T.weeklyChallenges(2900);
+  ok(D.length === 3 && Wk.length === 3 && new Set(D.map(c => c.k)).size === 3 && Array.from({ length: 40 }, (_, d) => T.dailyChallenges(20000 + d)).every(L => L.length === 3 && L.filter(c => /with/.test(c.words)).length <= 1) && JSON.stringify(D) === JSON.stringify(D2) && JSON.stringify(D) !== JSON.stringify(D3), 'three daily and three weekly challenges, the same for everyone, new each day', D.map(c => c.words).join(' | '));
+  ok(Wk.every(c => c.xp >= 2000) && D.every(c => c.xp >= 400 && c.xp <= 600), 'dailies pay 400 to 600 XP, weeklies 2000 or more');
+  { let seen = new Set(); for (let d = 0; d < 60; d++) for (const c of T.dailyChallenges(20000 + d)) seen.add(c.k); ok(seen.size === T.CH_DAILY.length, 'over two months every kind of daily comes up', seen.size + ' of ' + T.CH_DAILY.length); }
+  const list = T.myChallenges(), tally = { m: 1, k: 500, hs: 300, win: 9, rw: 99, obj: 50, dmg: 99999, fk: 50, cl: 9, mk: 9, ab: 99, Rifle: 99, SMG: 99, Sidearm: 99, Shotgun: 99, Sniper: 99, Melee: 9, Heavy: 99 };
+  const pr = T.challengeProgress(tally), need = list.filter(c => c.k !== 'm' || c.n <= 1).length;
+  ok(list.length === 6 && pr.done.length === need && pr.xp === pr.done.reduce((a, c) => a + c.xp, 0), 'a huge match finishes every challenge it can, and pays each one\'s XP', `${pr.done.length} done, ${pr.xp} XP`);
+  ok(T.challengeProgress(tally).xp === 0 || T.myChallenges().filter(c => c.done).length >= need, 'a finished challenge is not paid again');
+  // a whole match, paid
+  Object.assign(S, { xp: 700, pass: null, ch: null }); const P2 = fake(14, 5, 8, { fk: 3, mk: 1, ab: 12, cat: { Rifle: 11, Sidearm: 3 } }), out = T.payProgress(P2, Mx(5), true, { plants: 1, botLevel: 2 });
+  ok(out.xp.total >= 600 && out.level[1].l > out.level[0].l && S.xp === 700 + out.xp.total && T.myPass().xp === out.xp.total && out.pass.tier1 === Math.floor(out.xp.total / 1000), 'a match adds its XP to your level and to the pass alike', `+${out.xp.total} XP, level ${out.level[0].l} → ${out.level[1].l}, tier ${out.pass.tier1}`);
+  ok(out.ch.moved.length >= 1 && out.got.length === out.pass.tier1, 'it moves the challenges on and grants the tiers it reached', `${out.ch.moved.length} moved, ${out.got.length} granted`);
+  Date.now = realNow;
+  // cards and awards
+  const b1 = T.botCard('Rook', 1200), b2 = T.botCard('Rook', 1200); ok(b1.lv >= 1 && JSON.stringify(b1) === JSON.stringify(b2), 'a bot has a level, the same each time you meet it', JSON.stringify(b1));
+  ok(T.cardFrom('37|3|ember').lv === 37 && T.cardFrom('37|3|ember').title === T.TITLES[3] && T.cardFrom('9999|-1|<x>').lv === 999 && T.cardFrom('9999|-1|<x>').banner === 'plain' && T.cardFrom('x|999|y').title === '', 'a card from another device is read with nothing trusted');
+  T.seed(5); T.startMatch({ mode: 'bot', size: 3, diff: 1 }); const fs = T.M.fs; fs.forEach((f, i) => { f.stat.k = [9, 4, 2, 12, 3, 1][i]; f.stat.d = [3, 6, 7, 5, 8, 9][i]; f.stat.hs = [2, 3, 0, 4, 1, 0][i]; f.stat.dmg = f.stat.k * 130 + i; f.stat.fk = [0, 0, 4, 1, 0, 0][i]; f.stat.pl = i === 4 ? 3 : 0; });
+  const A = T.matchAwards(fs, 0), titles = fs.map(f => A.get(f.key).title);
+  ok(A.size === 6 && titles[0] === 'MATCH MVP' && titles[3] === 'TEAM MVP' && new Set(titles).size === 6 && [...A.values()].filter(a => a.top).length === 1, 'everyone in the line-up gets an award of their own; the winners\' best is the match MVP', titles.join(', '));
+  ok(titles[2] === 'FIRST BLOOD' && titles[4] === 'SITE EXPERT' && titles[1] === 'SHARPSHOOTER' && A.get(fs[1].key).line === '75% headshots', 'the awards go to who led them (first kills, plants, headshots)', titles.join(', '));
+  for (const k of Object.keys(S)) delete S[k]; Object.assign(S, JSON.parse(keep));
+}
 function loadChecks() {
   section('loading screen');
   T.seed(5); T.startMatch({ mode: 'bot', diff: 1, map: 0 }); const M = T.M, P = T.me(); P.credits = 9000;
@@ -580,6 +629,7 @@ else if (arg === 'teams') { teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); }
 else if (arg === 'kits') kitChecks();
 else if (arg === 'ults') ultChecks();
 else if (arg === 'skins') skinChecks();
-else { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); ultChecks(); skinChecks(); teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); matchChecks(20); twoSiteChecks(12); }
+else if (arg === 'progress') progressChecks();
+else { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); ultChecks(); skinChecks(); progressChecks(); teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); matchChecks(20); twoSiteChecks(12); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
