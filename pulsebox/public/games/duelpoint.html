@@ -2066,7 +2066,7 @@ const GAME = {
     if (key === 'vantax') {
       const v = d.t && M.byKey[d.t]; emit('duelZone', f, d);
       if (v && v.alive && f.alive && !v.duel && !f.duel && (d.px == null || Math.hypot(v.x - d.px, v.z - d.pz) < DUEL_R + 3)) { const mx = (f.x + v.x) / 2, mz = (f.z + v.z) / 2, r = Math.max(7.5, Math.hypot(f.x - v.x, f.z - v.z) / 2 + 3), D = { id: f.key + '>' + v.key + ':' + M.round, x: mx, z: mz, r, until: M.time + 12, a: f, b: v };
-        f.duel = v.duel = D; f.scoped = v.scoped = 0; emit('duelStart', D); if (f === me() || v === me()) say('DUEL FIELD', OPS.vanta.col); }
+        f.duel = v.duel = D; f.scoped = v.scoped = 0; emit('duelStart', D); }
       else if (f === me()) say('THE BEAM MET NOBODY', DIM);
       return true; }
     return false;
@@ -7805,7 +7805,7 @@ const GAME = {
       g.userData.glow.material.opacity = .5 * k; g.userData.glow.scale.setScalar(4 * k); });
     // (big and glowing enough to find: a rival sees it, through the walls' gaps, from 45 m, swelling and fading so it catches the eye)
     list(K.eyes, K2.eyes.filter(W => W.by.team === P.team || (W.act > 0 && Math.hypot(W.x - P.x, W.z - P.z) < 45)), (g, W) => { const mine = W.by.team === P.team, awake = W.act > 0, beat = .5 + .5 * Math.sin(X.t * 5), sc = mine ? (awake ? 1.5 : 1.1) : 2 + .25 * beat; g.position.set(W.x, W.y, W.z); g.rotation.y = W.yaw; g.scale.setScalar(sc); const spot = (W.flashT || 0) > X.t;   // (asleep: only Iris's side sees it, small and dim)
-      g.userData.cone.visible = mine && awake; g.userData.cone.scale.setScalar(1 / sc); g.userData.cone.position.z = -3 / sc; g.userData.cone.material.uniforms.op.value = spot ? 1 : .35 + .1 * Math.sin(X.t * 3); g.userData.halo.material.opacity = spot ? 1 : mine ? (awake ? .6 : .15) : .55 + .4 * beat; g.userData.halo.scale.setScalar((mine ? .9 : 1.1 + .35 * beat) * .7); g.userData.iris.rotation.z = X.t * 2; });
+      g.userData.cone.visible = mine && awake; g.userData.cone.scale.setScalar(1 / sc); g.userData.cone.position.z = -3 / sc; g.userData.cone.material.uniforms.op.value = spot ? 1 : .35 + .1 * Math.sin(X.t * 3); g.userData.halo.material.opacity = spot ? 1 : mine ? (awake ? .6 : .4) : .55 + .4 * beat; g.userData.halo.scale.setScalar((mine ? .9 : 1.1 + .35 * beat) * .7); g.userData.iris.rotation.z = X.t * 2; });
     list(K.anchors, M.fs.filter(f => f.tether && (f.team === P.team)).map(f => f.tether), (g, T) => { g.position.set(T.x, T.y, T.z); g.userData.ring.rotation.z = X.t; g.userData.ring2.rotation.z = -X.t * 1.6; g.userData.beam.material.uniforms.op.value = .6 + .2 * Math.sin(X.t * 4); });
     // (Sunder is instant now: its streak is drawn by on('sunder'), and the old flying bolt shows nothing)
     list(K.sunders, [], (g, B) => { g.position.set(B.x + B.dx * B.s, B.y + B.dy * B.s, B.z + B.dz * B.s); g.lookAt(g.position.x + B.dx, g.position.y + B.dy, g.position.z + B.dz); if (Math.random() < .8) spark([g.position.x, g.position.y, g.position.z], [rnd(-.5, .5), rnd(-.5, .5), rnd(-.5, .5)], OPS.vanta.col, .3); });

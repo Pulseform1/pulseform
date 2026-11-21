@@ -72,7 +72,7 @@
     if (key === 'vantax') {
       const v = d.t && M.byKey[d.t]; emit('duelZone', f, d);
       if (v && v.alive && f.alive && !v.duel && !f.duel && (d.px == null || Math.hypot(v.x - d.px, v.z - d.pz) < DUEL_R + 3)) { const mx = (f.x + v.x) / 2, mz = (f.z + v.z) / 2, r = Math.max(7.5, Math.hypot(f.x - v.x, f.z - v.z) / 2 + 3), D = { id: f.key + '>' + v.key + ':' + M.round, x: mx, z: mz, r, until: M.time + 12, a: f, b: v };
-        f.duel = v.duel = D; f.scoped = v.scoped = 0; emit('duelStart', D); if (f === me() || v === me()) say('DUEL FIELD', OPS.vanta.col); }
+        f.duel = v.duel = D; f.scoped = v.scoped = 0; emit('duelStart', D); }
       else if (f === me()) say('THE BEAM MET NOBODY', DIM);
       return true; }
     return false;
