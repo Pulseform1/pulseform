@@ -65,10 +65,26 @@ const DESPECKLE = {
     gl_FragColor = vec4( mix( base.rgb * mix( 1.0, f, green * glint ), sum / 8.0, green * lone ), SOLID( base.a ) );
   }`,
 };
+// deep in the timber: the colour drains to a cold grey-green, the light sinks, the shadows go near black and the edges close in
+const GLOOMY = `vec3 gloomy( vec3 c, vec2 uv, float k ) {
+    float l = dot( c, vec3( 0.2126, 0.7152, 0.0722 ) );
+    c = mix( c, vec3( l ) * vec3( 0.86, 1.0, 0.95 ), k * 0.62 );
+    c *= 1.0 - k * ( 0.2 + 0.22 * ( 1.0 - smoothstep( 0.0, 0.3, l ) ) );
+    vec2 q = uv - 0.5; c *= 1.0 - dot( q, q ) * 1.15 * k;
+    return c;
+  }`;
+const GLOOM = {
+  uniforms: { tDiffuse: { value: null }, uGloom: { value: 0 } },
+  vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uGloom; varying vec2 vUv;
+  ${GLOOMY}
+  void main() { vec4 b = texture2D( tDiffuse, vUv ); gl_FragColor = vec4( gloomy( b.rgb, vUv, uGloom ), b.a ); }`,
+};
 const GRADE = {
   uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uNight: { value: 0 }, uHurt: { value: 0 }, uGloom: { value: 0 } },
   vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }',
   fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; uniform float uNight; uniform float uGloom; varying vec2 vUv;
+  ${GLOOMY}
   void main() {
     vec3 c = texture2D( tDiffuse, vUv ).rgb;
     float l = dot( c, vec3( 0.2126, 0.7152, 0.0722 ) );
@@ -77,9 +93,9 @@ const GRADE = {
     c = mix( vec3( l ), c, 1.14 - 0.25 * uNight );
     c += vec3( 0.022, 0.008, -0.018 ) * smoothstep( 0.45, 1.0, l ) * ( 1.0 - uNight ) - vec3( 0.006, -0.002, -0.014 ) * ( 1.0 - smoothstep( 0.0, 0.35, l ) );
     // deep in the timber: the colour drains to a cold grey-green and the edges close in
-    c = mix( c, vec3( dot( c, vec3( 0.2126, 0.7152, 0.0722 ) ) ) * vec3( 0.9, 1.0, 0.96 ), uGloom * 0.42 );
+    c = gloomy( c, vUv, uGloom );
     // vignette and grain
-    vec2 q = vUv - 0.5; c *= 1.0 - dot( q, q ) * ( 0.62 + 0.3 * uNight + 0.55 * uGloom );
+    vec2 q = vUv - 0.5; c *= 1.0 - dot( q, q ) * ( 0.62 + 0.3 * uNight );
     float g = fract( sin( dot( vUv * ( 1.0 + fract( uTime ) ), vec2( 12.9898, 78.233 ) ) ) * 43758.5453 ) - 0.5;
     c += g * 0.018;
     gl_FragColor = vec4( clamp( c, 0.0, 1.0 ), 1.0 );
@@ -99,7 +115,7 @@ export class Post {
     this.setQuality(quality);
   }
   setQuality(q) {
-    this.q = q; this.on = true;
+    this.q = q; this.on = true; this.gloom = null;
     const size = this.r.getSize(new THREE.Vector2()), pr = this.r.getPixelRatio();
     const rt = new THREE.WebGLRenderTarget(size.x * pr, size.y * pr, { type: THREE.HalfFloatType, samples: q === 'medium' ? 2 : 4 });
     if (this.comp) this.comp.dispose();
@@ -108,7 +124,7 @@ export class Post {
     this.despeckle = new ShaderPass({ ...DESPECKLE, defines: { LINEAR: 1 } }); c.addPass(this.despeckle);
     this.despeckle2 = new ShaderPass(DESPECKLE);
     // low graphics: both clean-ups, and nothing else (no glow, sun shafts or grade)
-    if (q === 'low') { this.bloom = this.shafts = this.grade = null; c.addPass(new OutputPass()); c.addPass(this.despeckle2); this.resize(); return; }
+    if (q === 'low') { this.bloom = this.shafts = this.grade = null; c.addPass(new OutputPass()); this.gloom = new ShaderPass(GLOOM); this.gloom.enabled = false; c.addPass(this.gloom); c.addPass(this.despeckle2); this.resize(); return; }
     // Medium: the glow worked at half size and fewer steps for the sun's rays, which is most of the cost on built-in graphics
     const half = this.half = q === 'high' ? 1 : .5; this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x * half, size.y * half), q === 'high' ? .42 : .32, .55, .88); noGreenGlow(this.bloom); c.addPass(this.bloom);
     this.shafts = new ShaderPass({ ...SHAFTS, defines: { SAMPLES: q === 'high' ? 22 : 12 } }); c.addPass(this.shafts);
@@ -120,7 +136,7 @@ export class Post {
   // sunDir: toward the sun (world); k: how strong the shafts may be (daylight, clear sky)
   render(dt, sunDir, k, night, gloom = 0) {
     if (!this.on || !this.comp) { this.r.render(this.scene, this.cam); return; }
-    if (!this.bloom) { this.comp.render(dt); return; }   // (low graphics)
+    if (!this.bloom) { if (this.gloom) { this.gloom.enabled = gloom > .02; this.gloom.uniforms.uGloom.value = gloom; } this.comp.render(dt); return; }   // (low graphics: the gloom pass runs only in the deep forest)
     const v = this._v.copy(this.cam.position).addScaledVector(sunDir, 1000).project(this.cam), facing = v.z < 1 ? 1 : 0;
     const edge = Math.max(Math.abs(v.x), Math.abs(v.y)), vis = facing * (1 - THREE.MathUtils.smoothstep(edge, 1.1, 1.9));
     this.shafts.uniforms.uSun.value.set(v.x * .5 + .5, v.y * .5 + .5); this.shafts.uniforms.uK.value = k * vis * (this.q === 'high' ? .55 : .4);

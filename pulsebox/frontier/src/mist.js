@@ -16,11 +16,11 @@ export class ForestMist {
       const s = it.s; let d = Math.hypot(s.position.x - pos.x, s.position.z - pos.z);
       if (!this.init || d > 36) {   // (re)placed: anywhere round you the first time, then on the far edge as you move
         const a = Math.random() * Math.PI * 2, r = this.init ? 28 + Math.random() * 6 : 7 + Math.random() * 26;
-        s.position.set(pos.x + Math.cos(a) * r, 0, pos.z + Math.sin(a) * r); it.sc = 9 + Math.random() * 9; it.h = .5 + Math.random() * 1.8; it.ph = Math.random() * 6; d = r;
+        s.position.set(pos.x + Math.cos(a) * r, 0, pos.z + Math.sin(a) * r); it.sc = 9 + Math.random() * 9; it.h = .3 + Math.random() * 1.4; it.ph = Math.random() * 6; d = r;
       }
       s.position.x += wind.x * dt * .5; s.position.z += wind.y * dt * .5; s.position.y = world.height(s.position.x, s.position.z) + it.h;
       it.ph += dt * .12; s.scale.set(it.sc * (1 + .12 * Math.sin(it.ph)), it.sc * .42, 1);
-      s.material.opacity = k * .2 * Math.min(1, Math.max(0, (d - 3) / 6)); s.material.color.copy(col);
+      s.material.opacity = k * .34 * Math.min(1, Math.max(0, (d - 3) / 6)); s.material.color.copy(col);
     }
     this.init = true;
   }

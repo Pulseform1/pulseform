@@ -34,6 +34,7 @@ export class Flora {
       };
       for (const m of Object.values(p.im)) if (m) this.group.add(m);
     }
+    this.shadows();
     for (const d of plants.props) { d.im = im(d.geo, d.mat, cap.prop, d.shadow, d.depth); this.group.add(d.im); }
     // far-forest impostors
     const q = new THREE.InstancedBufferGeometry();
@@ -46,7 +47,9 @@ export class Flora {
     this.bb = new THREE.Mesh(q, billboardMaterial(plants.atlas, U)); this.bb.frustumCulled = false; this.group.add(this.bb);
     this.last = new THREE.Vector3(1e9, 0, 1e9); this.timer = 0; this.dirty = true; this.counts = {};
   }
-  set(o) { this.vegR = o.vegR ?? this.vegR ?? 900; this.nearR = o.nearR ?? this.nearR ?? 60; this.midR = o.midR ?? this.midR ?? 150; this.propR = o.propR ?? this.propR ?? 75; this.dirty = true; }
+  set(o) { this.vegR = o.vegR ?? this.vegR ?? 900; this.nearR = o.nearR ?? this.nearR ?? 60; this.midR = o.midR ?? this.midR ?? 150; this.propR = o.propR ?? this.propR ?? 75; this.midShadow = o.midShadow ?? this.midShadow ?? true; this.shadows(); this.dirty = true; }
+  // trees past the close ring: whether they cast shadows (off on Low: they stand mostly outside the shadowed area anyway)
+  shadows() { for (const p of this.plants.protos) if (p.im) { p.im.midT.castShadow = this.midShadow; if (p.im.midF) p.im.midF.castShadow = this.midShadow; } }
   update(cam, dt) {
     this.timer -= dt;
     const moved = (cam.x - this.last.x) ** 2 + (cam.z - this.last.z) ** 2;

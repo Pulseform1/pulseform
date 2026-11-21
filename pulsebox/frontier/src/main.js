@@ -30,9 +30,9 @@ import { ForestMist } from './mist.js';
 const $ = s => document.querySelector(s);
 const params = new URLSearchParams(location.search);
 const QUALITY = {
-  low: { pr: 1, shadow: 1024, span: 40, nearR: 300, farR: 2400, veg: { vegR: 600, nearR: 38, midR: 100, propR: 45 }, grass: 'low', fur: 0 },
-  medium: { pr: 1.25, shadow: 2048, span: 55, nearR: 380, farR: 3200, veg: { vegR: 800, nearR: 50, midR: 130, propR: 62 }, grass: 'medium', fur: 3 },
-  high: { pr: 1.6, shadow: 4096, span: 65, nearR: 440, farR: 3800, veg: { vegR: 950, nearR: 62, midR: 165, propR: 80 }, grass: 'high', fur: 7 },
+  low: { pr: 1, shadow: 1024, span: 40, nearR: 300, farR: 2400, veg: { vegR: 600, nearR: 32, midR: 100, propR: 45, midShadow: false }, grass: 'low', fur: 0 },
+  medium: { pr: 1.25, shadow: 2048, span: 55, nearR: 380, farR: 3200, veg: { vegR: 800, nearR: 50, midR: 130, propR: 62, midShadow: true }, grass: 'medium', fur: 3 },
+  high: { pr: 1.6, shadow: 4096, span: 65, nearR: 440, farR: 3800, veg: { vegR: 950, nearR: 62, midR: 165, propR: 80, midShadow: true }, grass: 'high', fur: 7 },
 };
 const SPAWNS = { forest: 'Deep Forest', valley: 'Mountain Valley', lake: 'Wilderness Lake' };
 // what a kill pays, in coins
@@ -122,7 +122,7 @@ async function start(opts) {
   const dens = G.dens = new Dens(scene, world, TEX); wildlife.dens = dens;
   dens.onFound = () => { if (G.state === 'play') { toast('A bear den in the hillside. Gnawed bones at the mouth, claw marks raked into the rock. Whatever lives here will defend it: back away, or be ready.'); audio.animal('bear', 70, 0); } };
   wildlife.onDen = () => { const t = performance.now(); if (G.state === 'play' && t - (G.denToast || 0) > 8000) { G.denToast = t; toast('The den bear is coming for you! You cannot outrun it. Stand and shoot: the head drops it, the heart slows it.'); } };
-  G.mist = new ForestMist(scene, TEX.puff, ({ low: 8, medium: 12, high: 16 })[G.settings.quality] || 12);
+  G.mist = new ForestMist(scene, TEX.puff, ({ low: 10, medium: 14, high: 18 })[G.settings.quality] || 12);
   wildlife.region = opts.spawn; wildlife.home = world.camp; wildlife.furN = (QUALITY[G.settings.quality] || QUALITY.medium).fur;
   player.onStep = kind => audio.step(surfaceAt(kind), kind === 'run');
   // stand in the tent doorway looking out at the fire
@@ -299,7 +299,7 @@ function step(dt) {
   // (camp stays a clearing you can see across)
   G.gloomT = (G.gloomT || 0) - dt;
   if (G.gloomT <= 0) { G.gloomT = .4; let f = 0; for (let k = 0; k < 9; k++) { const a = k / 8 * Math.PI * 2, r = k ? 38 : 0, x = player.pos.x + Math.cos(a) * r, z = player.pos.z + Math.sin(a) * r; f += G.world.deep(x, z, G.world.forestRaw(x, z, G.world.sample(x, z, {}))); }
-    const cp = G.world.camp, dc = cp ? Math.hypot(player.pos.x - cp.x, player.pos.z - cp.z) : 1e9; G.gloomTgt = THREE.MathUtils.smoothstep(f / 9, .25, .7) * THREE.MathUtils.smoothstep(dc, 60, 170); }
+    const cp = G.world.camp, dc = cp ? Math.hypot(player.pos.x - cp.x, player.pos.z - cp.z) : 1e9; G.gloomTgt = THREE.MathUtils.smoothstep(f / 9, .2, .6) * THREE.MathUtils.smoothstep(dc, 60, 170); }
   G.gloom = (G.gloom || 0) + ((G.gloomTgt || 0) - (G.gloom || 0)) * Math.min(1, dt * .25); sky.gloom = G.gloom;
   sky.update(dt, camera.position, gameDt);
   if (sky.hours < before) G.day++;
@@ -350,6 +350,10 @@ function step(dt) {
   const h = sky.hours, hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
   $('#clock').textContent = `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'am' : 'pm'}`;
   if (G.debug) $('#debug').textContent = `${fps.toFixed(0)} fps  calls ${renderer.info.render.calls}  tris ${(renderer.info.render.triangles / 1e6).toFixed(2)}M  trees ${flora.counts.near}/${flora.counts.mid}/${flora.counts.far}  jobs ${jobs.pending}`;
+  // shadows: redrawn every frame on Medium and High; on Low every other frame, and every third deep in the timber, where the
+  // canopy leaves the sun weak (the shadow map is half of what a frame costs there)
+  const shEvery = G.settings.quality === 'low' ? ((G.gloom || 0) > .5 ? 3 : 2) : 1; G.shN = ((G.shN || 0) + 1) % shEvery;
+  renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = G.shN === 0;
   if (!G.noRender) G.post.render(dt, U.uSunDirW.value, sky.daylight * (1 - Math.min(1, G.weather.cur.rain * 2)), sky.night, G.gloom || 0);
   input.endFrame();
 }
