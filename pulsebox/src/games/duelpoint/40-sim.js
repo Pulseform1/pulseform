@@ -601,7 +601,7 @@
   }
   function endRound(wi, why) {
     if (M.phase === 'end') return;
-    M.phase = 'end'; M.t = END_T; M.wins[wi]++; M.last = { wi, why };
+    M.phase = 'end'; M.t = why === 'defuse' ? DEFUSE_END_T : END_T; M.wins[wi]++; M.last = { wi, why };
     if (M.auto) M.adj += wi === 0 ? 18 : -12;   // the adaptive bot sharpens a little each round you take, and eases off when you lose one
     M.fs.forEach(f => { if (f.net) return; const won = f.team === wi; f.lossRun = won ? 0 : f.lossRun + 1; f.credits = Math.min(CASH.cap, f.credits + (won ? CASH.win : CASH.loss[Math.min(2, f.lossRun - 1)])); });
     if (why === 'boom') emit('boom', M.planted.x, M.planted.z);

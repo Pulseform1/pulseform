@@ -537,7 +537,7 @@
     // --- markers in the world: a pinged rival, the planted charge
     // teammates: a name and a marker over each, and their health
     for (const q of M.fs) if (q !== P && q.team === P.team && q.alive) { const s = toScreen(q.x, q.y + 2.05, q.z); if (s) { g.fillStyle = YOU; g.beginPath(); g.moveTo(s[0] - 7, s[1] - 10); g.lineTo(s[0] + 7, s[1] - 10); g.lineTo(s[0], s[1]); g.closePath(); g.fill(); tx(g, `${carries(q) ? '◆ ' : ''}${q.name.toUpperCase()} ${Math.ceil(q.hp)}`, s[0], s[1] - 20, 13, carries(q) ? GOLD : YOU, 'center', 800); } }
-    if (M.loot && M.loot.length && P.alive && M.phase !== 'end') for (const d of M.loot) { const G2 = GUNS[d.k], dd = Math.hypot(d.x - P.x, d.z - P.z); if (!G2 || dd > 9 || Math.abs(d.y - P.y) > 2.5) continue;
+    if (M.loot && M.loot.length && P.alive && !M.over) for (const d of M.loot) { const G2 = GUNS[d.k], dd = Math.hypot(d.x - P.x, d.z - P.z); if (!G2 || dd > 9 || Math.abs(d.y - P.y) > 2.5) continue;
       const s = toScreen(d.x, d.y + .45, d.z); if (!s || !canSeePt(P, d.x, d.y + .3, d.z)) continue; const on = P.nearLoot === d, a = on ? 1 : cl(1.25 - dd / 8, .35, .9);
       g.globalAlpha = a; const w2 = (on ? 150 : 104) * u, h2 = (on ? 34 : 24) * u; rr(g, s[0] - w2 / 2, s[1] - h2, w2, h2, 6 * u, 'rgba(12,16,22,.78)', on ? GOLD : 'rgba(239,233,220,.35)', on ? 2 : 1);
       if (on) { rr(g, s[0] - w2 / 2 + 6 * u, s[1] - h2 + 6 * u, 22 * u, 22 * u, 4 * u, GOLD); tx(g, touch ? '◉' : 'F', s[0] - w2 / 2 + 17 * u, s[1] - h2 + 17 * u, 14 * u, '#0c1016', 'center', 900); }
@@ -660,7 +660,7 @@
       g.restore();
     }
     if (touch && canBuy()) tx(g, `◈ ${P.credits}`, 640, V.y1 - 66 * u, 17 * u, GOLD);
-    if ((M.phase === 'buy' || (M.phase === 'end' && !M.over)) && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'PICK UP' : 'F'}: ${lootFree(P) ? '' : 'swap for '}${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
+    // (out of the live round the gun's own label in the world says PICK UP: no second line under the round-end cards)
     // --- the charge: what to do, and how far along
     const ring = (frac, label, col) => { const y = 470; g.strokeStyle = 'rgba(12,16,22,.7)'; g.lineWidth = 12 * u; g.beginPath(); g.arc(640, y, 34 * u, 0, TAU); g.stroke(); g.strokeStyle = col; g.lineWidth = 7 * u; g.beginPath(); g.arc(640, y, 34 * u, -Math.PI / 2, -Math.PI / 2 + TAU * frac); g.stroke(); tx(g, label, 640, y + 60 * u, 15 * u, col); };
     if (P.reloadT > 0) tx(g, 'RELOADING', 640, 420, 15 * u, GOLD);

@@ -108,7 +108,7 @@
     { n: 'Legend', react: .27, lag: .11, err: .045, flick: .26, jit: .01, turn: 7.2, spray: .84, hs: .36, hear: 30 },
   ];
   const LOAD_T = 5;   // the loading screen before the first round: added to that round's buy phase, so no buy time is lost
-  let WIN_ROUNDS = 5; const BUY_T = 28, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
+  let WIN_ROUNDS = 5; const BUY_T = 28, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5, DEFUSE_END_T = 12;   // (after a defuse: time to walk the site and pick up guns)
   const MATCH_LENS = [3, 4, 5, 6, 9, 11], winOf = w => MATCH_LENS.includes(+w) ? +w : 5, HALF = () => WIN_ROUNDS - 1;
   // overtime: tied at one short of the target after both halves, rounds go on (sides swap every round, credits topped up) until
   // one team is two ahead; after OT_MAX overtime rounds still level, the next round settles it (sudden death)

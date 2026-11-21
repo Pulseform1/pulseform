@@ -402,7 +402,7 @@ const GAME = {
     { n: 'Legend', react: .27, lag: .11, err: .045, flick: .26, jit: .01, turn: 7.2, spray: .84, hs: .36, hear: 30 },
   ];
   const LOAD_T = 5;   // the loading screen before the first round: added to that round's buy phase, so no buy time is lost
-  let WIN_ROUNDS = 5; const BUY_T = 28, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
+  let WIN_ROUNDS = 5; const BUY_T = 28, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5, DEFUSE_END_T = 12;   // (after a defuse: time to walk the site and pick up guns)
   const MATCH_LENS = [3, 4, 5, 6, 9, 11], winOf = w => MATCH_LENS.includes(+w) ? +w : 5, HALF = () => WIN_ROUNDS - 1;
   // overtime: tied at one short of the target after both halves, rounds go on (sides swap every round, credits topped up) until
   // one team is two ahead; after OT_MAX overtime rounds still level, the next round settles it (sudden death)
@@ -1653,7 +1653,7 @@ const GAME = {
   }
   function endRound(wi, why) {
     if (M.phase === 'end') return;
-    M.phase = 'end'; M.t = END_T; M.wins[wi]++; M.last = { wi, why };
+    M.phase = 'end'; M.t = why === 'defuse' ? DEFUSE_END_T : END_T; M.wins[wi]++; M.last = { wi, why };
     if (M.auto) M.adj += wi === 0 ? 18 : -12;   // the adaptive bot sharpens a little each round you take, and eases off when you lose one
     M.fs.forEach(f => { if (f.net) return; const won = f.team === wi; f.lossRun = won ? 0 : f.lossRun + 1; f.credits = Math.min(CASH.cap, f.credits + (won ? CASH.win : CASH.loss[Math.min(2, f.lossRun - 1)])); });
     if (why === 'boom') emit('boom', M.planted.x, M.planted.z);
@@ -9092,7 +9092,7 @@ const GAME = {
     // --- markers in the world: a pinged rival, the planted charge
     // teammates: a name and a marker over each, and their health
     for (const q of M.fs) if (q !== P && q.team === P.team && q.alive) { const s = toScreen(q.x, q.y + 2.05, q.z); if (s) { g.fillStyle = YOU; g.beginPath(); g.moveTo(s[0] - 7, s[1] - 10); g.lineTo(s[0] + 7, s[1] - 10); g.lineTo(s[0], s[1]); g.closePath(); g.fill(); tx(g, `${carries(q) ? '◆ ' : ''}${q.name.toUpperCase()} ${Math.ceil(q.hp)}`, s[0], s[1] - 20, 13, carries(q) ? GOLD : YOU, 'center', 800); } }
-    if (M.loot && M.loot.length && P.alive && M.phase !== 'end') for (const d of M.loot) { const G2 = GUNS[d.k], dd = Math.hypot(d.x - P.x, d.z - P.z); if (!G2 || dd > 9 || Math.abs(d.y - P.y) > 2.5) continue;
+    if (M.loot && M.loot.length && P.alive && !M.over) for (const d of M.loot) { const G2 = GUNS[d.k], dd = Math.hypot(d.x - P.x, d.z - P.z); if (!G2 || dd > 9 || Math.abs(d.y - P.y) > 2.5) continue;
       const s = toScreen(d.x, d.y + .45, d.z); if (!s || !canSeePt(P, d.x, d.y + .3, d.z)) continue; const on = P.nearLoot === d, a = on ? 1 : cl(1.25 - dd / 8, .35, .9);
       g.globalAlpha = a; const w2 = (on ? 150 : 104) * u, h2 = (on ? 34 : 24) * u; rr(g, s[0] - w2 / 2, s[1] - h2, w2, h2, 6 * u, 'rgba(12,16,22,.78)', on ? GOLD : 'rgba(239,233,220,.35)', on ? 2 : 1);
       if (on) { rr(g, s[0] - w2 / 2 + 6 * u, s[1] - h2 + 6 * u, 22 * u, 22 * u, 4 * u, GOLD); tx(g, touch ? '◉' : 'F', s[0] - w2 / 2 + 17 * u, s[1] - h2 + 17 * u, 14 * u, '#0c1016', 'center', 900); }
@@ -9215,7 +9215,7 @@ const GAME = {
       g.restore();
     }
     if (touch && canBuy()) tx(g, `◈ ${P.credits}`, 640, V.y1 - 66 * u, 17 * u, GOLD);
-    if ((M.phase === 'buy' || (M.phase === 'end' && !M.over)) && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'PICK UP' : 'F'}: ${lootFree(P) ? '' : 'swap for '}${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
+    // (out of the live round the gun's own label in the world says PICK UP: no second line under the round-end cards)
     // --- the charge: what to do, and how far along
     const ring = (frac, label, col) => { const y = 470; g.strokeStyle = 'rgba(12,16,22,.7)'; g.lineWidth = 12 * u; g.beginPath(); g.arc(640, y, 34 * u, 0, TAU); g.stroke(); g.strokeStyle = col; g.lineWidth = 7 * u; g.beginPath(); g.arc(640, y, 34 * u, -Math.PI / 2, -Math.PI / 2 + TAU * frac); g.stroke(); tx(g, label, 640, y + 60 * u, 15 * u, col); };
     if (P.reloadT > 0) tx(g, 'RELOADING', 640, 420, 15 * u, GOLD);
