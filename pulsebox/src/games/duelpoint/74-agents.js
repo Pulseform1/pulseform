@@ -117,8 +117,8 @@
     // a head with a face: a skull a little taller than it is wide, ears, brows over dark eyes, a nose, and a gaiter pulled up
     // over the jaw and neck (each operative's own mask, visor or helmet goes on top)
     add(sph(.124, 16, 12), M.skin).scale.set(.95, 1.06, 1); add(new THREE.SphereGeometry(.131, 16, 8, 0, TAU, Math.PI * .57, Math.PI * .43), M.suit).scale.set(.96, 1.06, 1.01);
-    add(rb(.075, .05, .03, .016), M.dark, 0, -.068, -.116); if (!['vex', 'bastion', 'wraith'].includes(f.op)) add(sph(.02, 8, 6), M.skin, 0, -.014, -.121).scale.set(.75, 1.1, 1);   // (not under a hood, a helm or a mask)
-    for (const sx of [-1, 1]) { add(rb(.036, .014, .012, .005), M.dark, sx * .043, .012, -.112, 0, sx * -.3); add(rb(.044, .01, .014, .004), M.suit, sx * .043, .03, -.113, 0, sx * -.3, sx * -.1); add(sph(.022, 8, 6), M.skin, sx * .116, -.002, .004).scale.set(.45, 1, .75); }
+    add(rb(.075, .05, .03, .016), M.dark, 0, -.068, -.116); const faceless = ['vex', 'bastion', 'wraith', 'vanta'].includes(f.op); if (!faceless) add(sph(.02, 8, 6), M.skin, 0, -.014, -.121).scale.set(.75, 1.1, 1);   // (not under a hood, a helm or a mask)
+    for (const sx of [-1, 1]) { if (f.op !== 'vanta') { add(rb(.036, .014, .012, .005), M.dark, sx * .043, .012, -.112, 0, sx * -.3); add(rb(.044, .01, .014, .004), M.suit, sx * .043, .03, -.113, 0, sx * -.3, sx * -.1); } add(sph(.022, 8, 6), M.skin, sx * .116, -.002, .004).scale.set(.45, 1, .75); }   // (Vanta's sealed helm: no eyes or brows under it)
     if (f.op === 'vex') {
       add(new THREE.SphereGeometry(.16, 18, 12, 0, TAU, 0, Math.PI * .64), M.cloth, 0, .012, .018); add(new THREE.TorusGeometry(.128, .024, 8, 20), M.cloth, 0, .0, -.05, .12); add(new THREE.ConeGeometry(.09, .16, 10), M.cloth, 0, .06, .16, 1.9);
       add(rb(.19, .034, .03, .012), M.glow, 0, .012, -.118); add(new THREE.TorusGeometry(.105, .042, 8, 18), M.cloth, 0, -.125, .0, Math.PI / 2);
@@ -144,7 +144,8 @@
       add(cyl(.028, .028, .03, 10), M.dark, 0, .16, -.12, Math.PI / 2); add(sph(.02, 8, 6), M.glow, 0, .16, -.137);
     } else if (f.op === 'vanta') {   // a close faceted helm, a glowing hex band for a visor, shards swept back on one side
       add(new THREE.SphereGeometry(.153, 6, 10, 0, TAU, 0, Math.PI * .56), M.plate, 0, .014, .01).scale.set(1, 1.02, 1.06);
-      add(new THREE.CylinderGeometry(.139, .135, .05, 6, 1, true, Math.PI - 1.2, 2.4), M.glow, 0, .002, 0); add(rb(.16, .062, .05, .02), M.dark, 0, -.075, -.102);
+      add(new THREE.CylinderGeometry(.158, .154, .052, 6, 1, true, Math.PI - 1.2, 2.4), M.glow, 0, .002, 0); add(rb(.16, .062, .05, .02), M.dark, 0, -.075, -.102);
+      add(new THREE.SphereGeometry(.137, 18, 10, 0, TAU, Math.PI * .4, Math.PI * .5), M.dark, 0, .0, .0).scale.set(.97, 1.04, 1.02);   // a sealed under-helm over the face, ears and jaw, so no skin shows round the visor
       for (let i = 0; i < 3; i++) add(new THREE.ConeGeometry(.022, .17 - i * .035, 4), M.glow, .095 + i * .022, .125 - i * .022, .03 + i * .05, -1.15, 0, -.55 - i * .15);
     } else {
       add(turn([[0, .185], [.1, .178], [.158, .13], [.17, .02], [.174, -.075], [.15, -.075]], 16), M.plate, 0, 0, .004); add(rb(.3, .045, .07, .015), M.plate, 0, .055, -.13); add(rb(.34, .03, .3, .012), M.dark, 0, -.065, 0);
