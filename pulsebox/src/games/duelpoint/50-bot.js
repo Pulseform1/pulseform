@@ -169,6 +169,22 @@
     if (P.k === 'hold' && !sees && B.last && !B.last.heard && B.lostT > 3.5 && B.lostT < 3.6 && R() < .25 + .15 * B.diff) { P = B.plan = { k: 'hunt' }; goTo(P, f, B.last.x, B.last.z); }
     if (P.k === 'push' && M.t < 28 && P.pts.length) P.pts.length = 0;   // out of time: straight to the site
     if (P.k === 'post' && e.alive && e.defuse > 0 && !P.rush) { P.rush = true; goTo(P, f, M.planted.x, M.planted.z); }
+    // --- the endgame: once you are down (the bots play the round out) or a side is down to its last one, nobody waits.
+    // The charge goes straight in, and the rest go and find the other side: every few seconds each gets a rough idea of
+    // where the nearest rival is (on a quiet map, steps carry), and a newer one sends it on
+    { const you = me(), mine = M.fs.filter(q => q.team === f.team && q.alive).length, theirs = M.fs.filter(q => q.team !== f.team && q.alive).length;
+      const teamN = M.fs.filter(q => q.team === f.team && !q.gone).length, foeN = M.fs.filter(q => q.team !== f.team && !q.gone).length;   // (a 1v1 is a duel from the start, not an endgame)
+      B.urgent = M.phase === 'live' && M.mode !== 'range' && ((you && !you.bot && !you.alive) || (mine === 1 && teamN > 1) || (theirs === 1 && foeN > 1));
+      if (B.urgent && e.alive) {
+        // (once it is planted there is no need: both sides know where to be, at the charge)
+        if (!M.planted && !(B.fixT > M.time) && !(B.last && M.time - B.last.t < 3)) { B.fixT = M.time + rnd(3.5, 5.5); const a = R() * TAU, r = rnd(0, 5); B.last = { x: e.x + Math.cos(a) * r, z: e.z + Math.sin(a) * r, t: M.time, heard: true }; }
+        const carrier = side === 'att' && carries(f), done = !P.path || !P.path.length;
+        if (carrier && P.k === 'push' && P.pts.length) P.pts.length = 0;   // straight to the site
+        const hunt = B.last && !carrier && P.k !== 'cover' && P.k !== 'fetch' && P.k !== 'retake' && P.k !== 'post' && (
+          (side === 'def' && !M.planted && (P.k === 'hold' || P.k === 'hunt') && M.t < roundT() - 8 && (theirs === 1 || mine >= theirs * 2)) ||   // (defenders only leave their spots for the last attacker, or when they far outnumber them: the attack still gets its chance to plant)
+          (side === 'att' && !M.planted && (P.k === 'hunt' || (P.k === 'push' && P.toSite && done)) && (theirs === 1 || mine >= theirs * 2 || !M.charge || !M.charge.k)));   // (the rest of the attack stays by whoever plants, unless only one defender is left, they far outnumber them, or nobody is carrying it)
+        if (hunt && (P.k !== 'hunt' || B.last.t > (P.at || 0) + .5)) { P = B.plan = { k: 'hunt', urgent: true, at: B.last.t }; goTo(P, f, B.last.x, B.last.z); }
+      } }
 
     // --- out of bullets or losing badly: get out of sight first, reload there, then pick the fight up again
     { const A0 = f.ammo[gun(f).k], low = f.hp + f.sh < 45 && e.hp + e.sh > f.hp + f.sh + 35, dry = A0 && A0.mag === 0 && A0.res > 0;
@@ -275,8 +291,9 @@
     const arrived = !flying && (!P.path || !P.path.length);
     if (arrived) {
       if (P.k === 'push') { if (P.pts.length) { const q = P.pts.shift(); goTo(P, f, q[0], q[1]); } else if (!P.toSite) { P.toSite = true; goTo(P, f, P.site[0], P.site[1]); } }
-      if (P.k === 'hunt') B.plan = planHold(f, null);
+      if (P.k === 'hunt' && !P.urgent) B.plan = planHold(f, null);
       if (P.k === 'fetch' && M.charge && !M.charge.k && !engaged) goal = [M.charge.x, M.charge.z];   // the last step onto it
+      if (P.k === 'retake' && M.planted && !engaged) { const dp = Math.hypot(M.planted.x - f.x, M.planted.z - f.z); if (dp > 1.1) { goal = [M.planted.x, M.planted.z]; if (M.planted.y > f.y + .4 && dp < 2.6 && f.ground) I.jump = true; } }   // the last step onto the charge
       if (P.k === 'cover' && !engaged) I.crouch = B.diff > 1;
       if ((P.k === 'hold' || P.k === 'post') && P.crouch && !engaged) I.crouch = true;
     }
@@ -291,8 +308,8 @@
     } else if (M.time - (B.engT || -9) < .8 && P.k !== 'retake' && P.k !== 'cover') goal = null;   // just lost a rival it was fighting: hold the angle a moment
     if (B.breaking) goal = null;   // stand and knock the wall down first
     // the charge
-    if (side === 'att' && !M.planted && carries(f) && P.k === 'push' && P.toSite && onSite(f.x, f.z) && (arrived || Math.hypot(P.site[0] - f.x, P.site[1] - f.z) < 1.4) && !sees && M.time - (B.engT || -9) > 1) { I.use = true; goal = null; }
-    if (side === 'def' && M.planted && Math.hypot(f.x - M.planted.x, f.z - M.planted.z) < 1.5) {
+    if (side === 'att' && !M.planted && carries(f) && P.k === 'push' && P.toSite && onSite(f.x, f.z) && (arrived || Math.hypot(P.site[0] - f.x, P.site[1] - f.z) < 1.4) && !sees && M.time - (B.engT || -9) > (B.urgent ? .4 : 1)) { I.use = true; goal = null; }
+    if (side === 'def' && M.planted && Math.hypot(f.x - M.planted.x, f.z - M.planted.z) < 1.6) {
       if (f.hp < B.hp0 && M.planted.t > DEFUSE_T - f.defuse + 2.5) B.wait = 1.2;   // shot at while defusing: stand up and look
       if (B.wait > 0) B.wait -= dt;
       else if ((!sees && B.lostT > 1) || M.planted.t < DEFUSE_T - f.defuse + 1.5) { I.use = true; goal = null; I.mx = 0; I.fire = false; }

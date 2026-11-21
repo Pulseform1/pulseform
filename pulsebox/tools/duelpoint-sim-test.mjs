@@ -15,7 +15,7 @@ const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name:
 const T = new Function('K', 'MP', code + `
   return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
-    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, gunStats, dmgAt, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
+    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, setWall, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, gunStats, dmgAt, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
 let failed = 0;
 const ok = (cond, name, extra = '') => { if (!cond) failed++; console.log((cond ? '  ok   ' : '  FAIL ') + name + (extra !== '' ? '  (' + extra + ')' : '')); };
@@ -161,6 +161,9 @@ function knifeWallChecks() {
   ok(hp0 - B.hp >= 60, 'one knife swing takes a real chunk out of the wall', `${hp0} → ${B.hp}`);
   let n = 1; while (B.hp > 0 && n < 30) { P.fireT = -1; T.fire(P); n++; }
   ok(B.hp <= 0 && n <= 8, 'keep swinging and the wall gives way', n + ' swings');
+  // looking a little down (as you do walking up to it), or a little up: the swing still lands on the wall, not the floor
+  for (const pitch of [-.35, .3]) { T.setWall(0, true); const h0 = B.hp; P.pitch = pitch; P.fireT = -1; T.fire(P); ok(h0 - B.hp >= 60, `a swing looking ${pitch < 0 ? 'down' : 'up'} at it (${pitch} rad) still cuts the wall`, `${h0} → ${B.hp}`); }
+  P.pitch = 0;
 }
 // a rifle on the floor: look at it in reach and press F; the charge going down pings the attackers; Nova's kills give a Surge back
 function pickupPingNovaChecks() {
@@ -431,7 +434,7 @@ function loadChecks() {
 }
 function twoSiteChecks(count) {
   section(`${count} matches on the two-site maps`);
-  const pool = T.mapPool(2), bySite = [0, 0, 0], why = {}, sizes = {}; let rounds = 0, plants = 0, done = 0, err = 0, boomWins = 0;
+  const pool = T.mapPool(2), bySite = [0, 0, 0], why = {}, sizes = {}; let rounds = 0, plants = 0, done = 0, err = 0, boomWins = 0, plantWins = 0;
   ok(pool.length === 6 && T.mapPool(1).length === 7, 'six two-site maps and seven one-site maps', `${pool.length} and ${T.mapPool(1).length}`);
   for (let n = 0; n < count; n++) {
     try {
@@ -442,14 +445,16 @@ function twoSiteChecks(count) {
         T.tick(DT);
         if (M.round !== lastRound) { lastRound = M.round; planted = false; }
         if (M.planted && !planted) { planted = true; plants++; bySite[M.planted.s]++; }
-        if (M.phase === 'end' && M.last && !M.last.seen2) { M.last.seen2 = true; rounds++; why[M.last.why] = (why[M.last.why] || 0) + 1; if (M.last.why === 'boom') boomWins++; }
+        if (M.phase === 'end' && M.last && !M.last.seen2) { M.last.seen2 = true; rounds++; why[M.last.why] = (why[M.last.why] || 0) + 1; if (M.last.why === 'boom') boomWins++; const att = M.fs.find(f => T.sideOf(f) === 'att'); if (planted && att && M.last.wi === att.team) plantWins++; }
       }
       if (M.over) done++;
     } catch (e) { err++; console.log(e.stack); }
   }
   ok(!err, 'no errors'); ok(done === count, 'every match finishes', `${done}/${count}`);
   ok(bySite[0] > 0 && bySite[1] > 0, 'attackers plant on both sites', `A ${bySite[0]}, B ${bySite[1]}${bySite[2] ? ', C ' + bySite[2] : ''}`);
-  ok(plants / Math.max(1, rounds) > .2 && boomWins > 0, 'planting is a real way to win', `${plants} plants in ${rounds} rounds, ${boomWins} won by the charge`);
+  // (a round won after the plant counts however it ends: the charge going off, or the retake beaten. Bots that reach a planted
+  // charge always defuse it now, so the charge itself rarely goes off between them; it used to when a defender stalled short of it)
+  ok(plants / Math.max(1, rounds) > .2 && plantWins >= plants * .25, 'planting is a real way to win', `${plants} plants in ${rounds} rounds, ${plantWins} won after the plant (${boomWins} by the charge going off)`);
   console.log(`    ${Object.entries(why).map(([k, v]) => `${T.WHY[k]} ${v}`).join(', ')}; team sizes ${Object.entries(sizes).map(([k, v]) => `${k}v${k} x${v}`).join(', ')}`);
 }
 

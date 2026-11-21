@@ -185,7 +185,7 @@
     ambTick(dt);
   }
   // a wall hit shudders; a wall that falls bursts into dust and chips
-  on('wallHit', b => { const w = X && X.mech && X.mech.brks.find(q => q.bi === b); if (w) w.shake = .12; });
+  on('wallHit', (b, dmg) => { const w = X && X.mech && X.mech.brks.find(q => q.bi === b); if (w) w.shake = Math.max(w.shake || 0, dmg >= 60 ? .3 : .12); });   // (a blade's chop shakes it hard)
   on('wallDown', b => { if (!X || !ready) return; const B = BRKS[b]; if (!B) return;
     for (const k of B.cells) { const x = ((k % GW) + .5) * CS, z = (Math.floor(k / GW) + .5) * CS; for (let n = 0; n < 14; n++) spark([x + rnd(-1, 1), rnd(.3, 4.5), z + rnd(-1, 1)], [rnd(-4, 4), rnd(1, 5), rnd(-4, 4)], n % 2 ? '#cdbfa5' : '#8a5a40', .9); }
     X.shake = Math.max(X.shake || 0, .35); });

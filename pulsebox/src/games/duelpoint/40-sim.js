@@ -217,7 +217,10 @@
     emit('melee', f, heavy, S);
     if (S && !f.net) { const e = S.hit.f, back = Math.abs(angDiff(e.yaw, f.yaw)) < 1.05; damage(e, heavy ? (back ? 150 : 75) : (S.hit.head ? 75 : 50), f, S.hit.head || (heavy && back), 'knife'); }
     else if (!S && !f.net && BRKS.length) {   // a breakable wall in reach takes the blade: a few swings and it is through
-      const W = castShot(f, viewDir(f.yaw, f.pitch)); if (!W.hit && !W.sentry && W.dist <= range + .3) { const e = W.end, k = idx(Math.floor((e[0] + W.d[0] * .06) / CS), Math.floor((e[2] + W.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], heavy ? 120 : 70, f); } }
+      // (the same fan as for a person, and a level swing too: looking a little down at a wall still connects, not the floor)
+      for (const [dy, dp] of [[0, 0], [0, -f.pitch], [.08, 0], [-.08, 0], [0, .07], [0, -.09], [.16, 0], [-.16, 0]]) {
+        const W = castShot(f, viewDir(f.yaw + dy, f.pitch + dp)); if (W.hit || W.sentry || W.dist > range + .3) continue;
+        const e = W.end, k = idx(Math.floor((e[0] + W.d[0] * .06) / CS), Math.floor((e[2] + W.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) { hitWall(BRKX[k], heavy ? 120 : 70, f); emit('wallCut', f, heavy, W, BRKX[k]); break; } } }
     if (!f.net) net({ t: 'kn', h: heavy ? 1 : 0, f: f.key });
     return true;
   }
@@ -340,7 +343,7 @@
     const key = f.op + k;
     if (key === 'vexq' && !f.net) f.dash = { t: .17, dx: d.dx, dz: d.dz };
     if (key === 'vexe') { const s = { x: d.x, z: d.z, y: hAt(d.x, d.z) > 2 ? 0 : hAt(d.x, d.z), r: 0, R: 3.8, t: 12, T: 12 }; M.smokes.push(s); emit('smoke', s); }
-    if (key === 'irisq') { for (const q of M.fs) if (q.team !== f.team) q.reveal = 3.2; if (me().team !== f.team) say('YOU ARE REVEALED', WARN); else if (f === me()) say(M.fs.length > 2 ? 'RIVALS REVEALED' : 'RIVAL REVEALED', YOU); }
+    if (key === 'irisq') { for (const q of M.fs) if (q.team !== f.team) q.reveal = 2.2; if (me().team !== f.team) say('YOU ARE REVEALED', WARN); else if (f === me()) say(M.fs.length > 2 ? 'RIVALS REVEALED' : 'RIVAL REVEALED', YOU); }
     if (key === 'irise') { const fl = { x: d.x, y: d.y, z: d.z, t: .55, by: f }; M.flares.push(fl); emit('flare', fl); }
     if (key === 'bastionq') { const w = d.ax ? { x0: d.x - .3, x1: d.x + .3, z0: d.z - 2.6, z1: d.z + 2.6 } : { x0: d.x - 2.6, x1: d.x + 2.6, z0: d.z - .3, z1: d.z + .3 }; w.t = 12; w.grow = 0; M.walls.push(w); emit('wall', w); }
     if (key === 'bastione') f.heal = { t: 3 };

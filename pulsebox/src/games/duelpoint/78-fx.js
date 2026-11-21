@@ -81,6 +81,9 @@
       const mk = X.marks[X.mkN++ % X.marks.length]; mk.visible = true; mk.position.set(S.end[0] + S.n[0] * .012, S.end[1] + S.n[1] * .012, S.end[2] + S.n[2] * .012); mk.lookAt(S.end[0] + S.n[0], S.end[1] + S.n[1], S.end[2] + S.n[2]); mk.rotation.z = Math.random() * 6;
     }
   });
+  on('wallCut', (f, heavy, W) => { if (!X || !ready) return; const e = W.end, n = W.n;
+    for (let i = 0; i < (heavy ? 14 : 9); i++) spark(e, [n[0] * 2.5 + rnd(-1.6, 1.6), rnd(-.2, 2.4), n[2] * 2.5 + rnd(-1.6, 1.6)], i % 3 ? '#cfc4b2' : '#8a8172', .45);
+    const mk = X.marks[X.mkN++ % X.marks.length]; mk.visible = true; mk.position.set(e[0] + n[0] * .012, e[1] + n[1] * .012, e[2] + n[2] * .012); mk.lookAt(e[0] + n[0], e[1] + n[1], e[2] + n[2]); mk.rotation.z = Math.random() * 6; });
   on('melee', (f, heavy, S) => { if (X && ready && S) for (let i = 0; i < 8; i++) spark(S.end, [rnd(-1.5, 1.5), rnd(-.5, 2), rnd(-1.5, 1.5)], (OPS[other(f).op] || OPS.vex).col, .32); });
   on('flarePop', fl => { if (X && ready) { X.flashL.position.set(fl.x, fl.y, fl.z); X.flashL.intensity = 18; } });
   on('boom', (x, z) => { if (X && ready) { X.boom.position.set(x, .5, z); X.boom.visible = true; X.boomT = .7; X.shake = .5; X.flashL.position.set(x, 2, z); X.flashL.intensity = 30; } });

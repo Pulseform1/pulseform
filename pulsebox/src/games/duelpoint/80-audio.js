@@ -256,6 +256,7 @@
   cue('pad', f => { const o = outFor(f); tone(o, 140, .32, 'sine', .2, 420); tone(o, 600, .14, 'square', .03, 300); });
   cue('gate', (g, open) => { const G = GATES[g]; if (!G) return; const o = atPos(G.c[0], G.c[1]); tone(o, 70, .9, 'sawtooth', .07, open ? -20 : 30); hiss(o, .8, .05, 'lowpass', 300); tone(o, 120, .12, 'square', .1, -40, .85); });
   cue('gateJam', () => tone(outFor(null), 180, .12, 'square', .05, -60));
+  cue('wallCut', (f, heavy, W) => { const o = atPos(W.end[0], W.end[2], 1); tone(o, heavy ? 95 : 120, .12, 'sine', .55, -50, 0); hiss(o, .09, .5, 'lowpass', 1400, 0, 1); hiss(o, .16, .22, 'bandpass', 2400, .01, .8); });
   cue('wallHit', b => { const B = BRKS[b]; if (!B || Math.random() < .6) return; const o = atPos(B.c[0], B.c[1], .7); hiss(o, .07, .08, 'bandpass', 900, 0, 1.2); });
   cue('wallDown', b => { const B = BRKS[b]; if (!B) return; const o = atPos(B.c[0], B.c[1], 1.3); hiss(o, 1.2, .4, 'lowpass', 700); tone(o, 60, .9, 'sine', .35, -25); for (let k = 0; k < 6; k++) hiss(o, .08, .12, 'bandpass', 1500 + Math.random() * 1500, .1 + k * .09, 2); });
   cue('vent', n => { const v = VENTS[n]; if (!v) return; const o = atPos(v[0], v[1]); hiss(o, 1.6, .08, 'highpass', 2600); tone(o, 95, .5, 'sine', .05, -30); });

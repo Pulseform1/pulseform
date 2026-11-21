@@ -310,7 +310,7 @@ const GAME = {
     gnat: GUN('gnat', 'Gnat', 'SMG', 1, 950, '#a6f04d', { mag: 20, res: 60, rpm: 960, rel: 2.25, auto: true, ads: 1.15, punch: 1.05, kickV: 1.25, dmg: [[10, 22], [20, 19], [99, 15]], head: 2.5, legs: .85, acc: { fs: .4, walk: .9, run: 2.2, jump: 5, inc: .7, max: 5.5, free: 0, recov: .4 }, pat: { vk: .55, vmax: 4.2, hs0: 4, hk: 1.6 }, desc: 'Cheap, very fast SMG. Deadly at arm\'s length; the spray climbs hard and it fades fast with range. Tap or short bursts.' }),
     hornet: GUN('hornet', 'Hornet', 'SMG', 1, 1600, '#3ee6c1', { mag: 30, res: 90, rpm: 800, rel: 2.25, auto: true, ads: 1.15, sil: 1, punch: .85, kickV: 1.05, dmg: [[15, 23], [30, 20], [99, 17]], head: 3, legs: .85, acc: { fs: .3, walk: .7, run: 1.4, jump: 4, inc: .5, max: 3.6, free: 1, recov: .34 }, pat: { vk: .42, vmax: 3, hs0: 6, hk: 1.1 }, desc: 'Suppressed SMG. Steadier on the move than the Gnat; still climbs, so burst it past mid range.' }),
     breaker: GUN('breaker', 'Breaker', 'Shotgun', 1, 850, '#ffb347', { mag: 5, res: 10, rpm: 66, rel: 2.5, pel: 15, pspr: 2.6, equip: 1, dmg: [[8, 20], [12, 17], [99, 13]], head: 2, legs: .85, acc: { fs: .2, walk: .4, run: 1, jump: 3, inc: 0, max: 0, free: 0, recov: .3 }, punch: 3, desc: 'Pump shotgun. One shot up close, slow to cycle.' }),
-    thresher: GUN('thresher', 'Thresher', 'Shotgun', 1, 1850, '#ff6a3d', { mag: 7, res: 21, rpm: 210, rel: 2.2, auto: true, pel: 12, pspr: 2.25, equip: 1, dmg: [[10, 17], [15, 13], [99, 10]], head: 2, legs: .85, acc: { fs: .2, walk: .4, run: .9, jump: 3, inc: .4, max: 2, free: 0, recov: .4 }, punch: 2, desc: 'Auto shotgun. Hold a corner and nothing walks past.' }),
+    thresher: GUN('thresher', 'Thresher', 'Shotgun', 1, 1850, '#ff6a3d', { mag: 7, res: 21, rpm: 210, rel: 2.2, auto: true, pel: 12, pspr: 2.6, equip: 1, dmg: [[6, 18], [10, 11], [14, 6], [99, 2]], head: 2, legs: .85, acc: { fs: .2, walk: .4, run: .9, jump: 3, inc: .4, max: 2, free: 0, recov: .4 }, punch: 2, desc: 'Auto shotgun. Shreds anything inside 6 m; past 10 m it barely scratches.' }),
     mako: GUN('mako', 'Mako', 'Rifle', 1, 2050, '#4f7dff', { mag: 24, res: 72, rpm: 594, rel: 2.5, auto: true, ads: 1.25, alt: 'burst4', equip: 1, dmg: [[99, 35]], head: 3.3, legs: .85, acc: { fs: .3, walk: 1.8, run: 5.5, jump: 9, inc: .45, max: 3.4, free: 0, recov: .36 }, pat: { vk: .4, vmax: 3, hs0: 6, hk: 1.1 }, desc: 'Budget rifle. Aim down sights (right click) to fire 4-round bursts.' }),
     paladin: GUN('paladin', 'Paladin', 'Rifle', 1, 2250, '#e6d3a3', { mag: 12, res: 36, rpm: 285, rel: 2.5, ads: 1.5, equip: 1, dmg: [[99, 65]], head: 3, legs: .75, acc: { fs: .1, walk: 2.2, run: 6, jump: 10, inc: 1.2, max: 3, free: 0, recov: .3 }, pat: { vk: 1, vmax: 3, hs0: 4, hk: .4 }, punch: 1.6, desc: 'Marksman rifle. One headshot kills. Tap, do not spray.' }),
     // the two 2900 rifles: the Vesper sprays (quiet, tight for its first shots, a gentle climb, weaker far away); the Lancer taps (one headshot kills at any range, the first shot is pin-point, then it climbs hard)
@@ -348,7 +348,7 @@ const GAME = {
   const CLASSES = [['Sidearm', 'Sidearms'], ['SMG', 'SMGs'], ['Shotgun', 'Shotguns'], ['Rifle', 'Rifles'], ['Sniper', 'Snipers'], ['Heavy', 'Heavy'], ['Shield', 'Shields']];
   const OPS = {
     vex: { n: 'VEX', role: 'Shade', col: '#8f6bff', bio: 'Smoke and a sudden step: Vex fights where you cannot see.', q: { n: 'Blink', d: 'Dash 6 m the way you are moving.' }, e: { n: 'Veil', d: 'Throw a smoke cloud that blocks sight for 12 s.' } },
-    iris: { n: 'IRIS', role: 'Seer', col: '#35e0c8', bio: 'Iris sees through walls. Then she makes you look away.', q: { n: 'Ping', d: 'See your rival through walls for 3 s.' }, e: { n: 'Flare', d: 'A flash that blinds whoever is looking at it.' } },
+    iris: { n: 'IRIS', role: 'Seer', col: '#35e0c8', bio: 'Iris sees through walls. Then she makes you look away.', q: { n: 'Ping', d: 'See rivals through walls for 2 s.' }, e: { n: 'Flare', d: 'A flash that blinds whoever is looking at it.' } },
     bastion: { n: 'BASTION', role: 'Warden', col: '#ffb347', bio: 'A wall, a patch, and a refusal to move.', q: { n: 'Rampart', d: 'Raise a wall in front of you for 12 s.' }, e: { n: 'Patch', d: 'Heal 60 health over 3 s.' } },
     nova: { n: 'NOVA', role: 'Striker', col: '#ffe14d', bio: 'A courier who outran everything once. She still does.', q: { n: 'Surge', d: '3.5 s of speed, and your sprays settle twice as fast.' }, e: { n: 'Shockwave', d: 'A blast where you aim: rivals caught are slowed, shaky and stung for 15.' } },
     wraith: { n: 'WRAITH', role: 'Phantom', col: '#a9b8ff', bio: 'Nobody has seen Wraith arrive. That is the point.', q: { n: 'Shroud', d: 'Nearly invisible beyond 5 m and silent for 5 s. Firing ends it.' }, e: { n: 'Ghost Step', d: 'Fake footsteps, then fake gunfire, where you aim. Rivals hear it as real.' } },
@@ -1103,7 +1103,10 @@ const GAME = {
     emit('melee', f, heavy, S);
     if (S && !f.net) { const e = S.hit.f, back = Math.abs(angDiff(e.yaw, f.yaw)) < 1.05; damage(e, heavy ? (back ? 150 : 75) : (S.hit.head ? 75 : 50), f, S.hit.head || (heavy && back), 'knife'); }
     else if (!S && !f.net && BRKS.length) {   // a breakable wall in reach takes the blade: a few swings and it is through
-      const W = castShot(f, viewDir(f.yaw, f.pitch)); if (!W.hit && !W.sentry && W.dist <= range + .3) { const e = W.end, k = idx(Math.floor((e[0] + W.d[0] * .06) / CS), Math.floor((e[2] + W.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], heavy ? 120 : 70, f); } }
+      // (the same fan as for a person, and a level swing too: looking a little down at a wall still connects, not the floor)
+      for (const [dy, dp] of [[0, 0], [0, -f.pitch], [.08, 0], [-.08, 0], [0, .07], [0, -.09], [.16, 0], [-.16, 0]]) {
+        const W = castShot(f, viewDir(f.yaw + dy, f.pitch + dp)); if (W.hit || W.sentry || W.dist > range + .3) continue;
+        const e = W.end, k = idx(Math.floor((e[0] + W.d[0] * .06) / CS), Math.floor((e[2] + W.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) { hitWall(BRKX[k], heavy ? 120 : 70, f); emit('wallCut', f, heavy, W, BRKX[k]); break; } } }
     if (!f.net) net({ t: 'kn', h: heavy ? 1 : 0, f: f.key });
     return true;
   }
@@ -1226,7 +1229,7 @@ const GAME = {
     const key = f.op + k;
     if (key === 'vexq' && !f.net) f.dash = { t: .17, dx: d.dx, dz: d.dz };
     if (key === 'vexe') { const s = { x: d.x, z: d.z, y: hAt(d.x, d.z) > 2 ? 0 : hAt(d.x, d.z), r: 0, R: 3.8, t: 12, T: 12 }; M.smokes.push(s); emit('smoke', s); }
-    if (key === 'irisq') { for (const q of M.fs) if (q.team !== f.team) q.reveal = 3.2; if (me().team !== f.team) say('YOU ARE REVEALED', WARN); else if (f === me()) say(M.fs.length > 2 ? 'RIVALS REVEALED' : 'RIVAL REVEALED', YOU); }
+    if (key === 'irisq') { for (const q of M.fs) if (q.team !== f.team) q.reveal = 2.2; if (me().team !== f.team) say('YOU ARE REVEALED', WARN); else if (f === me()) say(M.fs.length > 2 ? 'RIVALS REVEALED' : 'RIVAL REVEALED', YOU); }
     if (key === 'irise') { const fl = { x: d.x, y: d.y, z: d.z, t: .55, by: f }; M.flares.push(fl); emit('flare', fl); }
     if (key === 'bastionq') { const w = d.ax ? { x0: d.x - .3, x1: d.x + .3, z0: d.z - 2.6, z1: d.z + 2.6 } : { x0: d.x - 2.6, x1: d.x + 2.6, z0: d.z - .3, z1: d.z + .3 }; w.t = 12; w.grow = 0; M.walls.push(w); emit('wall', w); }
     if (key === 'bastione') f.heal = { t: 3 };
@@ -1934,6 +1937,22 @@ const GAME = {
     if (P.k === 'hold' && !sees && B.last && !B.last.heard && B.lostT > 3.5 && B.lostT < 3.6 && R() < .25 + .15 * B.diff) { P = B.plan = { k: 'hunt' }; goTo(P, f, B.last.x, B.last.z); }
     if (P.k === 'push' && M.t < 28 && P.pts.length) P.pts.length = 0;   // out of time: straight to the site
     if (P.k === 'post' && e.alive && e.defuse > 0 && !P.rush) { P.rush = true; goTo(P, f, M.planted.x, M.planted.z); }
+    // --- the endgame: once you are down (the bots play the round out) or a side is down to its last one, nobody waits.
+    // The charge goes straight in, and the rest go and find the other side: every few seconds each gets a rough idea of
+    // where the nearest rival is (on a quiet map, steps carry), and a newer one sends it on
+    { const you = me(), mine = M.fs.filter(q => q.team === f.team && q.alive).length, theirs = M.fs.filter(q => q.team !== f.team && q.alive).length;
+      const teamN = M.fs.filter(q => q.team === f.team && !q.gone).length, foeN = M.fs.filter(q => q.team !== f.team && !q.gone).length;   // (a 1v1 is a duel from the start, not an endgame)
+      B.urgent = M.phase === 'live' && M.mode !== 'range' && ((you && !you.bot && !you.alive) || (mine === 1 && teamN > 1) || (theirs === 1 && foeN > 1));
+      if (B.urgent && e.alive) {
+        // (once it is planted there is no need: both sides know where to be, at the charge)
+        if (!M.planted && !(B.fixT > M.time) && !(B.last && M.time - B.last.t < 3)) { B.fixT = M.time + rnd(3.5, 5.5); const a = R() * TAU, r = rnd(0, 5); B.last = { x: e.x + Math.cos(a) * r, z: e.z + Math.sin(a) * r, t: M.time, heard: true }; }
+        const carrier = side === 'att' && carries(f), done = !P.path || !P.path.length;
+        if (carrier && P.k === 'push' && P.pts.length) P.pts.length = 0;   // straight to the site
+        const hunt = B.last && !carrier && P.k !== 'cover' && P.k !== 'fetch' && P.k !== 'retake' && P.k !== 'post' && (
+          (side === 'def' && !M.planted && (P.k === 'hold' || P.k === 'hunt') && M.t < roundT() - 8 && (theirs === 1 || mine >= theirs * 2)) ||   // (defenders only leave their spots for the last attacker, or when they far outnumber them: the attack still gets its chance to plant)
+          (side === 'att' && !M.planted && (P.k === 'hunt' || (P.k === 'push' && P.toSite && done)) && (theirs === 1 || mine >= theirs * 2 || !M.charge || !M.charge.k)));   // (the rest of the attack stays by whoever plants, unless only one defender is left, they far outnumber them, or nobody is carrying it)
+        if (hunt && (P.k !== 'hunt' || B.last.t > (P.at || 0) + .5)) { P = B.plan = { k: 'hunt', urgent: true, at: B.last.t }; goTo(P, f, B.last.x, B.last.z); }
+      } }
 
     // --- out of bullets or losing badly: get out of sight first, reload there, then pick the fight up again
     { const A0 = f.ammo[gun(f).k], low = f.hp + f.sh < 45 && e.hp + e.sh > f.hp + f.sh + 35, dry = A0 && A0.mag === 0 && A0.res > 0;
@@ -2040,8 +2059,9 @@ const GAME = {
     const arrived = !flying && (!P.path || !P.path.length);
     if (arrived) {
       if (P.k === 'push') { if (P.pts.length) { const q = P.pts.shift(); goTo(P, f, q[0], q[1]); } else if (!P.toSite) { P.toSite = true; goTo(P, f, P.site[0], P.site[1]); } }
-      if (P.k === 'hunt') B.plan = planHold(f, null);
+      if (P.k === 'hunt' && !P.urgent) B.plan = planHold(f, null);
       if (P.k === 'fetch' && M.charge && !M.charge.k && !engaged) goal = [M.charge.x, M.charge.z];   // the last step onto it
+      if (P.k === 'retake' && M.planted && !engaged) { const dp = Math.hypot(M.planted.x - f.x, M.planted.z - f.z); if (dp > 1.1) { goal = [M.planted.x, M.planted.z]; if (M.planted.y > f.y + .4 && dp < 2.6 && f.ground) I.jump = true; } }   // the last step onto the charge
       if (P.k === 'cover' && !engaged) I.crouch = B.diff > 1;
       if ((P.k === 'hold' || P.k === 'post') && P.crouch && !engaged) I.crouch = true;
     }
@@ -2056,8 +2076,8 @@ const GAME = {
     } else if (M.time - (B.engT || -9) < .8 && P.k !== 'retake' && P.k !== 'cover') goal = null;   // just lost a rival it was fighting: hold the angle a moment
     if (B.breaking) goal = null;   // stand and knock the wall down first
     // the charge
-    if (side === 'att' && !M.planted && carries(f) && P.k === 'push' && P.toSite && onSite(f.x, f.z) && (arrived || Math.hypot(P.site[0] - f.x, P.site[1] - f.z) < 1.4) && !sees && M.time - (B.engT || -9) > 1) { I.use = true; goal = null; }
-    if (side === 'def' && M.planted && Math.hypot(f.x - M.planted.x, f.z - M.planted.z) < 1.5) {
+    if (side === 'att' && !M.planted && carries(f) && P.k === 'push' && P.toSite && onSite(f.x, f.z) && (arrived || Math.hypot(P.site[0] - f.x, P.site[1] - f.z) < 1.4) && !sees && M.time - (B.engT || -9) > (B.urgent ? .4 : 1)) { I.use = true; goal = null; }
+    if (side === 'def' && M.planted && Math.hypot(f.x - M.planted.x, f.z - M.planted.z) < 1.6) {
       if (f.hp < B.hp0 && M.planted.t > DEFUSE_T - f.defuse + 2.5) B.wait = 1.2;   // shot at while defusing: stand up and look
       if (B.wait > 0) B.wait -= dt;
       else if ((!sees && B.lostT > 1) || M.planted.t < DEFUSE_T - f.defuse + 1.5) { I.use = true; goal = null; I.mx = 0; I.fire = false; }
@@ -2497,7 +2517,7 @@ const GAME = {
     ambTick(dt);
   }
   // a wall hit shudders; a wall that falls bursts into dust and chips
-  on('wallHit', b => { const w = X && X.mech && X.mech.brks.find(q => q.bi === b); if (w) w.shake = .12; });
+  on('wallHit', (b, dmg) => { const w = X && X.mech && X.mech.brks.find(q => q.bi === b); if (w) w.shake = Math.max(w.shake || 0, dmg >= 60 ? .3 : .12); });   // (a blade's chop shakes it hard)
   on('wallDown', b => { if (!X || !ready) return; const B = BRKS[b]; if (!B) return;
     for (const k of B.cells) { const x = ((k % GW) + .5) * CS, z = (Math.floor(k / GW) + .5) * CS; for (let n = 0; n < 14; n++) spark([x + rnd(-1, 1), rnd(.3, 4.5), z + rnd(-1, 1)], [rnd(-4, 4), rnd(1, 5), rnd(-4, 4)], n % 2 ? '#cdbfa5' : '#8a5a40', .9); }
     X.shake = Math.max(X.shake || 0, .35); });
@@ -3095,7 +3115,7 @@ const GAME = {
       g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; for (let k = 0; k < 18; k++) { let x = Math.random() * w, y = Math.random() * h; g.beginPath(); g.moveTo(x, y); for (let q = 0; q < 5; q++) { x += (Math.random() - .5) * 120; y += (Math.random() - .5) * 120; g.lineTo(x, y); } g.stroke(); }
       for (let k = 0; k < 40; k++) { g.fillStyle = `rgba(255,255,255,${.1 + Math.random() * .2})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 10 + Math.random() * 50, 4 + Math.random() * 12, Math.random() * 3, 0, 7); g.fill(); } });
     const beltDraw = dir => (g, w, h) => { g.fillStyle = '#26282c'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(255,255,255,.05)'; for (let y = 0; y < h; y += 8) g.fillRect(0, y, w, 2);
-      g.translate(w / 2, h / 2); g.rotate([Math.PI / 2, Math.PI, -Math.PI / 2, 0][dir]); g.strokeStyle = '#f2b51e'; g.lineWidth = 16; g.lineJoin = 'round'; g.beginPath(); g.moveTo(-38, 26); g.lineTo(0, -16); g.lineTo(38, 26); g.stroke(); g.setTransform(1, 0, 0, 1, 0, 0);
+      g.translate(w / 2, h / 2); g.rotate([Math.PI / 2, 0, -Math.PI / 2, Math.PI][dir]);   // (the canvas's up lies along +z, south: east, south, west, north) g.strokeStyle = '#f2b51e'; g.lineWidth = 16; g.lineJoin = 'round'; g.beginPath(); g.moveTo(-38, 26); g.lineTo(0, -16); g.lineTo(38, 26); g.stroke(); g.setTransform(1, 0, 0, 1, 0, 0);
       g.fillStyle = '#111'; g.fillRect(0, 0, 6, h); g.fillRect(w - 6, 0, 6, h); };
     X.beltT = [0, 1, 2, 3].map(dir => { const t = canvasTex(128, 128, beltDraw(dir)); t.userData = { dir }; T['belt' + dir] = t; return t; });
     T.vent = canvasTex(128, 128, (g, w, h) => { g.fillStyle = '#2a2c30'; g.fillRect(0, 0, w, h); g.fillStyle = '#0c0d0f'; for (let x = 12; x < w - 8; x += 14) g.fillRect(x, 10, 7, h - 20); g.strokeStyle = '#5a5e66'; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6); });
@@ -6110,6 +6130,9 @@ const GAME = {
       const mk = X.marks[X.mkN++ % X.marks.length]; mk.visible = true; mk.position.set(S.end[0] + S.n[0] * .012, S.end[1] + S.n[1] * .012, S.end[2] + S.n[2] * .012); mk.lookAt(S.end[0] + S.n[0], S.end[1] + S.n[1], S.end[2] + S.n[2]); mk.rotation.z = Math.random() * 6;
     }
   });
+  on('wallCut', (f, heavy, W) => { if (!X || !ready) return; const e = W.end, n = W.n;
+    for (let i = 0; i < (heavy ? 14 : 9); i++) spark(e, [n[0] * 2.5 + rnd(-1.6, 1.6), rnd(-.2, 2.4), n[2] * 2.5 + rnd(-1.6, 1.6)], i % 3 ? '#cfc4b2' : '#8a8172', .45);
+    const mk = X.marks[X.mkN++ % X.marks.length]; mk.visible = true; mk.position.set(e[0] + n[0] * .012, e[1] + n[1] * .012, e[2] + n[2] * .012); mk.lookAt(e[0] + n[0], e[1] + n[1], e[2] + n[2]); mk.rotation.z = Math.random() * 6; });
   on('melee', (f, heavy, S) => { if (X && ready && S) for (let i = 0; i < 8; i++) spark(S.end, [rnd(-1.5, 1.5), rnd(-.5, 2), rnd(-1.5, 1.5)], (OPS[other(f).op] || OPS.vex).col, .32); });
   on('flarePop', fl => { if (X && ready) { X.flashL.position.set(fl.x, fl.y, fl.z); X.flashL.intensity = 18; } });
   on('boom', (x, z) => { if (X && ready) { X.boom.position.set(x, .5, z); X.boom.visible = true; X.boomT = .7; X.shake = .5; X.flashL.position.set(x, 2, z); X.flashL.intensity = 30; } });
@@ -6740,6 +6763,7 @@ const GAME = {
   cue('pad', f => { const o = outFor(f); tone(o, 140, .32, 'sine', .2, 420); tone(o, 600, .14, 'square', .03, 300); });
   cue('gate', (g, open) => { const G = GATES[g]; if (!G) return; const o = atPos(G.c[0], G.c[1]); tone(o, 70, .9, 'sawtooth', .07, open ? -20 : 30); hiss(o, .8, .05, 'lowpass', 300); tone(o, 120, .12, 'square', .1, -40, .85); });
   cue('gateJam', () => tone(outFor(null), 180, .12, 'square', .05, -60));
+  cue('wallCut', (f, heavy, W) => { const o = atPos(W.end[0], W.end[2], 1); tone(o, heavy ? 95 : 120, .12, 'sine', .55, -50, 0); hiss(o, .09, .5, 'lowpass', 1400, 0, 1); hiss(o, .16, .22, 'bandpass', 2400, .01, .8); });
   cue('wallHit', b => { const B = BRKS[b]; if (!B || Math.random() < .6) return; const o = atPos(B.c[0], B.c[1], .7); hiss(o, .07, .08, 'bandpass', 900, 0, 1.2); });
   cue('wallDown', b => { const B = BRKS[b]; if (!B) return; const o = atPos(B.c[0], B.c[1], 1.3); hiss(o, 1.2, .4, 'lowpass', 700); tone(o, 60, .9, 'sine', .35, -25); for (let k = 0; k < 6; k++) hiss(o, .08, .12, 'bandpass', 1500 + Math.random() * 1500, .1 + k * .09, 2); });
   cue('vent', n => { const v = VENTS[n]; if (!v) return; const o = atPos(v[0], v[1]); hiss(o, 1.6, .08, 'highpass', 2600); tone(o, 95, .5, 'sine', .05, -30); });
@@ -8511,7 +8535,7 @@ const GAME = {
     const sy = V.y1 - 92 * u;
     if (host) {
       const sx = 640 - 543 * u, cs = (opts, val, fn, w) => { choice(g, sx2, sy, w, tapH(34), opts, val, v => { fn(v); MP.send({ t: 'lteam', teams: PARTY.teams, set: S2, want: [...PARTY.want] }); hostTeams(); }); sx2 += w + 10 * u; }; let sx2 = sx;
-      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 200 * u); cs([[1, '1V1'], [2, '2V2'], [3, '3V3'], [4, '4V4'], [5, '5V5']], S2.size, v => { S2.size = Math.max(v, teamSize(Math.ceil(ps.length / 2))); }, 236 * u); cs([[true, 'BOTS FILL'], [false, 'NO BOTS']], S2.fill, v => { S2.fill = v; }, 170 * u); if (S2.ranked) { rr(g, sx2, sy, 230 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED · FIRST TO 5', sx2 + 115 * u, sy + tapH(34) / 2, 12 * u, GOLD, 'center', 900); sx2 += 240 * u; } else cs(MATCH_LENS.map(w => [w, 'BO' + (w * 2 - 1)]), winOf(S2.win), v => { S2.win = v; }, 230 * u);
+      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 200 * u); cs([[1, '1V1'], [2, '2V2'], [3, '3V3'], [4, '4V4'], [5, '5V5']], S2.size, v => { S2.size = Math.max(v, teamSize(Math.ceil(ps.length / 2))); }, 236 * u); cs([[true, 'BOTS FILL'], [false, 'NO BOTS']], S2.fill, v => { S2.fill = v; }, 170 * u); if (S2.ranked) { rr(g, sx2, sy, 230 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED · FIRST TO 5', sx2 + 115 * u, sy + tapH(34) / 2, 12 * u, GOLD, 'center', 900); sx2 += 240 * u; } else cs(MATCH_LENS.map(w => [w, 'FIRST TO ' + w]), winOf(S2.win), v => { S2.win = v; }, 300 * u);
       const ok = readyAll(); btn(g, sx2, sy - 6 * u, 200 * u, 48 * u, 'START MATCH', startParty, { on: ok, fill: FOE, solid: ok, col: ok ? INK : DIM, px: 17 * u, sub: ok ? '' : 'waiting for ready' });
     } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S2.size)}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS' : 'NO BOTS'}  ·  ${S2.ranked ? 'RANKED  ·  FIRST TO 5' : 'FIRST TO ' + winOf(S2.win)}  ·  SIDES SWAP AT THE HALF  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
     const waiting = ps.filter(p => p.id !== MP.hostId && !(p.id === me2 ? PARTY.ready : (PARTY.prof.get(p.id) || {}).rd)).length;
