@@ -8366,21 +8366,68 @@ const GAME = {
   on('round', n => { banner = null; if (n !== 1 && X) X.roundFadeT = performance.now(); });
   // the banner wears the emblem of the skin you made the kill with (Epic and up), or the plain skull
   const killEmblem = wk => { const sk = skinOfId(skinFor(me(), wk)); return sk && sk.L.emblem ? Object.assign({ tier: sk.R.tier }, sk.L.emblem) : { shape: 'skull', col: BONE, glow: YOU }; };
-  // the emblem's glyph, drawn round (0, 0) at radius r
-  function glyph(g, shape, r, col, ink) {
-    g.fillStyle = col; g.beginPath();
-    if (shape === 'bolt') { g.moveTo(.14 * r, -.62 * r); g.lineTo(-.34 * r, .08 * r); g.lineTo(-.02 * r, .08 * r); g.lineTo(-.16 * r, .62 * r); g.lineTo(.34 * r, -.12 * r); g.lineTo(.02 * r, -.12 * r); g.closePath(); g.fill(); return; }
-    if (shape === 'star') { for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? .26 : .6; g.lineTo(Math.cos(a) * q * r, Math.sin(a) * q * r); } g.closePath(); g.fill(); return; }
-    if (shape === 'crown') { g.moveTo(-.5 * r, .34 * r); g.lineTo(-.56 * r, -.3 * r); g.lineTo(-.26 * r, -.02 * r); g.lineTo(0, -.46 * r); g.lineTo(.26 * r, -.02 * r); g.lineTo(.56 * r, -.3 * r); g.lineTo(.5 * r, .34 * r); g.closePath(); g.fill(); g.fillRect(-.5 * r, .4 * r, r, .12 * r); return; }
-    if (shape === 'flame') { g.moveTo(0, .58 * r); g.bezierCurveTo(-.5 * r, .5 * r, -.48 * r, -.05 * r, -.12 * r, -.62 * r); g.bezierCurveTo(-.1 * r, -.2 * r, .1 * r, -.25 * r, .16 * r, -.38 * r); g.bezierCurveTo(.5 * r, -.05 * r, .48 * r, .5 * r, 0, .58 * r); g.fill();
-      g.fillStyle = ink; g.beginPath(); g.moveTo(0, .5 * r); g.bezierCurveTo(-.22 * r, .45 * r, -.2 * r, .15 * r, 0, -.05 * r); g.bezierCurveTo(.2 * r, .15 * r, .22 * r, .45 * r, 0, .5 * r); g.fill(); return; }
-    if (shape === 'fang') { for (const sx of [-1, 1]) { g.moveTo(sx * .42 * r, -.5 * r); g.quadraticCurveTo(sx * .44 * r, .2 * r, sx * .1 * r, .6 * r); g.quadraticCurveTo(sx * .2 * r, .05 * r, sx * .05 * r, -.5 * r); g.closePath(); } g.fill(); return; }
-    // the skull: a dome and a jaw, deep eyes, a notch for a nose, teeth
-    g.arc(0, -.12 * r, .48 * r, Math.PI * .82, Math.PI * 2.18); g.lineTo(.3 * r, .3 * r); g.lineTo(.26 * r, .5 * r); g.lineTo(-.26 * r, .5 * r); g.lineTo(-.3 * r, .3 * r); g.closePath(); g.fill();
-    g.fillStyle = ink; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(sx * .19 * r, -.06 * r, .13 * r, .15 * r, sx * .25, 0, TAU); g.fill(); }
-    g.beginPath(); g.moveTo(0, .1 * r); g.lineTo(.07 * r, .24 * r); g.lineTo(-.07 * r, .24 * r); g.closePath(); g.fill();
-    for (const tx0 of [-.12, 0, .12]) g.fillRect((tx0 - .018) * r, .36 * r, .036 * r, .14 * r);
+  /* ---- the emblem in the middle of the kill banner: drawn once as a picture and kept (by shape and colours), so the
+     banner lays it down with a single draw each frame. Each is built the same way: a glow in the skin's colour behind
+     it, a dark edge so it reads on anything, the body lit from the upper left (a light face and a shaded face, split
+     down the middle like cut metal), its own details, then highlights along the upper edges. The skull is the plain
+     one: a cut-stone cranium, slanted sockets with a light burning in each, cheek planes, a nose and a row of teeth. */
+  const EMB = {}, mixHex = (a, b, t) => { const pa = [1, 3, 5].map(i => parseInt(a.slice(i, i + 2), 16)), pb = [1, 3, 5].map(i => parseInt(b.slice(i, i + 2), 16)); return '#' + pa.map((v, i) => Math.round(v + (pb[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+  function emblemArt(shape, col, glow) {
+    const key = shape + col + glow; if (EMB[key]) return EMB[key];
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), r = 92, INK2 = '#0a0d13', lite = mixHex(col, '#ffffff', .55), mid = col, dark = mixHex(mixHex(col, glow, .5), '#000000', .38), deep = mixHex(glow, '#000000', .62);
+    g.translate(S / 2, S / 2); g.lineJoin = 'round'; g.lineCap = 'round';
+    const P = pts => { g.beginPath(); pts.forEach((q, i) => i ? g.lineTo(q[0] * r, q[1] * r) : g.moveTo(q[0] * r, q[1] * r)); g.closePath(); };
+    // the body of an emblem: glow, dark edge, lit face, shaded face (right of `split`), a rim of light along the top
+    const body = (path, split = 0) => {
+      g.save(); g.shadowColor = glow; g.shadowBlur = 26; g.fillStyle = glow; path(); g.fill(); g.shadowBlur = 14; g.fill(); g.restore();
+      path(); g.strokeStyle = INK2; g.lineWidth = 9; g.stroke();
+      const gr = g.createLinearGradient(-r * .5, -r * .8, r * .4, r * .8); gr.addColorStop(0, lite); gr.addColorStop(.55, mid); gr.addColorStop(1, dark); path(); g.fillStyle = gr; g.fill();
+      g.save(); path(); g.clip(); g.fillStyle = 'rgba(8,10,16,.2)'; g.fillRect(split * r, -r * 1.2, r * 1.4, r * 2.4);   // the shaded face
+      g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 3; g.translate(1.5, 2.5); path(); g.stroke(); g.restore(); };   // (a rim of light: the edge, nudged in and down, shows only along the top left)
+    const cut = (pts, fill) => { P(pts); g.fillStyle = fill; g.fill(); }, line = (pts, colr, w) => { g.beginPath(); pts.forEach((q, i) => i ? g.lineTo(q[0] * r, q[1] * r) : g.moveTo(q[0] * r, q[1] * r)); g.strokeStyle = colr; g.lineWidth = w; g.stroke(); };
+    const spark = (x, y, s2, colr) => { g.save(); g.shadowColor = glow; g.shadowBlur = 12; cut([[x, y - s2], [x + s2 * .45, y], [x, y + s2], [x - s2 * .45, y]], colr); g.restore(); };
+    if (shape === 'skull') {
+      const skull = () => { g.beginPath(); g.moveTo(-.54 * r, -.1 * r); g.bezierCurveTo(-.56 * r, -.52 * r, -.32 * r, -.78 * r, 0, -.78 * r); g.bezierCurveTo(.32 * r, -.78 * r, .56 * r, -.52 * r, .54 * r, -.1 * r);
+        [[.5, .12], [.36, .25], [.33, .47], [.22, .6], [-.22, .6], [-.33, .47], [-.36, .25], [-.5, .12]].forEach(q => g.lineTo(q[0] * r, q[1] * r)); g.closePath(); };
+      body(skull, .02);
+      for (const sx of [-1, 1]) { cut([[sx * .5, .12], [sx * .36, .25], [sx * .3, .2], [sx * .43, .06]], 'rgba(8,10,16,.28)');   // the cheek planes
+        cut([[sx * .43, -.14], [sx * .1, -.03], [sx * .13, .17], [sx * .31, .2], [sx * .44, .06]], INK2);   // slanted sockets
+        cut([[sx * .4, -.1], [sx * .13, -.01], [sx * .14, .03], [sx * .4, -.05]], 'rgba(255,255,255,.12)');   // (a brow of light along each)
+        g.save(); g.shadowColor = glow; g.shadowBlur = 16; g.fillStyle = glow; g.beginPath(); g.ellipse(sx * .27 * r, .075 * r, .075 * r, .06 * r, sx * .3, 0, TAU); g.fill(); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(sx * .27 * r, .07 * r, .028 * r, 0, TAU); g.fill(); g.restore(); }   // the light in them
+      cut([[0, .13], [.085, .33], [0, .28], [-.085, .33]], INK2);   // the nose
+      line([[-.27, .44], [.27, .44]], INK2, 4); for (const x of [-.165, -.055, .055, .165]) line([[x, .44], [x, .6]], INK2, 3.5);   // the teeth
+      line([[-.06, -.76], [-.12, -.6], [-.03, -.5], [-.08, -.4]], 'rgba(8,10,16,.55)', 2.5);   // an old crack
+      g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 4; g.beginPath(); g.arc(-.08 * r, -.2 * r, .5 * r, Math.PI * 1.08, Math.PI * 1.42); g.stroke();   // the shine on the crown of it
+    } else if (shape === 'bolt') {
+      body(() => P([[.2, -.92], [-.5, .06], [-.08, .06], [-.3, .92], [.52, -.2], [.08, -.2], [.34, -.92]]), 0);
+      cut([[.16, -.7], [-.3, -.02], [-.02, -.02], [-.14, .5], [.2, -.1], [-.02, -.1], [.22, -.7]], 'rgba(255,255,255,.55)');   // its hot core
+      spark(-.62, -.42, .16, lite); spark(.66, .34, .13, lite); spark(.5, -.62, .09, glow);
+    } else if (shape === 'star') {
+      const pts = []; for (let i = 0; i < 8; i++) { const a = -Math.PI / 2 + i * Math.PI / 4, q = i % 2 ? .3 : (i % 4 ? .62 : .96); pts.push([Math.cos(a) * q, Math.sin(a) * q]); } body(() => P(pts), 0);
+      for (let i = 0; i < 8; i += 2) { const a0 = -Math.PI / 2 + i * Math.PI / 4, a1 = a0 + Math.PI / 4, q = i % 4 ? .62 : .96; cut([[0, 0], [Math.cos(a0) * q, Math.sin(a0) * q], [Math.cos(a1) * .3, Math.sin(a1) * .3]], 'rgba(8,10,16,.22)'); }   // each point cut in two faces
+      g.save(); g.shadowColor = glow; g.shadowBlur = 14; cut([[0, -.2], [.2, 0], [0, .2], [-.2, 0]], glow); g.restore(); cut([[0, -.1], [.1, 0], [0, .1], [-.1, 0]], '#ffffff');   // the stone at its heart
+      spark(-.66, -.62, .11, lite); spark(.7, .58, .09, lite);
+    } else if (shape === 'crown') {
+      body(() => P([[-.62, .5], [-.74, -.42], [-.36, -.06], [0, -.72], [.36, -.06], [.74, -.42], [.62, .5]]), 0);
+      cut([[-.62, .28], [.62, .28], [.62, .5], [-.62, .5]], 'rgba(8,10,16,.3)'); line([[-.6, .28], [.6, .28]], 'rgba(255,255,255,.5)', 2.5);   // the band
+      for (const [x, y, s2] of [[0, -.72, .1], [-.74, -.42, .08], [.74, -.42, .08]]) { g.save(); g.shadowColor = glow; g.shadowBlur = 12; g.fillStyle = glow; g.beginPath(); g.arc(x * r, y * r, s2 * r, 0, TAU); g.fill(); g.restore(); g.fillStyle = '#ffffff'; g.beginPath(); g.arc((x - .02) * r, (y - .02) * r, s2 * .4 * r, 0, TAU); g.fill(); }   // a jewel on each point
+      for (const x of [-.36, 0, .36]) { g.save(); g.shadowColor = glow; g.shadowBlur = 10; cut([[x, .3], [x + .09, .39], [x, .48], [x - .09, .39]], glow); g.restore(); }   // and three set in the band
+      cut([[-.7, .58], [.7, .58], [.64, .72], [-.64, .72]], mid); line([[-.7, .58], [.7, .58]], INK2, 3);
+    } else if (shape === 'flame') {
+      const fl = k => () => { g.beginPath(); g.moveTo(0, .9 * r * k); g.bezierCurveTo(-.82 * r * k, .78 * r * k, -.72 * r * k, -.05 * r * k, -.16 * r * k, -.95 * r * k); g.bezierCurveTo(-.14 * r * k, -.4 * r * k, .14 * r * k, -.42 * r * k, .26 * r * k, -.62 * r * k); g.bezierCurveTo(.84 * r * k, -.1 * r * k, .78 * r * k, .78 * r * k, 0, .9 * r * k); g.closePath(); };
+      body(fl(1), .04); g.save(); g.translate(0, .22 * r); const inner = fl(.56); inner(); g.fillStyle = glow; g.fill(); g.translate(0, .12 * r); const core = fl(.3); core(); g.fillStyle = '#fffbe8'; g.fill(); g.restore();   // a flame in a flame, white at the root
+      spark(-.56, -.56, .1, lite); spark(.6, -.76, .08, glow); spark(.72, -.3, .06, lite);
+    } else {   // fang: a beast's bite: two great curved teeth, small ones between them, a jagged gum above, a drop on one tip
+      for (const x of [-.2, 0, .2]) body(() => P([[x - .1, -.5], [x + .1, -.5], [x, -.12]]), x);
+      for (const sx of [-1, 1]) { body(() => { g.beginPath(); g.moveTo(sx * .7 * r, -.52 * r); g.bezierCurveTo(sx * .82 * r, .1 * r, sx * .62 * r, .6 * r, sx * .4 * r, .96 * r); g.bezierCurveTo(sx * .42 * r, .4 * r, sx * .36 * r, -.1 * r, sx * .3 * r, -.52 * r); g.closePath(); }, sx > 0 ? .52 : -.5);
+        g.strokeStyle = 'rgba(255,255,255,.65)'; g.lineWidth = 3; g.beginPath(); g.moveTo(sx * .62 * r, -.38 * r); g.bezierCurveTo(sx * .7 * r, .1 * r, sx * .58 * r, .46 * r, sx * .47 * r, .7 * r); g.stroke(); }
+      body(() => P([[-.84, -.8], [.84, -.8], [.8, -.58], [.6, -.48], [.42, -.6], [.2, -.48], [0, -.6], [-.2, -.48], [-.42, -.6], [-.6, -.48], [-.8, -.58]]), 0);
+      g.save(); g.shadowColor = glow; g.shadowBlur = 12; g.fillStyle = glow; g.beginPath(); g.moveTo(.4 * r, .8 * r); g.quadraticCurveTo(.5 * r, .98 * r, .4 * r, 1.02 * r); g.quadraticCurveTo(.3 * r, .98 * r, .4 * r, .8 * r); g.fill(); g.restore();
+    }
+    return EMB[key] = c;
   }
+  // a light, kept as a picture too (for the ring of lights)
+  function emblemLight(col) { const key = 'L' + col; if (EMB[key]) return EMB[key]; const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, '#ffffff'); gr.addColorStop(.18, col); gr.addColorStop(.5, col + '55'); gr.addColorStop(1, col + '00'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return EMB[key] = c; }
   /* ---- ability icons: a small line drawing for each, in the bar and the armory */
   const ABICON = { vexc: 'orb', vexq: 'dash', vexe: 'smoke', vexx: 'portal', irisc: 'eye', irisq: 'wave', irise: 'flash', irisx: 'eye', bastionc: 'beacon', bastionq: 'wall', bastione: 'heart', bastionx: 'shield',
     novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'ghost', wraithe: 'steps', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
@@ -8470,7 +8517,7 @@ const GAME = {
   function drawBanner(g, V, u) {
     if (!banner) return; const B = banner, n = cl(B.n | 0, 1, 5), T = 2.1 + n * .12, t = B.pin != null ? B.pin : (performance.now() - B.t0) / 1000;   // (pin: the tests hold a moment) if (t > T) { banner = null; return; }
     if (!B.sh) B.sh = bannerShards(n, Math.floor(B.t0 * 7));
-    const E = B.em, acc = n >= 5 ? GOLD : E.glow, cx = 640, cy = V.y1 - (isTouch() ? 160 : 140) * u, R = 40 * u * (1 + (n - 1) * .07);
+    const E = B.em, acc = n >= 5 ? GOLD : E.glow, touch = isTouch(), cx = 640, cy = V.y1 - (touch ? 196 : 140) * u, R = (touch ? 33 : 40) * u * (1 + (n - 1) * .07);   // (a phone's health and ammo sit bottom centre: the banner rides above them, a little smaller)
     const inK = smooth(cl(t / .14, 0, 1)), pop = t < .14 ? 1.7 - .7 * inK : 1 + Math.sin(Math.min(1, (t - .14) / .22) * Math.PI) * .06, outK = smooth(cl((t - (T - .35)) / .35, 0, 1)), a = (t < .06 ? t / .06 : 1) * (1 - outK), sc = pop * (1 - outK * .25);
     const st = (c, w) => { g.strokeStyle = c; g.lineWidth = w; }, line = (x0, y0, x1, y1) => { g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); };
     g.save(); g.translate(cx, cy);
@@ -8503,16 +8550,18 @@ const GAME = {
     // the ring of lights: they spin round as it lands, then settle and glow
     { const N = 2 + n * 2, spinT = .55 + n * .08, sq = smooth(cl(t / spinT, 0, 1)), rot = (1 - sq) * TAU * (1 + n * .25), rL = R * 1.46;
       for (let i = 0; i < N; i++) { const an = -Math.PI / 2 + i * TAU / N + rot, lit = t > .08 + i * (spinT / N) * .9, x = Math.cos(an) * rL, y = Math.sin(an) * rL, pl = lit ? .75 + .25 * Math.sin(t * 6 + i) : .3;
-        if (lit) { const gg = g.createRadialGradient(x, y, 0, x, y, R * .2); gg.addColorStop(0, acc + 'cc'); gg.addColorStop(1, acc + '00'); g.fillStyle = gg; g.globalAlpha = a * pl; g.beginPath(); g.arc(x, y, R * .2, 0, TAU); g.fill(); }
-        g.globalAlpha = a; g.fillStyle = lit ? BONE : 'rgba(239,233,220,.35)'; g.beginPath(); g.arc(x, y, R * (lit ? .055 : .04), 0, TAU); g.fill(); } }
+        if (lit) { g.globalAlpha = a * pl; const ls = R * .46; g.drawImage(emblemLight(acc), x - ls / 2, y - ls / 2, ls, ls); g.globalAlpha = a; }
+        else { g.fillStyle = 'rgba(239,233,220,.35)'; g.beginPath(); g.arc(x, y, R * .04, 0, TAU); g.fill(); } } }
     // the rings round the disc: outer, then (2+) arcs, then (3+) brackets; four ticks always
     st(BONE, 2.4 * u); g.beginPath(); g.arc(0, 0, R * 1.2, 0, TAU); g.stroke();
     for (let i = 0; i < 4; i++) { const an = i * Math.PI / 2; line(Math.cos(an) * R * 1.24, Math.sin(an) * R * 1.24, Math.cos(an) * R * 1.36, Math.sin(an) * R * 1.36); }
     if (n >= 2) { g.save(); g.rotate(-t * .8); st(acc, 3 * u); for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(0, 0, R * 1.08, i * TAU / 3 + .2, i * TAU / 3 + TAU / 3 - .2); g.stroke(); } g.restore(); }
     if (n >= 3) { st(BONE, 3 * u); for (const sx of [-1, 1]) { g.beginPath(); g.arc(0, 0, R * 1.3, sx > 0 ? -.5 : Math.PI - .5, sx > 0 ? .5 : Math.PI + .5); g.stroke(); } }
     // the disc and the emblem
-    { const dg = g.createRadialGradient(0, -R * .3, R * .1, 0, 0, R); dg.addColorStop(0, '#2a3140'); dg.addColorStop(1, '#0b0e14'); g.fillStyle = dg; g.beginPath(); g.arc(0, 0, R, 0, TAU); g.fill(); st(acc, 2.5 * u); g.stroke(); st('rgba(239,233,220,.25)', 1 * u); g.beginPath(); g.arc(0, 0, R * .86, 0, TAU); g.stroke(); }
-    g.save(); g.shadowColor = acc; g.shadowBlur = 14 * u; glyph(g, E.shape, R * 1.02, n >= 5 ? '#fff6d6' : E.col, '#0b0e14'); g.restore();
+    { const dg = g.createRadialGradient(0, -R * .35, R * .05, 0, 0, R); dg.addColorStop(0, '#303848'); dg.addColorStop(.6, '#141922'); dg.addColorStop(1, '#07090d'); g.fillStyle = dg; g.beginPath(); g.arc(0, 0, R, 0, TAU); g.fill(); st(acc, 2.5 * u); g.stroke();
+      st('rgba(0,0,0,.55)', 3 * u); g.beginPath(); g.arc(0, 0, R * .93, 0, TAU); g.stroke(); st('rgba(239,233,220,.22)', 1 * u); g.beginPath(); g.arc(0, 0, R * .88, 0, TAU); g.stroke();
+      st(acc + '66', 1.5 * u); for (let i = 0; i < 24; i++) { const an = i * TAU / 24; line(Math.cos(an) * R * .9, Math.sin(an) * R * .9, Math.cos(an) * R * (i % 6 ? .95 : .99), Math.sin(an) * R * (i % 6 ? .95 : .99)); } }   // a bezel, notched like a dial
+    { const art = emblemArt(E.shape, n >= 5 ? '#fff3c4' : E.col, acc), es = R * 2.22 * (1 + .04 * Math.sin(t * 5)); g.drawImage(art, -es / 2, -es / 2, es, es); }   // (its picture: 92 of the picture's 128 is the emblem's radius, the rest its glow)
     // the white flash as it lands, and a streak of light across it
     if (t < .14) { g.globalAlpha = a * (1 - t / .14); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(0, 0, R * 1.25, 0, TAU); g.fill(); g.globalAlpha = a; }
     if (t > .1 && t < .6) { const q = (t - .1) / .5, x = lp(-R * 3, R * 3, q); g.save(); g.beginPath(); g.arc(0, 0, R * 1.22, 0, TAU); g.clip(); g.rotate(-.5); const sg = g.createLinearGradient(x - R * .4, 0, x + R * .4, 0); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.55)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = sg; g.fillRect(-R * 3, -R * 3, R * 6, R * 6); g.restore(); }
@@ -10616,7 +10665,7 @@ const GAME = {
   };
   // for the browser tests
   GAME.test = {
-    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, PS, STATS, seasonNow, myPass, passTier, passRewards, buyPremium, myChallenges, levelOf, myCard, overNext, matchAwards, payProgress, heroArt, heroRender, get baked() { return baked; }, readyAb, castReady, abData, killBanner: (n, pin, wk) => { banner = { t0: performance.now(), n, head: true, name: 'Kestrel', em: killEmblem(wk || 'pip'), pin }; }, get ptr() { return ptr; }, mech: () => ({ TPS, PADS, GATES, BRKS, VENTS, navCells, GRASS, ICE, LOWG, BELT, GW, GH, NC, hAt, los, setGate, setWall }), hurt: (v, n, by, h) => applyDamage(v, n, by, h, 'vesper'), get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
+    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, PS, STATS, seasonNow, myPass, passTier, passRewards, buyPremium, myChallenges, levelOf, myCard, overNext, matchAwards, payProgress, heroArt, heroRender, get baked() { return baked; }, get banner() { return banner; }, EMB, readyAb, castReady, abData, killBanner: (n, pin, wk) => { banner = { t0: performance.now(), n, head: true, name: 'Kestrel', em: wk && typeof wk === 'object' ? wk : killEmblem(wk || 'pip'), pin }; }, get ptr() { return ptr; }, mech: () => ({ TPS, PADS, GATES, BRKS, VENTS, navCells, GRASS, ICE, LOWG, BELT, GW, GH, NC, hAt, los, setGate, setWall }), hurt: (v, n, by, h) => applyDamage(v, n, by, h, 'vesper'), get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
