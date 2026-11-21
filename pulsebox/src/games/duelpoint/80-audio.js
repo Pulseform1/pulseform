@@ -90,17 +90,21 @@
   const baked = {}, bakedV = {}, baking = {};
   // each gun is baked three times, each a little different (its own noise, the punch and the crack a few percent apart), and
   // the shots take turns: the same sample over and over is what makes a spray sound like a machine
-  function bakeShot(k, vI = 0) {
-    const ac = K.ac, D0 = GSND[k], bk = k + ':' + vI; if (!ac || !D0 || baking[bk] || typeof OfflineAudioContext === 'undefined') return; baking[bk] = 1;
+  function bakeShot(k, vI = 0, R) {
+    const ac = K.ac, D0 = GSND[k], bk = k + ':' + vI; if (!ac || !D0 || baking[bk] || typeof OfflineAudioContext === 'undefined') return;
+    if (R === undefined && GUN_REC[k]) { recBuf(k, b => bakeShot(k, vI, b || null)); return; }   // (a real recording first: decoded once, then baked round)
+    baking[bk] = 1;
     const jj = 1 + (vI - 1) * .04, D = Object.assign({}, D0, { p: [D0.p[0] * jj, D0.p[1] * jj, D0.p[2] * (2 - jj), D0.p[3]], c: [D0.c[0] * (2 - jj), D0.c[1], D0.c[2], D0.c[3]] });
-    const sr = ac.sampleRate, dur = Math.max(D.t[1], D.p[2]) + (D.rack ? D.rack + .32 : 0) + .15, len = Math.ceil(sr * dur);
+    const fit = GUN_REC_FIT[k] || { r: 1, g: 1 }, rate = fit.r * (1 + (vI - 1) * .035), sr = ac.sampleRate, dur = Math.max(D.t[1], D.p[2], R ? R.duration / rate : 0) + (D.rack ? D.rack + .32 : 0) + .15, len = Math.ceil(sr * dur);
     let oc; try { oc = new OfflineAudioContext(1, len, sr); } catch (e) { return; }
     const nb = oc.createBuffer(1, sr, sr), ch = nb.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
     // everything is driven into a soft clip and a fast compressor: that is what makes it punch rather than hiss
     const mix = oc.createGain(), sh = oc.createWaveShaper(), comp = oc.createDynamicsCompressor(), cv = new Float32Array(1024);
     for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; cv[i] = Math.tanh(2.4 * x) / Math.tanh(2.4); } sh.curve = cv;
     comp.threshold.value = -16; comp.ratio.value = 6; comp.attack.value = .001; comp.release.value = .1; comp.knee.value = 6;
-    mix.gain.value = .7; mix.connect(sh).connect(comp).connect(oc.destination);
+    mix.gain.value = R ? .3 : .7; mix.connect(sh).connect(comp).connect(oc.destination);   // (with a recording, the made-up layers sit underneath it)
+    // the recording: straight into the compressor (not the clipper: it is real, it needs no drive), each bake a few percent faster or slower
+    if (R) { const r = oc.createBufferSource(), a = oc.createGain(), hp = oc.createBiquadFilter(); r.buffer = R; r.playbackRate.value = rate; hp.type = 'highpass'; hp.frequency.value = 45; a.gain.value = .95 * fit.g; r.connect(hp).connect(a).connect(comp); r.start(0); }
     const noise = (t0, d, v, type, f, q, att = .0012) => { const n = oc.createBufferSource(), fl = oc.createBiquadFilter(), a = oc.createGain(); n.buffer = nb; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
       a.gain.setValueAtTime(0, t0); a.gain.linearRampToValueAtTime(v, t0 + att); a.gain.exponentialRampToValueAtTime(.0001, t0 + d); n.connect(fl).connect(a).connect(mix); n.start(t0, Math.random() * .4); n.stop(t0 + d + .02); };
     const osc = (t0, type, f0, f1, d, v) => { const o = oc.createOscillator(), a = oc.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + d);
