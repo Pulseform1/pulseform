@@ -27,6 +27,8 @@
     knife: GUN('knife', 'Knife', 'Melee', 3, 0, '#ff8a3d', { melee: 1, auto: true, mag: 0, res: 0, rpm: 140, rel: 0, spd: 1.25, equip: .4, dmg: [[2.4, 50]], head: 1.5, legs: 1, acc: { fs: 0, walk: 0, run: 0, jump: 0, inc: 0, max: 0, free: 0, recov: .3 }, desc: 'Always with you. Left click slashes, right click stabs: 150 from behind. You run faster with it out.' }),
     torrent: GUN('torrent', 'Torrent', 'Heavy', 1, 3200, '#e8e8e8', { mag: 60, res: 120, rpm: 720, spin: .3, rel: 5, auto: true, ads: 1.25, spd: .9, equip: 1.25, kickV: 1.1, dmg: [[30, 38], [99, 31]], head: 2.5, legs: .85, acc: { fs: .8, walk: 2, run: 4, jump: 8, inc: .15, inc2: .22, n2: 10, max: 4.5, free: 0, recov: .45 }, pat: { vk: .12, n2: 10, vk2: .42, vmax: 6, hs0: 10, hk: .9 }, desc: 'Machine gun. 60 rounds that fire faster the longer you hold. Steady for ten shots, then it climbs hard: pull down.' }),
   };
+  // tagging: how much of your speed you keep for a moment after a hit, by the class of the gun that hit you
+  const TAGK = { Sidearm: .7, SMG: .68, Shotgun: .45, Rifle: .55, Sniper: .3, Heavy: .55, Melee: .6 };
   // round money: pistol rounds (1 and 5) start everyone on 800; winning, losing streaks, kills and plants pay for the next round's buys
   // damage is the body damage at that range times where it landed: G.head for the head, G.legs for the legs (1 head, 2 body, 3 legs)
   const dmgAt = (G, dist, part) => { const row = G.dmg.find(r => dist <= r[0]) || G.dmg[G.dmg.length - 1]; return Math.round(row[1] * (part === 1 ? G.head : part === 3 ? G.legs : 1)); };

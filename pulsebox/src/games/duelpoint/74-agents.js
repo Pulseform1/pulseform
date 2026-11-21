@@ -274,7 +274,15 @@
     const sw = f.swing ? Math.sin(Math.min(1, f.swing.t / .4) * Math.PI) : 0;
     U.arms.rotation.x = f.pitch * .9 + f.kick * 1.2 - (f.swing && f.swing.heavy ? 0 : sw * .7) + Math.sin(ph * 2) * amp * .03; U.arms.rotation.y = f.swing && !f.swing.heavy ? (f.swing.t / .4 - .5) * 1.3 * (f.swing.side || 1) * (sw > 0 ? 1 : 0) : 0; U.arms.position.z = f.swing && f.swing.heavy ? -sw * .25 : 0;
     U.arms.rotation.x -= U.spr * .5;   // gun down while sprinting
-    if (f.castT > 0) { f.castT -= dt; const c = Math.sin(cl(1 - f.castT / .5, 0, 1) * Math.PI); U.arms.rotation.x -= c * .55; U.arms.rotation.z += c * .3; U.torso.rotation.y += c * .2; }   // using an ability
+    // using an ability: the body plays the same gesture you see in first person
+    if (f.castT > 0) { f.castT -= dt; const D = f.castD || .5, q = cl(1 - f.castT / D, 0, 1), c = Math.sin(q * Math.PI), kd = f.castK;
+      if (kd === 'throw') { const wind = sm(cl(q / .45, 0, 1)) * (1 - sm(cl((q - .45) / .15, 0, 1))), fl = sm(cl((q - .45) / .15, 0, 1)) * (1 - sm(cl((q - .7) / .3, 0, 1)));
+        U.arms.rotation.x -= wind * 1.1 - fl * .35; U.arms.rotation.z += wind * .35; U.torso.rotation.y += wind * .35 - fl * .25; U.torso.rotation.x += fl * .18; }
+      else if (kd === 'place') { U.torso.rotation.x += c * .55; U.arms.rotation.x += c * .7; U.hip.position.y -= c * .12; }
+      else if (kd === 'push') { U.arms.rotation.x -= c * .4; U.torso.rotation.x += c * .12; U.torso.rotation.y -= c * .2; }
+      else if (kd === 'heal') { U.arms.rotation.x += c * .35; U.arms.rotation.z += c * .25; U.torso.rotation.x += c * .1; }
+      else if (kd === 'dash') { U.torso.rotation.y += c * .4; U.arms.rotation.z -= c * .35; U.torso.rotation.x += c * .15; }
+      else { U.arms.rotation.x -= c * .55; U.arms.rotation.z += c * .3; U.torso.rotation.y += c * .2; } }
     U.head.rotation.x = f.pitch * .6 - sk * .3;
     if (U.flash) { U.flash.visible = f.kick > .05 && f.alive && !gun(f).melee; if (U.flash.visible) U.flash.material.rotation = Math.random() * 6; }
     // the rival's gun works too: slide, bolt, pump, magazine; and the arms tip it over to reload

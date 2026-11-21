@@ -88,7 +88,72 @@
   // a skin with a kill effect plays it on the rival it finishes
   on('kill', (v, by, head, wk) => { if (!X || !ready || !by || v === by) return; const sk = skinOfId(skinFor(by, wk)); if (sk) killFx(v, sk.line); });
   on('land', f => { if (X && M && f === me()) X.dip = .09; });
-  on('ability', f => { f.castT = .5; });
+  /* ---- abilities: your off hand comes into view and does the thing, in your operative's colours. Each ability is one of a
+     few gestures: throw (up with a glowing charge, wound back, flung down the view), place (down to the floor ahead, set
+     it, back), push (palm out, a ring of light bursts off it), pulse (palm up, the charge swells and rings out), heal (to
+     the chest, glowing), dash (a quick sweep across) and surge (a fist that crackles). Rivals' bodies play the same move. */
+  const AB_KIND = { vexq: 'dash', vexe: 'throw', vexx: 'pulse', irisq: 'pulse', irise: 'throw', irisx: 'pulse', bastionq: 'push', bastione: 'heal', bastionx: 'heal',
+    novaq: 'surge', novae: 'push', novax: 'surge', wraithq: 'pulse', wraithe: 'throw', wraithx: 'pulse', talonq: 'throw', talone: 'place', talonx: 'push',
+    emberq: 'throw', embere: 'push', emberx: 'throw', axiomq: 'place', axiome: 'place', axiomx: 'place' };
+  const AB_D = { throw: .62, place: .7, push: .55, pulse: .72, heal: .8, dash: .36, surge: .6 };
+  on('ability', (f, k) => { f.castK = AB_KIND[f.op + k] || 'push'; f.castD = AB_D[f.castK]; f.castT = f.castD; f.castBig = k === 'x'; });
+  // the hand itself: a sleeve, a glove, fingers and thumb, a charge of light in the palm and a ring for bursts (one per operative, kept)
+  function abHand(op) {
+    X.abHands = X.abHands || {}; if (X.abHands[op]) return X.abHands[op];
+    const O = OPS[op] || OPS.vex, c = new THREE.Color(O.col), std = (col, r = .85) => new THREE.MeshStandardMaterial({ color: col, roughness: r, metalness: 0 });
+    const glove = std(new THREE.Color('#6a707c').lerp(c, .16).convertSRGBToLinear(), .9), sleeve = std(new THREE.Color('#262c38').lerp(c, .42).convertSRGBToLinear()), band = std(LC(O.col), .5);
+    const H = new THREE.Group(), add = (geo, m, x, y, z, rx = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.x = rx; H.add(o); return o; }, B = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+    add(new THREE.CylinderGeometry(.031, .031, .03, 12), sleeve, 0, -.004, .05, Math.PI / 2); add(new THREE.CylinderGeometry(.032, .032, .016, 12), band, 0, -.004, .07, Math.PI / 2);   // the cuff (the forearm is laid each frame, see abHandFrame)
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(.03, .038, 1, 12), sleeve); arm.geometry.translate(0, .5, 0);
+    add(B(.07, .024, .08), glove, 0, 0, 0); const fing = [];
+    for (let i = 0; i < 4; i++) fing.push(add(B(.0155, .018, .062), glove, -.026 + i * .0173, .002, -.066 + Math.abs(i - 1.5) * .006));
+    const thumb = add(B(.017, .018, .05), glove, .042, .004, -.012); thumb.rotation.y = -.55;
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(.026, 16, 12), new THREE.MeshBasicMaterial({ color: LC(O.col), transparent: true }));
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.glowT || (X.glowT = canvasTex(64, 64, g => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.35, 'rgba(255,255,255,.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); })), color: c, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    glow.scale.setScalar(.16); orb.add(glow);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.05, .006, 8, 32), new THREE.MeshBasicMaterial({ color: c, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    H.visible = false; X.vroot.add(H, orb, ring, arm); orb.visible = ring.visible = arm.visible = false;
+    return X.abHands[op] = { H, orb, ring, fing, glow, arm };
+  }
+  // keyframes for the hand: [q, x, y, z, rx, ry, rz], eased between
+  const AB_KF = {
+    throw: [[0, -.16, -.38, -.3, -.2, 0, .3], [.3, -.11, -.1, -.33, -.35, .1, .2], [.48, -.085, -.065, -.23, .35, .15, .1], [.62, -.03, -.035, -.55, -.75, 0, 0], [1, -.12, -.42, -.45, -.9, 0, .3]],
+    place: [[0, -.06, -.42, -.3, -.4, 0, .2], [.45, -.04, -.17, -.42, -1.0, 0, 0], [.6, -.04, -.18, -.43, -1.1, 0, 0], [1, -.07, -.44, -.36, -.6, 0, .2]],
+    push: [[0, -.17, -.36, -.28, 0, 0, .3], [.35, -.05, -.075, -.42, 1.45, 0, 0], [.55, -.05, -.07, -.44, 1.5, 0, 0], [1, -.16, -.4, -.32, .4, 0, .3]],
+    pulse: [[0, -.15, -.38, -.3, -.2, 0, .3], [.38, -.07, -.1, -.31, -.25, 0, .05], [.65, -.07, -.095, -.31, -.25, 0, .05], [1, -.14, -.4, -.32, -.3, 0, .3]],
+    heal: [[0, -.15, -.4, -.25, 0, 0, .3], [.3, -.05, -.14, -.25, 1.3, .35, 0], [.75, -.05, -.145, -.25, 1.3, .35, 0], [1, -.13, -.42, -.28, .3, 0, .3]],
+    dash: [[0, .06, -.24, -.32, -.1, 0, -.4], [.45, -.08, -.14, -.36, -.1, .2, .1], [.75, -.24, -.16, -.34, -.1, .5, .5], [1, -.3, -.34, -.3, -.2, .5, .6]],
+    surge: [[0, -.15, -.38, -.3, -.3, 0, .3], [.3, -.08, -.11, -.33, -.2, .1, .1], [.7, -.08, -.11, -.33, -.2, .1, .1], [1, -.14, -.4, -.33, -.3, 0, .3]],
+  };
+  function abKey(kind, q) { const K2 = AB_KF[kind], o = [0, 0, 0, 0, 0, 0]; let i = 0; while (i < K2.length - 2 && q > K2[i + 1][0]) i++;
+    const a = K2[i], b = K2[i + 1], t = sm(cl((q - a[0]) / Math.max(1e-6, b[0] - a[0]), 0, 1)); for (let j = 0; j < 6; j++) o[j] = lp(a[j + 1], b[j + 1], t); return o; }
+  function abHandFrame(P) {
+    const live = P.alive && P.castT > 0 && P.castK && !(P.scoped && gun(P).scope), R = abHand(P.op);
+    for (const k in X.abHands) { const h = X.abHands[k]; if (h !== R || !live) { h.H.visible = h.orb.visible = h.ring.visible = h.arm.visible = false; } }
+    if (!live) return;
+    const kind = P.castK, q = 1 - P.castT / (P.castD || .5), o = abKey(kind, q), big = P.castBig ? 1.25 : 1, { H, orb, ring, fing, glow, arm } = R;
+    H.visible = true; H.position.set(o[0], o[1], o[2]); H.rotation.set(o[3], o[4], o[5]);
+    // the forearm: from the wrist back to an elbow down at the bottom left, out of sight, whatever the hand is doing
+    { H.updateMatrix(); const w = new THREE.Vector3(0, -.004, .07).applyMatrix4(H.matrix), e = new THREE.Vector3(-.2, -.5, .02), d = e.clone().sub(w), L = d.length();
+      arm.visible = true; arm.position.copy(w); arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); arm.scale.set(1, L, 1); }
+    const curl = kind === 'surge' ? 1 : kind === 'throw' && q > .1 && q < .56 ? .7 : kind === 'place' && q < .5 ? .6 : 0;   // a fist, or fingers closed round what it holds
+    for (const f of fing) { f.scale.z = 1 - curl * .45; f.rotation.x = curl * .9; }
+    // the charge: in the palm, then off down the view (a throw), set down (place), swelling (pulse, heal, surge)
+    let ov = 0, os = 0, fly = 0;
+    if (kind === 'throw') { ov = q < .58 ? 1 : q < .8 ? 1 : 0; os = sm(cl(q / .25, 0, 1)); fly = q < .56 ? 0 : (q - .56) / .24; }
+    else if (kind === 'place') { ov = q < .52 ? 1 : 0; os = .8 * sm(cl(q / .2, 0, 1)); }
+    else if (kind === 'pulse') { ov = q < .85 ? 1 : 0; os = sm(cl(q / .38, 0, 1)) * (1.3 - .6 * sm(cl((q - .6) / .25, 0, 1))); }
+    else if (kind === 'heal') { ov = q > .2 && q < .9 ? 1 : 0; os = .9 + Math.sin(X.t * 14) * .15; }
+    else if (kind === 'surge') { ov = q > .15 && q < .85 ? 1 : 0; os = .55 + Math.random() * .35; H.position.x += (Math.random() - .5) * .004; H.position.y += (Math.random() - .5) * .004; }
+    else if (kind === 'push') { ov = q > .25 && q < .6 ? 1 : 0; os = .7; }
+    else if (kind === 'dash') { ov = q < .8 ? 1 : 0; os = .6; }
+    orb.visible = ov > 0; if (ov) { H.updateMatrix(); const palm = new THREE.Vector3(0, kind === 'push' || kind === 'heal' ? -.045 : .045, -.03).applyMatrix4(H.matrix);
+      if (fly > 0) palm.set(lp(palm.x, 0, fly), lp(palm.y, .02, fly), palm.z - fly * 1.4);
+      orb.position.copy(palm); orb.scale.setScalar(Math.max(.001, os * big * (fly > 0 ? 1 - fly * .5 : 1))); orb.material.opacity = fly > 0 ? 1 - fly : 1; glow.material.opacity = (fly > 0 ? 1 - fly : 1) * (.8 + Math.random() * .2); }
+    // a ring bursts off the palm (push) or the charge (pulse), growing and fading
+    const rq = kind === 'push' ? (q - .3) / .45 : kind === 'pulse' ? (q - .4) / .45 : kind === 'heal' ? (q - .35) / .5 : -1;
+    ring.visible = rq > 0 && rq < 1; if (ring.visible) { ring.position.copy(kind === 'pulse' || kind === 'heal' ? orb.position : H.position); if (kind === 'push') ring.position.z -= .05; ring.rotation.set(kind === 'push' ? 0 : Math.PI / 2, 0, 0); ring.scale.setScalar((1 + rq * (kind === 'push' ? 2.6 : 1.8)) * big * (kind === 'heal' ? .6 : 1)); ring.material.opacity = (1 - rq) * .85; }
+  }
   on('dry', f => { if (X && M && f === me()) X.dryT = .16; });
   const VKICK = { Sidearm: 1.25, SMG: .7, Rifle: 1, Sniper: 2.2, Shotgun: 1.9, Heavy: .8 };   // how hard each class kicks in your hands
 
@@ -207,7 +272,10 @@
     if (!X.vcharge) { X.vcharge = X.chargeCopy(); X.vcharge.scale.setScalar(.42); X.vroot.add(X.vcharge); }
     { const q = P.alive && P.plant > 0 ? cl(P.plant / PLANT_T, 0, 1) : -1; X.vcharge.visible = q >= 0 && X.kneel > .3;
       if (q >= 0) { const s2 = sm(cl(q / .35, 0, 1)), d2 = sm(cl((q - .35) / .55, 0, 1)); X.vcharge.position.set(.03 + Math.sin(X.t * 9) * .003 * (1 - d2), lp(-.5, -.26, s2) - d2 * .3, -.66 - d2 * .12); X.vcharge.rotation.set(lp(.9, .45, s2) + d2 * .25, .35 - d2 * .3, 0); } }
-    if (P.castT > 0) { P.castT -= dt; const q = 1 - Math.max(0, P.castT) / .5, c = Math.sin(Math.min(1, q) * Math.PI); X.view.position.y -= c * .07; X.view.position.x += c * .03; X.view.rotation.x -= c * .45; X.view.rotation.z += c * .35; }   // the off hand casts: the gun dips out of the way
+    // the off hand casts (see abHandFrame): the gun dips out of its way, further for a throw or a placing
+    if (P.castT > 0) { const D = P.castD || .5, q = 1 - Math.max(0, P.castT) / D, c = Math.sin(Math.min(1, q) * Math.PI), dk = P.castK === 'throw' || P.castK === 'place' ? 1.25 : P.castK === 'dash' ? .5 : .9;
+      X.view.position.y -= c * .08 * dk; X.view.position.x += c * .035 * dk; X.view.rotation.x -= c * .45 * dk; X.view.rotation.z += c * .3 * dk; }
+    abHandFrame(P); if (P.castT > 0) P.castT -= dt;
 
     // the rival
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }

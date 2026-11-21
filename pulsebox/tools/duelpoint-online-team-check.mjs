@@ -22,7 +22,7 @@ await wait(2000);
 await T(H, () => { const t = GAME.test, id = MP.players().find(p => p.id !== MP.id).id; t.PARTY.set.ranked = true; t.PARTY.set.size = 2; t.PARTY.teams[id] = 0; MP.send({ t: 'lteam', teams: t.PARTY.teams, set: t.PARTY.set }); });
 await T(C, () => { GAME.test.PARTY.ready = true; }); await wait(1500);
 let r = await T(C, () => { const t = GAME.test, me = MP.id, hp = t.PARTY.prof.get(MP.hostId) || {}; return { ranked: t.PARTY.set.ranked, hostRk: (hp.rk || {})['2'], placed: hp.rkp }; });
-ok(r.ranked && r.hostRk === 1240 && r.placed === '0100', 'the host makes the party ranked; the friend sees it, and the host\'s 2v2 rank', JSON.stringify(r));
+ok(r.ranked && r.hostRk === 1240 && r.placed === '01000', 'the host makes the party ranked; the friend sees it, and the host\'s 2v2 rank', JSON.stringify(r));
 await H.screenshot({ path: O + '/online-ranked-party.png' });
 await T(H, () => { MP.start(); }); await wait(3500);
 const st = p => T(p, () => { const t = GAME.test, M = t.M; return M && { ranked: M.ranked, size: M.size, n: M.fs.length, keys: M.fs.map(f => f.key).sort().join(','), carrier: M.charge && M.charge.k, rks: M.fs.filter(f => !f.isBot && !f.bot).map(f => f.rk).sort() }; });

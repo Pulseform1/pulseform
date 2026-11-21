@@ -15,7 +15,7 @@ const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name:
 const T = new Function('K', 'MP', code + `
   return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
-    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
+    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
 let failed = 0;
 const ok = (cond, name, extra = '') => { if (!cond) failed++; console.log((cond ? '  ok   ' : '  FAIL ') + name + (extra !== '' ? '  (' + extra + ')' : '')); };
@@ -140,6 +140,7 @@ function moveChecks() {
   [M, P] = lab('lancer'); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1 }; run(.6); I = { ...idle(), mz: 1, crouch: true }; T.tick(DT); T.tick(DT); ok(!P.slide, 'running with a rifle is too slow to slide: you just crouch');
   knifeWallChecks();
   pickupPingNovaChecks();
+  tagDefusePingChecks();
   const lv = [600, 900, 1100, 1400, 1700].map(r => T.diffFor(r)), keys = ['react', 'err', 'flick'];
   ok(lv.every((L, i) => !i || keys.every(k => L.D[k] <= lv[i - 1].D[k]) && L.D.turn >= lv[i - 1].D.turn), 'the bot gets sharper at every step up in rating', lv.map(L => L.D.n).join(' → '));
   T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto', map: 0 }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
@@ -186,6 +187,24 @@ function pickupPingNovaChecks() {
   [M, P, F] = lab('lancer'); P.op = 'nova'; P.ab.q = T.OPS.nova.q.max; F.hp = 1; F.sh = 0; T.applyDamage(F, 50, P, false, 'lancer');
   ok(P.ab.q === T.OPS.nova.q.max, 'but never more than she can carry', `q ${P.ab.q}`);
   [M, P, F] = lab('lancer'); P.op = 'vex'; P.ab.q = 0; F.hp = 1; F.sh = 0; T.applyDamage(F, 50, P, false, 'lancer'); ok(P.ab.q === 0, 'other operatives get no free charge');
+}
+// tagging (a hit slows you a moment), the halfway defuse checkpoint, and a ping for your team
+function tagDefusePingChecks() {
+  let I = idle(); T.setInput(() => I);
+  let [M, P, F] = lab(); P.yaw = -Math.PI / 2; I = { ...idle(), mz: 1 }; run(.6); const v0 = Math.hypot(P.vx, P.vz);
+  T.applyDamage(P, 20, F, false, 'longbow'); run(.12); const v1 = Math.hypot(P.vx, P.vz); run(.6); const v2 = Math.hypot(P.vx, P.vz);
+  ok(v1 < v0 * .6 && v2 > v0 * .95, 'a hit tags you: slowed for a moment, then back to full speed', `${v0.toFixed(1)} → ${v1.toFixed(1)} → ${v2.toFixed(1)} m/s`);
+  // the defuse: halfway is kept
+  [M, P, F] = lab(); const def = T.sideOf(P) === 'def' ? P : F, att = def === P ? F : P; if (def !== P) { T.M.fs.forEach(f => { f.bot = f === P ? null : f.bot; }); }
+  if (def === P) { T.plantAt(P.x + .5, P.z, att); M.planted.t = 60; I = { ...idle(), use: true }; run(T.DEFUSE_T * .62); const d1 = P.defuse; I = idle(); run(.2); I = { ...idle(), use: true }; T.tick(DT);
+    ok(M.planted.half && P.defuse >= T.DEFUSE_T / 2, 'a defuse past halfway keeps its half when it is broken off', `${d1.toFixed(2)} s, then restarts at ${P.defuse.toFixed(2)} s`);
+    [M, P, F] = lab(); T.plantAt(P.x + .5, P.z, att); M.planted.t = 60; I = { ...idle(), use: true }; run(T.DEFUSE_T * .3); I = idle(); run(.2); I = { ...idle(), use: true }; T.tick(DT);
+    ok(!M.planted.half && P.defuse < .1, 'one let go before halfway starts again from nothing', P.defuse.toFixed(2)); }
+  else ok(true, 'the defuse checkpoint (skipped: you attack on this map\'s first round)');
+  // a ping marks where you look, for your team
+  [M, P, F] = lab(); P.yaw = -Math.PI / 2; I = idle(); const pinged = T.ping(P);
+  ok(pinged && M.pings.length === 1 && M.pings[0].team === P.team && M.pings[0].x > P.x, 'a ping marks the spot you are looking at, for your team', M.pings[0] ? `${M.pings[0].x.toFixed(1)}, ${M.pings[0].z.toFixed(1)}` : 'none');
+  ok(!T.ping(P) && M.pings.length === 1, 'and pings cannot be spammed');
 }
 // a 4v4 plays a spread of maps: one-site ones, two-site ones, the three-site one and the one where attackers start at both ends
 const FOUR_MAPS = ['saltworks', 'verdance', 'neonrow', 'sandgate', 'skyline', 'orbital', 'ironworks', 'frostline'];

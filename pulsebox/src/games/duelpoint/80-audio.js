@@ -11,10 +11,12 @@
     const v = CFG.vol == null ? 1 : cl(+CFG.vol, 0, 1); if (busN.gain.value !== v) busN.gain.value = v; return busN;
   }
   // where to plug a sound in: returns an audio node that leads to the speakers, shaped for a source at fighter f (or your own)
+  // who is listening: you, or (dead, in a team game) the teammate you are watching through: their sounds are 'yours'
+  const ear = () => (M && typeof viewer === 'function' && viewer()) || me();
   function outFor(f, vol = 1) {
     const ac = K.ac, g = ac.createGain(); let v = vol, pan = 0, muffle = false;
-    if (M && f && f !== me()) {
-      const P = me(), dx = f.x - P.x, dz = f.z - P.z, d = Math.hypot(dx, dz) || .01;
+    if (M && f && f !== ear()) {
+      const P = ear(), dx = f.x - P.x, dz = f.z - P.z, d = Math.hypot(dx, dz) || .01;
       v *= Math.pow(cl(1 - d / 55, .05, 1), 1.4); pan = cl((dx * Math.cos(P.yaw) - dz * Math.sin(P.yaw)) / d, -1, 1) * .85;
       muffle = los(P.x, eyeY(P), P.z, f.x, f.y + 1.2, f.z, false) < d - .6; if (muffle) v *= .6;
     }
@@ -92,12 +94,12 @@
   // bake every gun as a match starts (it takes a few milliseconds each, off the main sound path)
   on('round', () => { if (K.ac) for (const k in GSND) bakeShot(k); });
   on('shot', (f, S, first) => {
-    if (!first || !canHear()) return; const G = gun(f), mine = f === me(), out = outFor(f, mine ? .6 : 1);
+    if (!first || !canHear()) return; const G = gun(f), mine = f === ear(), out = outFor(f, mine ? .6 : 1);
     if (G.rail) { tone(out, 1800, .25, 'sawtooth', .12, -1500); hiss(out, .3, .3, 'highpass', 2500); tone(out, 70, .25, 'sine', .6, -30); return; }
     const B = baked[G.k];
     if (B) {   // the gun's own shot, a hair higher or lower each time; far away it loses its edge
       const ac = K.ac, src = ac.createBufferSource(), a = ac.createGain(); src.buffer = B; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v;
-      let head = out; if (!mine && M) { const P = me(), d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 2200, cl((d - 12) / 40, 0, 1)); lpf.connect(out); head = lpf; } }
+      let head = out; if (!mine && M) { const P = ear(), d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 2200, cl((d - 12) / 40, 0, 1)); lpf.connect(out); head = lpf; } }
       src.connect(a).connect(head); src.start(); return;
     }
     bakeShot(G.k);
@@ -107,15 +109,15 @@
   });
   const cue = (name, fn) => on(name, (a, b, c, d) => { if (canHear()) fn(a, b, c, d); });
   cue('dry', f => tone(outFor(f), 320, .03, 'square', .05));
-  cue('reload', f => { const o = outFor(f, f === me() ? .7 : 1); tone(o, 520, .04, 'square', .06, 0, .15); hiss(o, .05, .1, 'highpass', 2500, .15); tone(o, 380, .05, 'square', .07, 0, gun(f).rel * .62); hiss(o, .06, .12, 'highpass', 2000, gun(f).rel * .88); });
-  cue('swap', f => { const o = outFor(f, f === me() ? .6 : .8); hiss(o, .05, .1, 'highpass', 3000); tone(o, 700, .03, 'square', .03); });
+  cue('reload', f => { const o = outFor(f, f === ear() ? .7 : 1); tone(o, 520, .04, 'square', .06, 0, .15); hiss(o, .05, .1, 'highpass', 2500, .15); tone(o, 380, .05, 'square', .07, 0, gun(f).rel * .62); hiss(o, .06, .12, 'highpass', 2000, gun(f).rel * .88); });
+  cue('swap', f => { const o = outFor(f, f === ear() ? .6 : .8); hiss(o, .05, .1, 'highpass', 3000); tone(o, 700, .03, 'square', .03); });
   cue('melee', (f, heavy, S) => { const o = outFor(f); hiss(o, heavy ? .14 : .09, .16, 'bandpass', heavy ? 1500 : 2800, 0, 1.2); if (S) { tone(o, 180, .09, 'sine', .25, -90, .02); hiss(o, .05, .2, 'lowpass', 900, .02); } });
   // a slide: a gritty scrape that fades as it slows; a jump: a soft push-off
-  cue('slide', f => { const o = outFor(f === me() ? null : f, f === me() ? .8 : 1); hiss(o, .55, .16, 'bandpass', 900, 0, .6); hiss(o, .4, .1, 'lowpass', 300, .05); });
-  cue('jump', f => { const o = outFor(f === me() ? null : f); hiss(o, .07, f === me() ? .05 : .2, 'lowpass', 600); });
-  cue('step', f => { if (f === me()) hiss(outFor(null), .04, .035, 'lowpass', 500); else { const o = outFor(f); hiss(o, .06, .32, 'lowpass', 420); tone(o, 95, .05, 'sine', .14, -30); } });
-  cue('jump', f => { if (f !== me()) hiss(outFor(f), .06, .12, 'lowpass', 700); });
-  cue('land', f => { const o = outFor(f, f === me() ? .5 : 1); hiss(o, .09, .3, 'lowpass', 360); tone(o, 70, .08, 'sine', .25, -20); });
+  cue('slide', f => { const o = outFor(f === ear() ? null : f, f === ear() ? .8 : 1); hiss(o, .55, .16, 'bandpass', 900, 0, .6); hiss(o, .4, .1, 'lowpass', 300, .05); });
+  cue('jump', f => { const o = outFor(f === ear() ? null : f); hiss(o, .07, f === ear() ? .05 : .2, 'lowpass', 600); });
+  cue('step', f => { if (f === ear()) hiss(outFor(null), .04, .035, 'lowpass', 500); else { const o = outFor(f); hiss(o, .06, .32, 'lowpass', 420); tone(o, 95, .05, 'sine', .14, -30); } });
+  cue('jump', f => { if (f !== ear()) hiss(outFor(f), .06, .12, 'lowpass', 700); });
+  cue('land', f => { const o = outFor(f, f === ear() ? .5 : 1); hiss(o, .09, .3, 'lowpass', 360); tone(o, 70, .08, 'sine', .25, -20); });
   cue('hurt', (v, by, dmg, head) => {
     if (by === me()) { const o = outFor(null); if (head) { tone(o, 2300, .05, 'square', .07); tone(o, 3100, .06, 'square', .06, 0, .04); } else tone(o, 1500, .04, 'square', .06); }
     if (v === me()) { const o = outFor(null); tone(o, 140, .12, 'sine', .35, -70); hiss(o, .07, .18, 'lowpass', 700); }
@@ -185,6 +187,8 @@
   cue('defused', () => { const o = outFor(null); [523, 659, 784, 1047].forEach((q, i) => tone(o, q, .18, 'triangle', .12, 0, i * .07)); });
   cue('beep', () => { if (M && M.planted) tone(outFor({ x: M.planted.x, y: 0, z: M.planted.z }, 1.4), 1850, .06, 'square', .09); });
   cue('boom', (x, z) => { const o = outFor({ x, y: 0, z }, 1.6); hiss(o, 1.1, .7, 'lowpass', 500); tone(o, 60, .9, 'sine', .7, -35); hiss(o, .25, .4, 'bandpass', 1500); });
+  cue('ping', (pg, f) => { if (pg.team !== me().team) return; const o = outFor(null); tone(o, 1320, .07, 'sine', .07); tone(o, 1760, .09, 'sine', .06, 0, .07); });
+  cue('defuseHalf', f => { if (f.team !== me().team && f !== me()) return; tone(outFor(f), 990, .08, 'square', .05); });
   cue('buy', (f, ok) => { if (f === me()) tone(outFor(null), ok ? 990 : 170, ok ? .06 : .12, 'square', .06); });
   cue('round', () => tone(outFor(null), 440, .16, 'triangle', .09));
   cue('live', () => { const o = outFor(null); tone(o, 660, .1, 'triangle', .1); tone(o, 880, .2, 'triangle', .1, 0, .1); });

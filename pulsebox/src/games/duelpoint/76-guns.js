@@ -525,10 +525,21 @@
       const arm = (par, x, y, z, rx, ry, l) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(rx, ry, 0); par.add(g); const was = T; T = g;
         lathe([[-.03, .03], [-.03, .037], [.0, .04], [.02, .043], [.03, .046], [l, .056], [l, .02]], HM.sleeve, 0, 0, 14); lathe([[.012, .0445], [.012, .0475], [.04, .0485], [.04, .046]], band, 0, 0, 14); T = was; };
       const fingers = (n, x, y0, z, w, dy, mat = HM.glove) => { for (let i = 0; i < n; i++) rbox(w, .0155, .019, mat, x, y0 - i * dy, z, .0065); };
-      T = group(grip[0], grip[1], grip[2], k === 'knife' ? 0 : -.25);
+      const RH = T = group(grip[0], grip[1], grip[2], k === 'knife' ? 0 : -.25);
       if (k === 'knife') { rbox(.013, .05, .074, HM.glove, .019, -.002, 0, .005); rbox(.013, .04, .07, HM.glove, -.018, -.006, 0, .005); for (let i = 0; i < 4; i++) rbox(.042, .017, .0165, HM.glove, 0, -.024, -.027 + i * .018, .0065); rbox(.012, .013, .04, HM.glove, -.011, .02, -.022, .005); rbox(.006, .024, .04, band, .0265, -.004, .012, .002); arm(T, .006, -.02, .045, 1.1, -.3, .42); }
       else { rbox(.014, .074, .054, HM.glove, .0215, 0, .002, .006); rbox(.046, .072, .016, HM.glove, .002, 0, .03, .006); fingers(4, -.002, .027, -.029, .05, .0178); rbox(.014, .018, .05, HM.glove, -.0215, .032, -.012, .006); rbox(.0065, .03, .034, band, .0292, .004, .008, .002); rbox(.02, .012, .03, m.rubber, .024, .03, .004, .003); arm(T, .01, -.036, .034, .7, -.2, .42); }
-      if (k !== 'knife') {
+      if (k !== 'knife' && pistolHold) {
+        // a pistol in both hands: the support hand closes round the grip, in the grip's own frame so it follows its angle.
+        // Palm flat on the left panel, heel of the hand behind, four fingers wrapped over the trigger hand's in front of
+        // the grip, the thumb laid forward along the frame
+        const LH = parts.lhand = new THREE.Group(); LH.userData.p0 = LH.position.clone(); RH.add(LH); T = LH;
+        rbox(.013, .066, .058, HM.glove, -.0305, -.014, -.004, .006);   // palm
+        rbox(.022, .046, .02, HM.glove, -.025, -.022, .026, .006);   // heel
+        fingers(4, .002, .016, -.047, .058, .0172);   // fingers over the trigger hand's
+        rbox(.012, .015, .052, HM.glove, -.0305, .034, -.026, .005);   // thumb, forward along the frame
+        rbox(.0065, .028, .03, band, -.0385, -.03, .016, .002);
+        arm(T, -.034, -.046, .03, .75, .5, .38);
+      } else if (k !== 'knife') {
         T = parts.lhand = group(sup[0], sup[1], sup[2], pistolHold ? .3 : 0);
         rbox(.056, .018, .08, HM.glove, 0, 0, 0, .007); rbox(.014, .044, .07, HM.glove, -.032, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, HM.glove, -.034, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, HM.glove, .032, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
         arm(T, -.02, -.012, .034, .5, .55, pistolHold ? .38 : .55);

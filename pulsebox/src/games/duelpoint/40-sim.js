@@ -71,6 +71,7 @@
     f.crouch = cl(f.crouch + (I.crouch || f.slide ? 1 : -1) * dt * 8, 0, 1);
     let sp = (f.sprinting ? SPRINT : f.crouch > .5 ? CSPD : I.walk ? WALK : SPD) * G.spd; if (f.scoped) sp *= G.scope ? .55 : .76;
     sp *= (f.surge > 0 ? 1.3 : 1) * (f.daze > 0 ? .6 : 1) * (f.snare > 0 ? .35 : 1);   // Surge, a Shockwave's daze, a Snare
+    if (f.tagT > 0) { sp *= lp(1, f.tagK || 1, cl(f.tagT / .12, 0, 1)); f.tagT -= dt; if (f.tagT <= 0) f.tagK = 1; }   // tagged (eases off over its last moment)
     const s = Math.sin(f.yaw), c = Math.cos(f.yaw); let wx = -s * I.mz + c * I.mx, wz = -c * I.mz - s * I.mx; const L = Math.hypot(wx, wz); if (L > 1) { wx /= L; wz /= L; }
     if (frozen) wx = wz = 0;
     const ck = idx(Math.floor(f.x / CS), Math.floor(f.z / CS)), onIce = f.ground && ck >= 0 && ICE[ck];   // the floor under you: ice has no grip
@@ -226,9 +227,12 @@
     if (f.autoReload > 0 && (f.autoReload -= dt) <= 0 && f.alive && !f.burst) reload(f);
     // the spray settles once the trigger has rested a moment: from wherever it got to (its worst, or a long spray's climb
     // and sway) to nothing in 'recov' seconds, so the crosshair glides home at the same pace however long you held it
+    settleSpray(f, G, dt);
+    if (f.reloadT > 0) { f.reloadT -= dt; if (f.reloadT <= 0) { const A = f.ammo[G.k], n = Math.min(G.mag - A.mag, A.res); A.mag += n; if (M.mode !== 'range') A.res -= n; f.spray = 0; } }
+  }
+  function settleSpray(f, G, dt) {
     if (f.fireT < -.05 && !f.burst && f.spray > 0) { const from = f.sprayFrom || (f.sprayFrom = f.spray);
       f.spray = Math.max(0, f.spray - dt * (f.surge > 0 ? 2 : 1) * Math.max(from, G.acc.free + 1 + (G.acc.inc ? G.acc.max / G.acc.inc : 4)) / G.acc.recov); if (!f.spray) f.sprayFrom = 0; }
-    if (f.reloadT > 0) { f.reloadT -= dt; if (f.reloadT <= 0) { const A = f.ammo[G.k], n = Math.min(G.mag - A.mag, A.res); A.mag += n; if (M.mode !== 'range') A.res -= n; f.spray = 0; } }
   }
   function switchTo(f, slot) { if (!f.guns[slot] || f.slot === slot || !f.alive) return; f.slot = slot; f.reloadT = 0; f.autoReload = 0; f.scoped = 0; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, GUNS[f.guns[slot]].equip * .7); emit('swap', f); }
   const cycleWeapon = (f, dir = 1) => { const order = [1, 2, 3].filter(s => f.guns[s]); switchTo(f, order[(order.indexOf(f.slot) + (dir > 0 ? 1 : order.length - 1)) % order.length]); };
@@ -250,6 +254,9 @@
   function applyDamage(v, dmg, by, head, wk, leg) {
     if (!v.alive || M.phase === 'end') return;
     if (v.guard > 0) dmg *= .5;   // Bulwark
+    // tagged: a bullet (or the knife) that lands slows you for a moment, harder from the heavy hitters, so running out into
+    // fire is punished and the one holding the angle gets the next shot
+    { const TG = GUNS[wk]; if (TG) { v.tagT = .32; v.tagK = Math.min(v.tagT > 0 && v.tagK ? v.tagK : 1, TAGK[TG.cat] || .6); } }
     const real = Math.min(dmg, v.hp + v.sh), soak = Math.min(v.sh, dmg); v.sh -= soak; v.hp -= dmg - soak; if (!by.net) by.stat.dmg += real;
     if (v === me()) { M.hurt = 1; M.hurtDir = Math.atan2(by.x - v.x, by.z - v.z); }
     if (v.bot) v.bot.hitBy = { x: by.x, z: by.z, t: M.time };
@@ -334,6 +341,14 @@
     if (key === 'bastione') f.heal = { t: 3 };
     kitApply(f, key, d);
     emit('ability', f, k);
+  }
+  /* ---------- pings: mark where you are looking for your team (middle click or J); it shows in the world and on the minimap ---------- */
+  function ping(f, remote, at) {
+    if (!M || !f || (!remote && (!f.alive || (f.pingCD || 0) > M.time))) return false;
+    let p = at; if (!p) { const S = castShot(f, viewDir(f.yaw, f.pitch)), d = Math.min(S.dist, 60) - .15; p = { x: f.x + S.d[0] * d, y: eyeY(f) + S.d[1] * d, z: f.z + S.d[2] * d }; }
+    if (!remote) f.pingCD = M.time + .6;
+    M.pings = (M.pings || []).filter(q => q.k !== f.key && M.time - q.t0 < 4); const pg = { x: p.x, y: p.y, z: p.z, t0: M.time, k: f.key, team: f.team, name: f.name, foe: false };
+    M.pings.push(pg); emit('ping', pg, f); if (!remote) net({ t: 'pg', x: r2(p.x), y: r2(p.y), z: r2(p.z), f: f.key }); return true;
   }
   /* ---------- smoke grenades ---------- */
   // thrown from the eyes along the view with a little lift; online, both devices fly the same throw and pop the same cloud
@@ -439,7 +454,9 @@
       if (f.plant >= PLANT_T) { f.plant = 0; plantAt(f.x, f.z, f); net({ t: 'pl', x: +f.x.toFixed(2), z: +f.z.toFixed(2), f: f.key }); }
     } else f.plant = 0;
     if (side === 'def' && M.planted && !M.defused && I.use && f.ground && Math.hypot(f.x - M.planted.x, f.z - M.planted.z) < 1.7) {
-      if (f.defuse === 0) emit('defuseStart', f); f.defuse += dt; f.scoped = 0;
+      if (f.defuse === 0) { emit('defuseStart', f); if (M.planted.half) f.defuse = DEFUSE_T / 2; } f.defuse += dt; f.scoped = 0;
+      // halfway is a checkpoint: let go (or get pushed off) after it, and the next defuse picks up from half
+      if (f.defuse >= DEFUSE_T / 2 && !M.planted.half) { M.planted.half = true; emit('defuseHalf', f); net({ t: 'dh', f: f.key }); }
       if (f.defuse >= DEFUSE_T) { f.defuse = 0; defuseDone(f); net({ t: 'df', f: f.key }); }
     } else f.defuse = 0;
   }
@@ -641,7 +658,7 @@
     const hostAtt = o.hostAtt == null ? (R() < .5 ? 1 : 0) : o.hostAtt, decHostAtt = o.decHostAtt == null ? (R() < .5 ? 1 : 0) : o.decHostAtt;
     if (online && !o.seats) flip = host ? 0 : 1;
     M = { mode, online, host, auto, flip, byKey: Object.fromEntries(fs.map(f => [f.key, f])), rating: STATS.rating, adj: 0, fs, wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? 0 : 1) ^ flip, decAtt: (decHostAtt ? 0 : 1) ^ flip,
-      planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0, ranked, botDiff: o.botDiff != null ? o.botDiff : o.diff };
+      planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], pings: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0, ranked, botDiff: o.botDiff != null ? o.botDiff : o.diff };
     M.size = teamSize(Math.max(fs.filter(f => f.team === 0).length, fs.filter(f => f.team === 1).length)); if (ranked) { A.rk = rankStrength(M.size); A.rkp = placed(rankedOf(M.size)) ? 1 : 0; }
     M.loadT = mode === 'bot' || online ? LOAD_T : 0; M.loading = M.loadT > 0;
     for (const f of fs) { f.rating = f === A ? STATS.rating : f.bot ? botRating(f, M) : f.rating || 0; f.skins = f === A ? Object.assign({}, STATS.equip) : f.bot || f.isBot ? botSkins() : {}; }

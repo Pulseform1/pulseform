@@ -391,6 +391,12 @@
       g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] + 14 * p); g.lineTo(s[0] - 10 * p, s[1]); g.lineTo(s[0] + 10 * p, s[1]); g.closePath(); g.fill(); tx(g, D.by.toUpperCase(), s[0], s[1] - 14, 13, FOE, 'center', 900); } } }
     if (M.planted && M.phase === 'live') { const s = toScreen(M.planted.x, M.planted.y + .9, M.planted.z); if (s) { const p = 1 + Math.sin(M.time * 9) * .12; g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] - 11 * u * p); g.lineTo(s[0] + 9 * u * p, s[1]); g.lineTo(s[0], s[1] + 11 * u * p); g.lineTo(s[0] - 9 * u * p, s[1]); g.fill(); tx(g, Math.hypot(P.x - M.planted.x, P.z - M.planted.z).toFixed(0) + ' m', s[0], s[1] + 24 * u, 13 * u, BONE); } }
     drawSiteMarks(g, P, u);   // the sites, while you are finding your way
+    // your team's pings: a diamond where they marked, with who and how far, pulsing as it lands
+    if (M.pings && M.pings.length) for (const pg of M.pings) { const age = M.time - pg.t0; if (age > 4 || pg.team !== me().team) continue; const s = toScreen(pg.x, pg.y + .15, pg.z); if (!s) continue;
+      const a = age > 3.4 ? (4 - age) / .6 : 1, pop = 1 + Math.max(0, 1 - age / .35) * .8, r = 9 * u * pop; g.globalAlpha = a;
+      g.strokeStyle = YOU; g.lineWidth = 2.5; g.beginPath(); g.moveTo(s[0], s[1] - r); g.lineTo(s[0] + r, s[1]); g.lineTo(s[0], s[1] + r); g.lineTo(s[0] - r, s[1]); g.closePath(); g.stroke();
+      g.fillStyle = 'rgba(53,224,200,.25)'; g.fill(); if (age < .8) { g.strokeStyle = `rgba(53,224,200,${1 - age / .8})`; g.beginPath(); g.arc(s[0], s[1], r + age * 40 * u, 0, TAU); g.stroke(); }
+      tx(g, `${pg.k === me().key ? 'PING' : pg.name.toUpperCase()}  ·  ${Math.round(Math.hypot(pg.x - P.x, pg.z - P.z))} m`, s[0], s[1] - r - 9 * u, 10.5 * u, YOU, 'center', 800); g.globalAlpha = 1; }
     // --- crosshair and hit marks
     // the crosshair marks where the next shot really goes: it rides up (and sways) with the spray, less the little the view
     // itself nods, and sits a touch lower for the view punch
@@ -445,6 +451,7 @@
       if (M.planted) { g.fillStyle = WARN; g.beginPath(); g.arc(mx + M.planted.x * k, my + M.planted.z * k, 4.5 * u, 0, TAU); g.fill(); }
       if (M.charge && !M.planted && side === 'att') { const c = carrier(), cx2 = c ? c.x : M.charge.x, cz2 = c ? c.z : M.charge.z; if (!c || c.alive) { g.strokeStyle = GOLD; g.lineWidth = 2; g.beginPath(); g.arc(mx + cx2 * k, my + cz2 * k, (c ? 6 : 4.5) * u, 0, TAU); g.stroke(); if (!c) { g.fillStyle = GOLD; g.fill(); } } }
       { const CP = M.chargePing; if (CP && side === 'att' && M.charge && !M.charge.k && !M.planted && M.time - CP.t0 < 3) { const q = (M.time - CP.t0) / 3; for (let i = 0; i < 2; i++) { const r = (q * 3 + i / 2) % 1; g.strokeStyle = `rgba(255,210,90,${1 - r})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + CP.x * k, my + CP.z * k, (5 + r * 16) * u, 0, TAU); g.stroke(); } } }
+      if (M.pings) for (const pg of M.pings) { const age = M.time - pg.t0; if (age > 4 || pg.team !== me().team) continue; g.strokeStyle = `rgba(53,224,200,${1 - age / 4})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + pg.x * k, my + pg.z * k, (4 + (age % 1) * 9) * u, 0, TAU); g.stroke(); g.fillStyle = YOU; g.fillRect(mx + pg.x * k - 2 * u, my + pg.z * k - 2 * u, 4 * u, 4 * u); }   // pings
       if (heard && (heard.t -= 1 / 60) > 0) { g.strokeStyle = `rgba(255,138,61,${heard.t / 1.6})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + heard.x * k, my + heard.z * k, (8 + (1.6 - heard.t) * 8) * u, 0, TAU); g.stroke(); }
       for (const q of M.fs) if (q !== P && q.alive && !q.gone) { const ours = q.team === P.team; if (!ours && !(q.reveal > 0 || canSee(P, q))) continue; g.fillStyle = ours ? YOU : FOE; g.beginPath(); g.arc(mx + q.x * k, my + q.z * k, (ours ? 3.2 : 4) * u, 0, TAU); g.fill(); }   // your teammates, and every rival in sight
       g.save(); g.translate(mx + P.x * k, my + P.z * k); g.rotate(-P.yaw); g.fillStyle = 'rgba(53,224,200,.22)'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 30 * u, -Math.PI / 2 - .6, -Math.PI / 2 + .6); g.fill(); g.fillStyle = YOU; g.beginPath(); g.moveTo(0, -7 * u); g.lineTo(5 * u, 5 * u); g.lineTo(-5 * u, 5 * u); g.fill(); g.restore();
@@ -486,12 +493,12 @@
       const near = M.planted && Math.hypot(P.x - M.planted.x, P.z - M.planted.z) < 1.7, key = touch ? 'Hold the button' : 'Hold F';
       if (P.orbT > 0) ring(P.orbT / ORB.take, 'ULT ORB', OPS[P.op].col);
       else if (M.orbs && M.orbs.some(o => !o.taken && Math.hypot(o.x - P.x, o.z - P.z) < ORB.r)) hint(g, (touch ? 'Hold the button' : 'Hold F') + ' to take the orb: an ultimate point', V.y0 + 140 * u, 16 * u, OPS[P.op].col);
-      if (P.plant > 0) ring(P.plant / PLANT_T, 'PLANTING', FOE); else if (P.defuse > 0) ring(P.defuse / DEFUSE_T, 'DEFUSING', YOU);
+      if (P.plant > 0) ring(P.plant / PLANT_T, 'PLANTING', FOE); else if (P.defuse > 0) ring(P.defuse / DEFUSE_T, P.defuse >= DEFUSE_T / 2 ? 'DEFUSING  ·  HALF SAVED' : 'DEFUSING', YOU);
       else if (side === 'att' && !M.planted && M.charge && !carries(P)) { const c = carrier();
         if (c) { if (M.t > roundT() - 6 || onSite(P.x, P.z)) hint(g, c.name.toUpperCase() + ' HAS THE CHARGE' + (onSite(P.x, P.z) ? '  ·  COVER THE PLANT' : ''), V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
         else hint(g, 'THE CHARGE IS ON THE FLOOR  ·  WALK OVER IT TO PICK IT UP', V.y0 + 104 * u, 16 * u, GOLD); }
       else if (side === 'att' && !M.planted) { if (onSite(P.x, P.z)) onSiteHint(g, 'ABC'[siteAt(P.x, P.z)], key, V.y0 + 104 * u, u); else hint(g, M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site ' + siteWords() + ' and plant it' : 'Carry the charge to the site and plant it') : '', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
-      else if (side === 'def' && M.planted) hint(g, near ? key + ' to defuse' : 'Defuse the charge', V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
+      else if (side === 'def' && M.planted) hint(g, (near ? key + ' to defuse' : 'Defuse the charge') + (M.planted.half ? '  ·  HALF DONE' : ''), V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
       else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold ' + siteWords('and') + ': stop them planting' : 'Stop them planting on the site', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
       if (M.fs.some(q => q.team !== P.team && q.alive && q.defuse > 0)) tx(g, M.fs.length > 2 ? 'THEY ARE DEFUSING' : 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);   // any of them, not just the nearest
       if (P.nearLoot && GUNS[P.nearLoot.k]) hint(g, `${touch ? 'Tap PICK UP' : 'Press F'} to ${lootFree(P) ? 'pick up' : 'swap for'} the ${GUNS[P.nearLoot.k].n}`, V.y0 + 172 * u, 15 * u, GOLD);

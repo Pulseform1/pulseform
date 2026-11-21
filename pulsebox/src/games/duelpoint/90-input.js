@@ -81,11 +81,11 @@
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
     else if (c === 'KeyG') throwNade(P); else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyX') ability(P, 'x'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = INSP_D;
-    else if (c === 'KeyT') dropHeld(P); else if (c === 'KeyH') dropCharge(P);   // drop the gun in your hand, or the charge, for a teammate
+    else if (c === 'KeyT') dropHeld(P); else if (c === 'KeyH') dropCharge(P); else if (c === 'KeyJ') ping(P);   // drop the gun in your hand, or the charge, for a teammate
   }
   if (typeof document !== 'undefined') {
     // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser
-    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOXTH]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
+    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOXTHJ]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       if (UI.armory) { const V = K.view, s = 1 / pxPer(); ptr = { x: cl(ptr.x + e.movementX * s, V.x0 + 2, V.x1 - 4), y: cl(ptr.y + e.movementY * s, V.y0 + 2, V.y1 - 4) }; KNAV.on = false; if (dragZ) dragZ.fn(ptr.x, ptr.y); return; }   // the armory's cursor
       const P = me(); if (!P.alive) return;   // the dead don't turn: the body stays as it fell
@@ -93,7 +93,7 @@
     // (on a Mac, Ctrl+click arrives as a right click: while crouching that is still a shot)
     document.addEventListener('mousedown', e => { if (M && screen === 'play' && !me().alive && UI.spec && X) { nextSpec(); return; } if (!locked() || !playing()) return;
       if (UI.armory) { if (e.button === 0) { const z = zoneAt(ptr.x, ptr.y); if (z) { if (z.drag) dragZ = z; z.fn(ptr.x, ptr.y); } } return; }   // a click on the armory, at our cursor
-      if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = mouse.tap = true; else if (e.button === 2) altAction(me()); });
+      if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = mouse.tap = true; else if (e.button === 2) altAction(me()); else if (e.button === 1) { e.preventDefault(); ping(me()); } });
     document.addEventListener('mouseup', e => { if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = false; if (vcursor()) dragZ = null; });
     document.addEventListener('contextmenu', e => { if (screen === 'play') e.preventDefault(); });
     // the wheel changes weapon, one step per notch; a trackpad's two-finger swipe sends a stream of tiny steps, so they add up
@@ -137,6 +137,7 @@
       else if (b.k === 'q' || b.k === 'e' || b.k === 'x') ability(P, b.k); else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);
       return;
     }
+    if (M && screen === 'play' && !me().alive && UI.spec && X && M.mode !== 'range') { nextSpec(); return; }   // dead: a tap moves to the next teammate
     if (x < lp(K.view.x0, K.view.x1, .45)) { if (!TS.stick) TS.stick = { id, x0: x, y0: y, x, y }; } else if (!TS.look) TS.look = { id, x, y };
   }
   function touchMove(x, y, id) {

@@ -242,7 +242,7 @@ const GAME = {
   id: 'duelpoint', title: 'Duelpoint', tagline: 'Two on two. Seven maps. Every round counts.',
   font: 'Chakra Petch', accent: '#ff8a3d', accent2: '#35e0c8', bg: '#0c1016', noSkins: true, noHud: true, scoreLabel: 'Match score',
   how: [
-    'Mouse and keys: WASD moves, mouse aims, click shoots, right click aims or scopes. Shift walks, Ctrl or C crouches (hold or toggle), pull out your knife (3) to move faster, O opens settings (sensitivity), Space jumps, R reloads, 1 2 3 swap weapons, Q and E are your abilities, G throws a smoke grenade, F plants and defuses, B opens the armory.',
+    'Mouse and keys: WASD moves, mouse aims, click shoots, right click aims or scopes. Shift walks, Ctrl or C crouches (hold or toggle), pull out your knife (3) to move faster, O opens settings (sensitivity), Space jumps, R reloads, 1 2 3 swap weapons, Q and E are your abilities, G throws a smoke grenade, F plants and defuses, B opens the armory, middle click or J pings a spot for your team.',
     'Phone: left thumb moves, right thumb looks. Auto-fire shoots when your crosshair is on your rival; the buttons do the rest.',
     'Stand still to shoot straight. Your first shot lands exactly on the crosshair; moving throws it off. Tap the opposite direction to stop dead. Tap or burst at range: sprays climb, then sway.',
     'Attack: carry the charge to the ring and plant it. Defend: stop them, or defuse it. Pick the match length (best of 5, 7, 9 or 11); sides swap at the half.',
@@ -321,6 +321,8 @@ const GAME = {
     knife: GUN('knife', 'Knife', 'Melee', 3, 0, '#ff8a3d', { melee: 1, auto: true, mag: 0, res: 0, rpm: 140, rel: 0, spd: 1.25, equip: .4, dmg: [[2.4, 50]], head: 1.5, legs: 1, acc: { fs: 0, walk: 0, run: 0, jump: 0, inc: 0, max: 0, free: 0, recov: .3 }, desc: 'Always with you. Left click slashes, right click stabs: 150 from behind. You run faster with it out.' }),
     torrent: GUN('torrent', 'Torrent', 'Heavy', 1, 3200, '#e8e8e8', { mag: 60, res: 120, rpm: 720, spin: .3, rel: 5, auto: true, ads: 1.25, spd: .9, equip: 1.25, kickV: 1.1, dmg: [[30, 38], [99, 31]], head: 2.5, legs: .85, acc: { fs: .8, walk: 2, run: 4, jump: 8, inc: .15, inc2: .22, n2: 10, max: 4.5, free: 0, recov: .45 }, pat: { vk: .12, n2: 10, vk2: .42, vmax: 6, hs0: 10, hk: .9 }, desc: 'Machine gun. 60 rounds that fire faster the longer you hold. Steady for ten shots, then it climbs hard: pull down.' }),
   };
+  // tagging: how much of your speed you keep for a moment after a hit, by the class of the gun that hit you
+  const TAGK = { Sidearm: .7, SMG: .68, Shotgun: .45, Rifle: .55, Sniper: .3, Heavy: .55, Melee: .6 };
   // round money: pistol rounds (1 and 5) start everyone on 800; winning, losing streaks, kills and plants pay for the next round's buys
   // damage is the body damage at that range times where it landed: G.head for the head, G.legs for the legs (1 head, 2 body, 3 legs)
   const dmgAt = (G, dist, part) => { const row = G.dmg.find(r => dist <= r[0]) || G.dmg[G.dmg.length - 1]; return Math.round(row[1] * (part === 1 ? G.head : part === 3 ? G.legs : 1)); };
@@ -942,6 +944,7 @@ const GAME = {
     f.crouch = cl(f.crouch + (I.crouch || f.slide ? 1 : -1) * dt * 8, 0, 1);
     let sp = (f.sprinting ? SPRINT : f.crouch > .5 ? CSPD : I.walk ? WALK : SPD) * G.spd; if (f.scoped) sp *= G.scope ? .55 : .76;
     sp *= (f.surge > 0 ? 1.3 : 1) * (f.daze > 0 ? .6 : 1) * (f.snare > 0 ? .35 : 1);   // Surge, a Shockwave's daze, a Snare
+    if (f.tagT > 0) { sp *= lp(1, f.tagK || 1, cl(f.tagT / .12, 0, 1)); f.tagT -= dt; if (f.tagT <= 0) f.tagK = 1; }   // tagged (eases off over its last moment)
     const s = Math.sin(f.yaw), c = Math.cos(f.yaw); let wx = -s * I.mz + c * I.mx, wz = -c * I.mz - s * I.mx; const L = Math.hypot(wx, wz); if (L > 1) { wx /= L; wz /= L; }
     if (frozen) wx = wz = 0;
     const ck = idx(Math.floor(f.x / CS), Math.floor(f.z / CS)), onIce = f.ground && ck >= 0 && ICE[ck];   // the floor under you: ice has no grip
@@ -1097,9 +1100,12 @@ const GAME = {
     if (f.autoReload > 0 && (f.autoReload -= dt) <= 0 && f.alive && !f.burst) reload(f);
     // the spray settles once the trigger has rested a moment: from wherever it got to (its worst, or a long spray's climb
     // and sway) to nothing in 'recov' seconds, so the crosshair glides home at the same pace however long you held it
+    settleSpray(f, G, dt);
+    if (f.reloadT > 0) { f.reloadT -= dt; if (f.reloadT <= 0) { const A = f.ammo[G.k], n = Math.min(G.mag - A.mag, A.res); A.mag += n; if (M.mode !== 'range') A.res -= n; f.spray = 0; } }
+  }
+  function settleSpray(f, G, dt) {
     if (f.fireT < -.05 && !f.burst && f.spray > 0) { const from = f.sprayFrom || (f.sprayFrom = f.spray);
       f.spray = Math.max(0, f.spray - dt * (f.surge > 0 ? 2 : 1) * Math.max(from, G.acc.free + 1 + (G.acc.inc ? G.acc.max / G.acc.inc : 4)) / G.acc.recov); if (!f.spray) f.sprayFrom = 0; }
-    if (f.reloadT > 0) { f.reloadT -= dt; if (f.reloadT <= 0) { const A = f.ammo[G.k], n = Math.min(G.mag - A.mag, A.res); A.mag += n; if (M.mode !== 'range') A.res -= n; f.spray = 0; } }
   }
   function switchTo(f, slot) { if (!f.guns[slot] || f.slot === slot || !f.alive) return; f.slot = slot; f.reloadT = 0; f.autoReload = 0; f.scoped = 0; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, GUNS[f.guns[slot]].equip * .7); emit('swap', f); }
   const cycleWeapon = (f, dir = 1) => { const order = [1, 2, 3].filter(s => f.guns[s]); switchTo(f, order[(order.indexOf(f.slot) + (dir > 0 ? 1 : order.length - 1)) % order.length]); };
@@ -1121,6 +1127,9 @@ const GAME = {
   function applyDamage(v, dmg, by, head, wk, leg) {
     if (!v.alive || M.phase === 'end') return;
     if (v.guard > 0) dmg *= .5;   // Bulwark
+    // tagged: a bullet (or the knife) that lands slows you for a moment, harder from the heavy hitters, so running out into
+    // fire is punished and the one holding the angle gets the next shot
+    { const TG = GUNS[wk]; if (TG) { v.tagT = .32; v.tagK = Math.min(v.tagT > 0 && v.tagK ? v.tagK : 1, TAGK[TG.cat] || .6); } }
     const real = Math.min(dmg, v.hp + v.sh), soak = Math.min(v.sh, dmg); v.sh -= soak; v.hp -= dmg - soak; if (!by.net) by.stat.dmg += real;
     if (v === me()) { M.hurt = 1; M.hurtDir = Math.atan2(by.x - v.x, by.z - v.z); }
     if (v.bot) v.bot.hitBy = { x: by.x, z: by.z, t: M.time };
@@ -1205,6 +1214,14 @@ const GAME = {
     if (key === 'bastione') f.heal = { t: 3 };
     kitApply(f, key, d);
     emit('ability', f, k);
+  }
+  /* ---------- pings: mark where you are looking for your team (middle click or J); it shows in the world and on the minimap ---------- */
+  function ping(f, remote, at) {
+    if (!M || !f || (!remote && (!f.alive || (f.pingCD || 0) > M.time))) return false;
+    let p = at; if (!p) { const S = castShot(f, viewDir(f.yaw, f.pitch)), d = Math.min(S.dist, 60) - .15; p = { x: f.x + S.d[0] * d, y: eyeY(f) + S.d[1] * d, z: f.z + S.d[2] * d }; }
+    if (!remote) f.pingCD = M.time + .6;
+    M.pings = (M.pings || []).filter(q => q.k !== f.key && M.time - q.t0 < 4); const pg = { x: p.x, y: p.y, z: p.z, t0: M.time, k: f.key, team: f.team, name: f.name, foe: false };
+    M.pings.push(pg); emit('ping', pg, f); if (!remote) net({ t: 'pg', x: r2(p.x), y: r2(p.y), z: r2(p.z), f: f.key }); return true;
   }
   /* ---------- smoke grenades ---------- */
   // thrown from the eyes along the view with a little lift; online, both devices fly the same throw and pop the same cloud
@@ -1310,7 +1327,9 @@ const GAME = {
       if (f.plant >= PLANT_T) { f.plant = 0; plantAt(f.x, f.z, f); net({ t: 'pl', x: +f.x.toFixed(2), z: +f.z.toFixed(2), f: f.key }); }
     } else f.plant = 0;
     if (side === 'def' && M.planted && !M.defused && I.use && f.ground && Math.hypot(f.x - M.planted.x, f.z - M.planted.z) < 1.7) {
-      if (f.defuse === 0) emit('defuseStart', f); f.defuse += dt; f.scoped = 0;
+      if (f.defuse === 0) { emit('defuseStart', f); if (M.planted.half) f.defuse = DEFUSE_T / 2; } f.defuse += dt; f.scoped = 0;
+      // halfway is a checkpoint: let go (or get pushed off) after it, and the next defuse picks up from half
+      if (f.defuse >= DEFUSE_T / 2 && !M.planted.half) { M.planted.half = true; emit('defuseHalf', f); net({ t: 'dh', f: f.key }); }
       if (f.defuse >= DEFUSE_T) { f.defuse = 0; defuseDone(f); net({ t: 'df', f: f.key }); }
     } else f.defuse = 0;
   }
@@ -1512,7 +1531,7 @@ const GAME = {
     const hostAtt = o.hostAtt == null ? (R() < .5 ? 1 : 0) : o.hostAtt, decHostAtt = o.decHostAtt == null ? (R() < .5 ? 1 : 0) : o.decHostAtt;
     if (online && !o.seats) flip = host ? 0 : 1;
     M = { mode, online, host, auto, flip, byKey: Object.fromEntries(fs.map(f => [f.key, f])), rating: STATS.rating, adj: 0, fs, wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? 0 : 1) ^ flip, decAtt: (decHostAtt ? 0 : 1) ^ flip,
-      planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0, ranked, botDiff: o.botDiff != null ? o.botDiff : o.diff };
+      planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], pings: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0, ranked, botDiff: o.botDiff != null ? o.botDiff : o.diff };
     M.size = teamSize(Math.max(fs.filter(f => f.team === 0).length, fs.filter(f => f.team === 1).length)); if (ranked) { A.rk = rankStrength(M.size); A.rkp = placed(rankedOf(M.size)) ? 1 : 0; }
     M.loadT = mode === 'bot' || online ? LOAD_T : 0; M.loading = M.loadT > 0;
     for (const f of fs) { f.rating = f === A ? STATS.rating : f.bot ? botRating(f, M) : f.rating || 0; f.skins = f === A ? Object.assign({}, STATS.equip) : f.bot || f.isBot ? botSkins() : {}; }
@@ -2105,7 +2124,7 @@ const GAME = {
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
         break;
-      case 'sh': { const S = castShot(F, viewDir(m.a, m.b)); F.kick = .08; F.cloak = 0; emit('shot', F, S, true); break; }
+      case 'sh': { const S = castShot(F, viewDir(m.a, m.b)), G = gun(F); F.kick = .08; F.cloak = 0; if (!(F.spray > .5)) F.sseed = Math.random() * TAU; F.spray = (F.spray || 0) + 1; F.sprayFrom = 0; F.fireT = Math.max(F.fireT || 0, -.02) + 60 / (G.rpm || 600); emit('shot', F, S, true); break; }
       case 'kn': F.swing = { t: 0, heavy: !!m.h, side: 1 }; emit('melee', F, !!m.h, null); break;
       case 'hit': { const V = M.byKey[String(m.v)]; if (V && !V.net) applyDamage(V, m.d, F, !!m.h, m.w, !!m.l); break; }
       case 'dead': {
@@ -2119,6 +2138,8 @@ const GAME = {
       case 'nd': F.smokes = Math.max(0, (F.smokes || 0) - 1); F.throwT = .6; addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); emit('throw', F); break;
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;
       case 'df': defuseDone(F); break;
+      case 'dh': if (M.planted) M.planted.half = true; break;   // a defuse got halfway
+      case 'pg': if (F.team === me().team) ping(F, true, { x: +m.x, y: +m.y, z: +m.z }); break;   // a teammate's ping
       case 'rdy': F.ready = true; break;
       case 'dp': if (GUNS[m.k]) addLoot({ id: String(m.id), k: m.k, x: +m.x, z: +m.z, m: m.m | 0, r: m.r | 0, by: F.key, fo: m.fo ? String(m.fo) : '' }); break;   // a gun put on the floor
       case 'pk': { const d = M.loot && M.loot.find(q => q.id === String(m.id)); if (d) takeLoot(F, d, true); break; }   // and picked up
@@ -2132,6 +2153,7 @@ const GAME = {
   // place a network fighter between the two snapshots either side of "a tenth of a second ago"
   function netFollow(f, dt) {
     for (const k of ['flash', 'reveal', 'kick']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
+    if (f.fireT > -1) f.fireT = (f.fireT || 0) - dt; settleSpray(f, gun(f), dt);   // (their spray, kept from their shots: a spectator's crosshair rides it)
     if (f.swing) { f.swing.t += dt; if (f.swing.t > .7) f.swing = null; }
     const sn = f.snaps; if (!sn || !sn.length) return; const rt = M.time - (M.netDelay || .1); while (sn.length > 2 && sn[1].at <= rt) sn.shift();
     const a = sn[0], b = sn[1] || a, k = b === a || b.at - a.at < 1e-6 ? 1 : cl((rt - a.at) / (b.at - a.at), 0, 1.4);
@@ -3332,7 +3354,15 @@ const GAME = {
     const sw = f.swing ? Math.sin(Math.min(1, f.swing.t / .4) * Math.PI) : 0;
     U.arms.rotation.x = f.pitch * .9 + f.kick * 1.2 - (f.swing && f.swing.heavy ? 0 : sw * .7) + Math.sin(ph * 2) * amp * .03; U.arms.rotation.y = f.swing && !f.swing.heavy ? (f.swing.t / .4 - .5) * 1.3 * (f.swing.side || 1) * (sw > 0 ? 1 : 0) : 0; U.arms.position.z = f.swing && f.swing.heavy ? -sw * .25 : 0;
     U.arms.rotation.x -= U.spr * .5;   // gun down while sprinting
-    if (f.castT > 0) { f.castT -= dt; const c = Math.sin(cl(1 - f.castT / .5, 0, 1) * Math.PI); U.arms.rotation.x -= c * .55; U.arms.rotation.z += c * .3; U.torso.rotation.y += c * .2; }   // using an ability
+    // using an ability: the body plays the same gesture you see in first person
+    if (f.castT > 0) { f.castT -= dt; const D = f.castD || .5, q = cl(1 - f.castT / D, 0, 1), c = Math.sin(q * Math.PI), kd = f.castK;
+      if (kd === 'throw') { const wind = sm(cl(q / .45, 0, 1)) * (1 - sm(cl((q - .45) / .15, 0, 1))), fl = sm(cl((q - .45) / .15, 0, 1)) * (1 - sm(cl((q - .7) / .3, 0, 1)));
+        U.arms.rotation.x -= wind * 1.1 - fl * .35; U.arms.rotation.z += wind * .35; U.torso.rotation.y += wind * .35 - fl * .25; U.torso.rotation.x += fl * .18; }
+      else if (kd === 'place') { U.torso.rotation.x += c * .55; U.arms.rotation.x += c * .7; U.hip.position.y -= c * .12; }
+      else if (kd === 'push') { U.arms.rotation.x -= c * .4; U.torso.rotation.x += c * .12; U.torso.rotation.y -= c * .2; }
+      else if (kd === 'heal') { U.arms.rotation.x += c * .35; U.arms.rotation.z += c * .25; U.torso.rotation.x += c * .1; }
+      else if (kd === 'dash') { U.torso.rotation.y += c * .4; U.arms.rotation.z -= c * .35; U.torso.rotation.x += c * .15; }
+      else { U.arms.rotation.x -= c * .55; U.arms.rotation.z += c * .3; U.torso.rotation.y += c * .2; } }
     U.head.rotation.x = f.pitch * .6 - sk * .3;
     if (U.flash) { U.flash.visible = f.kick > .05 && f.alive && !gun(f).melee; if (U.flash.visible) U.flash.material.rotation = Math.random() * 6; }
     // the rival's gun works too: slide, bolt, pump, magazine; and the arms tip it over to reload
@@ -3996,10 +4026,21 @@ const GAME = {
       const arm = (par, x, y, z, rx, ry, l) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(rx, ry, 0); par.add(g); const was = T; T = g;
         lathe([[-.03, .03], [-.03, .037], [.0, .04], [.02, .043], [.03, .046], [l, .056], [l, .02]], HM.sleeve, 0, 0, 14); lathe([[.012, .0445], [.012, .0475], [.04, .0485], [.04, .046]], band, 0, 0, 14); T = was; };
       const fingers = (n, x, y0, z, w, dy, mat = HM.glove) => { for (let i = 0; i < n; i++) rbox(w, .0155, .019, mat, x, y0 - i * dy, z, .0065); };
-      T = group(grip[0], grip[1], grip[2], k === 'knife' ? 0 : -.25);
+      const RH = T = group(grip[0], grip[1], grip[2], k === 'knife' ? 0 : -.25);
       if (k === 'knife') { rbox(.013, .05, .074, HM.glove, .019, -.002, 0, .005); rbox(.013, .04, .07, HM.glove, -.018, -.006, 0, .005); for (let i = 0; i < 4; i++) rbox(.042, .017, .0165, HM.glove, 0, -.024, -.027 + i * .018, .0065); rbox(.012, .013, .04, HM.glove, -.011, .02, -.022, .005); rbox(.006, .024, .04, band, .0265, -.004, .012, .002); arm(T, .006, -.02, .045, 1.1, -.3, .42); }
       else { rbox(.014, .074, .054, HM.glove, .0215, 0, .002, .006); rbox(.046, .072, .016, HM.glove, .002, 0, .03, .006); fingers(4, -.002, .027, -.029, .05, .0178); rbox(.014, .018, .05, HM.glove, -.0215, .032, -.012, .006); rbox(.0065, .03, .034, band, .0292, .004, .008, .002); rbox(.02, .012, .03, m.rubber, .024, .03, .004, .003); arm(T, .01, -.036, .034, .7, -.2, .42); }
-      if (k !== 'knife') {
+      if (k !== 'knife' && pistolHold) {
+        // a pistol in both hands: the support hand closes round the grip, in the grip's own frame so it follows its angle.
+        // Palm flat on the left panel, heel of the hand behind, four fingers wrapped over the trigger hand's in front of
+        // the grip, the thumb laid forward along the frame
+        const LH = parts.lhand = new THREE.Group(); LH.userData.p0 = LH.position.clone(); RH.add(LH); T = LH;
+        rbox(.013, .066, .058, HM.glove, -.0305, -.014, -.004, .006);   // palm
+        rbox(.022, .046, .02, HM.glove, -.025, -.022, .026, .006);   // heel
+        fingers(4, .002, .016, -.047, .058, .0172);   // fingers over the trigger hand's
+        rbox(.012, .015, .052, HM.glove, -.0305, .034, -.026, .005);   // thumb, forward along the frame
+        rbox(.0065, .028, .03, band, -.0385, -.03, .016, .002);
+        arm(T, -.034, -.046, .03, .75, .5, .38);
+      } else if (k !== 'knife') {
         T = parts.lhand = group(sup[0], sup[1], sup[2], pistolHold ? .3 : 0);
         rbox(.056, .018, .08, HM.glove, 0, 0, 0, .007); rbox(.014, .044, .07, HM.glove, -.032, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, HM.glove, -.034, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, HM.glove, .032, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
         arm(T, -.02, -.012, .034, .5, .55, pistolHold ? .38 : .55);
@@ -5604,7 +5645,72 @@ const GAME = {
   // a skin with a kill effect plays it on the rival it finishes
   on('kill', (v, by, head, wk) => { if (!X || !ready || !by || v === by) return; const sk = skinOfId(skinFor(by, wk)); if (sk) killFx(v, sk.line); });
   on('land', f => { if (X && M && f === me()) X.dip = .09; });
-  on('ability', f => { f.castT = .5; });
+  /* ---- abilities: your off hand comes into view and does the thing, in your operative's colours. Each ability is one of a
+     few gestures: throw (up with a glowing charge, wound back, flung down the view), place (down to the floor ahead, set
+     it, back), push (palm out, a ring of light bursts off it), pulse (palm up, the charge swells and rings out), heal (to
+     the chest, glowing), dash (a quick sweep across) and surge (a fist that crackles). Rivals' bodies play the same move. */
+  const AB_KIND = { vexq: 'dash', vexe: 'throw', vexx: 'pulse', irisq: 'pulse', irise: 'throw', irisx: 'pulse', bastionq: 'push', bastione: 'heal', bastionx: 'heal',
+    novaq: 'surge', novae: 'push', novax: 'surge', wraithq: 'pulse', wraithe: 'throw', wraithx: 'pulse', talonq: 'throw', talone: 'place', talonx: 'push',
+    emberq: 'throw', embere: 'push', emberx: 'throw', axiomq: 'place', axiome: 'place', axiomx: 'place' };
+  const AB_D = { throw: .62, place: .7, push: .55, pulse: .72, heal: .8, dash: .36, surge: .6 };
+  on('ability', (f, k) => { f.castK = AB_KIND[f.op + k] || 'push'; f.castD = AB_D[f.castK]; f.castT = f.castD; f.castBig = k === 'x'; });
+  // the hand itself: a sleeve, a glove, fingers and thumb, a charge of light in the palm and a ring for bursts (one per operative, kept)
+  function abHand(op) {
+    X.abHands = X.abHands || {}; if (X.abHands[op]) return X.abHands[op];
+    const O = OPS[op] || OPS.vex, c = new THREE.Color(O.col), std = (col, r = .85) => new THREE.MeshStandardMaterial({ color: col, roughness: r, metalness: 0 });
+    const glove = std(new THREE.Color('#6a707c').lerp(c, .16).convertSRGBToLinear(), .9), sleeve = std(new THREE.Color('#262c38').lerp(c, .42).convertSRGBToLinear()), band = std(LC(O.col), .5);
+    const H = new THREE.Group(), add = (geo, m, x, y, z, rx = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.x = rx; H.add(o); return o; }, B = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+    add(new THREE.CylinderGeometry(.031, .031, .03, 12), sleeve, 0, -.004, .05, Math.PI / 2); add(new THREE.CylinderGeometry(.032, .032, .016, 12), band, 0, -.004, .07, Math.PI / 2);   // the cuff (the forearm is laid each frame, see abHandFrame)
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(.03, .038, 1, 12), sleeve); arm.geometry.translate(0, .5, 0);
+    add(B(.07, .024, .08), glove, 0, 0, 0); const fing = [];
+    for (let i = 0; i < 4; i++) fing.push(add(B(.0155, .018, .062), glove, -.026 + i * .0173, .002, -.066 + Math.abs(i - 1.5) * .006));
+    const thumb = add(B(.017, .018, .05), glove, .042, .004, -.012); thumb.rotation.y = -.55;
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(.026, 16, 12), new THREE.MeshBasicMaterial({ color: LC(O.col), transparent: true }));
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.glowT || (X.glowT = canvasTex(64, 64, g => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.35, 'rgba(255,255,255,.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); })), color: c, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    glow.scale.setScalar(.16); orb.add(glow);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.05, .006, 8, 32), new THREE.MeshBasicMaterial({ color: c, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    H.visible = false; X.vroot.add(H, orb, ring, arm); orb.visible = ring.visible = arm.visible = false;
+    return X.abHands[op] = { H, orb, ring, fing, glow, arm };
+  }
+  // keyframes for the hand: [q, x, y, z, rx, ry, rz], eased between
+  const AB_KF = {
+    throw: [[0, -.16, -.38, -.3, -.2, 0, .3], [.3, -.11, -.1, -.33, -.35, .1, .2], [.48, -.085, -.065, -.23, .35, .15, .1], [.62, -.03, -.035, -.55, -.75, 0, 0], [1, -.12, -.42, -.45, -.9, 0, .3]],
+    place: [[0, -.06, -.42, -.3, -.4, 0, .2], [.45, -.04, -.17, -.42, -1.0, 0, 0], [.6, -.04, -.18, -.43, -1.1, 0, 0], [1, -.07, -.44, -.36, -.6, 0, .2]],
+    push: [[0, -.17, -.36, -.28, 0, 0, .3], [.35, -.05, -.075, -.42, 1.45, 0, 0], [.55, -.05, -.07, -.44, 1.5, 0, 0], [1, -.16, -.4, -.32, .4, 0, .3]],
+    pulse: [[0, -.15, -.38, -.3, -.2, 0, .3], [.38, -.07, -.1, -.31, -.25, 0, .05], [.65, -.07, -.095, -.31, -.25, 0, .05], [1, -.14, -.4, -.32, -.3, 0, .3]],
+    heal: [[0, -.15, -.4, -.25, 0, 0, .3], [.3, -.05, -.14, -.25, 1.3, .35, 0], [.75, -.05, -.145, -.25, 1.3, .35, 0], [1, -.13, -.42, -.28, .3, 0, .3]],
+    dash: [[0, .06, -.24, -.32, -.1, 0, -.4], [.45, -.08, -.14, -.36, -.1, .2, .1], [.75, -.24, -.16, -.34, -.1, .5, .5], [1, -.3, -.34, -.3, -.2, .5, .6]],
+    surge: [[0, -.15, -.38, -.3, -.3, 0, .3], [.3, -.08, -.11, -.33, -.2, .1, .1], [.7, -.08, -.11, -.33, -.2, .1, .1], [1, -.14, -.4, -.33, -.3, 0, .3]],
+  };
+  function abKey(kind, q) { const K2 = AB_KF[kind], o = [0, 0, 0, 0, 0, 0]; let i = 0; while (i < K2.length - 2 && q > K2[i + 1][0]) i++;
+    const a = K2[i], b = K2[i + 1], t = sm(cl((q - a[0]) / Math.max(1e-6, b[0] - a[0]), 0, 1)); for (let j = 0; j < 6; j++) o[j] = lp(a[j + 1], b[j + 1], t); return o; }
+  function abHandFrame(P) {
+    const live = P.alive && P.castT > 0 && P.castK && !(P.scoped && gun(P).scope), R = abHand(P.op);
+    for (const k in X.abHands) { const h = X.abHands[k]; if (h !== R || !live) { h.H.visible = h.orb.visible = h.ring.visible = h.arm.visible = false; } }
+    if (!live) return;
+    const kind = P.castK, q = 1 - P.castT / (P.castD || .5), o = abKey(kind, q), big = P.castBig ? 1.25 : 1, { H, orb, ring, fing, glow, arm } = R;
+    H.visible = true; H.position.set(o[0], o[1], o[2]); H.rotation.set(o[3], o[4], o[5]);
+    // the forearm: from the wrist back to an elbow down at the bottom left, out of sight, whatever the hand is doing
+    { H.updateMatrix(); const w = new THREE.Vector3(0, -.004, .07).applyMatrix4(H.matrix), e = new THREE.Vector3(-.2, -.5, .02), d = e.clone().sub(w), L = d.length();
+      arm.visible = true; arm.position.copy(w); arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); arm.scale.set(1, L, 1); }
+    const curl = kind === 'surge' ? 1 : kind === 'throw' && q > .1 && q < .56 ? .7 : kind === 'place' && q < .5 ? .6 : 0;   // a fist, or fingers closed round what it holds
+    for (const f of fing) { f.scale.z = 1 - curl * .45; f.rotation.x = curl * .9; }
+    // the charge: in the palm, then off down the view (a throw), set down (place), swelling (pulse, heal, surge)
+    let ov = 0, os = 0, fly = 0;
+    if (kind === 'throw') { ov = q < .58 ? 1 : q < .8 ? 1 : 0; os = sm(cl(q / .25, 0, 1)); fly = q < .56 ? 0 : (q - .56) / .24; }
+    else if (kind === 'place') { ov = q < .52 ? 1 : 0; os = .8 * sm(cl(q / .2, 0, 1)); }
+    else if (kind === 'pulse') { ov = q < .85 ? 1 : 0; os = sm(cl(q / .38, 0, 1)) * (1.3 - .6 * sm(cl((q - .6) / .25, 0, 1))); }
+    else if (kind === 'heal') { ov = q > .2 && q < .9 ? 1 : 0; os = .9 + Math.sin(X.t * 14) * .15; }
+    else if (kind === 'surge') { ov = q > .15 && q < .85 ? 1 : 0; os = .55 + Math.random() * .35; H.position.x += (Math.random() - .5) * .004; H.position.y += (Math.random() - .5) * .004; }
+    else if (kind === 'push') { ov = q > .25 && q < .6 ? 1 : 0; os = .7; }
+    else if (kind === 'dash') { ov = q < .8 ? 1 : 0; os = .6; }
+    orb.visible = ov > 0; if (ov) { H.updateMatrix(); const palm = new THREE.Vector3(0, kind === 'push' || kind === 'heal' ? -.045 : .045, -.03).applyMatrix4(H.matrix);
+      if (fly > 0) palm.set(lp(palm.x, 0, fly), lp(palm.y, .02, fly), palm.z - fly * 1.4);
+      orb.position.copy(palm); orb.scale.setScalar(Math.max(.001, os * big * (fly > 0 ? 1 - fly * .5 : 1))); orb.material.opacity = fly > 0 ? 1 - fly : 1; glow.material.opacity = (fly > 0 ? 1 - fly : 1) * (.8 + Math.random() * .2); }
+    // a ring bursts off the palm (push) or the charge (pulse), growing and fading
+    const rq = kind === 'push' ? (q - .3) / .45 : kind === 'pulse' ? (q - .4) / .45 : kind === 'heal' ? (q - .35) / .5 : -1;
+    ring.visible = rq > 0 && rq < 1; if (ring.visible) { ring.position.copy(kind === 'pulse' || kind === 'heal' ? orb.position : H.position); if (kind === 'push') ring.position.z -= .05; ring.rotation.set(kind === 'push' ? 0 : Math.PI / 2, 0, 0); ring.scale.setScalar((1 + rq * (kind === 'push' ? 2.6 : 1.8)) * big * (kind === 'heal' ? .6 : 1)); ring.material.opacity = (1 - rq) * .85; }
+  }
   on('dry', f => { if (X && M && f === me()) X.dryT = .16; });
   const VKICK = { Sidearm: 1.25, SMG: .7, Rifle: 1, Sniper: 2.2, Shotgun: 1.9, Heavy: .8 };   // how hard each class kicks in your hands
 
@@ -5723,7 +5829,10 @@ const GAME = {
     if (!X.vcharge) { X.vcharge = X.chargeCopy(); X.vcharge.scale.setScalar(.42); X.vroot.add(X.vcharge); }
     { const q = P.alive && P.plant > 0 ? cl(P.plant / PLANT_T, 0, 1) : -1; X.vcharge.visible = q >= 0 && X.kneel > .3;
       if (q >= 0) { const s2 = sm(cl(q / .35, 0, 1)), d2 = sm(cl((q - .35) / .55, 0, 1)); X.vcharge.position.set(.03 + Math.sin(X.t * 9) * .003 * (1 - d2), lp(-.5, -.26, s2) - d2 * .3, -.66 - d2 * .12); X.vcharge.rotation.set(lp(.9, .45, s2) + d2 * .25, .35 - d2 * .3, 0); } }
-    if (P.castT > 0) { P.castT -= dt; const q = 1 - Math.max(0, P.castT) / .5, c = Math.sin(Math.min(1, q) * Math.PI); X.view.position.y -= c * .07; X.view.position.x += c * .03; X.view.rotation.x -= c * .45; X.view.rotation.z += c * .35; }   // the off hand casts: the gun dips out of the way
+    // the off hand casts (see abHandFrame): the gun dips out of its way, further for a throw or a placing
+    if (P.castT > 0) { const D = P.castD || .5, q = 1 - Math.max(0, P.castT) / D, c = Math.sin(Math.min(1, q) * Math.PI), dk = P.castK === 'throw' || P.castK === 'place' ? 1.25 : P.castK === 'dash' ? .5 : .9;
+      X.view.position.y -= c * .08 * dk; X.view.position.x += c * .035 * dk; X.view.rotation.x -= c * .45 * dk; X.view.rotation.z += c * .3 * dk; }
+    abHandFrame(P); if (P.castT > 0) P.castT -= dt;
 
     // the rival
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }
@@ -5901,10 +6010,12 @@ const GAME = {
     const v = CFG.vol == null ? 1 : cl(+CFG.vol, 0, 1); if (busN.gain.value !== v) busN.gain.value = v; return busN;
   }
   // where to plug a sound in: returns an audio node that leads to the speakers, shaped for a source at fighter f (or your own)
+  // who is listening: you, or (dead, in a team game) the teammate you are watching through: their sounds are 'yours'
+  const ear = () => (M && typeof viewer === 'function' && viewer()) || me();
   function outFor(f, vol = 1) {
     const ac = K.ac, g = ac.createGain(); let v = vol, pan = 0, muffle = false;
-    if (M && f && f !== me()) {
-      const P = me(), dx = f.x - P.x, dz = f.z - P.z, d = Math.hypot(dx, dz) || .01;
+    if (M && f && f !== ear()) {
+      const P = ear(), dx = f.x - P.x, dz = f.z - P.z, d = Math.hypot(dx, dz) || .01;
       v *= Math.pow(cl(1 - d / 55, .05, 1), 1.4); pan = cl((dx * Math.cos(P.yaw) - dz * Math.sin(P.yaw)) / d, -1, 1) * .85;
       muffle = los(P.x, eyeY(P), P.z, f.x, f.y + 1.2, f.z, false) < d - .6; if (muffle) v *= .6;
     }
@@ -5982,12 +6093,12 @@ const GAME = {
   // bake every gun as a match starts (it takes a few milliseconds each, off the main sound path)
   on('round', () => { if (K.ac) for (const k in GSND) bakeShot(k); });
   on('shot', (f, S, first) => {
-    if (!first || !canHear()) return; const G = gun(f), mine = f === me(), out = outFor(f, mine ? .6 : 1);
+    if (!first || !canHear()) return; const G = gun(f), mine = f === ear(), out = outFor(f, mine ? .6 : 1);
     if (G.rail) { tone(out, 1800, .25, 'sawtooth', .12, -1500); hiss(out, .3, .3, 'highpass', 2500); tone(out, 70, .25, 'sine', .6, -30); return; }
     const B = baked[G.k];
     if (B) {   // the gun's own shot, a hair higher or lower each time; far away it loses its edge
       const ac = K.ac, src = ac.createBufferSource(), a = ac.createGain(); src.buffer = B; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v;
-      let head = out; if (!mine && M) { const P = me(), d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 2200, cl((d - 12) / 40, 0, 1)); lpf.connect(out); head = lpf; } }
+      let head = out; if (!mine && M) { const P = ear(), d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 2200, cl((d - 12) / 40, 0, 1)); lpf.connect(out); head = lpf; } }
       src.connect(a).connect(head); src.start(); return;
     }
     bakeShot(G.k);
@@ -5997,15 +6108,15 @@ const GAME = {
   });
   const cue = (name, fn) => on(name, (a, b, c, d) => { if (canHear()) fn(a, b, c, d); });
   cue('dry', f => tone(outFor(f), 320, .03, 'square', .05));
-  cue('reload', f => { const o = outFor(f, f === me() ? .7 : 1); tone(o, 520, .04, 'square', .06, 0, .15); hiss(o, .05, .1, 'highpass', 2500, .15); tone(o, 380, .05, 'square', .07, 0, gun(f).rel * .62); hiss(o, .06, .12, 'highpass', 2000, gun(f).rel * .88); });
-  cue('swap', f => { const o = outFor(f, f === me() ? .6 : .8); hiss(o, .05, .1, 'highpass', 3000); tone(o, 700, .03, 'square', .03); });
+  cue('reload', f => { const o = outFor(f, f === ear() ? .7 : 1); tone(o, 520, .04, 'square', .06, 0, .15); hiss(o, .05, .1, 'highpass', 2500, .15); tone(o, 380, .05, 'square', .07, 0, gun(f).rel * .62); hiss(o, .06, .12, 'highpass', 2000, gun(f).rel * .88); });
+  cue('swap', f => { const o = outFor(f, f === ear() ? .6 : .8); hiss(o, .05, .1, 'highpass', 3000); tone(o, 700, .03, 'square', .03); });
   cue('melee', (f, heavy, S) => { const o = outFor(f); hiss(o, heavy ? .14 : .09, .16, 'bandpass', heavy ? 1500 : 2800, 0, 1.2); if (S) { tone(o, 180, .09, 'sine', .25, -90, .02); hiss(o, .05, .2, 'lowpass', 900, .02); } });
   // a slide: a gritty scrape that fades as it slows; a jump: a soft push-off
-  cue('slide', f => { const o = outFor(f === me() ? null : f, f === me() ? .8 : 1); hiss(o, .55, .16, 'bandpass', 900, 0, .6); hiss(o, .4, .1, 'lowpass', 300, .05); });
-  cue('jump', f => { const o = outFor(f === me() ? null : f); hiss(o, .07, f === me() ? .05 : .2, 'lowpass', 600); });
-  cue('step', f => { if (f === me()) hiss(outFor(null), .04, .035, 'lowpass', 500); else { const o = outFor(f); hiss(o, .06, .32, 'lowpass', 420); tone(o, 95, .05, 'sine', .14, -30); } });
-  cue('jump', f => { if (f !== me()) hiss(outFor(f), .06, .12, 'lowpass', 700); });
-  cue('land', f => { const o = outFor(f, f === me() ? .5 : 1); hiss(o, .09, .3, 'lowpass', 360); tone(o, 70, .08, 'sine', .25, -20); });
+  cue('slide', f => { const o = outFor(f === ear() ? null : f, f === ear() ? .8 : 1); hiss(o, .55, .16, 'bandpass', 900, 0, .6); hiss(o, .4, .1, 'lowpass', 300, .05); });
+  cue('jump', f => { const o = outFor(f === ear() ? null : f); hiss(o, .07, f === ear() ? .05 : .2, 'lowpass', 600); });
+  cue('step', f => { if (f === ear()) hiss(outFor(null), .04, .035, 'lowpass', 500); else { const o = outFor(f); hiss(o, .06, .32, 'lowpass', 420); tone(o, 95, .05, 'sine', .14, -30); } });
+  cue('jump', f => { if (f !== ear()) hiss(outFor(f), .06, .12, 'lowpass', 700); });
+  cue('land', f => { const o = outFor(f, f === ear() ? .5 : 1); hiss(o, .09, .3, 'lowpass', 360); tone(o, 70, .08, 'sine', .25, -20); });
   cue('hurt', (v, by, dmg, head) => {
     if (by === me()) { const o = outFor(null); if (head) { tone(o, 2300, .05, 'square', .07); tone(o, 3100, .06, 'square', .06, 0, .04); } else tone(o, 1500, .04, 'square', .06); }
     if (v === me()) { const o = outFor(null); tone(o, 140, .12, 'sine', .35, -70); hiss(o, .07, .18, 'lowpass', 700); }
@@ -6075,6 +6186,8 @@ const GAME = {
   cue('defused', () => { const o = outFor(null); [523, 659, 784, 1047].forEach((q, i) => tone(o, q, .18, 'triangle', .12, 0, i * .07)); });
   cue('beep', () => { if (M && M.planted) tone(outFor({ x: M.planted.x, y: 0, z: M.planted.z }, 1.4), 1850, .06, 'square', .09); });
   cue('boom', (x, z) => { const o = outFor({ x, y: 0, z }, 1.6); hiss(o, 1.1, .7, 'lowpass', 500); tone(o, 60, .9, 'sine', .7, -35); hiss(o, .25, .4, 'bandpass', 1500); });
+  cue('ping', (pg, f) => { if (pg.team !== me().team) return; const o = outFor(null); tone(o, 1320, .07, 'sine', .07); tone(o, 1760, .09, 'sine', .06, 0, .07); });
+  cue('defuseHalf', f => { if (f.team !== me().team && f !== me()) return; tone(outFor(f), 990, .08, 'square', .05); });
   cue('buy', (f, ok) => { if (f === me()) tone(outFor(null), ok ? 990 : 170, ok ? .06 : .12, 'square', .06); });
   cue('round', () => tone(outFor(null), 440, .16, 'triangle', .09));
   cue('live', () => { const o = outFor(null); tone(o, 660, .1, 'triangle', .1); tone(o, 880, .2, 'triangle', .1, 0, .1); });
@@ -6221,11 +6334,11 @@ const GAME = {
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
     else if (c === 'KeyG') throwNade(P); else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyX') ability(P, 'x'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = INSP_D;
-    else if (c === 'KeyT') dropHeld(P); else if (c === 'KeyH') dropCharge(P);   // drop the gun in your hand, or the charge, for a teammate
+    else if (c === 'KeyT') dropHeld(P); else if (c === 'KeyH') dropCharge(P); else if (c === 'KeyJ') ping(P);   // drop the gun in your hand, or the charge, for a teammate
   }
   if (typeof document !== 'undefined') {
     // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser
-    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOXTH]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
+    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOXTHJ]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       if (UI.armory) { const V = K.view, s = 1 / pxPer(); ptr = { x: cl(ptr.x + e.movementX * s, V.x0 + 2, V.x1 - 4), y: cl(ptr.y + e.movementY * s, V.y0 + 2, V.y1 - 4) }; KNAV.on = false; if (dragZ) dragZ.fn(ptr.x, ptr.y); return; }   // the armory's cursor
       const P = me(); if (!P.alive) return;   // the dead don't turn: the body stays as it fell
@@ -6233,7 +6346,7 @@ const GAME = {
     // (on a Mac, Ctrl+click arrives as a right click: while crouching that is still a shot)
     document.addEventListener('mousedown', e => { if (M && screen === 'play' && !me().alive && UI.spec && X) { nextSpec(); return; } if (!locked() || !playing()) return;
       if (UI.armory) { if (e.button === 0) { const z = zoneAt(ptr.x, ptr.y); if (z) { if (z.drag) dragZ = z; z.fn(ptr.x, ptr.y); } } return; }   // a click on the armory, at our cursor
-      if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = mouse.tap = true; else if (e.button === 2) altAction(me()); });
+      if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = mouse.tap = true; else if (e.button === 2) altAction(me()); else if (e.button === 1) { e.preventDefault(); ping(me()); } });
     document.addEventListener('mouseup', e => { if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = false; if (vcursor()) dragZ = null; });
     document.addEventListener('contextmenu', e => { if (screen === 'play') e.preventDefault(); });
     // the wheel changes weapon, one step per notch; a trackpad's two-finger swipe sends a stream of tiny steps, so they add up
@@ -6277,6 +6390,7 @@ const GAME = {
       else if (b.k === 'q' || b.k === 'e' || b.k === 'x') ability(P, b.k); else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);
       return;
     }
+    if (M && screen === 'play' && !me().alive && UI.spec && X && M.mode !== 'range') { nextSpec(); return; }   // dead: a tap moves to the next teammate
     if (x < lp(K.view.x0, K.view.x1, .45)) { if (!TS.stick) TS.stick = { id, x0: x, y0: y, x, y }; } else if (!TS.look) TS.look = { id, x, y };
   }
   function touchMove(x, y, id) {
@@ -6732,6 +6846,12 @@ const GAME = {
       g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] + 14 * p); g.lineTo(s[0] - 10 * p, s[1]); g.lineTo(s[0] + 10 * p, s[1]); g.closePath(); g.fill(); tx(g, D.by.toUpperCase(), s[0], s[1] - 14, 13, FOE, 'center', 900); } } }
     if (M.planted && M.phase === 'live') { const s = toScreen(M.planted.x, M.planted.y + .9, M.planted.z); if (s) { const p = 1 + Math.sin(M.time * 9) * .12; g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] - 11 * u * p); g.lineTo(s[0] + 9 * u * p, s[1]); g.lineTo(s[0], s[1] + 11 * u * p); g.lineTo(s[0] - 9 * u * p, s[1]); g.fill(); tx(g, Math.hypot(P.x - M.planted.x, P.z - M.planted.z).toFixed(0) + ' m', s[0], s[1] + 24 * u, 13 * u, BONE); } }
     drawSiteMarks(g, P, u);   // the sites, while you are finding your way
+    // your team's pings: a diamond where they marked, with who and how far, pulsing as it lands
+    if (M.pings && M.pings.length) for (const pg of M.pings) { const age = M.time - pg.t0; if (age > 4 || pg.team !== me().team) continue; const s = toScreen(pg.x, pg.y + .15, pg.z); if (!s) continue;
+      const a = age > 3.4 ? (4 - age) / .6 : 1, pop = 1 + Math.max(0, 1 - age / .35) * .8, r = 9 * u * pop; g.globalAlpha = a;
+      g.strokeStyle = YOU; g.lineWidth = 2.5; g.beginPath(); g.moveTo(s[0], s[1] - r); g.lineTo(s[0] + r, s[1]); g.lineTo(s[0], s[1] + r); g.lineTo(s[0] - r, s[1]); g.closePath(); g.stroke();
+      g.fillStyle = 'rgba(53,224,200,.25)'; g.fill(); if (age < .8) { g.strokeStyle = `rgba(53,224,200,${1 - age / .8})`; g.beginPath(); g.arc(s[0], s[1], r + age * 40 * u, 0, TAU); g.stroke(); }
+      tx(g, `${pg.k === me().key ? 'PING' : pg.name.toUpperCase()}  ·  ${Math.round(Math.hypot(pg.x - P.x, pg.z - P.z))} m`, s[0], s[1] - r - 9 * u, 10.5 * u, YOU, 'center', 800); g.globalAlpha = 1; }
     // --- crosshair and hit marks
     // the crosshair marks where the next shot really goes: it rides up (and sways) with the spray, less the little the view
     // itself nods, and sits a touch lower for the view punch
@@ -6786,6 +6906,7 @@ const GAME = {
       if (M.planted) { g.fillStyle = WARN; g.beginPath(); g.arc(mx + M.planted.x * k, my + M.planted.z * k, 4.5 * u, 0, TAU); g.fill(); }
       if (M.charge && !M.planted && side === 'att') { const c = carrier(), cx2 = c ? c.x : M.charge.x, cz2 = c ? c.z : M.charge.z; if (!c || c.alive) { g.strokeStyle = GOLD; g.lineWidth = 2; g.beginPath(); g.arc(mx + cx2 * k, my + cz2 * k, (c ? 6 : 4.5) * u, 0, TAU); g.stroke(); if (!c) { g.fillStyle = GOLD; g.fill(); } } }
       { const CP = M.chargePing; if (CP && side === 'att' && M.charge && !M.charge.k && !M.planted && M.time - CP.t0 < 3) { const q = (M.time - CP.t0) / 3; for (let i = 0; i < 2; i++) { const r = (q * 3 + i / 2) % 1; g.strokeStyle = `rgba(255,210,90,${1 - r})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + CP.x * k, my + CP.z * k, (5 + r * 16) * u, 0, TAU); g.stroke(); } } }
+      if (M.pings) for (const pg of M.pings) { const age = M.time - pg.t0; if (age > 4 || pg.team !== me().team) continue; g.strokeStyle = `rgba(53,224,200,${1 - age / 4})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + pg.x * k, my + pg.z * k, (4 + (age % 1) * 9) * u, 0, TAU); g.stroke(); g.fillStyle = YOU; g.fillRect(mx + pg.x * k - 2 * u, my + pg.z * k - 2 * u, 4 * u, 4 * u); }   // pings
       if (heard && (heard.t -= 1 / 60) > 0) { g.strokeStyle = `rgba(255,138,61,${heard.t / 1.6})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + heard.x * k, my + heard.z * k, (8 + (1.6 - heard.t) * 8) * u, 0, TAU); g.stroke(); }
       for (const q of M.fs) if (q !== P && q.alive && !q.gone) { const ours = q.team === P.team; if (!ours && !(q.reveal > 0 || canSee(P, q))) continue; g.fillStyle = ours ? YOU : FOE; g.beginPath(); g.arc(mx + q.x * k, my + q.z * k, (ours ? 3.2 : 4) * u, 0, TAU); g.fill(); }   // your teammates, and every rival in sight
       g.save(); g.translate(mx + P.x * k, my + P.z * k); g.rotate(-P.yaw); g.fillStyle = 'rgba(53,224,200,.22)'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 30 * u, -Math.PI / 2 - .6, -Math.PI / 2 + .6); g.fill(); g.fillStyle = YOU; g.beginPath(); g.moveTo(0, -7 * u); g.lineTo(5 * u, 5 * u); g.lineTo(-5 * u, 5 * u); g.fill(); g.restore();
@@ -6827,12 +6948,12 @@ const GAME = {
       const near = M.planted && Math.hypot(P.x - M.planted.x, P.z - M.planted.z) < 1.7, key = touch ? 'Hold the button' : 'Hold F';
       if (P.orbT > 0) ring(P.orbT / ORB.take, 'ULT ORB', OPS[P.op].col);
       else if (M.orbs && M.orbs.some(o => !o.taken && Math.hypot(o.x - P.x, o.z - P.z) < ORB.r)) hint(g, (touch ? 'Hold the button' : 'Hold F') + ' to take the orb: an ultimate point', V.y0 + 140 * u, 16 * u, OPS[P.op].col);
-      if (P.plant > 0) ring(P.plant / PLANT_T, 'PLANTING', FOE); else if (P.defuse > 0) ring(P.defuse / DEFUSE_T, 'DEFUSING', YOU);
+      if (P.plant > 0) ring(P.plant / PLANT_T, 'PLANTING', FOE); else if (P.defuse > 0) ring(P.defuse / DEFUSE_T, P.defuse >= DEFUSE_T / 2 ? 'DEFUSING  ·  HALF SAVED' : 'DEFUSING', YOU);
       else if (side === 'att' && !M.planted && M.charge && !carries(P)) { const c = carrier();
         if (c) { if (M.t > roundT() - 6 || onSite(P.x, P.z)) hint(g, c.name.toUpperCase() + ' HAS THE CHARGE' + (onSite(P.x, P.z) ? '  ·  COVER THE PLANT' : ''), V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
         else hint(g, 'THE CHARGE IS ON THE FLOOR  ·  WALK OVER IT TO PICK IT UP', V.y0 + 104 * u, 16 * u, GOLD); }
       else if (side === 'att' && !M.planted) { if (onSite(P.x, P.z)) onSiteHint(g, 'ABC'[siteAt(P.x, P.z)], key, V.y0 + 104 * u, u); else hint(g, M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site ' + siteWords() + ' and plant it' : 'Carry the charge to the site and plant it') : '', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
-      else if (side === 'def' && M.planted) hint(g, near ? key + ' to defuse' : 'Defuse the charge', V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
+      else if (side === 'def' && M.planted) hint(g, (near ? key + ' to defuse' : 'Defuse the charge') + (M.planted.half ? '  ·  HALF DONE' : ''), V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
       else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold ' + siteWords('and') + ': stop them planting' : 'Stop them planting on the site', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
       if (M.fs.some(q => q.team !== P.team && q.alive && q.defuse > 0)) tx(g, M.fs.length > 2 ? 'THEY ARE DEFUSING' : 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);   // any of them, not just the nearest
       if (P.nearLoot && GUNS[P.nearLoot.k]) hint(g, `${touch ? 'Tap PICK UP' : 'Press F'} to ${lootFree(P) ? 'pick up' : 'swap for'} the ${GUNS[P.nearLoot.k].n}`, V.y0 + 172 * u, 15 * u, GOLD);
@@ -7116,7 +7237,7 @@ const GAME = {
     else choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), MATCH_LENS.map(w => [w, `BEST OF ${w * 2 - 1}`]), winOf(CFG.win), v => { CFG.win = v; saveAll(); });
     if (!ranked) tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); y += tapH(34) + 14 * u;
     tx(g, 'BOT LEVEL', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 14 * u;
-    if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Knife out (3) to move faster, and crouch while running with it to slide; Shift walks. B opens the armory, F plants, defuses, takes orbs and swaps guns; T drops your gun, H the charge. Q, E, X: abilities.'].reduce((yy, l) => para(g, l, x0, yy, lw, 11.5 * u, '#aeb6c2') + 4 * u, y + 26 * u); }   // wrapped to the left column, clear of PLAY
+    if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Knife out (3) to move faster, and crouch while running with it to slide; Shift walks. B opens the armory, F plants, defuses, takes orbs and swaps guns; T drops your gun, H the charge. Q, E, X: abilities. Middle click or J pings a spot.'].reduce((yy, l) => para(g, l, x0, yy, lw, 11.5 * u, '#aeb6c2') + 4 * u, y + 26 * u); }   // wrapped to the left column, clear of PLAY
     // the right column: your operative, friends, practice
     const rx = V.x1 - rw - 30 * u; let ry = top;
     { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);

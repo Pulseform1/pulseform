@@ -58,7 +58,7 @@
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
         break;
-      case 'sh': { const S = castShot(F, viewDir(m.a, m.b)); F.kick = .08; F.cloak = 0; emit('shot', F, S, true); break; }
+      case 'sh': { const S = castShot(F, viewDir(m.a, m.b)), G = gun(F); F.kick = .08; F.cloak = 0; if (!(F.spray > .5)) F.sseed = Math.random() * TAU; F.spray = (F.spray || 0) + 1; F.sprayFrom = 0; F.fireT = Math.max(F.fireT || 0, -.02) + 60 / (G.rpm || 600); emit('shot', F, S, true); break; }
       case 'kn': F.swing = { t: 0, heavy: !!m.h, side: 1 }; emit('melee', F, !!m.h, null); break;
       case 'hit': { const V = M.byKey[String(m.v)]; if (V && !V.net) applyDamage(V, m.d, F, !!m.h, m.w, !!m.l); break; }
       case 'dead': {
@@ -72,6 +72,8 @@
       case 'nd': F.smokes = Math.max(0, (F.smokes || 0) - 1); F.throwT = .6; addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); emit('throw', F); break;
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;
       case 'df': defuseDone(F); break;
+      case 'dh': if (M.planted) M.planted.half = true; break;   // a defuse got halfway
+      case 'pg': if (F.team === me().team) ping(F, true, { x: +m.x, y: +m.y, z: +m.z }); break;   // a teammate's ping
       case 'rdy': F.ready = true; break;
       case 'dp': if (GUNS[m.k]) addLoot({ id: String(m.id), k: m.k, x: +m.x, z: +m.z, m: m.m | 0, r: m.r | 0, by: F.key, fo: m.fo ? String(m.fo) : '' }); break;   // a gun put on the floor
       case 'pk': { const d = M.loot && M.loot.find(q => q.id === String(m.id)); if (d) takeLoot(F, d, true); break; }   // and picked up
@@ -85,6 +87,7 @@
   // place a network fighter between the two snapshots either side of "a tenth of a second ago"
   function netFollow(f, dt) {
     for (const k of ['flash', 'reveal', 'kick']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
+    if (f.fireT > -1) f.fireT = (f.fireT || 0) - dt; settleSpray(f, gun(f), dt);   // (their spray, kept from their shots: a spectator's crosshair rides it)
     if (f.swing) { f.swing.t += dt; if (f.swing.t > .7) f.swing = null; }
     const sn = f.snaps; if (!sn || !sn.length) return; const rt = M.time - (M.netDelay || .1); while (sn.length > 2 && sn[1].at <= rt) sn.shift();
     const a = sn[0], b = sn[1] || a, k = b === a || b.at - a.at < 1e-6 ? 1 : cl((rt - a.at) / (b.at - a.at), 0, 1.4);
