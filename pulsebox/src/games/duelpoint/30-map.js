@@ -107,6 +107,11 @@
       AREAS.forEach((A, q) => { if (i >= A.r[0] && i <= A.r[2] && j >= A.r[1] && j <= A.r[3]) AREA[k] = q; });
     }
     for (const rf of ROOFS) for (let j = rf.r[1]; j <= rf.r[3]; j++) for (let i = rf.r[0]; i <= rf.r[2]; i++) CEIL[idx(i, j)] = rf.h;
+    // a doorway is only a doorway with a wall on both sides of it to hold up the wall over it: an opening at a wall's end, or
+    // between two walls that stop short, keeps no wall over it (it hung in the air) and no ceiling
+    { const solid = (i, j) => { const k = idx(i, j); return k < 0 || CH[k] >= DOOR_H; };
+      const held = d => d[0] !== d[2] ? solid(d[0] - 1, d[1]) && solid(d[2] + 1, d[3]) : d[1] !== d[3] ? solid(d[0], d[1] - 1) && solid(d[2], d[3] + 1) : (solid(d[0] - 1, d[1]) && solid(d[0] + 1, d[1])) || (solid(d[0], d[1] - 1) && solid(d[0], d[1] + 1));
+      const keep = DOORS.filter(held); DOORS.length = 0; DOORS.push(...keep); }
     for (const d of DOORS) for (let j = d[1]; j <= d[3]; j++) for (let i = d[0]; i <= d[2]; i++) CEIL[idx(i, j)] = DOOR_H;
     siteCells.forEach((cells, q) => { if (!cells.length) return; const c = [0, 0]; for (const p of cells) { c[0] += p[0] / cells.length; c[1] += p[1] / cells.length; } SITES.push({ k: 'ABC'[q], cells, c }); });
     siteC[0] = SITES[0].c[0]; siteC[1] = SITES[0].c[1];

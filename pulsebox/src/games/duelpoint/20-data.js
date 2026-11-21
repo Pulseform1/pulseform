@@ -113,8 +113,8 @@
   // overtime: tied at one short of the target after both halves, rounds go on (sides swap every round, credits topped up) until
   // one team is two ahead; after OT_MAX overtime rounds still level, the next round settles it (sudden death)
   const OT_MAX = 6, otRound = n => Math.max(0, n - 2 * HALF()), suddenDeath = n => otRound(n) > OT_MAX;   // first to 3/4/5/6 rounds; attackers and defenders swap after round N-1 (the half)
-  // round credits are tight: a win doesn't always buy a rifle and shields, a loss rarely does
-  const CASH = { start: 800, win: 2600, loss: [1600, 2000, 2400], kill: 150, plant: 250, cap: 9000, decider: 4500 };
+  // round credits: a win buys a rifle, a heavy shield and your abilities; two losses in a row nearly do, three do
+  const CASH = { start: 800, win: 3200, loss: [2100, 2600, 3000], kill: 200, plant: 300, cap: 9000, decider: 5500 };
   // the adaptive bot: your skill rating picks its level, between these ratings it blends from one to the next
   const RATING_AT = [700, 1000, 1300, 1600];
   function diffFor(r) {

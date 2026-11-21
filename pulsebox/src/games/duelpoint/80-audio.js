@@ -129,7 +129,7 @@
   function shotAt(f, G, out, mine, when) {
     const ac = K.ac, src = ac.createBufferSource(), a = ac.createGain(), V2 = bakedV[G.k] || [], n = V2.length; let buf = baked[G.k];
     if (n > 1) { SHOTN[G.k] = ((SHOTN[G.k] | 0) + 1 + (Math.random() < .35 ? 1 : 0)) % n; buf = V2[SHOTN[G.k]] || buf; }   // (turns, now and then skipping one, so no pattern)
-    src.buffer = buf; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v;
+    src.buffer = buf; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v * (GSND[G.k].sup ? .7 : .85);   // (every gun a little quieter, the suppressed ones a little more)
     let head = out, d = 0;
     if (!mine && M) { const P = ear(); d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 1600, cl((d - 12) / 45, 0, 1)); lpf.connect(out); head = lpf; } }
     src.connect(a).connect(head);

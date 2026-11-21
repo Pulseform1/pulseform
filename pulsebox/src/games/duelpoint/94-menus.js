@@ -40,7 +40,7 @@
       R.push((g, x, y, w) => { tx(g, 'Aim with', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['mouse', 'MOUSE'], ['trackpad', 'TRACKPAD']], CFG.aim, v => { CFG.aim = v; CFG.aimSet = true; if (locked()) { releaseMouse(); grabMouse(); } }); });
       R.push((g, x, y, w) => CFG.aim === 'trackpad' ? fine(g, x, y, w, 'Trackpad speed', CFG.tpsens, .2, 3, .05, v => { CFG.tpsens = v; }, v => v.toFixed(2)) : fine(g, x, y, w, 'Mouse sensitivity', CFG.sens, .05, 3, .01, v => { CFG.sens = v; }, v => v.toFixed(2)));
       R.push((g, x, y, w) => fine(g, x, y, w, 'Aiming / scoped', CFG.zsens, .3, 1.5, .05, v => { CFG.zsens = v; }, v => 'x' + v.toFixed(2)));
-      R.push((g, x, y, w) => { tx(g, 'Crouch (Ctrl)', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['hold', 'HOLD'], ['toggle', 'TOGGLE']], CFG.crouch, v => { CFG.crouch = v; keys.crouchT = false; }); });
+      R.push((g, x, y, w) => { tx(g, 'Crouch (' + keyLabel('crouch') + ')', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['hold', 'HOLD'], ['toggle', 'TOGGLE']], CFG.crouch, v => { CFG.crouch = v; keys.crouchT = false; }); });
       R.push((g, x, y, w, wide) => toggle(g, x, y, w, 'Full screen in play', CFG.full, v => { CFG.full = v; if (!v && document.fullscreenElement) try { document.exitFullscreen(); } catch (e) {} }, wide && 'stops Ctrl+W closing the tab'));
     }
     R.push((g, x, y, w) => fine(g, x, y, w, 'Field of view', fovH(), 90, 115, 1, v => { CFG.fov = v; }, v => Math.round(v) + '\u00b0'));
@@ -114,6 +114,7 @@
     if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, VN, W, H2, u);
     if (UI.panel === 'settings') return drawSettings(g, VN, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, VN, W, u);
+    if (UI.panel === 'keys') return drawKeys(g, VN, W, u);
     if (UI.panel === 'career') return drawCareer(g, VN, W, u);
     if (UI.panel === 'pass') return drawPass(g, VN, W, u);
     drawPlay(g, VN, W, H2, u);
@@ -178,15 +179,34 @@
     tx(g, 'SETTINGS', x, y + 24 * u, 36 * u, BONE, 'left'); btn(g, x + w - 150 * u, y, 150 * u, tapH(46), 'BACK', () => { UI.panel = 'home'; }, { px: 17 * u }); y += tapH(46) + 22 * u;
     y = setRows(g, x, y, w, controlRows(true), V.y1 - tapH(46) - 24 * u);
     btn(g, x, y, Math.min(w, 260 * u), tapH(46), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 16 * u, sub: 'shape, colour, presets, codes' });
+    if (!isTouch()) btn(g, x + Math.min(w, 260 * u) + 12 * u, y, Math.min(w, 260 * u), tapH(46), 'KEYBINDS', () => { UI.panel = 'keys'; }, { px: 16 * u, sub: 'every key, yours to change' });
   }
   function drawOpts(g) {
     const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale();
     g.fillStyle = 'rgba(12,16,22,.86)'; g.fillRect(V.x0, V.y0, W, H); zone(V.x0, V.y0, W, H, () => {});
     if (UI.opts === 'xh') return drawXhair(g, V, W, u);
+    if (UI.opts === 'keys') return drawKeys(g, V, W, u);
     const w = Math.min(W - 80, 760 * u), x = 640 - w / 2, row = tapH(44, 38) + 8 * u; let y = V.y0 + 24 * u;
     tx(g, 'SETTINGS', x, y + 24 * u, 36 * u, BONE, 'left'); btn(g, x + w - 150 * u, y, 150 * u, tapH(46), 'CLOSE', () => openOpts(false), { on: true, fill: YOU, px: 17 * u, sub: isTouch() ? '' : 'or press O' }); y += tapH(46) + 22 * u;
     y = setRows(g, x, y, w, controlRows(false), V.y1 - tapH(46) - 24 * u);
     btn(g, x, y, Math.min(w, 260 * u), tapH(46), 'CROSSHAIR', () => { UI.opts = 'xh'; }, { px: 16 * u });
+    if (!isTouch()) btn(g, x + Math.min(w, 260 * u) + 12 * u, y, Math.min(w, 260 * u), tapH(46), 'KEYBINDS', () => { UI.opts = 'keys'; }, { px: 16 * u });
+  }
+  // keybinds: a button for each action showing its key; click it, then press the key you want (Escape keeps the old one).
+  // A key already in use swaps over, so no key ever does two things.
+  function drawKeys(g, V, W, u) {
+    const w = Math.min(W - 80, 900 * u), x = 640 - w / 2, h = tapH(40, 34); let y = V.y0 + 20 * u;
+    tx(g, 'KEYBINDS', x, y + 24 * u, 36 * u, BONE, 'left');
+    btn(g, x + w - 150 * u, y, 150 * u, tapH(46), 'BACK', () => { UI.bindWait = null; if (UI.opts) UI.opts = 'main'; else UI.panel = 'settings'; }, { px: 17 * u });
+    btn(g, x + w - 320 * u, y, 160 * u, tapH(46), 'RESET ALL', () => { UI.bindWait = null; CFG.binds = {}; keys = {}; saveAll(); toast('KEYS BACK TO THE USUAL'); }, { px: 15 * u, off: !CFG.binds || !Object.keys(CFG.binds).length });
+    y += tapH(46) + 10 * u;
+    tx(g, UI.bindWait ? 'PRESS THE KEY YOU WANT  \u00b7  ESC TO KEEP THE OLD ONE' : 'Click an action, then press its new key. Mouse buttons and the arrow keys stay as they are.', x, y + 8 * u, 12 * u, UI.bindWait ? GOLD : DIM, 'left', 800); y += 26 * u;
+    const cols = W > 900 * u ? 3 : 2, gap = 22 * u, cw = (w - gap * (cols - 1)) / cols, per = Math.ceil(BINDS.length / cols), row = Math.min(h + 6 * u, (V.y1 - 16 * u - y) / per);
+    BINDS.forEach(([id, label], i) => {
+      const cx = x + Math.floor(i / per) * (cw + gap), cy = y + (i % per) * row, bw = cw * .44, wait = UI.bindWait === id, moved = CFG.binds && CFG.binds[id];
+      tx(g, label, cx, cy + Math.min(h, row - 4 * u) / 2, Math.min(15 * u, row * .4), moved ? YOU : BONE, 'left', 700);
+      btn(g, cx + cw - bw, cy, bw, Math.min(h, row - 4 * u), wait ? '\u2026' : keyLabel(id), () => { UI.bindWait = wait ? null : id; }, { on: wait, fill: GOLD, px: Math.min(15 * u, row * .38) });
+    });
   }
   // the crosshair designer: four sections on the left (shape, colour, dot and outline, outer lines), the live preview,
   // the presets and the share code on the right. Opens from its own tab on the menu, and from Settings in a match (O).

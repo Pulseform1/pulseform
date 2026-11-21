@@ -643,7 +643,7 @@
         if (ult) tx(g, have ? 'READY' : `${pts}/${c2}`, x + w - 6, -12, 9.5, have ? op.col : '#5a6272', 'right', 900);
         if (rdy) tx(g, A.n.toUpperCase(), x + w / 2, -74, 11, op.col, 'center', 900);
         g.restore(); };
-      slot('C', 'c', 262, 70); slot('Q', 'q', 338, 70); slot('E', 'e', 414, 70); slot('X', 'x', 490, 78);
+      slot(keyLabel('abc'), 'c', 262, 70); slot(keyLabel('abq'), 'q', 338, 70); slot(keyLabel('abe'), 'e', 414, 70); slot(keyLabel('abx'), 'x', 490, 78);
       if (P.rdy) { const K2 = isTouch() ? 'FIRE' : 'CLICK', A = P.rdy === 'x' ? op.x : op[P.rdy]; tx(g, `${K2} TO USE  ·  ${isTouch() ? 'ALT' : 'RIGHT CLICK'}: ${ABALT[P.op + P.rdy] || 'THE SAME'}  ·  ${P.rdy.toUpperCase()} TO PUT AWAY`, 400, -96, 10, BONE, 'center', 800); }
       if (P.smokes > 0) { const x = 578, on = P.smokes > 0; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? NADE.col : 'rgba(255,255,255,.12)'); tx(g, 'SMOKE ×' + (P.smokes || 0), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, 'G', x + 43, -16, 12, on ? NADE.col : '#5a6272'); }
       g.restore();

@@ -137,6 +137,13 @@
       const solid = (i, j) => { const k = idx(i, j); return k < 0 || CH[k] >= DOOR_H; }, x0 = d[0] * CS, z0 = d[1] * CS, x1 = (d[2] + 1) * CS, z1 = (d[3] + 1) * CS;
       const across = d[0] !== d[2] ? true : d[1] !== d[3] ? false : solid(d[0] - 1, d[1]) && solid(d[0] + 1, d[1]);   // across: a door in a wall that runs east-west
       flat('wall', x0, z0, x1, z1, DOOR_H, -1, 4, [.6, .6, .6, .6]);
+      // the top of the wall over the door, like any other wall's top, and an end where the wall over it does not meet another
+      // (without them the wall over a door was two bare faces: seen from above, a lone panel with the floor showing through)
+      flat('ground', x0, z0, x1, z1, WALL_H, 1, 4, [1, 1, 1, 1], [.62, .6, .57]);
+      { const ends = across ? [[d[0] - 1, d[1], x0, [-1, 0, 0]], [d[2] + 1, d[1], x1, [1, 0, 0]]] : [[d[0], d[1] - 1, z0, [0, 0, -1]], [d[0], d[3] + 1, z1, [0, 0, 1]]];
+        for (const [ei, ej, c, n] of ends) { const k = idx(ei, ej); if (k >= 0 && CH[k] >= WALL_H - .01) continue;
+          const P = across ? [[c, DOOR_H, z0], [c, DOOR_H, z1], [c, WALL_H, z1], [c, WALL_H, z0]] : [[x0, DOOR_H, c], [x1, DOOR_H, c], [x1, WALL_H, c], [x0, WALL_H, c]];
+          quad('wall', P, n, P.map(q => uvWall(across ? q[2] : q[0], q[1])), [.9, .9, .9, .9]); } }
       const faces = across ? [[[x0, z0], [x1, z0], [0, 0, -1], 0, -1], [[x0, z1], [x1, z1], [0, 0, 1], 0, 1]] : [[[x0, z0], [x0, z1], [-1, 0, 0], -1, 0], [[x1, z0], [x1, z1], [1, 0, 0], 1, 0]];
       for (const [a, b, n, di, dj] of faces) {
         const fl = n[0] > 0 || n[2] < 0 ? -1 : 1, ua = fl * (across ? a[0] : a[1]), ub = fl * (across ? b[0] : b[1]);

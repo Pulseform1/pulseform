@@ -59,21 +59,49 @@
   }
   const vcursor = () => locked() && UI.armory && screen === 'play';
   function drawCursor(g) { if (!vcursor()) return; const x = ptr.x, y = ptr.y, s = uiScale(); g.save(); g.fillStyle = '#fff'; g.strokeStyle = 'rgba(10,12,16,.9)'; g.lineWidth = 2 * s; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 20 * s); g.lineTo(x + 5.5 * s, y + 15 * s); g.lineTo(x + 9.5 * s, y + 23 * s); g.lineTo(x + 13 * s, y + 21.5 * s); g.lineTo(x + 9 * s, y + 13.5 * s); g.lineTo(x + 15.5 * s, y + 13.5 * s); g.closePath(); g.stroke(); g.fill(); g.restore(); }
+  /* keybinds: every action has its usual key, and CFG.binds holds the ones you have changed. A key you press is turned into
+     the usual key for what it does (or into nothing, if its usual job now lives on another key), so everything below reads
+     the usual keys. The arrows, right Shift and Ctrl and Z keep working beside your binds; Escape and Enter are never bound. */
+  const BINDS = [['fwd', 'Forward', 'KeyW'], ['back', 'Back', 'KeyS'], ['left', 'Left', 'KeyA'], ['right', 'Right', 'KeyD'], ['jump', 'Jump', 'Space'], ['crouch', 'Crouch', 'ControlLeft'], ['walk', 'Walk', 'ShiftLeft'],
+    ['use', 'Use / plant / defuse', 'KeyF'], ['fire', 'Fire (key)', 'KeyV'], ['reload', 'Reload', 'KeyR'], ['s1', 'Main gun', 'Digit1'], ['s2', 'Sidearm', 'Digit2'], ['s3', 'Knife', 'Digit3'],
+    ['nade', 'Grenade', 'KeyG'], ['abc', 'Ability C', 'KeyC'], ['abq', 'Ability Q', 'KeyQ'], ['abe', 'Ability E', 'KeyE'], ['abx', 'Ultimate', 'KeyX'],
+    ['inspect', 'Inspect', 'KeyY'], ['drop', 'Drop gun', 'KeyT'], ['dropc', 'Drop charge', 'KeyH'], ['ping', 'Ping', 'KeyJ'], ['armory', 'Armory', 'KeyB'], ['opts', 'Settings', 'KeyO']];
+  const BIND_DEF = Object.fromEntries(BINDS.map(b => [b[0], b[2]]));
+  const bindOf = id => (CFG.binds && CFG.binds[id]) || BIND_DEF[id];
+  function remapKey(c) {
+    const B = CFG.binds; if (!B || !c) return c;
+    for (const id in B) if (B[id] === c) return BIND_DEF[id] || c;   // a key you bound: the usual key for its action
+    for (const [id, , def] of BINDS) if (def === c && B[id] && B[id] !== c) return null;   // a usual key whose action has moved
+    return c;
+  }
+  // bind an action to a key; whatever had that key takes this action's old one, so no key ever does two things
+  function setBind(id, code) {
+    const B = Object.assign({}, CFG.binds || {}), old = bindOf(id), other = BINDS.find(b => b[0] !== id && bindOf(b[0]) === code);
+    B[id] = code; if (other) B[other[0]] = old;
+    for (const k of Object.keys(B)) if (B[k] === BIND_DEF[k]) delete B[k];
+    CFG.binds = B; keys = {}; saveAll();
+  }
+  const KEY_NAMES = { Space: 'SPACE', ShiftLeft: 'L-SHIFT', ShiftRight: 'R-SHIFT', ControlLeft: 'L-CTRL', ControlRight: 'R-CTRL', AltLeft: 'L-ALT', AltRight: 'R-ALT', Tab: 'TAB', CapsLock: 'CAPS', Backquote: '`', Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backspace: 'BKSP', ArrowUp: '\u2191', ArrowDown: '\u2193', ArrowLeft: '\u2190', ArrowRight: '\u2192' };
+  const keyName = code => KEY_NAMES[code] || String(code || '').replace(/^Key|^Digit/, '').replace(/^Numpad/, 'NUM ').toUpperCase();
+  const keyLabel = id => keyName(bindOf(id));
   function keyEvent(c, d) {
+    // waiting for a key to bind (Escape leaves it as it was)
+    if (UI.bindWait) { if (d) { if (c !== 'Escape' && c !== 'Enter') setBind(UI.bindWait, c); UI.bindWait = null; } return; }
+    const raw = c; c = remapKey(c);
     // crouch while running with the knife is a slide (a short press, so toggle-crouch doesn't leave you ducked after it); otherwise toggle crouch flips on each fresh press
     if (KM[c] === 'crouch' && d && !keys.crouch) { if (M && canSlide(me())) keys.slideAt = performance.now(); else if (CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT; }
     if (KM[c] === 'fire' && d && !keys.fire) mouse.tap = true;   // a quick V tap fires even if it starts and ends between two frames, like a click
     if (KM[c]) keys[KM[c]] = d;
     if (!d) return;
-    if (screen === 'select') return selectKey(c);
-    const arrow = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[c];
+    if (screen === 'select') return selectKey(raw);
+    const arrow = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[raw];
     if (screen === 'menu' || screen === 'over' || (screen === 'play' && (UI.armory || UI.opts))) {
       if (arrow) return navMove(arrow[0], arrow[1]);
-      if ((c === 'Enter' || c === 'Space') && navGo()) return;
-      if (c === 'Escape' && screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; KNAV.on = false; return; }
+      if ((raw === 'Enter' || raw === 'Space') && navGo()) return;
+      if (raw === 'Escape' && screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; KNAV.on = false; return; }
     }
-    if (screen === 'menu') { if (c === 'Enter' && UI.panel === 'home') menuPlay(); return; }
-    if (screen === 'over') { if (c === 'Enter') toMenu(); return; }
+    if (screen === 'menu') { if (raw === 'Enter' && UI.panel === 'home') menuPlay(); return; }
+    if (screen === 'over') { if (raw === 'Enter') toMenu(); return; }
     if (!playing()) return; const P = me();
     if (c === 'Space' && !P.alive && UI.spec && M.mode !== 'range') { nextSpec(); return; }   // dead: Space moves to the next teammate
     if (c === 'KeyO') return openOpts(!UI.opts);
@@ -86,7 +114,7 @@
   }
   if (typeof document !== 'undefined') {
     // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser
-    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOXTHJC]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
+    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[remapKey(e.code)] || /^(Key[BRQEFYOXTHJC]|Digit[1-3]|Tab)$/.test(remapKey(e.code) || '') || (CFG.binds && Object.values(CFG.binds).includes(e.code)))) e.preventDefault(); }, true);
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       if (UI.armory) { const V = K.view, s = 1 / pxPer(); ptr = { x: cl(ptr.x + e.movementX * s, V.x0 + 2, V.x1 - 4), y: cl(ptr.y + e.movementY * s, V.y0 + 2, V.y1 - 4) }; KNAV.on = false; if (dragZ) dragZ.fn(ptr.x, ptr.y); return; }   // the armory's cursor
       const P = me(); if (!P.alive) return;   // the dead don't turn: the body stays as it fell
