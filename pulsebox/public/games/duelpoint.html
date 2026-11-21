@@ -3133,22 +3133,35 @@ const GAME = {
     const UP = new THREE.Vector3(0, 1, 0);
     const limb = (a, b, r0, r1, mat) => { const va = new THREE.Vector3(a[0], a[1], a[2]), d = new THREE.Vector3(b[0], b[1], b[2]).sub(va), L = d.length(), m = add(cyl(r1, r0, L, 10), mat, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2); m.quaternion.setFromUnitVectors(UP, d.normalize()); return m; };
 
+    /* An athletic frame under a plate carrier: broad shoulders, a waist, thighs that taper to the knee, calves, proper
+       boots, pads at the knees. Each leg is hip, knee and ankle, so the boots stay flat on the floor whatever the knees do. */
     const hip = bone(G, 0, .95, 0);
     const leg = side => {
-      const th = bone(hip, side * .115 * w, 0, 0); T = th;
-      add(cyl(.1 * w, .08, .46), M.suit, 0, -.23, 0); add(rb(.125, .21, .03, .03), M.plate, 0, -.2, -.085); add(cyl(.102 * w, .102 * w, .035), M.dark, 0, -.06, 0);
-      if (side > 0) { add(rb(.05, .15, .11, .015), M.dark, .1 * w, -.2, 0); add(rb(.03, .05, .04, .01), M.acc, .128 * w, -.15, 0); } else add(rb(.04, .1, .09, .012), M.cloth, -.1 * w, -.17, .01);
+      const th = bone(hip, side * .112 * w, 0, 0); th.rotation.order = 'ZXY'; T = th;
+      add(turn([[0, .03], [.098 * w, .03], [.113 * w, -.06], [.107 * w, -.2], [.09, -.36], [.08, -.46]], 14), M.suit).scale.z = 1.1;   // thigh
+      add(rb(.132 * w, .2, .036, .04), M.plate, 0, -.2, -.103);   // thigh plate
+      for (const y of [-.1, -.3]) add(cyl(.112 * w - (y < -.2 ? .014 : 0), .112 * w - (y < -.2 ? .018 : .004), .024, 14), M.dark, 0, y, 0).scale.z = 1.1;   // straps
+      if (side > 0) { add(rb(.052, .17, .12, .016), M.dark, .118 * w, -.2, .005); add(rb(.03, .06, .05, .01), M.acc, .146 * w, -.165, .005); add(rb(.034, .07, .034, .008), M.metal, .122 * w, -.095, .02); }   // holster and sidearm
+      else { add(rb(.046, .12, .1, .014), M.cloth, -.118 * w, -.19, .01); add(rb(.022, .13, .036, .006), M.metal, -.146 * w, -.2, .012, .15); }   // pouch and knife
       const sn = bone(th, 0, -.46, 0); T = sn;
-      add(cyl(.076, .058, .42), M.suit, 0, -.21, 0); const kn = add(sph(.085), M.plate, 0, -.005, -.028); kn.scale.set(1, 1.1, .8); add(rb(.105, .25, .03, .03), M.plate, 0, -.2, -.066); add(cyl(.07, .075, .06), M.dark, 0, -.38, 0);
-      add(rb(.125, .095, .27, .035), M.dark, 0, -.433, -.045); add(rb(.132, .028, .285, .012), M.plate, 0, -.476, -.045);
-      return { th, sn };
+      add(turn([[.076, 0], [.085, -.1], [.076, -.21], [.06, -.33], [.056, -.42]], 14), M.suit, 0, 0, .01);   // shin and calf
+      const kn = add(sph(.09, 12, 10), M.plate, 0, -.005, -.034); kn.scale.set(1, 1.18, .74); add(rb(.07, .06, .024, .02), M.dark, 0, -.005, -.096);   // knee pad
+      add(rb(.11, .25, .034, .034), M.plate, 0, -.215, -.07);   // shin guard
+      const ft = bone(sn, 0, -.42, 0); ft.rotation.order = 'XZY'; T = ft;
+      add(cyl(.064, .072, .11, 12), M.dark, 0, .005, .004);   // boot collar
+      add(rb(.122, .09, .2, .03), M.dark, 0, -.02, -.028); add(sph(.063, 12, 8), M.dark, 0, -.028, -.135).scale.set(.97, .64, 1.1);   // boot and toe
+      add(rb(.132, .03, .3, .012), M.plate, 0, -.055, -.048); add(rb(.06, .04, .014, .008), M.acc, 0, -.005, .076);   // sole, heel tab
+      return { th, sn, ft };
     };
     const L = leg(-1), Rg = leg(1);
     const torso = bone(hip, 0, 0, 0); T = torso;
-    add(turn([[0, -.05], [.155 * w, -.05], [.176 * w, .03], [.172 * w, .12], [0, .12]]), M.suit).scale.z = .76;
-    add(cyl(.18 * w, .18 * w, .055, 16), M.dark, 0, .1, 0).scale.z = .78; add(rb(.07, .05, .03, .012), M.acc, 0, .1, -.142 * w);
-    for (const sx of [-1, 1]) add(rb(.075, .085, .05, .016), M.cloth, sx * .105 * w, .075, -.125 * w, 0, sx * -.45); add(rb(.16, .09, .06, .02), M.cloth, 0, .08, .135 * w);
-    add(turn([[.166 * w, .12], [.176 * w, .2], [.212 * w, .37], [.218 * w, .47], [.16 * w, .545], [.075, .585], [0, .585]], 16), M.suit).scale.z = .66;
+    add(turn([[0, -.085], [.1 * w, -.085], [.166 * w, -.03], [.174 * w, .05], [.164 * w, .12], [0, .12]], 16), M.suit).scale.z = .8;   // pelvis
+    add(rb(.1, .12, .04, .03), M.plate, 0, -.03, -.122 * w);
+    add(cyl(.172 * w, .172 * w, .055, 16), M.dark, 0, .11, 0).scale.z = .8; add(rb(.07, .05, .03, .012), M.acc, 0, .11, -.142 * w);   // belt and buckle
+    for (const sx of [-1, 1]) add(rb(.075, .085, .05, .016), M.cloth, sx * .105 * w, .085, -.125 * w, 0, sx * -.45); add(rb(.16, .09, .06, .02), M.cloth, 0, .09, .135 * w);
+    add(turn([[.16 * w, .12], [.153 * w, .2], [.166 * w, .29], [.2 * w, .39], [.224 * w, .47], [.212 * w, .52], [.15 * w, .57], [.078, .6], [0, .6]], 18), M.suit).scale.z = .72;   // waist to shoulders
+    for (const sx of [-1, 1]) add(sph(.084, 12, 10), M.suit, sx * .232 * w, .5, 0);   // the shoulders the arms hang from
+    add(rb(.2 * w, .08, .03, .02), M.plate, 0, .165, -.126 * w);   // belly plate
     // chest and back armour
     const front = new THREE.Shape(); [[-.15, .5], [.15, .5], [.168, .37], [.115, .215], [-.115, .215], [-.168, .37]].forEach((p, i) => i ? front.lineTo(p[0] * w, p[1]) : front.moveTo(p[0] * w, p[1]));
     const plateG = new THREE.ExtrudeGeometry(front, { depth: .035, bevelEnabled: true, bevelThickness: .014, bevelSize: .014, bevelSegments: 2 });
@@ -3160,14 +3173,15 @@ const GAME = {
     add(new THREE.TorusGeometry(.078, .014, 8, 18), M.plate, 0, .575, 0, Math.PI / 2);
     // the belt: pouches round it, a holster with a sidearm on the right hip, a knife on the left
     T = torso; for (let i = 0; i < 4; i++) { const a = -2.2 + i * .55; add(rb(.06, .07, .04, .012), i % 2 ? M.cloth : M.dark, Math.sin(a) * .17 * w, .02, Math.cos(a) * -.13 * w, 0, -a); }
-    add(rb(.03, .02, .025, .006), M.metal, 0, .1, -.15 * w); T = Rg.th; add(rb(.05, .14, .08, .012), M.dark, .125 * w, -.08, .01); add(rb(.03, .07, .03, .006), M.metal, .125 * w, .0, .01); T = L.th; add(rb(.02, .12, .035, .006), M.metal, -.12 * w, -.06, .03, .2); T = torso;
-    add(cyl(.058, .072, .1), M.skin, 0, .6, 0);
+    add(rb(.03, .02, .025, .006), M.metal, 0, .11, -.15 * w);
+    add(cyl(.056, .07, .11), M.skin, 0, .6, 0); add(cyl(.074, .09, .05, 14), M.suit, 0, .575, 0);
+    const cap = (sx, mat, k = 1) => { const c = add(sph(.104 * k, 14, 10), mat, sx * .25 * w, .555, 0, 0, 0, sx * -.38); c.scale.set(1.12, .6, 1.16); const c2 = add(sph(.09 * k, 12, 8), M.dark, sx * .262 * w, .525, 0, 0, 0, sx * -.38); c2.scale.set(1.12, .5, 1.16); };
     // what they carry on their back, and their shoulders
     if (f.op === 'bastion') { add(rb(.3, .34, .15, .04), M.cloth, 0, .37, .21); add(cyl(.062, .062, .36, 12), M.plate, 0, .58, .2, 0, 0, Math.PI / 2); for (const sx of [-1, 1]) { const pd = add(rb(.17, .1, .2, .04), M.plate, sx * .285, .535, 0, 0, 0, sx * -.3); pd.scale.z = 1; add(rb(.12, .03, .15, .012), M.acc, sx * .3, .592, 0, 0, 0, sx * -.3); } }
-    else if (f.op === 'iris') { add(rb(.22, .26, .09, .03), M.plate, 0, .38, .175); add(cyl(.006, .006, .34, 6), M.dark, .08, .66, .19); add(sph(.012, 8, 6), M.glow, .08, .835, .19); add(rb(.14, .03, .01, .01), M.glow, 0, .44, .222); for (const sx of [-1, 1]) add(sph(.098), M.plate, sx * .245 * w, .525, 0).scale.set(1, .8, 1); }
-    else if (f.op === 'vex') { add(rb(.24, .28, .1, .03), M.dark, 0, .37, .175); for (const sx of [-1, 1]) add(sph(.1), M.cloth, sx * .25 * w, .525, 0).scale.set(1.05, .8, 1.05); }
+    else if (f.op === 'iris') { add(rb(.22, .26, .09, .03), M.plate, 0, .38, .175); add(cyl(.006, .006, .34, 6), M.dark, .08, .66, .19); add(sph(.012, 8, 6), M.glow, .08, .835, .19); add(rb(.14, .03, .01, .01), M.glow, 0, .44, .222); for (const sx of [-1, 1]) cap(sx, M.plate); }
+    else if (f.op === 'vex') { add(rb(.24, .28, .1, .03), M.dark, 0, .37, .175); for (const sx of [-1, 1]) cap(sx, M.cloth, 1.06); }
     else {
-      for (const sx of [-1, 1]) add(rb(.12, .08, .15, .03), M.plate, sx * .262 * w, .535, 0, 0, 0, sx * -.28);   // shoulder pads
+      for (const sx of [-1, 1]) { add(rb(.13, .07, .17, .03), M.plate, sx * .262 * w, .565, 0, 0, 0, sx * -.32); add(rb(.11, .05, .15, .02), M.plate, sx * .292 * w, .515, 0, 0, 0, sx * -.62); }   // shoulder pads: two overlapping plates
       if (f.op === 'nova') { add(rb(.18, .22, .08, .03), M.plate, 0, .38, .17); add(rb(.04, .18, .02, .01), M.glow, 0, .38, .215); for (const sx of [-1, 1]) add(cyl(.025, .025, .2, 8), M.dark, sx * .07, .38, .2); }
       else if (f.op === 'wraith') { add(rb(.34, .58, .014, .03), M.cloth, 0, .24, .17, -.06); add(rb(.36, .05, .04, .015), M.plate, 0, .52, .16); }
       else if (f.op === 'talon') { const q = add(cyl(.055, .05, .42, 10), M.cloth, .08, .36, .19, 0, 0, -.45); for (let k = 0; k < 3; k++) add(new THREE.ConeGeometry(.018, .07, 6), M.glow, .16 + k * .022, .58 - k * .012, .19 + (k - 1) * .025, 0, 0, -.45); add(rb(.05, .3, .015, .01), M.dark, 0, .36, .16, 0, 0, .6); }
@@ -3178,7 +3192,11 @@ const GAME = {
     const tails = bone(torso, 0, .1, .1 * w); if (f.op === 'vex') { T = tails; for (const sx of [-1, 1]) add(rb(.15, .5, .014, .03), M.cloth, sx * .085, -.26, .02, .08, 0, sx * .06); T = torso; }
     // the head
     const head = bone(torso, 0, .7, 0); T = head;
-    add(sph(.124), M.skin); add(rb(.16, .075, .1, .03), M.suit, 0, -.07, -.062);
+    // a head with a face: a skull a little taller than it is wide, ears, brows over dark eyes, a nose, and a gaiter pulled up
+    // over the jaw and neck (each operative's own mask, visor or helmet goes on top)
+    add(sph(.124, 16, 12), M.skin).scale.set(.95, 1.06, 1); add(new THREE.SphereGeometry(.131, 16, 8, 0, TAU, Math.PI * .57, Math.PI * .43), M.suit).scale.set(.96, 1.06, 1.01);
+    add(rb(.075, .05, .03, .016), M.dark, 0, -.068, -.116); if (!['vex', 'bastion', 'wraith'].includes(f.op)) add(sph(.02, 8, 6), M.skin, 0, -.014, -.121).scale.set(.75, 1.1, 1);   // (not under a hood, a helm or a mask)
+    for (const sx of [-1, 1]) { add(rb(.036, .014, .012, .005), M.dark, sx * .043, .012, -.112, 0, sx * -.3); add(rb(.044, .01, .014, .004), M.suit, sx * .043, .03, -.113, 0, sx * -.3, sx * -.1); add(sph(.022, 8, 6), M.skin, sx * .116, -.002, .004).scale.set(.45, 1, .75); }
     if (f.op === 'vex') {
       add(new THREE.SphereGeometry(.16, 18, 12, 0, TAU, 0, Math.PI * .64), M.cloth, 0, .012, .018); add(new THREE.TorusGeometry(.128, .024, 8, 20), M.cloth, 0, .0, -.05, .12); add(new THREE.ConeGeometry(.09, .16, 10), M.cloth, 0, .06, .16, 1.9);
       add(rb(.19, .034, .03, .012), M.glow, 0, .012, -.118); add(new THREE.TorusGeometry(.105, .042, 8, 18), M.cloth, 0, -.125, .0, Math.PI / 2);
@@ -3187,7 +3205,7 @@ const GAME = {
       add(new THREE.CylinderGeometry(.137, .132, .062, 22, 1, true, Math.PI - 1.15, 2.3), M.glow, 0, .004, 0); add(rb(.3, .016, .02, .006), M.plate, 0, .042, -.115);
       for (const sx of [-1, 1]) add(cyl(.042, .042, .03, 14), M.plate, sx * .148, -.005, .01, 0, 0, Math.PI / 2); add(cyl(.005, .005, .2, 6), M.dark, -.15, .11, .03); add(sph(.01, 8, 6), M.glow, -.15, .215, .03); add(rb(.05, .05, .05, .01), M.dark, 0, -.085, -.11);
     } else if (f.op === 'nova') {   // a sleek half helmet, a crest fin and a gold visor
-      add(new THREE.SphereGeometry(.147, 18, 12, 0, TAU, 0, Math.PI * .5), M.plate, 0, .012, .012); add(rb(.026, .12, .3, .01), M.acc, 0, .145, .02);
+      add(new THREE.SphereGeometry(.147, 18, 12, 0, TAU, 0, Math.PI * .5), M.plate, 0, .012, .012); { const fs = new THREE.Shape(); [[.15, 0], [-.15, 0], [-.19, .11], [-.06, .05]].forEach((q, i) => i ? fs.lineTo(q[0], q[1]) : fs.moveTo(q[0], q[1])); add(new THREE.ExtrudeGeometry(fs, { depth: .022, bevelEnabled: true, bevelThickness: .004, bevelSize: .004, bevelSegments: 1 }), M.acc, -.011, .135, .03, 0, Math.PI / 2, 0); }
       add(rb(.27, .034, .03, .012), M.glow, 0, .005, -.124); for (const sx of [-1, 1]) add(rb(.022, .085, .08, .008), M.plate, sx * .142, -.015, -.035);
     } else if (f.op === 'wraith') {   // a close cowl, a high collar and a blank mask with two slits
       add(new THREE.SphereGeometry(.158, 18, 12, 0, TAU, 0, Math.PI * .62), M.suit, 0, .014, .022); add(rb(.19, .2, .05, .05), M.plate, 0, -.025, -.118);
@@ -3211,7 +3229,7 @@ const GAME = {
     const pose = gd => {
       while (armMesh.children.length) { const c = armMesh.children[0]; armMesh.remove(c); if (c.geometry) c.geometry.dispose(); }
       const s = 1.08, a = .29, b = .27, knife = gd.k === 'knife';
-      gunHold.position.set(...(knife ? [.17, -.17, -.33] : gd.pistolHold ? [.02, -.05, -.46] : [.085, -.1, -.3]));
+      gunHold.position.set(...(knife ? [.17, -.17, -.33] : gd.pistolHold ? [.03, -.04, -.47] : gd.k === 'stub' ? [.09, -.11, -.36] : [.118, -.07, -.255]));
       const hold = gunHold.position, Rt = [hold.x + gd.grip[0] * s, hold.y + gd.grip[1] * s, hold.z + gd.grip[2] * s];
       let Lt = knife ? [-.2, -.34, -.2] : gd.pistolHold ? [Rt[0] - .05, Rt[1] - .015, Rt[2] + .005] : [hold.x + gd.sup[0] * s - .01, hold.y + gd.sup[1] * s, hold.z + gd.sup[2] * s];
       const SR = [.235 * w, 0, 0], SL = [-.235 * w, 0, 0];
@@ -3219,10 +3237,17 @@ const GAME = {
       T = armMesh;
       for (const [S, Tg, px] of [[SR, Rt, 1], [SL, Lt, -1]]) {
         const d = new THREE.Vector3(Tg[0] - S[0], Tg[1] - S[1], Tg[2] - S[2]), Ld = Math.min(d.length(), a + b - .005); d.normalize();
-        const x = (a * a - b * b + Ld * Ld) / (2 * Ld), h = Math.sqrt(Math.max(0, a * a - x * x)), pole = new THREE.Vector3(px * .7, -1, .2); pole.addScaledVector(d, -pole.dot(d)).normalize();
+        const x = (a * a - b * b + Ld * Ld) / (2 * Ld), h = Math.sqrt(Math.max(0, a * a - x * x)), pole = new THREE.Vector3(px * .55, -1, .25); pole.addScaledVector(d, -pole.dot(d)).normalize();
         const E = [S[0] + d.x * x + pole.x * h, S[1] + d.y * x + pole.y * h, S[2] + d.z * x + pole.z * h], Hn = [S[0] + d.x * Ld, S[1] + d.y * Ld, S[2] + d.z * Ld];
-        limb(S, E, .064, .054, M.suit); limb(E, Hn, .052, .042, M.suit); add(sph(.057, 10, 8), M.plate, E[0], E[1], E[2]); { const gl = add(rb(.078, .095, .07, .02), M.dark, Hn[0], Hn[1], Hn[2]); gl.lookAt(Hn[0] + d.x, Hn[1] + d.y, Hn[2] + d.z); const kn = add(rb(.07, .022, .02, .006), M.plate, Hn[0] + d.x * .03, Hn[1] + d.y * .03 + .02, Hn[2] + d.z * .03); kn.lookAt(Hn[0] + d.x, Hn[1] + d.y + .02, Hn[2] + d.z); }
-        const mid = [(E[0] + Hn[0]) / 2, (E[1] + Hn[1]) / 2, (E[2] + Hn[2]) / 2]; add(sph(.056, 10, 8), M.acc, mid[0], mid[1], mid[2]).scale.set(1, .5, 1);
+        limb(S, E, .07, .058, M.suit); limb(E, Hn, .056, .044, M.suit); add(sph(.062, 10, 8), M.plate, E[0], E[1], E[2]).scale.set(1, 1, 1.05);   // upper arm, forearm, elbow pad
+        const fa = new THREE.Vector3(Hn[0] - E[0], Hn[1] - E[1], Hn[2] - E[2]).normalize(), mid = [lp(E[0], Hn[0], .58), lp(E[1], Hn[1], .58), lp(E[2], Hn[2], .58)];
+        const br = add(cyl(.052, .058, .12, 10), M.plate, mid[0], mid[1], mid[2]); br.quaternion.setFromUnitVectors(UP, fa); add(sph(.03, 8, 6), M.acc, mid[0] - fa.y * .0 + px * .0, mid[1] + .05, mid[2]).scale.set(1, .4, 1.4);   // bracer with a light on it
+        // the hand: a palm in line with the forearm, four fingers closed round the grip (or cupped under the handguard), a thumb
+        const hand = new THREE.Group(); hand.position.set(Hn[0], Hn[1], Hn[2]); hand.lookAt(Hn[0] + fa.x, Hn[1] + fa.y, Hn[2] + fa.z); if (px < 0 && !gd.pistolHold && !knife) hand.rotateZ(-1.2); armMesh.add(hand); const was = T; T = hand;
+        add(cyl(.044, .048, .03, 10), M.dark, 0, 0, -.005, Math.PI / 2); add(rb(.074, .034, .078, .012), M.dark, 0, 0, .042);   // cuff, palm
+        add(rb(.07, .03, .05, .012), M.dark, -px * .012, -.02, .09, .9); add(rb(.066, .028, .04, .012), M.dark, -px * .014, -.05, .092, 1.9);   // fingers, curled
+        add(rb(.024, .026, .055, .01), M.dark, px * .03, .012, .06, -.3, px * .5); add(rb(.07, .02, .03, .006), M.plate, 0, .024, .05);   // thumb, knuckle guard
+        T = was;
       }
       bake(armMesh, false);
     };
@@ -3345,12 +3370,25 @@ const GAME = {
     const sp = Math.hypot(f.vx, f.vz), sl = f.slide ? 1 : 0, amp = Math.min(1, sp / 3.5) * (f.sprinting ? 1.15 : .8) * (1 - sl), ph = f.walkT * 1.9, cr = Math.max(f.crouch, U.kn) * (1 - sl);
     animKit(U.gunHold.children[0], dt);
     U.sl = lp(U.sl || 0, sl, Math.min(1, dt * 12)); U.spr = lp(U.spr || 0, f.sprinting ? 1 : 0, Math.min(1, dt * 8)); const sk = U.sl;
-    // legs: swing with the stride, the trailing knee bends; a crouch folds both
-    for (const [lg, o] of [[U.L, 0], [U.Rg, Math.PI]]) { const s = Math.sin(ph + o); lg.th.rotation.x = s * amp + cr * 1.1; lg.sn.rotation.x = -Math.max(0, -Math.cos(ph + o)) * amp * 1.2 - cr * 1.9; }
+    /* legs: each boot is put where it belongs (planted in a shooter's stance, or carried through its stride) and the knee
+       is solved to it, so feet never sink or skate through the floor. The stride follows the way they are really moving:
+       forward, backing off or stepping sideways. */
+    { const cy = Math.cos(f.yaw), sy = Math.sin(f.yaw), kk = Math.min(1, dt * 10), dirF = sp > .4 ? -(f.vx * sy + f.vz * cy) / sp : 0, dirR = sp > .4 ? (f.vx * cy - f.vz * sy) / sp : 0;
+      U.vf = lp(U.vf || 0, dirF, kk); U.vr = lp(U.vr || 0, dirR, kk); U.amp = lp(U.amp || 0, amp, kk);
+      const am = U.amp, still = 1 - Math.min(1, am * 1.4), stride = am * (f.sprinting ? .36 : .3) * (1 - cr * .45), lift = am * (f.sprinting ? .2 : .14);
+      const hipY = .95 - .035 - cr * .4 - sk * .55 - (U.kn || 0) * .14 + Math.abs(Math.sin(ph)) * am * .035 - am * .03, L1 = .46, L2 = .42;
+      U.hip.position.y = hipY; U.hip.position.x = Math.sin(ph) * am * .012;
+      for (const [lg, o, side] of [[U.L, 0, -1], [U.Rg, Math.PI, 1]]) { const p = ph + o, sw = Math.sin(p), up = Math.max(0, Math.cos(p));
+        // where the ankle goes, from the hip joint: forward, out to the side, and how far below
+        const fz = (side < 0 ? .13 : -.1) * (still + cr * .5) + sw * stride * U.vf + cr * .04, tx = side * (.035 + cr * .05 + still * .02) + sw * stride * .7 * U.vr - U.hip.position.x, dy = Math.max(.2, hipY - .07 - up * lift);
+        const down = Math.hypot(tx, dy), rz = Math.atan2(tx, dy), D = Math.min(Math.hypot(down, fz), L1 + L2 - .004);
+        const bend = Math.PI - Math.acos(cl((L1 * L1 + L2 * L2 - D * D) / (2 * L1 * L2), -1, 1)), a = Math.atan2(fz, down) + Math.acos(cl((L1 * L1 + D * D - L2 * L2) / (2 * L1 * D), -1, 1));
+        const toe = up * (-.55 * (.5 - .5 * sw) + .22 * (.5 + .5 * sw)) - (side > 0 ? cr * .0 : 0);   // heel up as it leaves the floor, toe up as it comes down
+        lg.th.rotation.set(a, 0, rz); lg.sn.rotation.x = -bend; lg.ft.rotation.set(bend - a + toe, 0, -rz); } }
     // a slide: the lead leg out straight, the other tucked, leaning back low; a sprint: leaning into it
-    if (sk > .01) { U.L.th.rotation.x = lp(U.L.th.rotation.x, -1.35, sk); U.L.sn.rotation.x = lp(U.L.sn.rotation.x, 0, sk); U.Rg.th.rotation.x = lp(U.Rg.th.rotation.x, -.4, sk); U.Rg.sn.rotation.x = lp(U.Rg.sn.rotation.x, -2.1, sk); }
-    U.hip.position.y = .95 - cr * .4 - sk * .55 + Math.abs(Math.sin(ph)) * amp * .03;
-    U.torso.rotation.x = -cr * .3 - amp * .1 - f.pitch * .1 - U.spr * .22 + sk * .5; U.torso.rotation.y = Math.sin(ph) * amp * .09; U.torso.position.y = Math.sin(X.t * 1.7 + f.x) * .004;
+    if (sk > .01) { for (const lg of [U.L, U.Rg]) { lg.th.rotation.z *= 1 - sk; lg.ft.rotation.set(lp(lg.ft.rotation.x, .3, sk), 0, 0); }
+      U.L.th.rotation.x = lp(U.L.th.rotation.x, -1.35, sk); U.L.sn.rotation.x = lp(U.L.sn.rotation.x, 0, sk); U.Rg.th.rotation.x = lp(U.Rg.th.rotation.x, -.4, sk); U.Rg.sn.rotation.x = lp(U.Rg.sn.rotation.x, -2.1, sk); }
+    U.torso.rotation.x = -.05 - cr * .3 - amp * .1 - f.pitch * .1 - U.spr * .22 + sk * .5; U.torso.rotation.y = Math.sin(ph) * amp * .09; U.torso.rotation.z = -Math.sin(ph) * amp * .025; U.torso.position.y = Math.sin(X.t * 1.7 + f.x) * .004;
     U.tails.rotation.x = .1 + amp * .55 + Math.sin(ph * 2) * amp * .08 + cr * .5;
     const sw = f.swing ? Math.sin(Math.min(1, f.swing.t / .4) * Math.PI) : 0;
     U.arms.rotation.x = f.pitch * .9 + f.kick * 1.2 - (f.swing && f.swing.heavy ? 0 : sw * .7) + Math.sin(ph * 2) * amp * .03; U.arms.rotation.y = f.swing && !f.swing.heavy ? (f.swing.t / .4 - .5) * 1.3 * (f.swing.side || 1) * (sw > 0 ? 1 : 0) : 0; U.arms.position.z = f.swing && f.swing.heavy ? -sw * .25 : 0;
@@ -3371,7 +3409,7 @@ const GAME = {
       const rt = f.reloadT > 0 ? 1 - f.reloadT / G.rel : -1, tl = rt < 0 ? 0 : sm(cl(rt / .14, 0, 1)) * (1 - sm(cl((rt - .88) / .12, 0, 1))); U.arms.rotation.z = -tl * .45; U.arms.rotation.x -= tl * .35; }
     // kneeling over the charge: leaning in, head down, both hands at the floor (the gun put away); planting, the charge is in
     // the hands on its way down; defusing, the hands work at it
-    if (U.kn > .01) { const k = U.kn, work = f.defuse > 0 ? Math.sin(X.t * 13) * .07 : 0; U.hip.position.y -= .14 * k; U.torso.rotation.x -= .5 * k; U.head.rotation.x -= .3 * k; U.arms.rotation.x = lp(U.arms.rotation.x, -1.0 + work, k); U.arms.rotation.z = lp(U.arms.rotation.z, 0, k); U.arms.position.z = lp(U.arms.position.z, .05, k); }
+    if (U.kn > .01) { const k = U.kn, work = f.defuse > 0 ? Math.sin(X.t * 13) * .07 : 0; U.torso.rotation.x -= .5 * k; U.head.rotation.x -= .3 * k; U.arms.rotation.x = lp(U.arms.rotation.x, -1.0 + work, k); U.arms.rotation.z = lp(U.arms.rotation.z, 0, k); U.arms.position.z = lp(U.arms.position.z, .05, k); }
     U.gunHold.visible = U.gunHold.visible && U.kn < .5;
     { const hold = f.alive && f.plant > 0; if (hold && !U.held) { U.held = X.chargeCopy(); U.held.scale.setScalar(.75); U.arms.add(U.held); } if (U.held) { U.held.visible = hold; if (hold) U.held.position.set(.03, -.2, -.4); } }
     if (f.alive) { U.rag = null; f.rag = null; U.dead = 0; A.rotation.x = 0; A.rotation.z = 0; A.position.y = f.y; }
@@ -3407,7 +3445,8 @@ const GAME = {
     U.hip.position.y = .95 - hipDrop;
     [U.L, U.Rg].forEach((lg, i) => { const bent = i === R.leg, kneeT = R.fwd ? (bent ? -.35 : .05) : R.slump ? 1.25 : bent ? .95 : .12, kneeS = R.fwd ? (bent ? -1.1 : -.15) : R.slump ? -1.35 : bent ? -1.55 : -.12;
       const kt = R.fwd && R.slump ? 1.45 : kneeT, ks = R.fwd && R.slump ? -2.35 : kneeS;   // (slumped forward against a wall: kneeling)
-      lg.th.rotation.x = lp(.55 * buckle, kt, g); lg.sn.rotation.x = lp(-1.1 * buckle, ks, g); lg.th.rotation.z = (i ? -1 : 1) * .12 * g; });
+      lg.th.rotation.x = lp(.55 * buckle, kt, g); lg.sn.rotation.x = lp(-1.1 * buckle, ks, g); lg.th.rotation.z = (i ? -1 : 1) * .12 * g; lg.th.rotation.y = 0; lg.ft.rotation.set(.35 * g - .2 * buckle * (1 - g), 0, (i ? 1 : -1) * .25 * g); });
+    U.hip.position.x = 0; U.torso.rotation.z = 0;
     U.torso.rotation.x = lp(.25 * buckle, R.fwd ? .2 : -.18, g); U.torso.rotation.y = R.side * .22 * g; U.torso.position.y = 0;
     U.arms.rotation.x = lp(-.5 * buckle, R.fwd ? -1.25 : R.slump ? -.9 : 1.15 + R.r3 * .5, g); U.arms.rotation.y = R.side * .35 * g; U.arms.rotation.z = R.side * (R.fwd ? -.2 : .45) * g; U.arms.position.z = 0;
     U.head.rotation.x = lp(.3 * buckle, R.fwd ? .45 : R.slump ? .55 : -.4, g); U.head.rotation.z = R.side * .45 * g; U.head.rotation.y = R.side * .25 * g;
