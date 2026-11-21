@@ -4193,6 +4193,8 @@ const GAME = {
       const out = Math.min(0, pose.front + .215) * 1.3;   // (negative: further forward)
       gunHold.position.set(...(knife ? [.17, -.17, -.33] : gd.pistolHold ? [.03, -.04, -.47] : gd.k === 'stub' ? [.09, -.11, -.36 + out] : [.118, -.07, -.255 + out]));
       if (!knife && !gd.pistolHold && !gd.dead && gd.rear != null) gunHold.position.z = Math.min(gunHold.position.z, pose.front - .03 - gd.rear);   // (a long stock: the whole gun comes forward until its back end is in front of the chest)
+      // (but never past where the grip hand can reach: the gun stays in the hands, even if a long stock then brushes the armour)
+      if (!knife && !gd.pistolHold && !gd.dead) { const g0 = gunHold.position, rx = g0.x + gd.grip[0] * s - .235 * w, ry = g0.y + gd.grip[1] * s; while (g0.z < -.2 && Math.hypot(rx, ry, g0.z + gd.grip[2] * s) > a + b - .03) g0.z += .01; }
       const hold = gunHold.position, Rt = gd.dead ? gd.dead[0] : [hold.x + gd.grip[0] * s, hold.y + gd.grip[1] * s, hold.z + gd.grip[2] * s];   // (dead: the hands wherever the body left them)
       let Lt = gd.dead ? gd.dead[1] : knife ? [-.2, -.34, -.2] : gd.pistolHold ? [Rt[0] - .05, Rt[1] - .015, Rt[2] + .005] : [hold.x + gd.sup[0] * s - .01, hold.y + gd.sup[1] * s, hold.z + gd.sup[2] * s];
       const SR = [.235 * w, 0, 0], SL = [-.235 * w, 0, 0];
