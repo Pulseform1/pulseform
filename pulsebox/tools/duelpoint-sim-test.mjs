@@ -15,7 +15,7 @@ const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name:
 const T = new Function('K', 'MP', code + `
   return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
-    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
+    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
 let failed = 0;
 const ok = (cond, name, extra = '') => { if (!cond) failed++; console.log((cond ? '  ok   ' : '  FAIL ') + name + (extra !== '' ? '  (' + extra + ')' : '')); };
@@ -141,6 +141,7 @@ function moveChecks() {
   knifeWallChecks();
   pickupPingNovaChecks();
   tagDefusePingChecks();
+  firstToNovaSlideChecks();
   const lv = [600, 900, 1100, 1400, 1700].map(r => T.diffFor(r)), keys = ['react', 'err', 'flick'];
   ok(lv.every((L, i) => !i || keys.every(k => L.D[k] <= lv[i - 1].D[k]) && L.D.turn >= lv[i - 1].D.turn), 'the bot gets sharper at every step up in rating', lv.map(L => L.D.n).join(' → '));
   T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto', map: 0 }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
@@ -205,6 +206,22 @@ function tagDefusePingChecks() {
   [M, P, F] = lab(); P.yaw = -Math.PI / 2; I = idle(); const pinged = T.ping(P);
   ok(pinged && M.pings.length === 1 && M.pings[0].team === P.team && M.pings[0].x > P.x, 'a ping marks the spot you are looking at, for your team', M.pings[0] ? `${M.pings[0].x.toFixed(1)}, ${M.pings[0].z.toFixed(1)}` : 'none');
   ok(!T.ping(P) && M.pings.length === 1, 'and pings cannot be spammed');
+}
+// matches are 'first to N' and attackers and defenders swap at the half; Nova's Surge comes back on a kill, offline and when
+// the kill arrives from another device; a slide keeps your aim steadier than a run
+function firstToNovaSlideChecks() {
+  let I = idle(); T.setInput(() => I); const was = T.CFG.win;
+  for (const w of [3, 4, 5, 6]) { T.CFG.win = w; T.seed(4); T.startMatch({ mode: 'bot', diff: 0, map: 0 }); T.skipLoad();
+    const side = n => { T.startRound(n); return T.sideOf(T.me()); }, s1 = side(1), sHalf = side(w - 1), sNext = side(w);
+    ok(T.WIN === w && T.HALF() === w - 1 && s1 === sHalf && sNext !== s1, `first to ${w}: you keep your side for ${w - 1} rounds, then attackers and defenders swap`, `${s1} … round ${w - 1} ${sHalf}, round ${w} ${sNext}`); }
+  T.CFG.win = was;
+  // Nova: online the kill is worked out on the victim's device; when word of it arrives, the killer's Surge comes back there too
+  let [M, P, F] = lab('lancer'); P.op = 'nova'; P.ab.q = 0; M.online = true; F.net = true; F.alive = true; F.hp = 30;
+  T.netMsg({ t: 'dead', f: F.key, by: P.key, h: 0, w: 'lancer' }); M.online = false; F.net = false;
+  ok(!F.alive && P.ab.q === 1, 'online: Nova gets a Surge back when her kill is reported from the other device', `q ${P.ab.q}`);
+  // a slide: steadier than running, not as steady as walking
+  [M, P, F] = lab('lancer'); const G = T.GUNS.lancer; Object.assign(P, { vx: 9, vz: 0, ground: true, slide: null }); const run = T.moveErr(P, G); P.slide = { t: .3 }; const sl = T.moveErr(P, G);
+  ok(sl < run * .7 && sl > G.acc.walk, 'sliding throws your aim less than running does', `run ${run.toFixed(2)}°, slide ${sl.toFixed(2)}°`);
 }
 // a 4v4 plays a spread of maps: one-site ones, two-site ones, the three-site one and the one where attackers start at both ends
 const FOUR_MAPS = ['saltworks', 'verdance', 'neonrow', 'sandgate', 'skyline', 'orbital', 'ironworks', 'frostline'];

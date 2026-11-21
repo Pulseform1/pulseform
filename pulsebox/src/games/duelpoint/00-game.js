@@ -10,7 +10,7 @@ const GAME = {
     'Mouse and keys: WASD moves, mouse aims, click shoots, right click aims or scopes. Shift walks, Ctrl or C crouches (hold or toggle), pull out your knife (3) to move faster, O opens settings (sensitivity), Space jumps, R reloads, 1 2 3 swap weapons, Q and E are your abilities, G throws a smoke grenade, F plants and defuses, B opens the armory, middle click or J pings a spot for your team.',
     'Phone: left thumb moves, right thumb looks. Auto-fire shoots when your crosshair is on your rival; the buttons do the rest.',
     'Stand still to shoot straight. Your first shot lands exactly on the crosshair; moving throws it off. Tap the opposite direction to stop dead. Tap or burst at range: sprays climb, then sway.',
-    'Attack: carry the charge to the ring and plant it. Defend: stop them, or defuse it. Pick the match length (best of 5, 7, 9 or 11); sides swap at the half.',
+    'Attack: carry the charge to the ring and plant it. Defend: stop them, or defuse it. Pick the match length (first to 3, 4, 5 or 6 rounds); attackers and defenders swap sides at the half.',
   ],
   skins: [{ name: 'Default', price: 0 }],
 };

@@ -16,13 +16,49 @@
     else for (let k = 0; k <= R0.d; k++) { g.fillStyle = col; g.fillRect(-r * .5 + k * r * .36, r * 1.1, r * .28, r * .16); }
     g.restore();
   }
+  /* THE RANK LADDER: every tier, low to high, with its emblem and its three divisions, and where you stand on it at a team
+     size (UI.rankScale holds the size while it is open). Opened by clicking your rank: on the career page, on the play
+     page, or after a ranked match. Click outside it, the X or Esc to close. */
+  function drawRankScale(g, V) {
+    const size = UI.rankScale; if (!size) return; const u = uiScale(), W = V.x1 - V.x0, H = V.y1 - V.y0;
+    const pw = Math.min(W - 40 * u, 1120 * u), ph = Math.min(H - 30 * u, 470 * u), px = (V.x0 + V.x1) / 2 - pw / 2, py = (V.y0 + V.y1) / 2 - ph / 2 + 8 * u;
+    zone(V.x0, V.y0, W, H, () => { UI.rankScale = null; }); zone(px, py, pw, ph, () => {});   // outside closes; inside does nothing (bar the buttons below)
+    g.fillStyle = 'rgba(4,6,9,.72)'; g.fillRect(V.x0, V.y0, W, H); rr(g, px, py, pw, ph, 12, 'rgba(12,15,21,.98)', 'rgba(239,233,220,.18)', 1.5);
+    const S = rankedOf(size), on = placed(S), me0 = on ? rankOf(S.rv) : null;
+    tx(g, 'RANKS', px + 26 * u, py + 34 * u, 28 * u, BONE, 'left', 900);
+    tx(g, `YOUR ${vsLabel(size)} RANK:  ${on ? rankLabel(S.rv).toUpperCase() + '  ·  ' + me0.rp + ' RP' : 'UNRANKED  ·  PLACEMENTS ' + S.n + ' / ' + PLACE_N}`, px + 26 * u, py + 62 * u, 13 * u, on ? me0.T.col : GOLD, 'left', 900);
+    // which team size (each has a rank of its own), and the close button
+    const tw = Math.min(330 * u, pw - 420 * u); choice(g, px + pw - tw - 70 * u, py + 22 * u, tw, 32 * u, RQ.map(k => [+k, vsLabel(+k)]), +size, v => { UI.rankScale = v; });
+    btn(g, px + pw - 52 * u, py + 22 * u, 32 * u, 32 * u, '×', () => { UI.rankScale = null; }, { px: 20 * u });
+    // the tiers, low to high, left to right
+    const n = TIERS.length, gx = px + 22 * u, gw = pw - 44 * u, cw2 = gw / n, top = py + 92 * u, ch2 = ph - 92 * u - 78 * u;
+    for (let t = 0; t < n; t++) {
+      const T = TIERS[t], x = gx + t * cw2, cx = x + cw2 / 2, mine = on && me0.t === t, above = on ? t > me0.t : true, topT = t === n - 1;
+      rr(g, x + 4 * u, top, cw2 - 8 * u, ch2, 8, mine ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.025)', mine ? T.col : 'rgba(239,233,220,.1)', mine ? 2 : 1);
+      g.globalAlpha = above && !mine ? .62 : 1;
+      tierBadge(g, cx, top + 52 * u, Math.min(26 * u, cw2 * .22), t * DIVS * 100 + (topT ? 0 : 0), true);
+      tx(g, T.n.toUpperCase(), cx, top + 104 * u, Math.min(15 * u, cw2 / 6.5), T.col, 'center', 900);
+      if (mine) { rr(g, cx - 46 * u, top + 136 * u, 92 * u, 22 * u, 11, T.col); tx(g, 'YOU  ·  ' + me0.rp + ' RP', cx, top + 147 * u, 10.5 * u, INK, 'center', 900); }   // you are here
+      tx(g, ['RECRUIT BOTS', 'RECRUIT BOTS', 'VETERAN BOTS', 'VETERAN BOTS', 'ELITE BOTS', 'ELITE BOTS', 'LEGEND BOTS', 'LEGEND BOTS'][t], cx, top + 122 * u, Math.min(9 * u, cw2 / 12), DIM, 'center', 800);
+      // its divisions, I at the bottom up to III (the top tier is one, with no ceiling)
+      const divs = topT ? 1 : DIVS, dh = Math.min(34 * u, (ch2 - 150 * u) / 3 - 6 * u);
+      for (let d = 0; d < divs; d++) {
+        const y = top + ch2 - 14 * u - (d + 1) * (dh + 6 * u), here = mine && (topT || me0.d === d), done = on && (t < me0.t || (t === me0.t && d < me0.d));
+        rr(g, x + 14 * u, y, cw2 - 28 * u, dh, 5, here ? T.col : done ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.04)', here ? T.col : 'rgba(239,233,220,.14)', 1);
+        tx(g, topT ? 'NO CEILING' : T.n.toUpperCase() + ' ' + ['I', 'II', 'III'][d], cx, y + dh / 2 - (here ? 5 * u : 0), Math.min(10.5 * u, cw2 / 9), here ? INK : done ? BONE : DIM, 'center', 900);
+        if (here) { const k = topT ? Math.min(1, me0.rp / 300) : me0.rp / 100; g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x + 20 * u, y + dh - 9 * u, cw2 - 40 * u, 4 * u); g.fillStyle = INK; g.fillRect(x + 20 * u, y + dh - 9 * u, (cw2 - 40 * u) * k, 4 * u); }
+      }
+      g.globalAlpha = 1;
+    }
+    para(g, `Every division is 100 RP. Win a ranked match to gain RP and lose one to drop; cross 100 and you go up a division, fall below 0 and you go down. Your first ${PLACE_N} ranked matches at each team size are placements, and they set where you start. Beat bots or players above your rank to climb faster.`, px + 26 * u, py + ph - 56 * u, pw - 52 * u, 11.5 * u, '#aeb6c2');
+  }
   // a rank as words: "Cobalt II · 45 RP", or the placements still to play
   const rankWords = size => { const S = rankedOf(size); return placed(S) ? `${rankLabel(S.rv)}  ·  ${rankOf(S.rv).rp} RP` : `Unranked  ·  placements ${S.n}/${PLACE_N}`; };
 
   // the end of a ranked match: the emblem, the rank, the bar filling or draining, the points, and a rank up or down
   function drawRankResult(g, x, y, w, u) {
     const R = M.rankRes, t = (performance.now() - M.payT) / 1000, h = 196 * u, col = R.d >= 0 ? YOU : FOE;
-    rr(g, x, y, w, h, 10, GLASS); tx(g, `RANKED  ·  ${vsLabel(R.size)}`, x + 16 * u, y + 20 * u, 12 * u, GOLD, 'left', 900);
+    zone(x, y, w, h, () => { UI.rankScale = R.size; }); rr(g, x, y, w, h, 10, GLASS); tx(g, 'SEE RANKS ›', x + w - 14 * u, y + 20 * u, 10 * u, DIM, 'right', 800); tx(g, `RANKED  ·  ${vsLabel(R.size)}`, x + 16 * u, y + 20 * u, 12 * u, GOLD, 'left', 900);
     if (R.placing) {   // still placing: a pip for each placement match
       tierBadge(g, x + w / 2, y + 78 * u, 30 * u, 0, false); tx(g, `PLACEMENT ${R.n} OF ${PLACE_N}`, x + w / 2, y + 134 * u, 16 * u, BONE, 'center', 900);
       for (let k = 0; k < PLACE_N; k++) { g.fillStyle = k < R.n ? GOLD : 'rgba(255,255,255,.14)'; g.fillRect(x + w / 2 - PLACE_N * 13 * u + k * 26 * u + 3 * u, y + 152 * u, 20 * u, 6 * u); }
@@ -47,9 +83,9 @@
     const ch = 86 * u, y1 = top + 34 * u, hs = STATS.kills ? Math.round(100 * STATS.heads / STATS.kills) + '%' : '—', wr = STATS.matches ? Math.round(100 * STATS.wins / STATS.matches) + '%' : '—';
     [['MATCHES', STATS.matches], ['WINS', STATS.wins + '  ·  ' + wr], ['KILLS', STATS.kills], ['HEADSHOTS', hs]].forEach(([a, b], k) => card(x0 + k * (cw + gap), y1, cw, ch, a, b));
     // ranked, one card per team size
-    const y2 = y1 + ch + 30 * u, rh = 150 * u; tx(g, 'RANKED', x0, y2 - 12 * u, 12 * u, GOLD, 'left', 900);
+    const y2 = y1 + ch + 30 * u, rh = 150 * u; tx(g, 'RANKED', x0, y2 - 12 * u, 12 * u, GOLD, 'left', 900); tx(g, 'CLICK A RANK TO SEE EVERY TIER', x0 + 80 * u, y2 - 12 * u, 10 * u, DIM, 'left', 800);
     { const cr = Math.min(cw, (cw * 4 + gap * 3 - gap * (RQ.length - 1)) / RQ.length); RQ.forEach((k, i) => { const S = rankedOf(+k), on = placed(S), x = x0 + i * (cr + gap), r0 = rankOf(S.rv), col = on ? r0.T.col : 'rgba(239,233,220,.3)';
-      rr(g, x, y2, cr, rh, 10, 'rgba(14,18,26,.94)', col, on ? 2 : 1.5); tx(g, vsLabel(+k), x + 14 * u, y2 + 20 * u, 13 * u, BONE, 'left', 900); tx(g, `${S.w}W · ${S.n - S.w}L`, x + cr - 12 * u, y2 + 20 * u, 10.5 * u, DIM, 'right', 800);
+      const hov = zone(x, y2, cr, rh, () => { UI.rankScale = +k; }); rr(g, x, y2, cr, rh, 10, hov ? 'rgba(24,30,42,.96)' : 'rgba(14,18,26,.94)', col, on ? 2 : 1.5); tx(g, vsLabel(+k), x + 14 * u, y2 + 20 * u, 13 * u, BONE, 'left', 900); tx(g, `${S.w}W · ${S.n - S.w}L`, x + cr - 12 * u, y2 + 20 * u, 10.5 * u, DIM, 'right', 800);
       tierBadge(g, x + cr / 2, y2 + 62 * u, 24 * u, S.rv, on);
       tx(g, on ? rankLabel(S.rv).toUpperCase() : 'UNRANKED', x + cr / 2, y2 + 106 * u, 15 * u, on ? col : BONE, 'center', 900);
       if (on && !r0.top) { g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(x + 14 * u, y2 + 120 * u, cr - 28 * u, 5 * u); g.fillStyle = col; g.fillRect(x + 14 * u, y2 + 120 * u, (cr - 28 * u) * r0.rp / 100, 5 * u); }

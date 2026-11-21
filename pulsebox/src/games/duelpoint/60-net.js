@@ -62,7 +62,7 @@
       case 'kn': F.swing = { t: 0, heavy: !!m.h, side: 1 }; emit('melee', F, !!m.h, null); break;
       case 'hit': { const V = M.byKey[String(m.v)]; if (V && !V.net) applyDamage(V, m.d, F, !!m.h, m.w, !!m.l); break; }
       case 'dead': {
-        if (!F.alive) break; const by = M.byKey[String(m.by)] || other(F); F.alive = false; F.hp = 0; F.stat.d++; by.stat.k++; if (m.h) by.stat.hs++; if (!by.net && by.team !== F.team) { by.credits = Math.min(CASH.cap, by.credits + CASH.kill); ultGain(by, 1); }   // your kill charges your ultimate, as it does offline
+        if (!F.alive) break; const by = M.byKey[String(m.by)] || other(F); F.alive = false; F.hp = 0; F.stat.d++; by.stat.k++; if (m.h) by.stat.hs++; if (!by.net && by.team !== F.team) { by.credits = Math.min(CASH.cap, by.credits + CASH.kill); ultGain(by, 1); novaKill(by, F); }   // your kill charges your ultimate (and Nova's Surge), as it does offline
         M.feed.unshift({ a: by.name, b: F.name, w: GUNS[m.w] ? GUNS[m.w].n : m.w, head: !!m.h, t: 0, mine: by === me() }); emit('kill', F, by, !!m.h, m.w); if (M.host) judge(); break;
       }
       case 'ab': spendAb(F, m.k); applyAbility(F, m.k, m.d || {}); break;

@@ -245,7 +245,7 @@ const GAME = {
     'Mouse and keys: WASD moves, mouse aims, click shoots, right click aims or scopes. Shift walks, Ctrl or C crouches (hold or toggle), pull out your knife (3) to move faster, O opens settings (sensitivity), Space jumps, R reloads, 1 2 3 swap weapons, Q and E are your abilities, G throws a smoke grenade, F plants and defuses, B opens the armory, middle click or J pings a spot for your team.',
     'Phone: left thumb moves, right thumb looks. Auto-fire shoots when your crosshair is on your rival; the buttons do the rest.',
     'Stand still to shoot straight. Your first shot lands exactly on the crosshair; moving throws it off. Tap the opposite direction to stop dead. Tap or burst at range: sprays climb, then sway.',
-    'Attack: carry the charge to the ring and plant it. Defend: stop them, or defuse it. Pick the match length (best of 5, 7, 9 or 11); sides swap at the half.',
+    'Attack: carry the charge to the ring and plant it. Defend: stop them, or defuse it. Pick the match length (first to 3, 4, 5 or 6 rounds); attackers and defenders swap sides at the half.',
   ],
   skins: [{ name: 'Default', price: 0 }],
 };
@@ -376,7 +376,7 @@ const GAME = {
   const MATCH_LENS = [3, 4, 5, 6], winOf = w => MATCH_LENS.includes(+w) ? +w : 5, HALF = () => WIN_ROUNDS - 1;
   // overtime: tied at one short of the target after both halves, rounds go on (sides swap every round, credits topped up) until
   // one team is two ahead; after OT_MAX overtime rounds still level, the next round settles it (sudden death)
-  const OT_MAX = 6, otRound = n => Math.max(0, n - 2 * HALF()), suddenDeath = n => otRound(n) > OT_MAX;   // first to 3/4/5/6: best of 5/7/9/11, sides swap at the half
+  const OT_MAX = 6, otRound = n => Math.max(0, n - 2 * HALF()), suddenDeath = n => otRound(n) > OT_MAX;   // first to 3/4/5/6 rounds; attackers and defenders swap after round N-1 (the half)
   // round credits are tight: a win doesn't always buy a rifle and shields, a loss rarely does
   const CASH = { start: 800, win: 2600, loss: [1600, 2000, 2400], kill: 150, plant: 250, cap: 9000, decider: 4500 };
   // the adaptive bot: your skill rating picks its level, between these ratings it blends from one to the next
@@ -990,6 +990,7 @@ const GAME = {
   function moveErr(f, G) {
     const A = G.acc, fr = f.od > 0 ? 0 : Math.hypot(f.vx, f.vz) / SPD;   // Overdrive: running never throws your aim
     let e = fr <= .28 ? 0 : fr <= .5 ? lp(0, A.walk, (fr - .28) / .22) : lp(A.walk, A.run, Math.min(1, (fr - .5) / .5));
+    if (f.slide && f.ground) e = Math.min(e, lp(A.walk, A.run, .33));   // sliding: steadier than a run (a third of the way from walking to running)
     if (!f.ground) e = Math.max(e, A.jump); return e;
   }
   // the half-angle of the cone the next bullet can leave in, in radians
@@ -1151,13 +1152,16 @@ const GAME = {
     if (!M.clutch) for (const t of [0, 1]) { const up = M.fs.filter(q => q.team === t && q.alive), them = M.fs.filter(q => q.team !== t && q.alive); if (up.length === 1 && them.length >= 2) M.clutch = { key: up[0].key, team: t, vs: them.length }; }
   });
   on('planted', f => { if (f && f.stat) f.stat.pl = (f.stat.pl || 0) + 1; }); on('defused', f => { if (f && f.stat) f.stat.df = (f.stat.df || 0) + 1; });
+  // Nova lives on momentum: every kill fills one Surge slot back up (to the most she can carry). Run on the killer's own
+  // device: offline that is where the kill happens; online the kill is worked out on the victim's and this runs when word arrives
+  function novaKill(by, v) { if (by && !by.net && v && by.team !== v.team && by.op === 'nova' && M.mode !== 'range' && (by.ab.q | 0) < OPS.nova.q.max) { by.ab.q = (by.ab.q | 0) + 1; emit('novaRefund', by); } }
   function die(v, by, head, wk) {
     if (!v.alive) return;
     v.alive = false; v.plant = v.defuse = 0; v.scoped = 0; v.burst = null; v.chan = null; v.volley = null; v.stat.d++; by.stat.k++; if (head) by.stat.hs++;
     ultGain(v, 1); if (by.team !== v.team) ultGain(by, 1);
     if (!by.net && by.team !== v.team) by.credits = Math.min(CASH.cap, by.credits + CASH.kill);
     // Nova lives on momentum: every kill hands back one Surge (up to the most she can carry)
-    if (!by.net && by.team !== v.team && by.op === 'nova' && M.mode !== 'range' && (by.ab.q | 0) < OPS.nova.q.max) { by.ab.q = (by.ab.q | 0) + 1; emit('novaRefund', by); }
+    novaKill(by, v);
     M.feed.unshift({ a: by.name, b: v.name, w: GUNS[wk] ? GUNS[wk].n : wk, head, t: 0, mine: by === me() });
     if (v === me()) M.deathInfo = { by: by.name, key: by.key, op: by.op, w: GUNS[wk] ? GUNS[wk].n : wk, head, hp: Math.ceil(by.hp), sh: by.sh, yaw: yawTo(v.x, v.z, by.x, by.z), at: [v.x, v.y, v.z], kat: [by.x, by.y, by.z], t: 0 };
     emit('kill', v, by, head, wk);
@@ -1513,7 +1517,7 @@ const GAME = {
   function startMatch(o) {
     const mode = o.mode, online = mode === 'online', host = !online || MP.isHost(), ops = Object.keys(OPS);
     const ranked = !!o.ranked && (mode === 'bot' || online);
-    WIN_ROUNDS = mode === 'range' || mode === 'demo' || ranked ? 5 : winOf(o.win != null ? o.win : online ? 5 : CFG.win);   // online, everyone uses the host's length; ranked is always best of 9
+    WIN_ROUNDS = mode === 'range' || mode === 'demo' || ranked ? 5 : winOf(o.win != null ? o.win : online ? 5 : CFG.win);   // online, everyone uses the host's length; ranked is always first to 5
     const A = fighter(mode === 'demo' ? { name: 'Rook', op: pick(ops), bot: { diff: 1 } } : { name: online ? MP.name : 'You', op: CFG.op, local: true });
     const auto = mode === 'bot' && (o.diff === 'auto' || o.diff == null), L = auto ? diffFor(STATS.rating) : null;
     const botP = () => auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' }, used = new Set([A.name, ...(o.mates || []).map(m => m.name)]), bname = () => { const n = pick(BOT_NAMES.filter(q => !used.has(q))); used.add(n); return n; };
@@ -2129,7 +2133,7 @@ const GAME = {
       case 'kn': F.swing = { t: 0, heavy: !!m.h, side: 1 }; emit('melee', F, !!m.h, null); break;
       case 'hit': { const V = M.byKey[String(m.v)]; if (V && !V.net) applyDamage(V, m.d, F, !!m.h, m.w, !!m.l); break; }
       case 'dead': {
-        if (!F.alive) break; const by = M.byKey[String(m.by)] || other(F); F.alive = false; F.hp = 0; F.stat.d++; by.stat.k++; if (m.h) by.stat.hs++; if (!by.net && by.team !== F.team) { by.credits = Math.min(CASH.cap, by.credits + CASH.kill); ultGain(by, 1); }   // your kill charges your ultimate, as it does offline
+        if (!F.alive) break; const by = M.byKey[String(m.by)] || other(F); F.alive = false; F.hp = 0; F.stat.d++; by.stat.k++; if (m.h) by.stat.hs++; if (!by.net && by.team !== F.team) { by.credits = Math.min(CASH.cap, by.credits + CASH.kill); ultGain(by, 1); novaKill(by, F); }   // your kill charges your ultimate (and Nova's Surge), as it does offline
         M.feed.unshift({ a: by.name, b: F.name, w: GUNS[m.w] ? GUNS[m.w].n : m.w, head: !!m.h, t: 0, mine: by === me() }); emit('kill', F, by, !!m.h, m.w); if (M.host) judge(); break;
       }
       case 'ab': spendAb(F, m.k); applyAbility(F, m.k, m.d || {}); break;
@@ -7150,13 +7154,49 @@ const GAME = {
     else for (let k = 0; k <= R0.d; k++) { g.fillStyle = col; g.fillRect(-r * .5 + k * r * .36, r * 1.1, r * .28, r * .16); }
     g.restore();
   }
+  /* THE RANK LADDER: every tier, low to high, with its emblem and its three divisions, and where you stand on it at a team
+     size (UI.rankScale holds the size while it is open). Opened by clicking your rank: on the career page, on the play
+     page, or after a ranked match. Click outside it, the X or Esc to close. */
+  function drawRankScale(g, V) {
+    const size = UI.rankScale; if (!size) return; const u = uiScale(), W = V.x1 - V.x0, H = V.y1 - V.y0;
+    const pw = Math.min(W - 40 * u, 1120 * u), ph = Math.min(H - 30 * u, 470 * u), px = (V.x0 + V.x1) / 2 - pw / 2, py = (V.y0 + V.y1) / 2 - ph / 2 + 8 * u;
+    zone(V.x0, V.y0, W, H, () => { UI.rankScale = null; }); zone(px, py, pw, ph, () => {});   // outside closes; inside does nothing (bar the buttons below)
+    g.fillStyle = 'rgba(4,6,9,.72)'; g.fillRect(V.x0, V.y0, W, H); rr(g, px, py, pw, ph, 12, 'rgba(12,15,21,.98)', 'rgba(239,233,220,.18)', 1.5);
+    const S = rankedOf(size), on = placed(S), me0 = on ? rankOf(S.rv) : null;
+    tx(g, 'RANKS', px + 26 * u, py + 34 * u, 28 * u, BONE, 'left', 900);
+    tx(g, `YOUR ${vsLabel(size)} RANK:  ${on ? rankLabel(S.rv).toUpperCase() + '  ·  ' + me0.rp + ' RP' : 'UNRANKED  ·  PLACEMENTS ' + S.n + ' / ' + PLACE_N}`, px + 26 * u, py + 62 * u, 13 * u, on ? me0.T.col : GOLD, 'left', 900);
+    // which team size (each has a rank of its own), and the close button
+    const tw = Math.min(330 * u, pw - 420 * u); choice(g, px + pw - tw - 70 * u, py + 22 * u, tw, 32 * u, RQ.map(k => [+k, vsLabel(+k)]), +size, v => { UI.rankScale = v; });
+    btn(g, px + pw - 52 * u, py + 22 * u, 32 * u, 32 * u, '×', () => { UI.rankScale = null; }, { px: 20 * u });
+    // the tiers, low to high, left to right
+    const n = TIERS.length, gx = px + 22 * u, gw = pw - 44 * u, cw2 = gw / n, top = py + 92 * u, ch2 = ph - 92 * u - 78 * u;
+    for (let t = 0; t < n; t++) {
+      const T = TIERS[t], x = gx + t * cw2, cx = x + cw2 / 2, mine = on && me0.t === t, above = on ? t > me0.t : true, topT = t === n - 1;
+      rr(g, x + 4 * u, top, cw2 - 8 * u, ch2, 8, mine ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.025)', mine ? T.col : 'rgba(239,233,220,.1)', mine ? 2 : 1);
+      g.globalAlpha = above && !mine ? .62 : 1;
+      tierBadge(g, cx, top + 52 * u, Math.min(26 * u, cw2 * .22), t * DIVS * 100 + (topT ? 0 : 0), true);
+      tx(g, T.n.toUpperCase(), cx, top + 104 * u, Math.min(15 * u, cw2 / 6.5), T.col, 'center', 900);
+      if (mine) { rr(g, cx - 46 * u, top + 136 * u, 92 * u, 22 * u, 11, T.col); tx(g, 'YOU  ·  ' + me0.rp + ' RP', cx, top + 147 * u, 10.5 * u, INK, 'center', 900); }   // you are here
+      tx(g, ['RECRUIT BOTS', 'RECRUIT BOTS', 'VETERAN BOTS', 'VETERAN BOTS', 'ELITE BOTS', 'ELITE BOTS', 'LEGEND BOTS', 'LEGEND BOTS'][t], cx, top + 122 * u, Math.min(9 * u, cw2 / 12), DIM, 'center', 800);
+      // its divisions, I at the bottom up to III (the top tier is one, with no ceiling)
+      const divs = topT ? 1 : DIVS, dh = Math.min(34 * u, (ch2 - 150 * u) / 3 - 6 * u);
+      for (let d = 0; d < divs; d++) {
+        const y = top + ch2 - 14 * u - (d + 1) * (dh + 6 * u), here = mine && (topT || me0.d === d), done = on && (t < me0.t || (t === me0.t && d < me0.d));
+        rr(g, x + 14 * u, y, cw2 - 28 * u, dh, 5, here ? T.col : done ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.04)', here ? T.col : 'rgba(239,233,220,.14)', 1);
+        tx(g, topT ? 'NO CEILING' : T.n.toUpperCase() + ' ' + ['I', 'II', 'III'][d], cx, y + dh / 2 - (here ? 5 * u : 0), Math.min(10.5 * u, cw2 / 9), here ? INK : done ? BONE : DIM, 'center', 900);
+        if (here) { const k = topT ? Math.min(1, me0.rp / 300) : me0.rp / 100; g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x + 20 * u, y + dh - 9 * u, cw2 - 40 * u, 4 * u); g.fillStyle = INK; g.fillRect(x + 20 * u, y + dh - 9 * u, (cw2 - 40 * u) * k, 4 * u); }
+      }
+      g.globalAlpha = 1;
+    }
+    para(g, `Every division is 100 RP. Win a ranked match to gain RP and lose one to drop; cross 100 and you go up a division, fall below 0 and you go down. Your first ${PLACE_N} ranked matches at each team size are placements, and they set where you start. Beat bots or players above your rank to climb faster.`, px + 26 * u, py + ph - 56 * u, pw - 52 * u, 11.5 * u, '#aeb6c2');
+  }
   // a rank as words: "Cobalt II · 45 RP", or the placements still to play
   const rankWords = size => { const S = rankedOf(size); return placed(S) ? `${rankLabel(S.rv)}  ·  ${rankOf(S.rv).rp} RP` : `Unranked  ·  placements ${S.n}/${PLACE_N}`; };
 
   // the end of a ranked match: the emblem, the rank, the bar filling or draining, the points, and a rank up or down
   function drawRankResult(g, x, y, w, u) {
     const R = M.rankRes, t = (performance.now() - M.payT) / 1000, h = 196 * u, col = R.d >= 0 ? YOU : FOE;
-    rr(g, x, y, w, h, 10, GLASS); tx(g, `RANKED  ·  ${vsLabel(R.size)}`, x + 16 * u, y + 20 * u, 12 * u, GOLD, 'left', 900);
+    zone(x, y, w, h, () => { UI.rankScale = R.size; }); rr(g, x, y, w, h, 10, GLASS); tx(g, 'SEE RANKS ›', x + w - 14 * u, y + 20 * u, 10 * u, DIM, 'right', 800); tx(g, `RANKED  ·  ${vsLabel(R.size)}`, x + 16 * u, y + 20 * u, 12 * u, GOLD, 'left', 900);
     if (R.placing) {   // still placing: a pip for each placement match
       tierBadge(g, x + w / 2, y + 78 * u, 30 * u, 0, false); tx(g, `PLACEMENT ${R.n} OF ${PLACE_N}`, x + w / 2, y + 134 * u, 16 * u, BONE, 'center', 900);
       for (let k = 0; k < PLACE_N; k++) { g.fillStyle = k < R.n ? GOLD : 'rgba(255,255,255,.14)'; g.fillRect(x + w / 2 - PLACE_N * 13 * u + k * 26 * u + 3 * u, y + 152 * u, 20 * u, 6 * u); }
@@ -7181,9 +7221,9 @@ const GAME = {
     const ch = 86 * u, y1 = top + 34 * u, hs = STATS.kills ? Math.round(100 * STATS.heads / STATS.kills) + '%' : '—', wr = STATS.matches ? Math.round(100 * STATS.wins / STATS.matches) + '%' : '—';
     [['MATCHES', STATS.matches], ['WINS', STATS.wins + '  ·  ' + wr], ['KILLS', STATS.kills], ['HEADSHOTS', hs]].forEach(([a, b], k) => card(x0 + k * (cw + gap), y1, cw, ch, a, b));
     // ranked, one card per team size
-    const y2 = y1 + ch + 30 * u, rh = 150 * u; tx(g, 'RANKED', x0, y2 - 12 * u, 12 * u, GOLD, 'left', 900);
+    const y2 = y1 + ch + 30 * u, rh = 150 * u; tx(g, 'RANKED', x0, y2 - 12 * u, 12 * u, GOLD, 'left', 900); tx(g, 'CLICK A RANK TO SEE EVERY TIER', x0 + 80 * u, y2 - 12 * u, 10 * u, DIM, 'left', 800);
     { const cr = Math.min(cw, (cw * 4 + gap * 3 - gap * (RQ.length - 1)) / RQ.length); RQ.forEach((k, i) => { const S = rankedOf(+k), on = placed(S), x = x0 + i * (cr + gap), r0 = rankOf(S.rv), col = on ? r0.T.col : 'rgba(239,233,220,.3)';
-      rr(g, x, y2, cr, rh, 10, 'rgba(14,18,26,.94)', col, on ? 2 : 1.5); tx(g, vsLabel(+k), x + 14 * u, y2 + 20 * u, 13 * u, BONE, 'left', 900); tx(g, `${S.w}W · ${S.n - S.w}L`, x + cr - 12 * u, y2 + 20 * u, 10.5 * u, DIM, 'right', 800);
+      const hov = zone(x, y2, cr, rh, () => { UI.rankScale = +k; }); rr(g, x, y2, cr, rh, 10, hov ? 'rgba(24,30,42,.96)' : 'rgba(14,18,26,.94)', col, on ? 2 : 1.5); tx(g, vsLabel(+k), x + 14 * u, y2 + 20 * u, 13 * u, BONE, 'left', 900); tx(g, `${S.w}W · ${S.n - S.w}L`, x + cr - 12 * u, y2 + 20 * u, 10.5 * u, DIM, 'right', 800);
       tierBadge(g, x + cr / 2, y2 + 62 * u, 24 * u, S.rv, on);
       tx(g, on ? rankLabel(S.rv).toUpperCase() : 'UNRANKED', x + cr / 2, y2 + 106 * u, 15 * u, on ? col : BONE, 'center', 900);
       if (on && !r0.top) { g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(x + 14 * u, y2 + 120 * u, cr - 28 * u, 5 * u); g.fillStyle = col; g.fillRect(x + 14 * u, y2 + 120 * u, (cr - 28 * u) * r0.rp / 100, 5 * u); }
@@ -7279,12 +7319,8 @@ const GAME = {
     MENU_TABS.forEach(([k, n], i) => { const x = tx0 + i * tw, on = UI.panel === k, hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
       tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, Math.min(13 * u, tw / 7.5), on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
-    tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); { const S = rankedOf(CFG.size), on = placed(S); tierBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, S.rv, on);
-      // the rank line stops short of your coins (on a phone the card is narrow): the team size goes first, then it is cut
-      g.font = `800 ${fitPx(g, 17 * u)}px ${FONT}`; const room = V.x1 - 22 * u - g.measureText(String(STATS.coins)).width - 17 * u * 1.4 - (px + 69 * u);
-      const rl = on ? rankLabel(S.rv).toUpperCase() + '  ' + rankOf(S.rv).rp + ' RP' : 'UNRANKED ' + S.n + '/' + PLACE_N, full = rl + '  ·  ' + vsLabel(CFG.size);
-      g.font = `800 ${fitPx(g, 10 * u)}px ${FONT}`; const line = g.measureText(full).width <= room ? full : rl;
-      g.save(); g.beginPath(); g.rect(px + 60 * u, V.y0, Math.max(0, room + 9 * u), h); g.clip(); tx(g, line, px + 69 * u, V.y0 + 38 * u, 10 * u, on ? rankOf(S.rv).T.col : DIM, 'left', 800); g.restore(); }
+    // your photo, your name and the operative you play (your rank is on the career page and the play page: click it there for the ladder)
+    { const op = OPS[CFG.op] || OPS.vex; tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 21 * u, 13 * u, BONE, 'left', 900); tx(g, op.n, px + 50 * u, V.y0 + 38 * u, 10 * u, op.col, 'left', 800); }
     coinTag(g, V.x1 - 22 * u, V.y0 + h / 2, 17 * u, STATS.coins);
     return h;
   }
@@ -7295,6 +7331,7 @@ const GAME = {
     const nh = drawTopBar(g, V, u), VN = Object.assign({}, V, { y0: V.y0 + nh });
     if (UI.lastPanel !== UI.panel) { UI.lastPanel = UI.panel; UI.panelT = performance.now(); }
     const fade = smooth(cl((performance.now() - (UI.panelT || 0)) / 220, 0, 1)); g.globalAlpha = .25 + .75 * fade; g.save(); g.translate(0, (1 - fade) * 10 * u); drawPage(g, VN, W, H - nh, u); g.restore(); g.globalAlpha = 1;
+    drawRankScale(g, V);
   }
   function drawPage(g, VN, W, H2, u) {
     if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, VN, W, H2, u);
@@ -7332,9 +7369,11 @@ const GAME = {
     let y = top + ch + 26 * u; const lw = cw * 2 + 16 * u;
     tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[5, '5V5'], [4, '4V4'], [3, '3V3'], [2, '2V2'], [1, '1V1 · DUEL']], teamSize(CFG.size), v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
     const ranked = CFG.queue === 'ranked';
-    tx(g, 'QUEUE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['unrated', 'UNRATED'], ['ranked', 'RANKED  ·  ' + (placed(rankedOf(CFG.size)) ? rankLabel(rankedOf(CFG.size).rv).toUpperCase() : 'PLACEMENTS ' + rankedOf(CFG.size).n + '/' + PLACE_N)]], CFG.queue, v => { CFG.queue = v; saveAll(); }); y += tapH(34) + 14 * u;
-    if (ranked) { tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); rr(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED IS BEST OF 9  ·  OVERTIME AT 4–4  ·  BEAT BOTS ABOVE YOUR RANK TO CLIMB FASTER', x0 + 110 * u + (lw - 110 * u) / 2, y, Math.min(11.5 * u, (lw - 110 * u) / 70), GOLD, 'center', 800); }
-    else choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), MATCH_LENS.map(w => [w, `BEST OF ${w * 2 - 1}`]), winOf(CFG.win), v => { CFG.win = v; saveAll(); });
+    { const S = rankedOf(CFG.size), bx = x0 + lw - tapH(34), by0 = y - tapH(34) / 2, hov = zone(bx, by0, tapH(34), tapH(34), () => { UI.rankScale = teamSize(CFG.size); });
+      rr(g, bx, by0, tapH(34), tapH(34), 6, hov ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.05)', 'rgba(239,233,220,.22)', 1); tierBadge(g, bx + tapH(34) / 2, y - 2 * u, tapH(34) * .3, S.rv, placed(S)); }   // your rank: click for the ladder
+    tx(g, 'QUEUE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u - tapH(34) - 8 * u, tapH(34), [['unrated', 'UNRATED'], ['ranked', 'RANKED  ·  ' + (placed(rankedOf(CFG.size)) ? rankLabel(rankedOf(CFG.size).rv).toUpperCase() : 'PLACEMENTS ' + rankedOf(CFG.size).n + '/' + PLACE_N)]], CFG.queue, v => { CFG.queue = v; saveAll(); }); y += tapH(34) + 14 * u;
+    if (ranked) { tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); rr(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED IS FIRST TO 5  ·  SIDES SWAP AT THE HALF  ·  OVERTIME AT 4–4  ·  BEAT BOTS ABOVE YOUR RANK TO CLIMB FASTER', x0 + 110 * u + (lw - 110 * u) / 2, y, Math.min(11.5 * u, (lw - 110 * u) / 70), GOLD, 'center', 800); }
+    else choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), MATCH_LENS.map(w => [w, `FIRST TO ${w}`]), winOf(CFG.win), v => { CFG.win = v; saveAll(); });
     if (!ranked) tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); y += tapH(34) + 14 * u;
     tx(g, 'BOT LEVEL', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 14 * u;
     if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Knife out (3) to move faster, and crouch while running with it to slide; Shift walks. B opens the armory, F plants, defuses, takes orbs and swaps guns; T drops your gun, H the charge. Q, E, X: abilities. Middle click or J pings a spot.'].reduce((yy, l) => para(g, l, x0, yy, lw, 11.5 * u, '#aeb6c2') + 4 * u, y + 26 * u); }   // wrapped to the left column, clear of PLAY
@@ -7539,6 +7578,7 @@ const GAME = {
     }
     // what the match paid, and where the adaptive bot goes next
     if (M.rankRes) drawRankResult(g, 640 - 280 * u - 250 * u, V.y0 + 236 * u, 250 * u, u);
+    if (UI.rankScale) drawRankScale(g, V);
     if (M.rated) { const r = M.rated; tx(g, `Rating ${r.after} (${r.after >= r.before ? '+' : ''}${r.after - r.before})   ·   next bot: ${rankName(r.after)}`, 640, cy, 15 * u, DIM); }
     // coins: the total counts up, the reasons beside it, and how far it takes you toward the rarest skin
     if (M.pay) { const t = (performance.now() - M.payT) / 1000, shown = Math.round(M.pay.total * smooth(cl(t / 1.4, 0, 1))), px0 = 640 + 280 * u, py0 = V.y0 + 236 * u;
@@ -8004,9 +8044,9 @@ const GAME = {
     const sy = V.y1 - 92 * u;
     if (host) {
       const sx = 640 - 543 * u, cs = (opts, val, fn, w) => { choice(g, sx2, sy, w, tapH(34), opts, val, v => { fn(v); MP.send({ t: 'lteam', teams: PARTY.teams, set: S2, want: [...PARTY.want] }); hostTeams(); }); sx2 += w + 10 * u; }; let sx2 = sx;
-      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 200 * u); cs([[1, '1V1'], [2, '2V2'], [3, '3V3'], [4, '4V4'], [5, '5V5']], S2.size, v => { S2.size = Math.max(v, teamSize(Math.ceil(ps.length / 2))); }, 236 * u); cs([[true, 'BOTS FILL'], [false, 'NO BOTS']], S2.fill, v => { S2.fill = v; }, 170 * u); if (S2.ranked) { rr(g, sx2, sy, 230 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED · BO9', sx2 + 115 * u, sy + tapH(34) / 2, 12 * u, GOLD, 'center', 900); sx2 += 240 * u; } else cs(MATCH_LENS.map(w => [w, 'BO' + (w * 2 - 1)]), winOf(S2.win), v => { S2.win = v; }, 230 * u);
+      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 200 * u); cs([[1, '1V1'], [2, '2V2'], [3, '3V3'], [4, '4V4'], [5, '5V5']], S2.size, v => { S2.size = Math.max(v, teamSize(Math.ceil(ps.length / 2))); }, 236 * u); cs([[true, 'BOTS FILL'], [false, 'NO BOTS']], S2.fill, v => { S2.fill = v; }, 170 * u); if (S2.ranked) { rr(g, sx2, sy, 230 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED · FIRST TO 5', sx2 + 115 * u, sy + tapH(34) / 2, 12 * u, GOLD, 'center', 900); sx2 += 240 * u; } else cs(MATCH_LENS.map(w => [w, 'BO' + (w * 2 - 1)]), winOf(S2.win), v => { S2.win = v; }, 230 * u);
       const ok = readyAll(); btn(g, sx2, sy - 6 * u, 200 * u, 48 * u, 'START MATCH', startParty, { on: ok, fill: FOE, solid: ok, col: ok ? INK : DIM, px: 17 * u, sub: ok ? '' : 'waiting for ready' });
-    } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S2.size)}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS' : 'NO BOTS'}  ·  ${S2.ranked ? 'RANKED  ·  BEST OF 9' : 'BEST OF ' + (winOf(S2.win) * 2 - 1)}  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
+    } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S2.size)}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS' : 'NO BOTS'}  ·  ${S2.ranked ? 'RANKED  ·  FIRST TO 5' : 'FIRST TO ' + winOf(S2.win)}  ·  SIDES SWAP AT THE HALF  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
     const waiting = ps.filter(p => p.id !== MP.hostId && !(p.id === me2 ? PARTY.ready : (PARTY.prof.get(p.id) || {}).rd)).length;
     tx(g, ps.length < 2 ? 'Send your friends the code. You can also start now and play with bots.' : waiting ? `Waiting for ${waiting} to ready up` : 'Everyone is ready', 640, by - 22 * u, 13 * u, waiting ? DIM : YOU, 'center', 800);
   }
@@ -8176,7 +8216,8 @@ const GAME = {
     tickA = cl(acc * 60, 0, 1);
     if (M.over && M.mode === 'demo') startMatch({ mode: 'demo' });
   };
-  GAME.esc = () => { if (screen === 'select') { selectKey('Escape'); return true; }
+  GAME.esc = () => { if (UI.rankScale) { UI.rankScale = null; return true; }
+    if (screen === 'select') { selectKey('Escape'); return true; }
     if (screen === 'party') { if (!MP.online()) { screen = 'menu'; UI.panel = 'home'; } return true; }
     if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker')) { if (SH.reveal) SH.reveal = null; else if (SH.show) SH.show = null; else UI.panel = 'home'; return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
   GAME.draw = g => {

@@ -70,12 +70,8 @@
     MENU_TABS.forEach(([k, n], i) => { const x = tx0 + i * tw, on = UI.panel === k, hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
       tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, Math.min(13 * u, tw / 7.5), on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
-    tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); { const S = rankedOf(CFG.size), on = placed(S); tierBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, S.rv, on);
-      // the rank line stops short of your coins (on a phone the card is narrow): the team size goes first, then it is cut
-      g.font = `800 ${fitPx(g, 17 * u)}px ${FONT}`; const room = V.x1 - 22 * u - g.measureText(String(STATS.coins)).width - 17 * u * 1.4 - (px + 69 * u);
-      const rl = on ? rankLabel(S.rv).toUpperCase() + '  ' + rankOf(S.rv).rp + ' RP' : 'UNRANKED ' + S.n + '/' + PLACE_N, full = rl + '  ·  ' + vsLabel(CFG.size);
-      g.font = `800 ${fitPx(g, 10 * u)}px ${FONT}`; const line = g.measureText(full).width <= room ? full : rl;
-      g.save(); g.beginPath(); g.rect(px + 60 * u, V.y0, Math.max(0, room + 9 * u), h); g.clip(); tx(g, line, px + 69 * u, V.y0 + 38 * u, 10 * u, on ? rankOf(S.rv).T.col : DIM, 'left', 800); g.restore(); }
+    // your photo, your name and the operative you play (your rank is on the career page and the play page: click it there for the ladder)
+    { const op = OPS[CFG.op] || OPS.vex; tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 21 * u, 13 * u, BONE, 'left', 900); tx(g, op.n, px + 50 * u, V.y0 + 38 * u, 10 * u, op.col, 'left', 800); }
     coinTag(g, V.x1 - 22 * u, V.y0 + h / 2, 17 * u, STATS.coins);
     return h;
   }
@@ -86,6 +82,7 @@
     const nh = drawTopBar(g, V, u), VN = Object.assign({}, V, { y0: V.y0 + nh });
     if (UI.lastPanel !== UI.panel) { UI.lastPanel = UI.panel; UI.panelT = performance.now(); }
     const fade = smooth(cl((performance.now() - (UI.panelT || 0)) / 220, 0, 1)); g.globalAlpha = .25 + .75 * fade; g.save(); g.translate(0, (1 - fade) * 10 * u); drawPage(g, VN, W, H - nh, u); g.restore(); g.globalAlpha = 1;
+    drawRankScale(g, V);
   }
   function drawPage(g, VN, W, H2, u) {
     if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, VN, W, H2, u);
@@ -123,9 +120,11 @@
     let y = top + ch + 26 * u; const lw = cw * 2 + 16 * u;
     tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[5, '5V5'], [4, '4V4'], [3, '3V3'], [2, '2V2'], [1, '1V1 · DUEL']], teamSize(CFG.size), v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
     const ranked = CFG.queue === 'ranked';
-    tx(g, 'QUEUE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['unrated', 'UNRATED'], ['ranked', 'RANKED  ·  ' + (placed(rankedOf(CFG.size)) ? rankLabel(rankedOf(CFG.size).rv).toUpperCase() : 'PLACEMENTS ' + rankedOf(CFG.size).n + '/' + PLACE_N)]], CFG.queue, v => { CFG.queue = v; saveAll(); }); y += tapH(34) + 14 * u;
-    if (ranked) { tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); rr(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED IS BEST OF 9  ·  OVERTIME AT 4–4  ·  BEAT BOTS ABOVE YOUR RANK TO CLIMB FASTER', x0 + 110 * u + (lw - 110 * u) / 2, y, Math.min(11.5 * u, (lw - 110 * u) / 70), GOLD, 'center', 800); }
-    else choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), MATCH_LENS.map(w => [w, `BEST OF ${w * 2 - 1}`]), winOf(CFG.win), v => { CFG.win = v; saveAll(); });
+    { const S = rankedOf(CFG.size), bx = x0 + lw - tapH(34), by0 = y - tapH(34) / 2, hov = zone(bx, by0, tapH(34), tapH(34), () => { UI.rankScale = teamSize(CFG.size); });
+      rr(g, bx, by0, tapH(34), tapH(34), 6, hov ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.05)', 'rgba(239,233,220,.22)', 1); tierBadge(g, bx + tapH(34) / 2, y - 2 * u, tapH(34) * .3, S.rv, placed(S)); }   // your rank: click for the ladder
+    tx(g, 'QUEUE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u - tapH(34) - 8 * u, tapH(34), [['unrated', 'UNRATED'], ['ranked', 'RANKED  ·  ' + (placed(rankedOf(CFG.size)) ? rankLabel(rankedOf(CFG.size).rv).toUpperCase() : 'PLACEMENTS ' + rankedOf(CFG.size).n + '/' + PLACE_N)]], CFG.queue, v => { CFG.queue = v; saveAll(); }); y += tapH(34) + 14 * u;
+    if (ranked) { tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); rr(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED IS FIRST TO 5  ·  SIDES SWAP AT THE HALF  ·  OVERTIME AT 4–4  ·  BEAT BOTS ABOVE YOUR RANK TO CLIMB FASTER', x0 + 110 * u + (lw - 110 * u) / 2, y, Math.min(11.5 * u, (lw - 110 * u) / 70), GOLD, 'center', 800); }
+    else choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), MATCH_LENS.map(w => [w, `FIRST TO ${w}`]), winOf(CFG.win), v => { CFG.win = v; saveAll(); });
     if (!ranked) tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); y += tapH(34) + 14 * u;
     tx(g, 'BOT LEVEL', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 14 * u;
     if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Knife out (3) to move faster, and crouch while running with it to slide; Shift walks. B opens the armory, F plants, defuses, takes orbs and swaps guns; T drops your gun, H the charge. Q, E, X: abilities. Middle click or J pings a spot.'].reduce((yy, l) => para(g, l, x0, yy, lw, 11.5 * u, '#aeb6c2') + 4 * u, y + 26 * u); }   // wrapped to the left column, clear of PLAY
@@ -330,6 +329,7 @@
     }
     // what the match paid, and where the adaptive bot goes next
     if (M.rankRes) drawRankResult(g, 640 - 280 * u - 250 * u, V.y0 + 236 * u, 250 * u, u);
+    if (UI.rankScale) drawRankScale(g, V);
     if (M.rated) { const r = M.rated; tx(g, `Rating ${r.after} (${r.after >= r.before ? '+' : ''}${r.after - r.before})   ·   next bot: ${rankName(r.after)}`, 640, cy, 15 * u, DIM); }
     // coins: the total counts up, the reasons beside it, and how far it takes you toward the rarest skin
     if (M.pay) { const t = (performance.now() - M.payT) / 1000, shown = Math.round(M.pay.total * smooth(cl(t / 1.4, 0, 1))), px0 = 640 + 280 * u, py0 = V.y0 + 236 * u;

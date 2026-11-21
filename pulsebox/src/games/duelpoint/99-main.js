@@ -61,7 +61,8 @@
     tickA = cl(acc * 60, 0, 1);
     if (M.over && M.mode === 'demo') startMatch({ mode: 'demo' });
   };
-  GAME.esc = () => { if (screen === 'select') { selectKey('Escape'); return true; }
+  GAME.esc = () => { if (UI.rankScale) { UI.rankScale = null; return true; }
+    if (screen === 'select') { selectKey('Escape'); return true; }
     if (screen === 'party') { if (!MP.online()) { screen = 'menu'; UI.panel = 'home'; } return true; }
     if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker')) { if (SH.reveal) SH.reveal = null; else if (SH.show) SH.show = null; else UI.panel = 'home'; return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
   GAME.draw = g => {

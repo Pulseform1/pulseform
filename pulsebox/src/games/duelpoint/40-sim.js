@@ -117,6 +117,7 @@
   function moveErr(f, G) {
     const A = G.acc, fr = f.od > 0 ? 0 : Math.hypot(f.vx, f.vz) / SPD;   // Overdrive: running never throws your aim
     let e = fr <= .28 ? 0 : fr <= .5 ? lp(0, A.walk, (fr - .28) / .22) : lp(A.walk, A.run, Math.min(1, (fr - .5) / .5));
+    if (f.slide && f.ground) e = Math.min(e, lp(A.walk, A.run, .33));   // sliding: steadier than a run (a third of the way from walking to running)
     if (!f.ground) e = Math.max(e, A.jump); return e;
   }
   // the half-angle of the cone the next bullet can leave in, in radians
@@ -278,13 +279,16 @@
     if (!M.clutch) for (const t of [0, 1]) { const up = M.fs.filter(q => q.team === t && q.alive), them = M.fs.filter(q => q.team !== t && q.alive); if (up.length === 1 && them.length >= 2) M.clutch = { key: up[0].key, team: t, vs: them.length }; }
   });
   on('planted', f => { if (f && f.stat) f.stat.pl = (f.stat.pl || 0) + 1; }); on('defused', f => { if (f && f.stat) f.stat.df = (f.stat.df || 0) + 1; });
+  // Nova lives on momentum: every kill fills one Surge slot back up (to the most she can carry). Run on the killer's own
+  // device: offline that is where the kill happens; online the kill is worked out on the victim's and this runs when word arrives
+  function novaKill(by, v) { if (by && !by.net && v && by.team !== v.team && by.op === 'nova' && M.mode !== 'range' && (by.ab.q | 0) < OPS.nova.q.max) { by.ab.q = (by.ab.q | 0) + 1; emit('novaRefund', by); } }
   function die(v, by, head, wk) {
     if (!v.alive) return;
     v.alive = false; v.plant = v.defuse = 0; v.scoped = 0; v.burst = null; v.chan = null; v.volley = null; v.stat.d++; by.stat.k++; if (head) by.stat.hs++;
     ultGain(v, 1); if (by.team !== v.team) ultGain(by, 1);
     if (!by.net && by.team !== v.team) by.credits = Math.min(CASH.cap, by.credits + CASH.kill);
     // Nova lives on momentum: every kill hands back one Surge (up to the most she can carry)
-    if (!by.net && by.team !== v.team && by.op === 'nova' && M.mode !== 'range' && (by.ab.q | 0) < OPS.nova.q.max) { by.ab.q = (by.ab.q | 0) + 1; emit('novaRefund', by); }
+    novaKill(by, v);
     M.feed.unshift({ a: by.name, b: v.name, w: GUNS[wk] ? GUNS[wk].n : wk, head, t: 0, mine: by === me() });
     if (v === me()) M.deathInfo = { by: by.name, key: by.key, op: by.op, w: GUNS[wk] ? GUNS[wk].n : wk, head, hp: Math.ceil(by.hp), sh: by.sh, yaw: yawTo(v.x, v.z, by.x, by.z), at: [v.x, v.y, v.z], kat: [by.x, by.y, by.z], t: 0 };
     emit('kill', v, by, head, wk);
@@ -640,7 +644,7 @@
   function startMatch(o) {
     const mode = o.mode, online = mode === 'online', host = !online || MP.isHost(), ops = Object.keys(OPS);
     const ranked = !!o.ranked && (mode === 'bot' || online);
-    WIN_ROUNDS = mode === 'range' || mode === 'demo' || ranked ? 5 : winOf(o.win != null ? o.win : online ? 5 : CFG.win);   // online, everyone uses the host's length; ranked is always best of 9
+    WIN_ROUNDS = mode === 'range' || mode === 'demo' || ranked ? 5 : winOf(o.win != null ? o.win : online ? 5 : CFG.win);   // online, everyone uses the host's length; ranked is always first to 5
     const A = fighter(mode === 'demo' ? { name: 'Rook', op: pick(ops), bot: { diff: 1 } } : { name: online ? MP.name : 'You', op: CFG.op, local: true });
     const auto = mode === 'bot' && (o.diff === 'auto' || o.diff == null), L = auto ? diffFor(STATS.rating) : null;
     const botP = () => auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' }, used = new Set([A.name, ...(o.mates || []).map(m => m.name)]), bname = () => { const n = pick(BOT_NAMES.filter(q => !used.has(q))); used.add(n); return n; };
