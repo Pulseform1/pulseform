@@ -357,8 +357,14 @@ function kitChecks() {
   ok(F.daze > 0 && F.hp === 85 && T.spreadOf(F) / T.D2R >= 2.5, 'Nova Shockwave: dazes, shakes the aim and stings for 15', `daze ${F.daze.toFixed(2)}, hp ${F.hp}`);
   [M, P, F] = setup('wraith'); F.yaw = T.yawTo(F.x, F.z, P.x, P.z); const seen0 = T.canSee(F, P); T.ability(P, 'q'); const seen1 = T.canSee(F, P); Object.assign(F, { x: 43, z: 3 }); const seen2 = T.canSee(F, P);
   P.fireT = 0; T.fire(P); ok(seen0 && !seen1 && seen2 && P.cloak === 0, 'Wraith Shroud: unseen at 10 m, seen up close, and firing ends it', `${seen0} ${seen1} ${seen2} cloak ${P.cloak}`);
-  [M, P, F] = setup('wraith'); F.bot = { diff: 1 }; F.team = 1; Object.assign(F, { x: 56, z: 9 }); T.ability(P, 'e'); run(.5);
-  ok(F.bot.last && F.bot.last.heard && Math.hypot(F.bot.last.x - M.kit.lures[0].x, F.bot.last.z - M.kit.lures[0].z) < .1, 'Wraith Ghost Step: a rival bot hears it as real', JSON.stringify(F.bot.last && { x: +F.bot.last.x.toFixed(1), z: +F.bot.last.z.toFixed(1) }));
+  // Mirage: a copy runs the way you look; a rival who shoots it is blinded and marked; a rival bot that has it in view takes it for real
+  [M, P, F] = setup('wraith'); Object.assign(F, { x: 20, z: 40 }); P.yaw = -Math.PI / 2; P.pitch = 0; T.ability(P, 'e'); const D0 = M.kit.decoys[0], x0 = D0 && D0.x; run(1);
+  ok(D0 && D0.x > x0 + 3 && Math.abs(D0.z - 3) < .5 && !M.kit.lures.length, 'Wraith Mirage: a copy runs ahead the way you look (no sounds)', D0 ? `${x0.toFixed(1)} → ${D0.x.toFixed(1)}` : 'none');
+  if (D0) { F.alive = true; Object.assign(F, { x: D0.x + 8, z: D0.z, y: 0 }); F.yaw = T.yawTo(F.x, F.z, D0.x, D0.z); F.pitch = -.06; F.fireT = 0; F.spray = 0; F.flash = 0; const gk = F.guns[F.slot]; F.ammo[gk] = { mag: 9, res: 9 }; T.fire(F);
+    ok(D0.popped && F.flash > 1 && F.reveal > 1, 'a rival who shoots it is blinded and marked', `flash ${F.flash.toFixed(1)}, reveal ${F.reveal.toFixed(1)}`); }
+  [M, P, F] = setup('wraith'); F.bot = { diff: 1 }; F.team = 1; P.yaw = -Math.PI / 2; P.pitch = 0; T.ability(P, 'e'); const D1 = M.kit.decoys[0]; Object.assign(F, { x: 52, z: 3, y: 0, vx: 0, vz: 0 }); F.yaw = T.yawTo(52, 3, 41, 3); F.flash = 0;
+  for (let i = 0; i < 60 && !D1.popped; i++) { Object.assign(F, { x: 52, z: 3, vx: 0, vz: 0 }); F.yaw = T.yawTo(F.x, F.z, D1.x, D1.z); T.tick(DT); }
+  ok(D1.popped && F.flash > 1, 'a rival bot that has it in view falls for it, and is blinded', `popped ${D1.popped}, flash ${F.flash.toFixed(1)}`);
   [M, P, F] = setup('talon'); P.yaw = T.yawTo(P.x, P.z, 61, 3); P.pitch = .05; T.ability(P, 'q'); run(1);
   ok(M.kit.darts.length === 1 && M.kit.darts[0].stuck >= 0 && F.reveal > 0, 'Talon Recon Dart: sticks and reveals the rival', `stuck ${M.kit.darts[0] && M.kit.darts[0].stuck.toFixed(2)}, reveal ${F.reveal.toFixed(2)}`);
   [M, P, F] = setup('talon'); T.ability(P, 'e'); const sn = M.kit.snares[0]; run(1); Object.assign(F, { x: sn.x + 3, z: sn.z, bot: null, local: true }); T.setInput(f => f === F ? { ...idle(), mx: 0, mz: 1 } : I); F.yaw = T.yawTo(F.x, F.z, sn.x - 3, sn.z); run(.8);

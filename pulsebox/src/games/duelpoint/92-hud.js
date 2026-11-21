@@ -167,7 +167,7 @@
   function emblemLight(col) { const key = 'L' + col; if (EMB[key]) return EMB[key]; const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, '#ffffff'); gr.addColorStop(.18, col); gr.addColorStop(.5, col + '55'); gr.addColorStop(1, col + '00'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return EMB[key] = c; }
   /* ---- ability icons: a small line drawing for each, in the bar and the armory */
   const ABICON = { vexc: 'orb', vexq: 'dash', vexe: 'smoke', vexx: 'portal', irisc: 'eye', irisq: 'wave', irise: 'flash', irisx: 'eye', bastionc: 'beacon', bastionq: 'wall', bastione: 'heart', bastionx: 'shield',
-    novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'ghost', wraithe: 'steps', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
+    novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'ghost', wraithe: 'ghost', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
     emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'mine', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel' };
   // what the other click does, for the hint under the bar
   const ABALT = { vexc: 'A SHORT LOB', talonc: 'A SHORT LOB', axiomc: 'A SHORT LOB', emberq: 'A SHORT LOB', emberx: 'A SHORT LOB', emberc: 'BENT RIGHT', bastionq: 'TURNED ALONG YOUR VIEW' };
@@ -255,7 +255,7 @@
     if (!banner) return; const B = banner, n = cl(B.n | 0, 1, 5), T = 2.1 + n * .12, t = B.pin != null ? B.pin : (performance.now() - B.t0) / 1000;   // (pin: the tests hold a moment) if (t > T) { banner = null; return; }
     if (!B.sh) B.sh = bannerShards(n, Math.floor(B.t0 * 7));
     const E = B.em, acc = n >= 5 ? GOLD : E.glow, touch = isTouch(), cx = 640, cy = V.y1 - (touch ? 196 : 140) * u, R = (touch ? 33 : 40) * u * (1 + (n - 1) * .07);   // (a phone's health and ammo sit bottom centre: the banner rides above them, a little smaller)
-    const inK = smooth(cl(t / .14, 0, 1)), pop = t < .14 ? 1.7 - .7 * inK : 1 + Math.sin(Math.min(1, (t - .14) / .22) * Math.PI) * .06, outK = smooth(cl((t - (T - .35)) / .35, 0, 1)), a = (t < .06 ? t / .06 : 1) * (1 - outK), sc = pop * (1 - outK * .25);
+    const inK = smooth(cl(t / .14, 0, 1)), pop = t < .14 ? 1.7 - .7 * inK : 1 + Math.sin(Math.min(1, (t - .14) / .22) * Math.PI) * .06, outK = Math.max(smooth(cl((t - (T - .35)) / .35, 0, 1)), isTouch() && M && M.phase === 'end' && M.last && M.last.t0 ? smooth(cl((performance.now() - M.last.t0 - 350) / 300, 0, 1)) : 0), a = (t < .06 ? t / .06 : 1) * (1 - outK), sc = pop * (1 - outK * .25);   // (on a phone it bows out once the round's result is up: no room for both)
     const st = (c, w) => { g.strokeStyle = c; g.lineWidth = w; }, line = (x0, y0, x1, y1) => { g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); };
     g.save(); g.translate(cx, cy);
     // behind it all: a dark backing (it has to read on a bright map), a soft glow, and (from three kills) a beam of light up and down
@@ -479,13 +479,13 @@
   on('clutch', (f, vs) => { if (!M) return; sweep('CLUTCH', `${f.name.toUpperCase()}  ·  1 v ${vs}`, f.team === me().team ? YOU : FOE); });
   function drawSweep(g) {
     if (!SWEEP) return; const t = (performance.now() - SWEEP.t0) / 1000, D = 2.6; if (t > D) { SWEEP = null; return; }
-    const V = K.view, u = uiScale(), W = V.x1 - V.x0, cy = V.y0 + 168 * u, hh = 46 * u, inK = smooth(cl(t / .28, 0, 1)), outK = smooth(cl((t - D + .35) / .35, 0, 1)), sk = 40 * u;
+    const V = K.view, u = uiScale(), W = V.x1 - V.x0, tch = isTouch(), cy = V.y0 + (tch ? 118 : 168) * u, hh = (tch ? 30 : 46) * u, inK = smooth(cl(t / .28, 0, 1)), outK = smooth(cl((t - D + .35) / .35, 0, 1)), sk = 40 * u;
     const x0 = lp(V.x0 - W, V.x0, inK) + outK * W, x1 = x0 + W, col = SWEEP.col;
     g.save(); g.globalAlpha = .9; g.fillStyle = 'rgba(8,10,14,.86)'; g.beginPath(); g.moveTo(x0 + sk, cy - hh); g.lineTo(x1 + sk, cy - hh); g.lineTo(x1 - sk, cy + hh); g.lineTo(x0 - sk, cy + hh); g.closePath(); g.fill();
     g.globalAlpha = 1; g.fillStyle = col; g.fillRect(x0, cy - hh, W, 3 * u); g.fillRect(x0, cy + hh - 3 * u, W, 3 * u);
     const sh = ((t * 900 * u) % (W + 400 * u)) - 200 * u; const gr = g.createLinearGradient(x0 + sh - 120 * u, 0, x0 + sh + 120 * u, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, 'rgba(255,255,255,.12)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x0, cy - hh, W, hh * 2);   // a glint runs along it
     const tx0 = 640 + (1 - inK) * -160 * u + outK * 160 * u, pop = 1 + .18 * Math.max(0, 1 - t / .35);
-    tx(g, SWEEP.title, tx0, cy - 8 * u, 46 * u * pop, col, 'center', 900); if (SWEEP.sub) tx(g, SWEEP.sub, tx0, cy + 27 * u, 14 * u, BONE, 'center', 800);
+    tx(g, SWEEP.title, tx0, cy - (tch ? 5 : 8) * u, (tch ? 30 : 46) * u * pop, col, 'center', 900); if (SWEEP.sub) tx(g, SWEEP.sub, tx0, cy + (tch ? 18 : 27) * u, (tch ? 11 : 14) * u, BONE, 'center', 800);   // (slimmer on a phone)
     g.restore();
   }
   // ---- switching sides: a band across the screen at the start of the second half (and the decider) says which side you are now
@@ -590,9 +590,10 @@
         g.fillStyle = on ? WARN : '#5a2620'; g.beginPath(); g.moveTo(0, 6); g.lineTo(13, 21); g.lineTo(0, 36); g.lineTo(-13, 21); g.closePath(); g.fill();
         g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(-42, 41, 84, 4); g.fillStyle = WARN; g.fillRect(-42, 41, 84 * k, 4);
       } else tx(g, clock(M.t), 0, 24, 29, M.phase === 'live' && M.t < 10 ? WARN : BONE, 'center', 800);
-      tx(g, M.phase === 'buy' ? 'BUY PHASE' : M.phase === 'end' ? 'ROUND OVER' : M.planted ? 'CHARGE PLANTED' : 'ROUND ' + M.round, 0, 62, 10, M.planted && M.phase === 'live' ? WARN : DIM, 'center', 800);
+      const sh2 = isTouch();   // (a phone's smallest letters are bigger than these labels were drawn for: shorter words, so the three never run together)
+      tx(g, M.phase === 'buy' ? (sh2 ? 'BUY' : 'BUY PHASE') : M.phase === 'end' ? (sh2 ? 'OVER' : 'ROUND OVER') : M.planted ? (sh2 ? 'PLANTED' : 'CHARGE PLANTED') : (sh2 ? 'R' : 'ROUND ') + M.round, 0, 62, 10, M.planted && M.phase === 'live' ? WARN : DIM, 'center', 800);
       const score = (x, n, col, tag) => { g.fillStyle = PANEL; g.fillRect(x - 25, 0, 50, 50); g.fillStyle = col; g.fillRect(x - 25, 0, 50, 3); tx(g, String(n), x, 27, 30, col, 'center', 800); if (tag) tx(g, tag, x, 62, 10, col, 'center', 800); };
-      score(-92, M.wins[0], YOU, side === 'att' ? 'ATTACK' : 'DEFEND'); score(92, M.wins[1], FOE, side === 'att' ? 'DEFEND' : 'ATTACK');
+      score(-92, M.wins[0], YOU, side === 'att' ? (sh2 ? 'ATK' : 'ATTACK') : (sh2 ? 'DEF' : 'DEFEND')); score(92, M.wins[1], FOE, side === 'att' ? (sh2 ? 'DEF' : 'DEFEND') : (sh2 ? 'ATK' : 'ATTACK'));
       const tile = (q, x, col, ours) => {
         const w = tw, h = 50, up = q.alive;
         portraitTile(g, q.op, x - w / 2, 0, w, h, { dead: !up, bar: col, r: 3, on: q === P && up });

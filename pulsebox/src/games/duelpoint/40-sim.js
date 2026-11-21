@@ -199,6 +199,7 @@
       const a2 = R() * TAU, r2 = Math.sqrt(R()) * ps, yw = f.yaw + pt[0] + Math.cos(a) * r + Math.cos(a2) * r2, pc = f.pitch + pt[1] + Math.sin(a) * r + Math.sin(a2) * r2, S = castShot(f, viewDir(yw, pc));
       if (p === 0) { y0 = yw; p0 = pc; }
       if (p === 0 && !f.net && M.kit && M.kit.hexes.length && hexShot(f, S)) continue;   // Overcharge: the shot took the charge
+      if (p === 0 && !f.net && M.kit && M.kit.decoys.length && decoyShot(f, S)) continue;   // Mirage: the shot hit the copy
       emit('shot', f, S, p === 0);
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k, S.hit.leg); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);

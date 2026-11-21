@@ -132,7 +132,7 @@
      it, back), push (palm out, a ring of light bursts off it), pulse (palm up, the charge swells and rings out), heal (to
      the chest, glowing), dash (a quick sweep across) and surge (a fist that crackles). Rivals' bodies play the same move. */
   const AB_KIND = { vexq: 'dash', vexe: 'throw', vexx: 'pulse', irisq: 'pulse', irise: 'throw', irisx: 'pulse', bastionq: 'push', bastione: 'heal', bastionx: 'heal',
-    novaq: 'surge', novae: 'push', novax: 'surge', wraithq: 'pulse', wraithe: 'throw', wraithx: 'pulse', talonq: 'throw', talone: 'place', talonx: 'push',
+    novaq: 'surge', novae: 'push', novax: 'surge', wraithq: 'pulse', wraithe: 'push', wraithx: 'pulse', talonq: 'throw', talone: 'place', talonx: 'push',
     emberq: 'throw', embere: 'push', emberx: 'throw', axiomq: 'place', axiome: 'place', axiomx: 'place' };
   const AB_D = { throw: .62, place: .7, push: .55, pulse: .72, heal: .8, dash: .36, surge: .6 };
   on('ability', (f, k) => { f.castK = AB_KIND[f.op + k] || 'push'; f.castD = AB_D[f.castK]; f.castT = f.castD; f.castBig = k === 'x'; });

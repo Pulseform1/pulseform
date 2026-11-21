@@ -10,20 +10,22 @@
     if (demo) { g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT`, 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); return; }
     if (!M.last.t0) M.last.t0 = performance.now(); const t = (performance.now() - M.last.t0) / 1000, a = smooth(cl(t / .25, 0, 1)), k = Math.min(u, 1.2);
     // (a big moment's band, an ace or a clutch, has the same place: while it is up this sits under it, then slides back)
-    const want = SWEEP ? 226 * u - 92 * k : 0; M.last.off = M.last.off == null ? want : lp(M.last.off, want, .18); const top = V.y0 + 92 * k + M.last.off;
+    const touch = isTouch(), want = SWEEP ? (touch ? 150 : 226) * u - 92 * k : 0; M.last.off = M.last.off == null ? want : lp(M.last.off, want, .18); const top = V.y0 + 92 * k + M.last.off;   // (a phone's band is slimmer, so less to clear)
     g.save(); g.globalAlpha = a;
     { const gr = g.createLinearGradient(V.x0, 0, V.x1, 0), bc = won ? '53,224,200' : '244,63,63'; gr.addColorStop(0, `rgba(${bc},0)`); gr.addColorStop(.3, `rgba(${bc},.2)`); gr.addColorStop(.7, `rgba(${bc},.2)`); gr.addColorStop(1, `rgba(${bc},0)`); g.fillStyle = 'rgba(8,10,14,.5)'; g.fillRect(V.x0, top, W, 66 * k); g.fillStyle = gr; g.fillRect(V.x0, top, W, 66 * k); g.fillStyle = c; g.fillRect(640 - 150 * k * a, top + 64 * k, 300 * k * a, 2 * k); }
     tx(g, won ? 'ROUND WON' : 'ROUND LOST', 640, top + 24 * k, 34 * k, c, 'center', 900); tx(g, `${WHY[M.last.why].toUpperCase()}   ·   ${M.wins[0]} – ${M.wins[1]}`, 640, top + 50 * k, 12 * k, BONE, 'center', 800);
     // your team this round (one against one: the two of you)
-    const mine = M.fs.filter(f => f.team === P.team && !f.gone), list = mine.length > 1 ? mine : [P, ...M.fs.filter(f => f.team !== P.team && !f.gone)], rk = f => (f.stat.k | 0) - (f.stat.k0 | 0), rd = f => Math.max(0, Math.round((f.stat.dmg || 0) - (f.stat.d0 || 0)));
-    const best = list.slice().sort((x, y) => rd(y) + rk(y) * 150 - rd(x) - rk(x) * 150)[0], n = list.length, gp = 8 * k, cw = Math.min(196 * k, (W - 60 * k) / n - gp), ch = 54 * k, x0 = 640 - (n * (cw + gp) - gp) / 2, y = top + 74 * k;
+    const mine = M.fs.filter(f => f.team === P.team && !f.gone), rk = f => (f.stat.k | 0) - (f.stat.k0 | 0), rd = f => Math.max(0, Math.round((f.stat.dmg || 0) - (f.stat.d0 || 0)));
+    // (a phone keeps it short: only those who did something this round, three at most, best first; nobody did: no cards)
+    let list = mine.length > 1 ? mine : [P, ...M.fs.filter(f => f.team !== P.team && !f.gone)]; if (touch) list = list.filter(f => rk(f) || rd(f)).sort((x, y) => rd(y) + rk(y) * 150 - rd(x) - rk(x) * 150).slice(0, 3);
+    const best = list.slice().sort((x, y) => rd(y) + rk(y) * 150 - rd(x) - rk(x) * 150)[0], n = list.length, gp = 8 * k, cw = Math.min(196 * k, (W - 60 * k) / Math.max(1, n) - gp), ch = (touch ? 46 : 54) * k, x0 = 640 - (n * (cw + gp) - gp) / 2, y = top + 74 * k;
     list.forEach((f, i) => { const x = x0 + i * (cw + gp), a2 = smooth(cl((t - .15 - i * .07) / .25, 0, 1)), col = f.team === P.team ? YOU : FOE, top2 = f === best && (rk(f) || rd(f)) && n > 1; g.save(); g.globalAlpha = a * a2; g.translate(0, (1 - a2) * 10 * k);
       rr(g, x, y, cw, ch, 6, 'rgba(10,13,18,.86)', top2 ? GOLD : f === P ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', top2 ? 1.5 : 1); g.fillStyle = col; g.fillRect(x, y, 3 * k, ch);
       portraitTile(g, f.op, x + 7 * k, y + 5 * k, ch - 10 * k, ch - 10 * k, { r: 4, dead: !f.alive }); const nx = x + ch + 2 * k, room = cw - ch - 8 * k;
-      fitTx(g, f.name.toUpperCase(), nx, y + 16 * k, 12 * k, f === P ? YOU : BONE, 'left', 900, room - (top2 ? 34 * k : 0)); if (top2) tx(g, 'BEST', x + cw - 7 * k, y + 16 * k, 9 * k, GOLD, 'right', 900);
-      if (cw * scrPx(g) < 150) fitTx(g, `${rk(f)} K  ·  ${rd(f)} DMG`, nx, y + 37 * k, 11 * k, BONE, 'left', 800, room);   // (a small card: one line)
-      else { tx(g, String(rk(f)), nx, y + 37 * k, 17 * k, BONE, 'left', 900); g.font = `900 ${fitPx(g, 17 * k)}px ${FONT}`; const kw = g.measureText(String(rk(f))).width; tx(g, rk(f) === 1 ? 'KILL' : 'KILLS', nx + kw + 4 * k, y + 39 * k, 8.5 * k, DIM, 'left', 900);
-        tx(g, String(rd(f)), x + cw - 30 * k, y + 37 * k, 14 * k, BONE, 'right', 800); tx(g, 'DMG', x + cw - 7 * k, y + 39 * k, 8.5 * k, DIM, 'right', 900); }
+      fitTx(g, f.name.toUpperCase(), nx, y + ch * .3, 12 * k, f === P ? YOU : BONE, 'left', 900, room - (top2 ? 34 * k : 0)); if (top2) tx(g, 'BEST', x + cw - 7 * k, y + ch * .3, 9 * k, GOLD, 'right', 900);
+      if (cw * scrPx(g) < 150) fitTx(g, `${rk(f)} K  ·  ${rd(f)} DMG`, nx, y + ch * .69, 11 * k, BONE, 'left', 800, room);   // (a small card: one line)
+      else { tx(g, String(rk(f)), nx, y + ch * .69, 17 * k, BONE, 'left', 900); g.font = `900 ${fitPx(g, 17 * k)}px ${FONT}`; const kw = g.measureText(String(rk(f))).width; tx(g, rk(f) === 1 ? 'KILL' : 'KILLS', nx + kw + 4 * k, y + ch * .72, 8.5 * k, DIM, 'left', 900);
+        tx(g, String(rd(f)), x + cw - 30 * k, y + ch * .69, 14 * k, BONE, 'right', 800); tx(g, 'DMG', x + cw - 7 * k, y + ch * .72, 8.5 * k, DIM, 'right', 900); }
       g.restore(); });
     g.restore();
   }

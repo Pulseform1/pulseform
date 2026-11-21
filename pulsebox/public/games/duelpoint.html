@@ -351,7 +351,7 @@ const GAME = {
     iris: { n: 'IRIS', role: 'Seer', col: '#35e0c8', bio: 'Iris sees through walls. Then she makes you look away.', q: { n: 'Ping', d: 'See rivals through walls for 2 s.' }, e: { n: 'Flare', d: 'A flash that blinds whoever is looking at it.' } },
     bastion: { n: 'BASTION', role: 'Warden', col: '#ffb347', bio: 'A wall, a patch, and a refusal to move.', q: { n: 'Rampart', d: 'Raise a wall in front of you for 12 s.' }, e: { n: 'Patch', d: 'Heal 60 health over 3 s.' } },
     nova: { n: 'NOVA', role: 'Striker', col: '#ffe14d', bio: 'A courier who outran everything once. She still does.', q: { n: 'Surge', d: '3.5 s of speed, and your sprays settle twice as fast.' }, e: { n: 'Shockwave', d: 'A blast where you aim: rivals caught are slowed, shaky and stung for 15.' } },
-    wraith: { n: 'WRAITH', role: 'Phantom', col: '#a9b8ff', bio: 'Nobody has seen Wraith arrive. That is the point.', q: { n: 'Shroud', d: 'Nearly invisible beyond 5 m and silent for 5 s. Firing ends it.' }, e: { n: 'Ghost Step', d: 'Fake footsteps, then fake gunfire, where you aim. Rivals hear it as real.' } },
+    wraith: { n: 'WRAITH', role: 'Phantom', col: '#a9b8ff', bio: 'Nobody has seen Wraith arrive. That is the point.', q: { n: 'Shroud', d: 'Nearly invisible beyond 5 m and silent for 5 s. Firing ends it.' }, e: { n: 'Mirage', d: 'A copy of you runs ahead for 4 s. Rivals see a real Wraith; whoever shoots it, or stares it down, is blinded and marked.' } },
     talon: { n: 'TALON', role: 'Tracker', col: '#7bd65a', bio: 'A ranger who reads a room like tracks in snow.', q: { n: 'Recon Dart', d: 'A dart that sticks where it lands and pulses twice, revealing rivals in its sight.' }, e: { n: 'Snare', d: 'A trap on the floor ahead: the first rival over it is slowed and revealed.' } },
     ember: { n: 'EMBER', role: 'Pyre', col: '#ff7a2f', bio: 'Foundry-born. Thinks every problem is a fuel problem.', q: { n: 'Ignite', d: 'Lob a firebomb: its pool burns rivals for 30 a second, 5 s.' }, e: { n: 'Heat Haze', d: 'A wall of amber haze across your view that blocks sight for 10 s.' } },
     axiom: { n: 'AXIOM', role: 'Engineer', col: '#5aa0ff', bio: 'Builds the thing that holds the angle, then goes for coffee.', q: { n: 'Sentry', d: 'A turret that fires on rivals in front of it until it is shot down.' }, e: { n: 'Tripmine', d: 'A mine at your feet. Armed, it bursts for up to 75 when a rival comes near.' } },
@@ -1233,6 +1233,7 @@ const GAME = {
       const a2 = R() * TAU, r2 = Math.sqrt(R()) * ps, yw = f.yaw + pt[0] + Math.cos(a) * r + Math.cos(a2) * r2, pc = f.pitch + pt[1] + Math.sin(a) * r + Math.sin(a2) * r2, S = castShot(f, viewDir(yw, pc));
       if (p === 0) { y0 = yw; p0 = pc; }
       if (p === 0 && !f.net && M.kit && M.kit.hexes.length && hexShot(f, S)) continue;   // Overcharge: the shot took the charge
+      if (p === 0 && !f.net && M.kit && M.kit.decoys.length && decoyShot(f, S)) continue;   // Mirage: the shot hit the copy
       emit('shot', f, S, p === 0);
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k, S.hit.leg); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);
@@ -1805,7 +1806,7 @@ const GAME = {
                        E Tripmine: a mine at your feet that arms, then bursts for up to 75 when a rival comes near.
      The things they leave in the world live in M.kit and are stepped by stepKits. Like damage, every effect on a fighter
      is worked out on that fighter's own device: a trap or mine that goes off there tells the others, so all screens agree. */
-  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [] };
+  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], decoys: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [] };
   const freshKit = () => Object.fromEntries(Object.keys(KIT_N).map(k => [k, []]));
   const enemyOf = (a, b) => a.team !== b.team;
   const kitId = (f, k) => f.key + ':' + k + ':' + M.round;
@@ -1813,7 +1814,7 @@ const GAME = {
   function kitAim(f, key, d, S, alt) {
     const e = eyeY(f), reach = (max, back = .6) => Math.max(1, Math.min(S.hit ? max : S.dist, max) - back);
     if (key === 'novae') { const dd = Math.max(1, Math.min(S.dist, 18) - .4); return { x: f.x + d[0] * dd, y: e + d[1] * dd, z: f.z + d[2] * dd }; }   // aimed at a rival, it goes off on them
-    if (key === 'wraithe') { const dd = reach(20); return { x: f.x + d[0] * dd, z: f.z + d[2] * dd }; }
+    if (key === 'wraithe') { const L = Math.hypot(d[0], d[2]) || 1; return { x: f.x, z: f.z, dx: d[0] / L, dz: d[2] / L }; }   // Mirage: it runs the way you look
     if (key === 'talonq') return { x: f.x + d[0] * .5, y: e + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * 42, vy: d[1] * 42 + 1.5, vz: d[2] * 42 };
     if (key === 'talone') { const dd = Math.min(reach(5, .4), 5); return { x: f.x - Math.sin(f.yaw) * dd, z: f.z - Math.cos(f.yaw) * dd }; }
     if (key === 'emberq') { const sp = alt ? 8.5 : 15; return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + (alt ? 2.2 : 3), vz: d[2] * sp + f.vz * .4 }; }   // the other click: a short underhand lob
@@ -1832,7 +1833,7 @@ const GAME = {
     if (key === 'novaq') { f.surge = 3.5; return true; }
     if (key === 'novae') { K2.waves.push({ x: d.x, y: d.y, z: d.z, t: .45, by: f }); return true; }
     if (key === 'wraithq') { f.cloak = 5; return true; }
-    if (key === 'wraithe') { K2.lures.push({ x: d.x, z: d.z, t: 4.2, step: 0, shots: 0, by: f, loud: 0 }); return true; }
+    if (key === 'wraithe') { const D = { id: kitId(f, 'e') + ':' + Math.round(M.time * 10), x: d.x + d.dx * .8, z: d.z + d.dz * .8, dx: d.dx, dz: d.dz, t: 4, T: 4, by: f, seen: {}, walkT: 0 }; D.y = hAt(D.x, D.z); K2.decoys.push(D); emit('decoy', D); return true; }
     if (key === 'talonq') { K2.darts.push({ x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, stuck: -1, pulses: 0, by: f }); return true; }
     if (key === 'talone') { K2.snares.push({ id: kitId(f, 'e'), x: d.x, z: d.z, y: hAt(d.x, d.z), arm: .8, by: f }); return true; }
     if (key === 'emberq') { K2.bombs.push({ x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f }); return true; }
@@ -1851,6 +1852,14 @@ const GAME = {
     if (key === 'axiomx') { K2.locks.push({ x: d.x, z: d.z, y: hAt(d.x, d.z), t: 2.5, T: 2.5, R: 14, by: f }); if (me().team !== f.team && Math.hypot(me().x - d.x, me().z - d.z) < 18) say('LOCKDOWN INCOMING', WARN); return true; }
     return false;
   }
+  // Mirage popped by whoever shot it (or a bot that fell for it): they are blinded and marked; decided where they are run
+  function decoyPop(D, v, fromNet) { if (!D || D.popped) return; D.popped = true; D.t = 0; emit('decoyPop', D, v);
+    if (v && !v.net) { v.flash = Math.max(v.flash, 1.8); v.reveal = Math.max(v.reveal, 2.5); if (v === me()) say('IT WAS A MIRAGE', OPS.wraith.col); }
+    if (!fromNet) net({ t: 'dk', id: D.id, v: v ? v.key : '' }); }
+  // a shot at the copy: a box the size of a fighter where it stands
+  function decoyShot(f, S) { const K2 = M.kit; if (!K2 || !K2.decoys.length) return false;
+    for (const D of K2.decoys) { if (D.popped || !enemyOf(D.by, f)) continue; const t = rayBox(S.o, S.d, [D.x - .32, D.y, D.z - .32], [D.x + .32, D.y + 1.85, D.z + .32]); if (t > 0 && t < S.dist) { decoyPop(D, f, false); return true; } }
+    return false; }
   // the fighters this device is in charge of
   const localFs = () => M.fs.filter(v => !v.net && v.alive);
   // a mine or snare set off: on the victim's device first, then on every other device by message
@@ -1896,7 +1905,13 @@ const GAME = {
       emit('wavePop', w);
     }
     K2.waves = K2.waves.filter(w => w.t > 0);
-    // Ghost Step: footsteps, then three bursts of gunfire, from nowhere
+    // Mirage: the copy runs on (stopping at a wall), and a rival bot that has it in view for a moment takes it for real and fires on it
+    for (const D of K2.decoys) { D.t -= dt; if (D.popped) continue; const nx = D.x + D.dx * SPD * .95 * dt, nz = D.z + D.dz * SPD * .95 * dt;
+      if (!blocked(nx, nz, D.y) && Math.abs(hAt(nx, nz) - D.y) < STEP + .05) { D.x = nx; D.z = nz; D.y = hAt(nx, nz); D.walkT += dt * SPD; D.moving = true; } else D.moving = false;
+      for (const v of localFs()) { if (!v.bot || !enemyOf(D.by, v) || !duelOk(D.by, v)) continue; const dd = Math.hypot(D.x - v.x, D.z - v.z); if (dd > 28 || Math.abs(angDiff(yawTo(v.x, v.z, D.x, D.z), v.yaw)) > 1.1 || !canSeePt(v, D.x, D.y + 1.3, D.z)) { D.seen[v.key] = 0; continue; }
+        v.bot.last = { x: D.x, z: D.z, t: M.time }; D.seen[v.key] = (D.seen[v.key] || 0) + dt; if (D.seen[v.key] > .5) { decoyPop(D, v, false); break; } } }
+    K2.decoys = K2.decoys.filter(D => D.t > 0 && !D.popped);
+    // (Ghost Step's lures, from before Mirage: none are made now)
     for (const L of K2.lures) { L.t -= dt; L.step -= dt; L.loud = Math.max(0, L.loud - dt); const firing = L.t < 2;
       if (L.step <= 0) { L.step = firing ? .11 : .34; L.loud = .3; emit(firing ? 'lureShot' : 'lureStep', L); if (firing) L.shots++; if (firing && L.shots % 4 === 0) L.step = .55; } }
     K2.lures = K2.lures.filter(L => L.t > 0);
@@ -2189,8 +2204,8 @@ const GAME = {
       if (f.ab.e && fresh && !sees && dE > 5 && dE < 18 && R() < dt * 1.2) botCast(f, 'e', { x: B.last.x, y: hAt(B.last.x, B.last.z) + 1.2, z: B.last.z });
     } else if (f.op === 'wraith') {
       if (f.ab.q && !sees && ((side === 'att' && P.k === 'push' && near < 20) || (P.k === 'retake' && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 24))) ability(f, 'q');
-      if (f.ab.e && side === 'att' && P.k === 'push' && !sees && M.t < roundT() - 8 && R() < dt * .4) {   // fake a push somewhere else
-        const o = SITES.length > 1 ? pick(SITES.filter((S2, i) => i !== (RSITE[P.lane] || 0))).c : pick(HOLDS).look; botCast(f, 'e', { x: o[0], z: o[1] }); }
+      if (f.ab.e && side === 'att' && P.k === 'push' && !sees && M.t < roundT() - 8 && R() < dt * .4) {   // send the copy in first
+        const o = SITES.length > 1 ? SITES[RSITE[P.lane] || 0].c : pick(HOLDS).look, dx = o[0] - f.x, dz = o[1] - f.z, L = Math.hypot(dx, dz) || 1; botCast(f, 'e', { x: f.x, z: f.z, dx: dx / L, dz: dz / L }); }   // Mirage: a copy runs ahead of the push
     } else if (f.op === 'talon') {
       if (f.ab.q && !sees && ((side === 'att' && P.k === 'push' && near < 26 && near > 8) || (side === 'def' && there && M.t < roundT() - 10))) {
         const tg = side === 'att' ? siteOfPlan(P, f) : holdLook; if (tg) { const dx = tg[0] - f.x, dz = tg[1] - f.z, dy = hAt(tg[0], tg[1]) + 2.4 - ey, L = Math.hypot(dx, dy, dz) || 1; botCast(f, 'q', { x: f.x, y: ey, z: f.z, vx: dx / L * 42, vy: dy / L * 42 + 1.5, vz: dz / L * 42 }); } }
@@ -2260,7 +2275,7 @@ const GAME = {
     const sees = e.alive && (Math.abs(angDiff(toE, f.yaw)) < 1.1 || dE < 4) && canSee(f, e);
     if (sees) { B.seen = (B.seen || 0) + dt; B.last = { x: e.x, z: e.z, t: M.time }; B.lostT = 0; } else { B.seen = 0; B.lostT = (B.lostT || 0) + dt; }
     if (e.alive && !sees && ((e.step > 0 && dE < D.hear) || (e.kick > 0 && dE < 45) || e.reveal > 0)) B.last = { x: e.x, z: e.z, t: M.time, heard: true };
-    if (M.kit) for (const L of M.kit.lures) if (L.loud > 0 && L.by.team !== f.team && Math.hypot(L.x - f.x, L.z - f.z) < D.hear * 1.4) B.last = { x: L.x, z: L.z, t: M.time, heard: true };   // a Ghost Step sounds real
+    if (M.kit) for (const L of M.kit.lures) if (L.loud > 0 && L.by.team !== f.team && Math.hypot(L.x - f.x, L.z - f.z) < D.hear * 1.4) B.last = { x: L.x, z: L.z, t: M.time, heard: true }   // (Ghost Step, gone: kept for old lures);   // a Ghost Step sounds real
     if (B.hitBy && M.time - B.hitBy.t < .05) { if (!sees) { B.last = { x: B.hitBy.x, z: B.hitBy.z, t: M.time, heard: true }; B.alarm = M.time; } if (B.err) { B.err[0] += rnd(-1, 1) * .035; B.err[1] += rnd(-.2, 1) * .03; } }   // shot: turn to it, and the hit throws the aim
     // what it believes about where you are is a moment old: it aims at that, so moving makes it miss
     B.hist = B.hist || []; if (sees) B.hist.push({ t: M.time, x: e.x, z: e.z, y: e.y, cr: e.crouch, h: headOf(e) }); else B.hist.length = 0;
@@ -2521,6 +2536,7 @@ const GAME = {
         if (!F.alive) break; const by = M.byKey[String(m.by)] || other(F); F.alive = false; F.hp = 0; F.stat.d++; by.stat.k++; if (m.h) by.stat.hs++; if (!by.net && by.team !== F.team) { by.credits = Math.min(CASH.cap, by.credits + CASH.kill); ultGain(by, 1); novaKill(by, F); }   // your kill charges your ultimate (and Nova's Surge), as it does offline
         M.feed.unshift({ a: by.name, b: F.name, w: GUNS[m.w] ? GUNS[m.w].n : m.w, head: !!m.h, t: 0, mine: by === me() }); emit('kill', F, by, !!m.h, m.w); if (M.host) judge(); break;
       }
+      case 'dk': { const D = M.kit && M.kit.decoys.find(q => q.id === m.id); if (D) decoyPop(D, M.byKey[m.v] || null, true); break; }
       case 'hx': { const F2 = M.byKey[m.f], h = M.kit && M.kit.hexes.find(q => q.id === m.id); if (F2 && h) takeHex(F2, h, true); else if (F2) F2.ward = 20; break; }
       case 'ab': if (!(m.d && m.d.free)) spendAb(F, m.k); applyAbility(F, m.k, m.d || {}); break;
       case 'orb': takeOrb(m.i | 0, F); break;   // someone took an ultimate orb
@@ -6627,7 +6643,7 @@ const GAME = {
      it, back), push (palm out, a ring of light bursts off it), pulse (palm up, the charge swells and rings out), heal (to
      the chest, glowing), dash (a quick sweep across) and surge (a fist that crackles). Rivals' bodies play the same move. */
   const AB_KIND = { vexq: 'dash', vexe: 'throw', vexx: 'pulse', irisq: 'pulse', irise: 'throw', irisx: 'pulse', bastionq: 'push', bastione: 'heal', bastionx: 'heal',
-    novaq: 'surge', novae: 'push', novax: 'surge', wraithq: 'pulse', wraithe: 'throw', wraithx: 'pulse', talonq: 'throw', talone: 'place', talonx: 'push',
+    novaq: 'surge', novae: 'push', novax: 'surge', wraithq: 'pulse', wraithe: 'push', wraithx: 'pulse', talonq: 'throw', talone: 'place', talonx: 'push',
     emberq: 'throw', embere: 'push', emberx: 'throw', axiomq: 'place', axiome: 'place', axiomx: 'place' };
   const AB_D = { throw: .62, place: .7, push: .55, pulse: .72, heal: .8, dash: .36, surge: .6 };
   on('ability', (f, k) => { f.castK = AB_KIND[f.op + k] || 'push'; f.castD = AB_D[f.castK]; f.castT = f.castD; f.castBig = k === 'x'; });
@@ -7607,7 +7623,7 @@ const GAME = {
   function burst(kind, x, y, z, col, r, T, h) { const K = X && X.kf2; if (!K) return; K.bursts.push({ kind, x, y, z, col, r, T, t: 0, h: h || 3 }); }
   // the preview for a readied ability: what kind, and where (from the same sums the ability uses)
   const PV = { vexe: 'spot', irise: 'mark', vexx: 'spot', axiomx: 'self', bastionq: 'wall', embere: 'haze', talone: 'floor', axiomq: 'floor', axiome: 'floor', bastionc: 'floor', wraithc: 'floor',
-    emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', wraithe: 'spot', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'beam' };
+    emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'beam', wraithe: 'run' };
   const PV_R = { vexe: 3.8, vexx: 1, axiomx: 14, emberq: 3.2, emberx: 5.5, vexc: 6, talonc: 3.5, axiomc: 5, wraithe: 1.2, talone: 1.3, axiomq: .6, axiome: 2.2, bastionc: 6, wraithc: .5, novae: 4.5 };
   function previewFrame(P) {
     const K = X.kf2; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false;
@@ -7632,6 +7648,7 @@ const GAME = {
       K.pvWall.visible = true; K.pvWall.position.set(cx, hAt(cx, cz) + h / 2, cz); K.pvWall.scale.set(ax ? .12 : w, h, ax ? w : .12); K.pvWall.material.uniforms.col.value.set(col); K.pvWall.material.uniforms.op.value = .45 + .15 * pulse;
       if (kind === 'front') { const L = 14, ex = cx + (d.ax ? d.dir * L : 0), ez = cz + (d.ax ? 0 : d.dir * L); K.pvBeam.visible = true; K.pvBeam.position.set(cx, hAt(cx, cz) + .05, cz); K.pvBeam.lookAt(ex, hAt(cx, cz) + .05, ez); K.pvBeam.scale.set(3, 3, L); K.pvBeam.material.color.set(col); K.pvBeam.material.opacity = .45; } }
     else if (kind === 'curve') { const pos = K.pvArc.geometry.attributes.position, e = eyeY(P); for (let i = 0; i < 40; i++) { const q = i / 39, a = Math.min(1, q * 2), b = Math.max(0, q * 2 - 1); pos.setXYZ(i, lp(P.x, d.ax, a) + (d.x - d.ax) * b, e + .3 * q, lp(P.z, d.az, a) + (d.z - d.az) * b); } pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); K.pvMark.visible = true; K.pvMark.position.set(d.x, d.y, d.z); K.pvMark.material.color.set('#fff6d6'); }
+    else if (kind === 'run') { const pos = K.pvArc.geometry.attributes.position, e = P.y + .08; let x = d.x, z = d.z, n = 0; for (let s = 0; s < 40; s++) { const nx = x + d.dx * .55, nz = z + d.dz * .55; if (blocked(nx, nz, P.y)) break; x = nx; z = nz; pos.setXYZ(n++, x, hAt(x, z) + .08, z); } for (let i = n; i < 40; i++) pos.setXYZ(i, x, hAt(x, z) + .08, z); pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); ring(x, hAt(x, z), z, .6); }   // Mirage: where the copy will run
     else if (kind === 'beam') { const e = eyeY(P), v = viewDir(P.yaw, P.pitch), L = key === 'vantax' ? 40 : 35, ex = key === 'vantax' ? d.ex : P.x + v[0] * L, ey = key === 'vantax' ? d.ey : e + v[1] * L, ez = key === 'vantax' ? d.ez : P.z + v[2] * L;
       K.pvBeam.visible = true; K.pvBeam.position.set(P.x + v[0] * .8, e - .25, P.z + v[2] * .8); K.pvBeam.lookAt(ex, ey, ez); K.pvBeam.scale.set(key === 'vantax' && d.t ? 2.2 : 1, key === 'vantax' && d.t ? 2.2 : 1, Math.hypot(ex - P.x, ey - e, ez - P.z)); K.pvBeam.material.color.set(key === 'vantax' && !d.t ? DIM : col); K.pvBeam.material.opacity = .55 * pulse;
       if (key === 'vantax' && d.t) { K.pvMark.visible = true; K.pvMark.position.set(ex, ey, ez); K.pvMark.material.color.set(col); K.pvMark.scale.setScalar(1.1 * pulse); } }
@@ -7667,6 +7684,13 @@ const GAME = {
     // other players holding an ability ready: it glows in their off hand
     list(K.rdy, M.fs.filter(f => f !== Vw && f.alive && f.rdy && duelOk(Vw, f) && (f.team === P.team || canSee(P, f) || f.reveal > 0)), (s, f) => { const y = f.yaw, rx = Math.cos(y), rz = -Math.sin(y), fx = -Math.sin(y), fz = -Math.cos(y); s.position.set(ipos(f, 'x') - rx * .24 + fx * .38, ipos(f, 'y') + 1.2 + lp(0, -.4, f.crouch), ipos(f, 'z') - rz * .24 + fz * .38);   // (in the off hand: left of them and ahead)
       s.material.color.set((OPS[f.op] || OPS.vex).col); s.scale.setScalar(.35 + .1 * Math.sin(X.t * 12)); });
+    // Mirage: each copy drawn as the operative itself, running (the red edge a rival gets, too), shimmering as it fades
+    { const live = new Set(); X.decoyF = X.decoyF || new Map();
+      for (const D of K2.decoys) { if (D.popped || !duelOk(Vw, D.by)) continue; live.add(D.id); let f = X.decoyF.get(D.id);
+        if (!f) { f = fighter({ op: D.by.op, key: 'mirage' + D.id, name: '', team: D.by.team }); f.guns = Object.assign({}, D.by.guns); f.slot = D.by.slot; f.skins = Object.assign({}, D.by.skins || {}); X.decoyF.set(D.id, f); }
+        Object.assign(f, { x: D.x, y: D.y, z: D.z, px: D.x, py: D.y, pz: D.z, vx: D.moving ? D.dx * SPD : 0, vz: D.moving ? D.dz * SPD : 0, yaw: Math.atan2(-D.dx, -D.dz), pitch: 0, alive: true, walkT: D.walkT, crouch: 0, ground: true, sprinting: false });
+        updateAgent(f, dt); const A = X.agents.get(f); if (A) A.visible = !(D.t < .4 && Math.random() < .5); }   // (it flickers out at the end)
+      for (const [id, f] of X.decoyF) if (!live.has(id)) { const A = X.agents.get(f); if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); X.agents.delete(f); } X.decoyF.delete(id); } }
     // Gloom: the fog closes in round you while it lasts
     { const k = Vw && Vw.murk > 0 ? Math.min(1, Vw.murk / .4, (3.5 - Vw.murk) / .25 + .2) : 0, fog = X.scene.fog;
       if (k > 0) { if (!X.murkBase) X.murkBase = { near: fog.near, far: fog.far, col: fog.color.clone(), bg: X.scene.background && X.scene.background.isColor ? X.scene.background.clone() : null };
@@ -7677,6 +7701,8 @@ const GAME = {
   // the moments
   const fxOk = () => X && ready && X.kf2 && M;
   const OPC = op => (OPS[op] || OPS.vex).col;
+  on('decoyPop', D => { if (!fxOk()) return; burst('shell', D.x, D.y + 1, D.z, OPS.wraith.col, 1.6, .45); for (let i = 0; i < 26; i++) spark([D.x + rnd(-.3, .3), D.y + rnd(.2, 1.8), D.z + rnd(-.3, .3)], [rnd(-3, 3), rnd(-1, 3), rnd(-3, 3)], i % 2 ? '#dfe6ff' : OPS.wraith.col, .6); });
+  on('decoy', D => { if (fxOk()) burst('ring', D.x, D.y, D.z, OPS.wraith.col, 1.4, .4); });
   on('gloomPop', G2 => { if (!fxOk()) return; burst('shell', G2.x, G2.y + .8, G2.z, OPS.vex.col, 6.5, .55); burst('ring', G2.x, G2.y, G2.z, '#b58cff', 7, .7); for (let i = 0; i < 18; i++) spark([G2.x, G2.y + 1, G2.z], [rnd(-5, 5), rnd(0, 4), rnd(-5, 5)], '#2a1440', .7); });
   on('shockPop', S => { if (!fxOk()) return; burst('shell', S.x, S.y, S.z, '#d8ffb0', 3.8, .35); burst('ring', S.x, hAt(S.x, S.z), S.z, OPS.talon.col, 4.5, .45); X.flashL.position.set(S.x, S.y + .5, S.z); X.flashL.intensity = 16; X.shake = Math.max(X.shake || 0, .25);
     for (let i = 0; i < 26; i++) spark([S.x, S.y + .2, S.z], [rnd(-6, 6), rnd(1, 6), rnd(-6, 6)], i % 3 ? '#e8ffd0' : '#ffffff', .5); });
@@ -7734,14 +7760,16 @@ const GAME = {
   // who is listening: you, or (dead, in a team game) the teammate you are watching through: their sounds are 'yours'
   const ear = () => (M && typeof viewer === 'function' && viewer()) || me();
   function outFor(f, vol = 1) {
-    const ac = K.ac, g = ac.createGain(); let v = vol, pan = 0, muffle = false;
+    const ac = K.ac, g = ac.createGain(); let v = vol, pan = 0, muffle = false, behind = false;
     if (M && f && f !== ear()) {
       const P = ear(), dx = f.x - P.x, dz = f.z - P.z, d = Math.hypot(dx, dz) || .01;
       v *= Math.pow(cl(1 - d / 55, .05, 1), 1.4); pan = cl((dx * Math.cos(P.yaw) - dz * Math.sin(P.yaw)) / d, -1, 1) * .85;
       muffle = los(P.x, eyeY(P), P.z, f.x, f.y + 1.2, f.z, false) < d - .6; if (muffle) v *= .6;
+      behind = (dx * -Math.sin(P.yaw) + dz * -Math.cos(P.yaw)) / d < -.3;
     }
     g.gain.value = v; let head = g;
     if (muffle) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 1100; lpf.connect(g); head = lpf; }
+    else if (behind) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 4200; lpf.connect(g); head = lpf; }   // (behind you: your head in the way of the high end, so you can tell front from back)
     if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = pan; g.connect(p).connect(bus()); } else g.connect(bus());
     return head;
   }
@@ -7788,9 +7816,12 @@ const GAME = {
     longbow: { s: .85, p: [90, 30, .28, 1.3], c: [1300, .16, 1, .6], r: [420, .5, .07], t: [900, 1.2, .4], rack: .7, v: 1.3 },
     torrent: { s: .6, p: [150, 52, .085, 1.05], c: [1700, .07, .8, .8], m: [2600, .018, .3], t: [1150, .35, .24], v: 1 },
   };
-  const baked = {}, baking = {};
-  function bakeShot(k) {
-    const ac = K.ac, D = GSND[k]; if (!ac || !D || baking[k] || typeof OfflineAudioContext === 'undefined') return; baking[k] = 1;
+  const baked = {}, bakedV = {}, baking = {};
+  // each gun is baked three times, each a little different (its own noise, the punch and the crack a few percent apart), and
+  // the shots take turns: the same sample over and over is what makes a spray sound like a machine
+  function bakeShot(k, vI = 0) {
+    const ac = K.ac, D0 = GSND[k], bk = k + ':' + vI; if (!ac || !D0 || baking[bk] || typeof OfflineAudioContext === 'undefined') return; baking[bk] = 1;
+    const jj = 1 + (vI - 1) * .04, D = Object.assign({}, D0, { p: [D0.p[0] * jj, D0.p[1] * jj, D0.p[2] * (2 - jj), D0.p[3]], c: [D0.c[0] * (2 - jj), D0.c[1], D0.c[2], D0.c[3]] });
     const sr = ac.sampleRate, dur = Math.max(D.t[1], D.p[2]) + (D.rack ? D.rack + .32 : 0) + .15, len = Math.ceil(sr * dur);
     let oc; try { oc = new OfflineAudioContext(1, len, sr); } catch (e) { return; }
     const nb = oc.createBuffer(1, sr, sr), ch = nb.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
@@ -7814,15 +7845,49 @@ const GAME = {
       a.gain.setValueAtTime(0, t0); a.gain.linearRampToValueAtTime(D.pf[3], t0 + .0015); a.gain.exponentialRampToValueAtTime(.0001, t0 + D.pf[2]); n.connect(fl).connect(a).connect(mix); n.start(t0, Math.random() * .4); n.stop(t0 + D.pf[2] + .02); }   // the puff
     if (D.sl) { for (const [dt0, f0, lv] of [[D.sl[0], 5400, 1], [D.sl[0] + .046, 4300, .8]]) { noise(dt0, .014, D.sl[1] * lv, 'bandpass', f0, 7, .0004); osc(dt0, 'square', f0 * .5, f0 * .46, .01, D.sl[1] * .18 * lv); osc(dt0 + .001, 'sine', f0 * .62, f0 * .6, .035, D.sl[1] * .14 * lv); } }   // the slide, back and home
     if (D.rack) { const r = D.rack; noise(r, .05, .32, 'bandpass', 1900, 3); osc(r, 'square', 320, 260, .03, .06); noise(r + .13, .06, .38, 'bandpass', 1400, 3); osc(r + .13, 'square', 260, 200, .035, .07); }   // pump / bolt
-    oc.startRendering().then(B => { const c0 = B.getChannelData(0); let pk = 0; for (let i = 0; i < c0.length; i++) pk = Math.max(pk, Math.abs(c0[i])); if (pk > 0) { const g = .92 / pk; for (let i = 0; i < c0.length; i++) c0[i] *= g; } baked[k] = B; }).catch(() => { baking[k] = 0; });
+    oc.startRendering().then(B => { const c0 = B.getChannelData(0); let pk = 0; for (let i = 0; i < c0.length; i++) pk = Math.max(pk, Math.abs(c0[i])); if (pk > 0) { const g = .92 / pk; for (let i = 0; i < c0.length; i++) c0[i] *= g; } (bakedV[k] = bakedV[k] || [])[vI] = B; if (!baked[k]) baked[k] = B; }).catch(() => { baking[bk] = 0; });
   }
   // bake every gun as a match starts (it takes a few milliseconds each, off the main sound path)
-  on('round', () => { if (K.ac) for (const k in GSND) bakeShot(k); });
+  on('round', () => { if (K.ac) for (const k in GSND) for (let v = 0; v < 3; v++) bakeShot(k, v); });
   // the gun's own shot, a hair higher or lower each time; far away it loses its edge. when: an audio-clock time (0: now)
+  const SHOTN = {};
   function shotAt(f, G, out, mine, when) {
-    const ac = K.ac, src = ac.createBufferSource(), a = ac.createGain(); src.buffer = baked[G.k]; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v;
-    let head = out; if (!mine && M) { const P = ear(), d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 2200, cl((d - 12) / 40, 0, 1)); lpf.connect(out); head = lpf; } }
-    src.connect(a).connect(head); src.start(when || 0); return src;
+    const ac = K.ac, src = ac.createBufferSource(), a = ac.createGain(), V2 = bakedV[G.k] || [], n = V2.length; let buf = baked[G.k];
+    if (n > 1) { SHOTN[G.k] = ((SHOTN[G.k] | 0) + 1 + (Math.random() < .35 ? 1 : 0)) % n; buf = V2[SHOTN[G.k]] || buf; }   // (turns, now and then skipping one, so no pattern)
+    src.buffer = buf; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v;
+    let head = out, d = 0;
+    if (!mine && M) { const P = ear(); d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 1600, cl((d - 12) / 45, 0, 1)); lpf.connect(out); head = lpf; } }
+    src.connect(a).connect(head);
+    // the room: a share of every shot goes to the map's reverb, more for one under a roof and more the further away it is
+    { const R = verb(); if (R) { const k = f && f.x != null ? idx(Math.floor(f.x / CS), Math.floor(f.z / CS)) : -1, inside = k >= 0 && CEIL[k] > 0, s2 = ac.createGain(); s2.gain.value = (mine ? .16 : .26) * (inside ? 1.7 : 1) * (1 + cl(d / 40, 0, 1)) * GSND[G.k].v * (G.sil ? .4 : 1); a.connect(s2).connect(R); } }
+    // far away, a shot is heard a moment after it is fired (sound is slow: about 3 ms a metre, from 15 m on, and never more than 0.15 s)
+    const late = mine ? 0 : Math.min(.15, Math.max(0, d - 15) / 343);
+    src.start(when || (late ? ac.currentTime + late : 0)); return src;
+  }
+  /* ---- the room each map makes: one reverb for all the gunfire, its echo made up to suit the map. Out in the open
+     (harbour, desert, snow) a shot cracks back off far walls: a few separate slaps, then a long thin tail. Indoors (the
+     station, the foundry, the temple's halls) it is a dense, short wash. The neon city is in between. */
+  let verbN = null, verbKind = '';
+  function verb() {
+    const ac = K.ac; if (!ac || typeof MAP === 'undefined' || !MAP) return null;
+    const kind = { harbor: 'open', desert: 'open', snow: 'open', space: 'hall', lava: 'hall', jungle: 'hall', neon: 'street' }[MAP.theme] || 'street';
+    if (!verbN || verbN.context !== ac) { verbN = ac.createConvolver(); const wet = ac.createGain(); wet.gain.value = .55; verbN.connect(wet).connect(bus()); verbKind = ''; }
+    if (verbKind !== kind) { verbKind = kind; const sr = ac.sampleRate, L = { open: 1.6, hall: .9, street: 1.2 }[kind], n = Math.floor(sr * L), B = ac.createBuffer(2, n, sr);
+      for (let ch = 0; ch < 2; ch++) { const d = B.getChannelData(ch); let lpS = 0;
+        const dk = { open: 4.2, hall: 7.5, street: 5.5 }[kind], dens = { open: .25, hall: 1, street: .55 }[kind];
+        for (let i = 0; i < n; i++) { const t = i / sr, w = (Math.random() * 2 - 1) * Math.exp(-t * dk) * dens; lpS += (w - lpS) * (kind === 'hall' ? .35 : .5); d[i] = lpS; }   // (a diffuse tail, a little dulled)
+        const slaps = { open: [.075, .14, .23, .37, .52], hall: [.012, .021, .033], street: [.045, .09, .16, .26] }[kind];
+        slaps.forEach((t0, q) => { const at = Math.floor((t0 + (ch ? .004 : 0) + Math.random() * .006) * sr), a = .9 * Math.pow(.62, q); for (let j = 0; j < 220 && at + j < n; j++) d[at + j] += (Math.random() * 2 - 1) * a * Math.exp(-j / 40); }); }   // the separate slaps off far walls
+      verbN.buffer = B; }
+    return verbN;
+  }
+  // your own gun's brass on the floor: a tinkle (two bounces) a moment after the shot; a shotgun's hull lands with a dull tap
+  let lastBrass = 0;
+  function casing(G) {
+    const ac = K.ac; if (!ac || G.melee || G.k === 'hammer') return; const now = ac.currentTime; if (now - lastBrass < .07) return; lastBrass = now;   // (a fast spray: not every case, or it is a wind chime)
+    const o = outFor(null, .55), d0 = .32 + Math.random() * .14, f0 = G.cat === 'Sniper' ? 3300 : G.cat === 'Sidearm' ? 5200 : 4400;
+    if (G.cat === 'Shotgun') { hiss(o, .05, .1, 'lowpass', 700, d0); tone(o, 220, .05, 'sine', .05, -60, d0); return; }
+    tone(o, f0 * (1 + (Math.random() - .5) * .12), .06, 'sine', .028, 0, d0); tone(o, f0 * 1.5, .04, 'sine', .016, 0, d0); tone(o, f0 * (1.05 + Math.random() * .1), .04, 'sine', .016, 0, d0 + .09 + Math.random() * .05);
   }
   // your spray as it is heard: when it began, its last real shot, and the shots started ahead of time
   const SPR = { live: false, pt: 0, gap: 0, last: 0, k: '', q: [] }, BEEP = { q: null };
@@ -7835,7 +7900,7 @@ const GAME = {
     if (BEEP.q && !(M && M.planted && M.phase === 'live' && !M.defused)) { if (BEEP.q.st > now) try { BEEP.q.src.stop(); } catch (er) {} BEEP.q = null; }
   }
   on('shot', (f, S, first) => {
-    if (!first || !canHear()) return; const G = gun(f), mine = f === ear(), out = outFor(f, mine ? .6 : 1);
+    if (!first || !canHear()) return; const G = gun(f), mine = f === ear(), out = outFor(f, mine ? .6 : 1); if (mine && f === me()) casing(G);
     if (G.rail) { tone(out, 1800, .25, 'sawtooth', .12, -1500); hiss(out, .3, .3, 'highpass', 2500); tone(out, 70, .25, 'sine', .6, -30); return; }
     const B = baked[G.k];
     if (B) {
@@ -7921,7 +7986,7 @@ const GAME = {
     else if (key === 'novaq') { tone(o, 260, .4, 'sawtooth', .07, 620); tone(o, 520, .35, 'square', .03, 900, .05); hiss(o, .35, .08, 'bandpass', 2600, 0, 2); }
     else if (key === 'novae' || key === 'emberq') { hiss(o, .14, .14, 'bandpass', 1400, 0, 1.2); tone(o, 500, .1, 'triangle', .06, 260); }
     else if (key === 'wraithq') { tone(o, 1100, .6, 'sine', .07, -820); hiss(o, .6, .05, 'highpass', 5200); }
-    else if (key === 'wraithe') hiss(o, .2, .06, 'highpass', 4000);
+    else if (key === 'wraithe') { tone(o, 1100, .35, 'sine', .07, -500); tone(o, 1650, .3, 'sine', .04, -700, .05); }   // Mirage: a glassy shimmer
     else if (key === 'talonq') { hiss(o, .1, .16, 'highpass', 2600); tone(o, 1400, .06, 'triangle', .05, -400); }
     else if (key === 'talone' || key === 'axiome') { tone(o, 1250, .05, 'square', .05); tone(o, 1650, .05, 'square', .05, 0, .08); }
     else if (key === 'axiomq') { tone(o, 200, .22, 'square', .06, 240); tone(o, 900, .07, 'square', .05, 0, .26); tone(o, 1200, .07, 'square', .05, 0, .36); }
@@ -7952,6 +8017,7 @@ const GAME = {
   // the things the newer operatives leave in the world
   const at = (x, y, z) => ({ x, y: y - 1, z });
   cue('wavePop', w => { const o = outFor(at(w.x, w.y, w.z), 1.3); tone(o, 90, .45, 'sine', .5, -50); hiss(o, .35, .35, 'bandpass', 900, 0, .8); tone(o, 1800, .3, 'sawtooth', .05, -1400, .02); });
+  cue('decoyPop', () => { const o = outFor(null); hiss(o, .3, .2, 'highpass', 3500); tone(o, 1400, .3, 'triangle', .08, -1000); });
   cue('lureStep', L => { const o = outFor(at(L.x, hAt(L.x, L.z) + 1, L.z)); hiss(o, .06, .32, 'lowpass', 420); tone(o, 95, .05, 'sine', .14, -30); });
   cue('lureShot', L => { const o = outFor(at(L.x, hAt(L.x, L.z) + 1, L.z)); const [d, cf, tf, tail, v] = SHOT.Rifle; hiss(o, d, .5 * v, 'bandpass', cf, 0, .6); hiss(o, tail, .16 * v, 'lowpass', 900, .02); tone(o, tf, .11, 'sine', .5 * v, -tf * .55); });
   cue('dartStick', D => tone(outFor(at(D.x, D.y, D.z)), 2200, .05, 'square', .05, -900));
@@ -8430,7 +8496,7 @@ const GAME = {
   function emblemLight(col) { const key = 'L' + col; if (EMB[key]) return EMB[key]; const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, '#ffffff'); gr.addColorStop(.18, col); gr.addColorStop(.5, col + '55'); gr.addColorStop(1, col + '00'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return EMB[key] = c; }
   /* ---- ability icons: a small line drawing for each, in the bar and the armory */
   const ABICON = { vexc: 'orb', vexq: 'dash', vexe: 'smoke', vexx: 'portal', irisc: 'eye', irisq: 'wave', irise: 'flash', irisx: 'eye', bastionc: 'beacon', bastionq: 'wall', bastione: 'heart', bastionx: 'shield',
-    novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'ghost', wraithe: 'steps', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
+    novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'ghost', wraithe: 'ghost', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
     emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'mine', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel' };
   // what the other click does, for the hint under the bar
   const ABALT = { vexc: 'A SHORT LOB', talonc: 'A SHORT LOB', axiomc: 'A SHORT LOB', emberq: 'A SHORT LOB', emberx: 'A SHORT LOB', emberc: 'BENT RIGHT', bastionq: 'TURNED ALONG YOUR VIEW' };
@@ -8518,7 +8584,7 @@ const GAME = {
     if (!banner) return; const B = banner, n = cl(B.n | 0, 1, 5), T = 2.1 + n * .12, t = B.pin != null ? B.pin : (performance.now() - B.t0) / 1000;   // (pin: the tests hold a moment) if (t > T) { banner = null; return; }
     if (!B.sh) B.sh = bannerShards(n, Math.floor(B.t0 * 7));
     const E = B.em, acc = n >= 5 ? GOLD : E.glow, touch = isTouch(), cx = 640, cy = V.y1 - (touch ? 196 : 140) * u, R = (touch ? 33 : 40) * u * (1 + (n - 1) * .07);   // (a phone's health and ammo sit bottom centre: the banner rides above them, a little smaller)
-    const inK = smooth(cl(t / .14, 0, 1)), pop = t < .14 ? 1.7 - .7 * inK : 1 + Math.sin(Math.min(1, (t - .14) / .22) * Math.PI) * .06, outK = smooth(cl((t - (T - .35)) / .35, 0, 1)), a = (t < .06 ? t / .06 : 1) * (1 - outK), sc = pop * (1 - outK * .25);
+    const inK = smooth(cl(t / .14, 0, 1)), pop = t < .14 ? 1.7 - .7 * inK : 1 + Math.sin(Math.min(1, (t - .14) / .22) * Math.PI) * .06, outK = Math.max(smooth(cl((t - (T - .35)) / .35, 0, 1)), isTouch() && M && M.phase === 'end' && M.last && M.last.t0 ? smooth(cl((performance.now() - M.last.t0 - 350) / 300, 0, 1)) : 0), a = (t < .06 ? t / .06 : 1) * (1 - outK), sc = pop * (1 - outK * .25);   // (on a phone it bows out once the round's result is up: no room for both)
     const st = (c, w) => { g.strokeStyle = c; g.lineWidth = w; }, line = (x0, y0, x1, y1) => { g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); };
     g.save(); g.translate(cx, cy);
     // behind it all: a dark backing (it has to read on a bright map), a soft glow, and (from three kills) a beam of light up and down
@@ -8742,13 +8808,13 @@ const GAME = {
   on('clutch', (f, vs) => { if (!M) return; sweep('CLUTCH', `${f.name.toUpperCase()}  ·  1 v ${vs}`, f.team === me().team ? YOU : FOE); });
   function drawSweep(g) {
     if (!SWEEP) return; const t = (performance.now() - SWEEP.t0) / 1000, D = 2.6; if (t > D) { SWEEP = null; return; }
-    const V = K.view, u = uiScale(), W = V.x1 - V.x0, cy = V.y0 + 168 * u, hh = 46 * u, inK = smooth(cl(t / .28, 0, 1)), outK = smooth(cl((t - D + .35) / .35, 0, 1)), sk = 40 * u;
+    const V = K.view, u = uiScale(), W = V.x1 - V.x0, tch = isTouch(), cy = V.y0 + (tch ? 118 : 168) * u, hh = (tch ? 30 : 46) * u, inK = smooth(cl(t / .28, 0, 1)), outK = smooth(cl((t - D + .35) / .35, 0, 1)), sk = 40 * u;
     const x0 = lp(V.x0 - W, V.x0, inK) + outK * W, x1 = x0 + W, col = SWEEP.col;
     g.save(); g.globalAlpha = .9; g.fillStyle = 'rgba(8,10,14,.86)'; g.beginPath(); g.moveTo(x0 + sk, cy - hh); g.lineTo(x1 + sk, cy - hh); g.lineTo(x1 - sk, cy + hh); g.lineTo(x0 - sk, cy + hh); g.closePath(); g.fill();
     g.globalAlpha = 1; g.fillStyle = col; g.fillRect(x0, cy - hh, W, 3 * u); g.fillRect(x0, cy + hh - 3 * u, W, 3 * u);
     const sh = ((t * 900 * u) % (W + 400 * u)) - 200 * u; const gr = g.createLinearGradient(x0 + sh - 120 * u, 0, x0 + sh + 120 * u, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, 'rgba(255,255,255,.12)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x0, cy - hh, W, hh * 2);   // a glint runs along it
     const tx0 = 640 + (1 - inK) * -160 * u + outK * 160 * u, pop = 1 + .18 * Math.max(0, 1 - t / .35);
-    tx(g, SWEEP.title, tx0, cy - 8 * u, 46 * u * pop, col, 'center', 900); if (SWEEP.sub) tx(g, SWEEP.sub, tx0, cy + 27 * u, 14 * u, BONE, 'center', 800);
+    tx(g, SWEEP.title, tx0, cy - (tch ? 5 : 8) * u, (tch ? 30 : 46) * u * pop, col, 'center', 900); if (SWEEP.sub) tx(g, SWEEP.sub, tx0, cy + (tch ? 18 : 27) * u, (tch ? 11 : 14) * u, BONE, 'center', 800);   // (slimmer on a phone)
     g.restore();
   }
   // ---- switching sides: a band across the screen at the start of the second half (and the decider) says which side you are now
@@ -8853,9 +8919,10 @@ const GAME = {
         g.fillStyle = on ? WARN : '#5a2620'; g.beginPath(); g.moveTo(0, 6); g.lineTo(13, 21); g.lineTo(0, 36); g.lineTo(-13, 21); g.closePath(); g.fill();
         g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(-42, 41, 84, 4); g.fillStyle = WARN; g.fillRect(-42, 41, 84 * k, 4);
       } else tx(g, clock(M.t), 0, 24, 29, M.phase === 'live' && M.t < 10 ? WARN : BONE, 'center', 800);
-      tx(g, M.phase === 'buy' ? 'BUY PHASE' : M.phase === 'end' ? 'ROUND OVER' : M.planted ? 'CHARGE PLANTED' : 'ROUND ' + M.round, 0, 62, 10, M.planted && M.phase === 'live' ? WARN : DIM, 'center', 800);
+      const sh2 = isTouch();   // (a phone's smallest letters are bigger than these labels were drawn for: shorter words, so the three never run together)
+      tx(g, M.phase === 'buy' ? (sh2 ? 'BUY' : 'BUY PHASE') : M.phase === 'end' ? (sh2 ? 'OVER' : 'ROUND OVER') : M.planted ? (sh2 ? 'PLANTED' : 'CHARGE PLANTED') : (sh2 ? 'R' : 'ROUND ') + M.round, 0, 62, 10, M.planted && M.phase === 'live' ? WARN : DIM, 'center', 800);
       const score = (x, n, col, tag) => { g.fillStyle = PANEL; g.fillRect(x - 25, 0, 50, 50); g.fillStyle = col; g.fillRect(x - 25, 0, 50, 3); tx(g, String(n), x, 27, 30, col, 'center', 800); if (tag) tx(g, tag, x, 62, 10, col, 'center', 800); };
-      score(-92, M.wins[0], YOU, side === 'att' ? 'ATTACK' : 'DEFEND'); score(92, M.wins[1], FOE, side === 'att' ? 'DEFEND' : 'ATTACK');
+      score(-92, M.wins[0], YOU, side === 'att' ? (sh2 ? 'ATK' : 'ATTACK') : (sh2 ? 'DEF' : 'DEFEND')); score(92, M.wins[1], FOE, side === 'att' ? (sh2 ? 'DEF' : 'DEFEND') : (sh2 ? 'ATK' : 'ATTACK'));
       const tile = (q, x, col, ours) => {
         const w = tw, h = 50, up = q.alive;
         portraitTile(g, q.op, x - w / 2, 0, w, h, { dead: !up, bar: col, r: 3, on: q === P && up });
@@ -9022,20 +9089,22 @@ const GAME = {
     if (demo) { g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT`, 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); return; }
     if (!M.last.t0) M.last.t0 = performance.now(); const t = (performance.now() - M.last.t0) / 1000, a = smooth(cl(t / .25, 0, 1)), k = Math.min(u, 1.2);
     // (a big moment's band, an ace or a clutch, has the same place: while it is up this sits under it, then slides back)
-    const want = SWEEP ? 226 * u - 92 * k : 0; M.last.off = M.last.off == null ? want : lp(M.last.off, want, .18); const top = V.y0 + 92 * k + M.last.off;
+    const touch = isTouch(), want = SWEEP ? (touch ? 150 : 226) * u - 92 * k : 0; M.last.off = M.last.off == null ? want : lp(M.last.off, want, .18); const top = V.y0 + 92 * k + M.last.off;   // (a phone's band is slimmer, so less to clear)
     g.save(); g.globalAlpha = a;
     { const gr = g.createLinearGradient(V.x0, 0, V.x1, 0), bc = won ? '53,224,200' : '244,63,63'; gr.addColorStop(0, `rgba(${bc},0)`); gr.addColorStop(.3, `rgba(${bc},.2)`); gr.addColorStop(.7, `rgba(${bc},.2)`); gr.addColorStop(1, `rgba(${bc},0)`); g.fillStyle = 'rgba(8,10,14,.5)'; g.fillRect(V.x0, top, W, 66 * k); g.fillStyle = gr; g.fillRect(V.x0, top, W, 66 * k); g.fillStyle = c; g.fillRect(640 - 150 * k * a, top + 64 * k, 300 * k * a, 2 * k); }
     tx(g, won ? 'ROUND WON' : 'ROUND LOST', 640, top + 24 * k, 34 * k, c, 'center', 900); tx(g, `${WHY[M.last.why].toUpperCase()}   ·   ${M.wins[0]} – ${M.wins[1]}`, 640, top + 50 * k, 12 * k, BONE, 'center', 800);
     // your team this round (one against one: the two of you)
-    const mine = M.fs.filter(f => f.team === P.team && !f.gone), list = mine.length > 1 ? mine : [P, ...M.fs.filter(f => f.team !== P.team && !f.gone)], rk = f => (f.stat.k | 0) - (f.stat.k0 | 0), rd = f => Math.max(0, Math.round((f.stat.dmg || 0) - (f.stat.d0 || 0)));
-    const best = list.slice().sort((x, y) => rd(y) + rk(y) * 150 - rd(x) - rk(x) * 150)[0], n = list.length, gp = 8 * k, cw = Math.min(196 * k, (W - 60 * k) / n - gp), ch = 54 * k, x0 = 640 - (n * (cw + gp) - gp) / 2, y = top + 74 * k;
+    const mine = M.fs.filter(f => f.team === P.team && !f.gone), rk = f => (f.stat.k | 0) - (f.stat.k0 | 0), rd = f => Math.max(0, Math.round((f.stat.dmg || 0) - (f.stat.d0 || 0)));
+    // (a phone keeps it short: only those who did something this round, three at most, best first; nobody did: no cards)
+    let list = mine.length > 1 ? mine : [P, ...M.fs.filter(f => f.team !== P.team && !f.gone)]; if (touch) list = list.filter(f => rk(f) || rd(f)).sort((x, y) => rd(y) + rk(y) * 150 - rd(x) - rk(x) * 150).slice(0, 3);
+    const best = list.slice().sort((x, y) => rd(y) + rk(y) * 150 - rd(x) - rk(x) * 150)[0], n = list.length, gp = 8 * k, cw = Math.min(196 * k, (W - 60 * k) / Math.max(1, n) - gp), ch = (touch ? 46 : 54) * k, x0 = 640 - (n * (cw + gp) - gp) / 2, y = top + 74 * k;
     list.forEach((f, i) => { const x = x0 + i * (cw + gp), a2 = smooth(cl((t - .15 - i * .07) / .25, 0, 1)), col = f.team === P.team ? YOU : FOE, top2 = f === best && (rk(f) || rd(f)) && n > 1; g.save(); g.globalAlpha = a * a2; g.translate(0, (1 - a2) * 10 * k);
       rr(g, x, y, cw, ch, 6, 'rgba(10,13,18,.86)', top2 ? GOLD : f === P ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', top2 ? 1.5 : 1); g.fillStyle = col; g.fillRect(x, y, 3 * k, ch);
       portraitTile(g, f.op, x + 7 * k, y + 5 * k, ch - 10 * k, ch - 10 * k, { r: 4, dead: !f.alive }); const nx = x + ch + 2 * k, room = cw - ch - 8 * k;
-      fitTx(g, f.name.toUpperCase(), nx, y + 16 * k, 12 * k, f === P ? YOU : BONE, 'left', 900, room - (top2 ? 34 * k : 0)); if (top2) tx(g, 'BEST', x + cw - 7 * k, y + 16 * k, 9 * k, GOLD, 'right', 900);
-      if (cw * scrPx(g) < 150) fitTx(g, `${rk(f)} K  ·  ${rd(f)} DMG`, nx, y + 37 * k, 11 * k, BONE, 'left', 800, room);   // (a small card: one line)
-      else { tx(g, String(rk(f)), nx, y + 37 * k, 17 * k, BONE, 'left', 900); g.font = `900 ${fitPx(g, 17 * k)}px ${FONT}`; const kw = g.measureText(String(rk(f))).width; tx(g, rk(f) === 1 ? 'KILL' : 'KILLS', nx + kw + 4 * k, y + 39 * k, 8.5 * k, DIM, 'left', 900);
-        tx(g, String(rd(f)), x + cw - 30 * k, y + 37 * k, 14 * k, BONE, 'right', 800); tx(g, 'DMG', x + cw - 7 * k, y + 39 * k, 8.5 * k, DIM, 'right', 900); }
+      fitTx(g, f.name.toUpperCase(), nx, y + ch * .3, 12 * k, f === P ? YOU : BONE, 'left', 900, room - (top2 ? 34 * k : 0)); if (top2) tx(g, 'BEST', x + cw - 7 * k, y + ch * .3, 9 * k, GOLD, 'right', 900);
+      if (cw * scrPx(g) < 150) fitTx(g, `${rk(f)} K  ·  ${rd(f)} DMG`, nx, y + ch * .69, 11 * k, BONE, 'left', 800, room);   // (a small card: one line)
+      else { tx(g, String(rk(f)), nx, y + ch * .69, 17 * k, BONE, 'left', 900); g.font = `900 ${fitPx(g, 17 * k)}px ${FONT}`; const kw = g.measureText(String(rk(f))).width; tx(g, rk(f) === 1 ? 'KILL' : 'KILLS', nx + kw + 4 * k, y + ch * .72, 8.5 * k, DIM, 'left', 900);
+        tx(g, String(rd(f)), x + cw - 30 * k, y + ch * .69, 14 * k, BONE, 'right', 800); tx(g, 'DMG', x + cw - 7 * k, y + ch * .72, 8.5 * k, DIM, 'right', 900); }
       g.restore(); });
     g.restore();
   }

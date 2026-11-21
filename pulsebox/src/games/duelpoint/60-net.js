@@ -68,6 +68,7 @@
         if (!F.alive) break; const by = M.byKey[String(m.by)] || other(F); F.alive = false; F.hp = 0; F.stat.d++; by.stat.k++; if (m.h) by.stat.hs++; if (!by.net && by.team !== F.team) { by.credits = Math.min(CASH.cap, by.credits + CASH.kill); ultGain(by, 1); novaKill(by, F); }   // your kill charges your ultimate (and Nova's Surge), as it does offline
         M.feed.unshift({ a: by.name, b: F.name, w: GUNS[m.w] ? GUNS[m.w].n : m.w, head: !!m.h, t: 0, mine: by === me() }); emit('kill', F, by, !!m.h, m.w); if (M.host) judge(); break;
       }
+      case 'dk': { const D = M.kit && M.kit.decoys.find(q => q.id === m.id); if (D) decoyPop(D, M.byKey[m.v] || null, true); break; }
       case 'hx': { const F2 = M.byKey[m.f], h = M.kit && M.kit.hexes.find(q => q.id === m.id); if (F2 && h) takeHex(F2, h, true); else if (F2) F2.ward = 20; break; }
       case 'ab': if (!(m.d && m.d.free)) spendAb(F, m.k); applyAbility(F, m.k, m.d || {}); break;
       case 'orb': takeOrb(m.i | 0, F); break;   // someone took an ultimate orb

@@ -66,7 +66,7 @@
   function burst(kind, x, y, z, col, r, T, h) { const K = X && X.kf2; if (!K) return; K.bursts.push({ kind, x, y, z, col, r, T, t: 0, h: h || 3 }); }
   // the preview for a readied ability: what kind, and where (from the same sums the ability uses)
   const PV = { vexe: 'spot', irise: 'mark', vexx: 'spot', axiomx: 'self', bastionq: 'wall', embere: 'haze', talone: 'floor', axiomq: 'floor', axiome: 'floor', bastionc: 'floor', wraithc: 'floor',
-    emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', wraithe: 'spot', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'beam' };
+    emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'beam', wraithe: 'run' };
   const PV_R = { vexe: 3.8, vexx: 1, axiomx: 14, emberq: 3.2, emberx: 5.5, vexc: 6, talonc: 3.5, axiomc: 5, wraithe: 1.2, talone: 1.3, axiomq: .6, axiome: 2.2, bastionc: 6, wraithc: .5, novae: 4.5 };
   function previewFrame(P) {
     const K = X.kf2; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false;
@@ -91,6 +91,7 @@
       K.pvWall.visible = true; K.pvWall.position.set(cx, hAt(cx, cz) + h / 2, cz); K.pvWall.scale.set(ax ? .12 : w, h, ax ? w : .12); K.pvWall.material.uniforms.col.value.set(col); K.pvWall.material.uniforms.op.value = .45 + .15 * pulse;
       if (kind === 'front') { const L = 14, ex = cx + (d.ax ? d.dir * L : 0), ez = cz + (d.ax ? 0 : d.dir * L); K.pvBeam.visible = true; K.pvBeam.position.set(cx, hAt(cx, cz) + .05, cz); K.pvBeam.lookAt(ex, hAt(cx, cz) + .05, ez); K.pvBeam.scale.set(3, 3, L); K.pvBeam.material.color.set(col); K.pvBeam.material.opacity = .45; } }
     else if (kind === 'curve') { const pos = K.pvArc.geometry.attributes.position, e = eyeY(P); for (let i = 0; i < 40; i++) { const q = i / 39, a = Math.min(1, q * 2), b = Math.max(0, q * 2 - 1); pos.setXYZ(i, lp(P.x, d.ax, a) + (d.x - d.ax) * b, e + .3 * q, lp(P.z, d.az, a) + (d.z - d.az) * b); } pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); K.pvMark.visible = true; K.pvMark.position.set(d.x, d.y, d.z); K.pvMark.material.color.set('#fff6d6'); }
+    else if (kind === 'run') { const pos = K.pvArc.geometry.attributes.position, e = P.y + .08; let x = d.x, z = d.z, n = 0; for (let s = 0; s < 40; s++) { const nx = x + d.dx * .55, nz = z + d.dz * .55; if (blocked(nx, nz, P.y)) break; x = nx; z = nz; pos.setXYZ(n++, x, hAt(x, z) + .08, z); } for (let i = n; i < 40; i++) pos.setXYZ(i, x, hAt(x, z) + .08, z); pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); ring(x, hAt(x, z), z, .6); }   // Mirage: where the copy will run
     else if (kind === 'beam') { const e = eyeY(P), v = viewDir(P.yaw, P.pitch), L = key === 'vantax' ? 40 : 35, ex = key === 'vantax' ? d.ex : P.x + v[0] * L, ey = key === 'vantax' ? d.ey : e + v[1] * L, ez = key === 'vantax' ? d.ez : P.z + v[2] * L;
       K.pvBeam.visible = true; K.pvBeam.position.set(P.x + v[0] * .8, e - .25, P.z + v[2] * .8); K.pvBeam.lookAt(ex, ey, ez); K.pvBeam.scale.set(key === 'vantax' && d.t ? 2.2 : 1, key === 'vantax' && d.t ? 2.2 : 1, Math.hypot(ex - P.x, ey - e, ez - P.z)); K.pvBeam.material.color.set(key === 'vantax' && !d.t ? DIM : col); K.pvBeam.material.opacity = .55 * pulse;
       if (key === 'vantax' && d.t) { K.pvMark.visible = true; K.pvMark.position.set(ex, ey, ez); K.pvMark.material.color.set(col); K.pvMark.scale.setScalar(1.1 * pulse); } }
@@ -126,6 +127,13 @@
     // other players holding an ability ready: it glows in their off hand
     list(K.rdy, M.fs.filter(f => f !== Vw && f.alive && f.rdy && duelOk(Vw, f) && (f.team === P.team || canSee(P, f) || f.reveal > 0)), (s, f) => { const y = f.yaw, rx = Math.cos(y), rz = -Math.sin(y), fx = -Math.sin(y), fz = -Math.cos(y); s.position.set(ipos(f, 'x') - rx * .24 + fx * .38, ipos(f, 'y') + 1.2 + lp(0, -.4, f.crouch), ipos(f, 'z') - rz * .24 + fz * .38);   // (in the off hand: left of them and ahead)
       s.material.color.set((OPS[f.op] || OPS.vex).col); s.scale.setScalar(.35 + .1 * Math.sin(X.t * 12)); });
+    // Mirage: each copy drawn as the operative itself, running (the red edge a rival gets, too), shimmering as it fades
+    { const live = new Set(); X.decoyF = X.decoyF || new Map();
+      for (const D of K2.decoys) { if (D.popped || !duelOk(Vw, D.by)) continue; live.add(D.id); let f = X.decoyF.get(D.id);
+        if (!f) { f = fighter({ op: D.by.op, key: 'mirage' + D.id, name: '', team: D.by.team }); f.guns = Object.assign({}, D.by.guns); f.slot = D.by.slot; f.skins = Object.assign({}, D.by.skins || {}); X.decoyF.set(D.id, f); }
+        Object.assign(f, { x: D.x, y: D.y, z: D.z, px: D.x, py: D.y, pz: D.z, vx: D.moving ? D.dx * SPD : 0, vz: D.moving ? D.dz * SPD : 0, yaw: Math.atan2(-D.dx, -D.dz), pitch: 0, alive: true, walkT: D.walkT, crouch: 0, ground: true, sprinting: false });
+        updateAgent(f, dt); const A = X.agents.get(f); if (A) A.visible = !(D.t < .4 && Math.random() < .5); }   // (it flickers out at the end)
+      for (const [id, f] of X.decoyF) if (!live.has(id)) { const A = X.agents.get(f); if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); X.agents.delete(f); } X.decoyF.delete(id); } }
     // Gloom: the fog closes in round you while it lasts
     { const k = Vw && Vw.murk > 0 ? Math.min(1, Vw.murk / .4, (3.5 - Vw.murk) / .25 + .2) : 0, fog = X.scene.fog;
       if (k > 0) { if (!X.murkBase) X.murkBase = { near: fog.near, far: fog.far, col: fog.color.clone(), bg: X.scene.background && X.scene.background.isColor ? X.scene.background.clone() : null };
@@ -136,6 +144,8 @@
   // the moments
   const fxOk = () => X && ready && X.kf2 && M;
   const OPC = op => (OPS[op] || OPS.vex).col;
+  on('decoyPop', D => { if (!fxOk()) return; burst('shell', D.x, D.y + 1, D.z, OPS.wraith.col, 1.6, .45); for (let i = 0; i < 26; i++) spark([D.x + rnd(-.3, .3), D.y + rnd(.2, 1.8), D.z + rnd(-.3, .3)], [rnd(-3, 3), rnd(-1, 3), rnd(-3, 3)], i % 2 ? '#dfe6ff' : OPS.wraith.col, .6); });
+  on('decoy', D => { if (fxOk()) burst('ring', D.x, D.y, D.z, OPS.wraith.col, 1.4, .4); });
   on('gloomPop', G2 => { if (!fxOk()) return; burst('shell', G2.x, G2.y + .8, G2.z, OPS.vex.col, 6.5, .55); burst('ring', G2.x, G2.y, G2.z, '#b58cff', 7, .7); for (let i = 0; i < 18; i++) spark([G2.x, G2.y + 1, G2.z], [rnd(-5, 5), rnd(0, 4), rnd(-5, 5)], '#2a1440', .7); });
   on('shockPop', S => { if (!fxOk()) return; burst('shell', S.x, S.y, S.z, '#d8ffb0', 3.8, .35); burst('ring', S.x, hAt(S.x, S.z), S.z, OPS.talon.col, 4.5, .45); X.flashL.position.set(S.x, S.y + .5, S.z); X.flashL.intensity = 16; X.shake = Math.max(X.shake || 0, .25);
     for (let i = 0; i < 26; i++) spark([S.x, S.y + .2, S.z], [rnd(-6, 6), rnd(1, 6), rnd(-6, 6)], i % 3 ? '#e8ffd0' : '#ffffff', .5); });

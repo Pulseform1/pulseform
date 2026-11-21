@@ -11,7 +11,7 @@
                        E Tripmine: a mine at your feet that arms, then bursts for up to 75 when a rival comes near.
      The things they leave in the world live in M.kit and are stepped by stepKits. Like damage, every effect on a fighter
      is worked out on that fighter's own device: a trap or mine that goes off there tells the others, so all screens agree. */
-  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [] };
+  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], decoys: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [] };
   const freshKit = () => Object.fromEntries(Object.keys(KIT_N).map(k => [k, []]));
   const enemyOf = (a, b) => a.team !== b.team;
   const kitId = (f, k) => f.key + ':' + k + ':' + M.round;
@@ -19,7 +19,7 @@
   function kitAim(f, key, d, S, alt) {
     const e = eyeY(f), reach = (max, back = .6) => Math.max(1, Math.min(S.hit ? max : S.dist, max) - back);
     if (key === 'novae') { const dd = Math.max(1, Math.min(S.dist, 18) - .4); return { x: f.x + d[0] * dd, y: e + d[1] * dd, z: f.z + d[2] * dd }; }   // aimed at a rival, it goes off on them
-    if (key === 'wraithe') { const dd = reach(20); return { x: f.x + d[0] * dd, z: f.z + d[2] * dd }; }
+    if (key === 'wraithe') { const L = Math.hypot(d[0], d[2]) || 1; return { x: f.x, z: f.z, dx: d[0] / L, dz: d[2] / L }; }   // Mirage: it runs the way you look
     if (key === 'talonq') return { x: f.x + d[0] * .5, y: e + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * 42, vy: d[1] * 42 + 1.5, vz: d[2] * 42 };
     if (key === 'talone') { const dd = Math.min(reach(5, .4), 5); return { x: f.x - Math.sin(f.yaw) * dd, z: f.z - Math.cos(f.yaw) * dd }; }
     if (key === 'emberq') { const sp = alt ? 8.5 : 15; return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + (alt ? 2.2 : 3), vz: d[2] * sp + f.vz * .4 }; }   // the other click: a short underhand lob
@@ -38,7 +38,7 @@
     if (key === 'novaq') { f.surge = 3.5; return true; }
     if (key === 'novae') { K2.waves.push({ x: d.x, y: d.y, z: d.z, t: .45, by: f }); return true; }
     if (key === 'wraithq') { f.cloak = 5; return true; }
-    if (key === 'wraithe') { K2.lures.push({ x: d.x, z: d.z, t: 4.2, step: 0, shots: 0, by: f, loud: 0 }); return true; }
+    if (key === 'wraithe') { const D = { id: kitId(f, 'e') + ':' + Math.round(M.time * 10), x: d.x + d.dx * .8, z: d.z + d.dz * .8, dx: d.dx, dz: d.dz, t: 4, T: 4, by: f, seen: {}, walkT: 0 }; D.y = hAt(D.x, D.z); K2.decoys.push(D); emit('decoy', D); return true; }
     if (key === 'talonq') { K2.darts.push({ x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, stuck: -1, pulses: 0, by: f }); return true; }
     if (key === 'talone') { K2.snares.push({ id: kitId(f, 'e'), x: d.x, z: d.z, y: hAt(d.x, d.z), arm: .8, by: f }); return true; }
     if (key === 'emberq') { K2.bombs.push({ x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f }); return true; }
@@ -57,6 +57,14 @@
     if (key === 'axiomx') { K2.locks.push({ x: d.x, z: d.z, y: hAt(d.x, d.z), t: 2.5, T: 2.5, R: 14, by: f }); if (me().team !== f.team && Math.hypot(me().x - d.x, me().z - d.z) < 18) say('LOCKDOWN INCOMING', WARN); return true; }
     return false;
   }
+  // Mirage popped by whoever shot it (or a bot that fell for it): they are blinded and marked; decided where they are run
+  function decoyPop(D, v, fromNet) { if (!D || D.popped) return; D.popped = true; D.t = 0; emit('decoyPop', D, v);
+    if (v && !v.net) { v.flash = Math.max(v.flash, 1.8); v.reveal = Math.max(v.reveal, 2.5); if (v === me()) say('IT WAS A MIRAGE', OPS.wraith.col); }
+    if (!fromNet) net({ t: 'dk', id: D.id, v: v ? v.key : '' }); }
+  // a shot at the copy: a box the size of a fighter where it stands
+  function decoyShot(f, S) { const K2 = M.kit; if (!K2 || !K2.decoys.length) return false;
+    for (const D of K2.decoys) { if (D.popped || !enemyOf(D.by, f)) continue; const t = rayBox(S.o, S.d, [D.x - .32, D.y, D.z - .32], [D.x + .32, D.y + 1.85, D.z + .32]); if (t > 0 && t < S.dist) { decoyPop(D, f, false); return true; } }
+    return false; }
   // the fighters this device is in charge of
   const localFs = () => M.fs.filter(v => !v.net && v.alive);
   // a mine or snare set off: on the victim's device first, then on every other device by message
@@ -102,7 +110,13 @@
       emit('wavePop', w);
     }
     K2.waves = K2.waves.filter(w => w.t > 0);
-    // Ghost Step: footsteps, then three bursts of gunfire, from nowhere
+    // Mirage: the copy runs on (stopping at a wall), and a rival bot that has it in view for a moment takes it for real and fires on it
+    for (const D of K2.decoys) { D.t -= dt; if (D.popped) continue; const nx = D.x + D.dx * SPD * .95 * dt, nz = D.z + D.dz * SPD * .95 * dt;
+      if (!blocked(nx, nz, D.y) && Math.abs(hAt(nx, nz) - D.y) < STEP + .05) { D.x = nx; D.z = nz; D.y = hAt(nx, nz); D.walkT += dt * SPD; D.moving = true; } else D.moving = false;
+      for (const v of localFs()) { if (!v.bot || !enemyOf(D.by, v) || !duelOk(D.by, v)) continue; const dd = Math.hypot(D.x - v.x, D.z - v.z); if (dd > 28 || Math.abs(angDiff(yawTo(v.x, v.z, D.x, D.z), v.yaw)) > 1.1 || !canSeePt(v, D.x, D.y + 1.3, D.z)) { D.seen[v.key] = 0; continue; }
+        v.bot.last = { x: D.x, z: D.z, t: M.time }; D.seen[v.key] = (D.seen[v.key] || 0) + dt; if (D.seen[v.key] > .5) { decoyPop(D, v, false); break; } } }
+    K2.decoys = K2.decoys.filter(D => D.t > 0 && !D.popped);
+    // (Ghost Step's lures, from before Mirage: none are made now)
     for (const L of K2.lures) { L.t -= dt; L.step -= dt; L.loud = Math.max(0, L.loud - dt); const firing = L.t < 2;
       if (L.step <= 0) { L.step = firing ? .11 : .34; L.loud = .3; emit(firing ? 'lureShot' : 'lureStep', L); if (firing) L.shots++; if (firing && L.shots % 4 === 0) L.step = .55; } }
     K2.lures = K2.lures.filter(L => L.t > 0);

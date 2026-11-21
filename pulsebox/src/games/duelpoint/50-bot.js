@@ -96,8 +96,8 @@
       if (f.ab.e && fresh && !sees && dE > 5 && dE < 18 && R() < dt * 1.2) botCast(f, 'e', { x: B.last.x, y: hAt(B.last.x, B.last.z) + 1.2, z: B.last.z });
     } else if (f.op === 'wraith') {
       if (f.ab.q && !sees && ((side === 'att' && P.k === 'push' && near < 20) || (P.k === 'retake' && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 24))) ability(f, 'q');
-      if (f.ab.e && side === 'att' && P.k === 'push' && !sees && M.t < roundT() - 8 && R() < dt * .4) {   // fake a push somewhere else
-        const o = SITES.length > 1 ? pick(SITES.filter((S2, i) => i !== (RSITE[P.lane] || 0))).c : pick(HOLDS).look; botCast(f, 'e', { x: o[0], z: o[1] }); }
+      if (f.ab.e && side === 'att' && P.k === 'push' && !sees && M.t < roundT() - 8 && R() < dt * .4) {   // send the copy in first
+        const o = SITES.length > 1 ? SITES[RSITE[P.lane] || 0].c : pick(HOLDS).look, dx = o[0] - f.x, dz = o[1] - f.z, L = Math.hypot(dx, dz) || 1; botCast(f, 'e', { x: f.x, z: f.z, dx: dx / L, dz: dz / L }); }   // Mirage: a copy runs ahead of the push
     } else if (f.op === 'talon') {
       if (f.ab.q && !sees && ((side === 'att' && P.k === 'push' && near < 26 && near > 8) || (side === 'def' && there && M.t < roundT() - 10))) {
         const tg = side === 'att' ? siteOfPlan(P, f) : holdLook; if (tg) { const dx = tg[0] - f.x, dz = tg[1] - f.z, dy = hAt(tg[0], tg[1]) + 2.4 - ey, L = Math.hypot(dx, dy, dz) || 1; botCast(f, 'q', { x: f.x, y: ey, z: f.z, vx: dx / L * 42, vy: dy / L * 42 + 1.5, vz: dz / L * 42 }); } }
@@ -167,7 +167,7 @@
     const sees = e.alive && (Math.abs(angDiff(toE, f.yaw)) < 1.1 || dE < 4) && canSee(f, e);
     if (sees) { B.seen = (B.seen || 0) + dt; B.last = { x: e.x, z: e.z, t: M.time }; B.lostT = 0; } else { B.seen = 0; B.lostT = (B.lostT || 0) + dt; }
     if (e.alive && !sees && ((e.step > 0 && dE < D.hear) || (e.kick > 0 && dE < 45) || e.reveal > 0)) B.last = { x: e.x, z: e.z, t: M.time, heard: true };
-    if (M.kit) for (const L of M.kit.lures) if (L.loud > 0 && L.by.team !== f.team && Math.hypot(L.x - f.x, L.z - f.z) < D.hear * 1.4) B.last = { x: L.x, z: L.z, t: M.time, heard: true };   // a Ghost Step sounds real
+    if (M.kit) for (const L of M.kit.lures) if (L.loud > 0 && L.by.team !== f.team && Math.hypot(L.x - f.x, L.z - f.z) < D.hear * 1.4) B.last = { x: L.x, z: L.z, t: M.time, heard: true }   // (Ghost Step, gone: kept for old lures);   // a Ghost Step sounds real
     if (B.hitBy && M.time - B.hitBy.t < .05) { if (!sees) { B.last = { x: B.hitBy.x, z: B.hitBy.z, t: M.time, heard: true }; B.alarm = M.time; } if (B.err) { B.err[0] += rnd(-1, 1) * .035; B.err[1] += rnd(-.2, 1) * .03; } }   // shot: turn to it, and the hit throws the aim
     // what it believes about where you are is a moment old: it aims at that, so moving makes it miss
     B.hist = B.hist || []; if (sees) B.hist.push({ t: M.time, x: e.x, z: e.z, y: e.y, cr: e.crouch, h: headOf(e) }); else B.hist.length = 0;

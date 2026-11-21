@@ -31,14 +31,16 @@
   // who is listening: you, or (dead, in a team game) the teammate you are watching through: their sounds are 'yours'
   const ear = () => (M && typeof viewer === 'function' && viewer()) || me();
   function outFor(f, vol = 1) {
-    const ac = K.ac, g = ac.createGain(); let v = vol, pan = 0, muffle = false;
+    const ac = K.ac, g = ac.createGain(); let v = vol, pan = 0, muffle = false, behind = false;
     if (M && f && f !== ear()) {
       const P = ear(), dx = f.x - P.x, dz = f.z - P.z, d = Math.hypot(dx, dz) || .01;
       v *= Math.pow(cl(1 - d / 55, .05, 1), 1.4); pan = cl((dx * Math.cos(P.yaw) - dz * Math.sin(P.yaw)) / d, -1, 1) * .85;
       muffle = los(P.x, eyeY(P), P.z, f.x, f.y + 1.2, f.z, false) < d - .6; if (muffle) v *= .6;
+      behind = (dx * -Math.sin(P.yaw) + dz * -Math.cos(P.yaw)) / d < -.3;
     }
     g.gain.value = v; let head = g;
     if (muffle) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 1100; lpf.connect(g); head = lpf; }
+    else if (behind) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 4200; lpf.connect(g); head = lpf; }   // (behind you: your head in the way of the high end, so you can tell front from back)
     if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = pan; g.connect(p).connect(bus()); } else g.connect(bus());
     return head;
   }
@@ -85,9 +87,12 @@
     longbow: { s: .85, p: [90, 30, .28, 1.3], c: [1300, .16, 1, .6], r: [420, .5, .07], t: [900, 1.2, .4], rack: .7, v: 1.3 },
     torrent: { s: .6, p: [150, 52, .085, 1.05], c: [1700, .07, .8, .8], m: [2600, .018, .3], t: [1150, .35, .24], v: 1 },
   };
-  const baked = {}, baking = {};
-  function bakeShot(k) {
-    const ac = K.ac, D = GSND[k]; if (!ac || !D || baking[k] || typeof OfflineAudioContext === 'undefined') return; baking[k] = 1;
+  const baked = {}, bakedV = {}, baking = {};
+  // each gun is baked three times, each a little different (its own noise, the punch and the crack a few percent apart), and
+  // the shots take turns: the same sample over and over is what makes a spray sound like a machine
+  function bakeShot(k, vI = 0) {
+    const ac = K.ac, D0 = GSND[k], bk = k + ':' + vI; if (!ac || !D0 || baking[bk] || typeof OfflineAudioContext === 'undefined') return; baking[bk] = 1;
+    const jj = 1 + (vI - 1) * .04, D = Object.assign({}, D0, { p: [D0.p[0] * jj, D0.p[1] * jj, D0.p[2] * (2 - jj), D0.p[3]], c: [D0.c[0] * (2 - jj), D0.c[1], D0.c[2], D0.c[3]] });
     const sr = ac.sampleRate, dur = Math.max(D.t[1], D.p[2]) + (D.rack ? D.rack + .32 : 0) + .15, len = Math.ceil(sr * dur);
     let oc; try { oc = new OfflineAudioContext(1, len, sr); } catch (e) { return; }
     const nb = oc.createBuffer(1, sr, sr), ch = nb.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
@@ -111,15 +116,49 @@
       a.gain.setValueAtTime(0, t0); a.gain.linearRampToValueAtTime(D.pf[3], t0 + .0015); a.gain.exponentialRampToValueAtTime(.0001, t0 + D.pf[2]); n.connect(fl).connect(a).connect(mix); n.start(t0, Math.random() * .4); n.stop(t0 + D.pf[2] + .02); }   // the puff
     if (D.sl) { for (const [dt0, f0, lv] of [[D.sl[0], 5400, 1], [D.sl[0] + .046, 4300, .8]]) { noise(dt0, .014, D.sl[1] * lv, 'bandpass', f0, 7, .0004); osc(dt0, 'square', f0 * .5, f0 * .46, .01, D.sl[1] * .18 * lv); osc(dt0 + .001, 'sine', f0 * .62, f0 * .6, .035, D.sl[1] * .14 * lv); } }   // the slide, back and home
     if (D.rack) { const r = D.rack; noise(r, .05, .32, 'bandpass', 1900, 3); osc(r, 'square', 320, 260, .03, .06); noise(r + .13, .06, .38, 'bandpass', 1400, 3); osc(r + .13, 'square', 260, 200, .035, .07); }   // pump / bolt
-    oc.startRendering().then(B => { const c0 = B.getChannelData(0); let pk = 0; for (let i = 0; i < c0.length; i++) pk = Math.max(pk, Math.abs(c0[i])); if (pk > 0) { const g = .92 / pk; for (let i = 0; i < c0.length; i++) c0[i] *= g; } baked[k] = B; }).catch(() => { baking[k] = 0; });
+    oc.startRendering().then(B => { const c0 = B.getChannelData(0); let pk = 0; for (let i = 0; i < c0.length; i++) pk = Math.max(pk, Math.abs(c0[i])); if (pk > 0) { const g = .92 / pk; for (let i = 0; i < c0.length; i++) c0[i] *= g; } (bakedV[k] = bakedV[k] || [])[vI] = B; if (!baked[k]) baked[k] = B; }).catch(() => { baking[bk] = 0; });
   }
   // bake every gun as a match starts (it takes a few milliseconds each, off the main sound path)
-  on('round', () => { if (K.ac) for (const k in GSND) bakeShot(k); });
+  on('round', () => { if (K.ac) for (const k in GSND) for (let v = 0; v < 3; v++) bakeShot(k, v); });
   // the gun's own shot, a hair higher or lower each time; far away it loses its edge. when: an audio-clock time (0: now)
+  const SHOTN = {};
   function shotAt(f, G, out, mine, when) {
-    const ac = K.ac, src = ac.createBufferSource(), a = ac.createGain(); src.buffer = baked[G.k]; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v;
-    let head = out; if (!mine && M) { const P = ear(), d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 2200, cl((d - 12) / 40, 0, 1)); lpf.connect(out); head = lpf; } }
-    src.connect(a).connect(head); src.start(when || 0); return src;
+    const ac = K.ac, src = ac.createBufferSource(), a = ac.createGain(), V2 = bakedV[G.k] || [], n = V2.length; let buf = baked[G.k];
+    if (n > 1) { SHOTN[G.k] = ((SHOTN[G.k] | 0) + 1 + (Math.random() < .35 ? 1 : 0)) % n; buf = V2[SHOTN[G.k]] || buf; }   // (turns, now and then skipping one, so no pattern)
+    src.buffer = buf; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v;
+    let head = out, d = 0;
+    if (!mine && M) { const P = ear(); d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 1600, cl((d - 12) / 45, 0, 1)); lpf.connect(out); head = lpf; } }
+    src.connect(a).connect(head);
+    // the room: a share of every shot goes to the map's reverb, more for one under a roof and more the further away it is
+    { const R = verb(); if (R) { const k = f && f.x != null ? idx(Math.floor(f.x / CS), Math.floor(f.z / CS)) : -1, inside = k >= 0 && CEIL[k] > 0, s2 = ac.createGain(); s2.gain.value = (mine ? .16 : .26) * (inside ? 1.7 : 1) * (1 + cl(d / 40, 0, 1)) * GSND[G.k].v * (G.sil ? .4 : 1); a.connect(s2).connect(R); } }
+    // far away, a shot is heard a moment after it is fired (sound is slow: about 3 ms a metre, from 15 m on, and never more than 0.15 s)
+    const late = mine ? 0 : Math.min(.15, Math.max(0, d - 15) / 343);
+    src.start(when || (late ? ac.currentTime + late : 0)); return src;
+  }
+  /* ---- the room each map makes: one reverb for all the gunfire, its echo made up to suit the map. Out in the open
+     (harbour, desert, snow) a shot cracks back off far walls: a few separate slaps, then a long thin tail. Indoors (the
+     station, the foundry, the temple's halls) it is a dense, short wash. The neon city is in between. */
+  let verbN = null, verbKind = '';
+  function verb() {
+    const ac = K.ac; if (!ac || typeof MAP === 'undefined' || !MAP) return null;
+    const kind = { harbor: 'open', desert: 'open', snow: 'open', space: 'hall', lava: 'hall', jungle: 'hall', neon: 'street' }[MAP.theme] || 'street';
+    if (!verbN || verbN.context !== ac) { verbN = ac.createConvolver(); const wet = ac.createGain(); wet.gain.value = .55; verbN.connect(wet).connect(bus()); verbKind = ''; }
+    if (verbKind !== kind) { verbKind = kind; const sr = ac.sampleRate, L = { open: 1.6, hall: .9, street: 1.2 }[kind], n = Math.floor(sr * L), B = ac.createBuffer(2, n, sr);
+      for (let ch = 0; ch < 2; ch++) { const d = B.getChannelData(ch); let lpS = 0;
+        const dk = { open: 4.2, hall: 7.5, street: 5.5 }[kind], dens = { open: .25, hall: 1, street: .55 }[kind];
+        for (let i = 0; i < n; i++) { const t = i / sr, w = (Math.random() * 2 - 1) * Math.exp(-t * dk) * dens; lpS += (w - lpS) * (kind === 'hall' ? .35 : .5); d[i] = lpS; }   // (a diffuse tail, a little dulled)
+        const slaps = { open: [.075, .14, .23, .37, .52], hall: [.012, .021, .033], street: [.045, .09, .16, .26] }[kind];
+        slaps.forEach((t0, q) => { const at = Math.floor((t0 + (ch ? .004 : 0) + Math.random() * .006) * sr), a = .9 * Math.pow(.62, q); for (let j = 0; j < 220 && at + j < n; j++) d[at + j] += (Math.random() * 2 - 1) * a * Math.exp(-j / 40); }); }   // the separate slaps off far walls
+      verbN.buffer = B; }
+    return verbN;
+  }
+  // your own gun's brass on the floor: a tinkle (two bounces) a moment after the shot; a shotgun's hull lands with a dull tap
+  let lastBrass = 0;
+  function casing(G) {
+    const ac = K.ac; if (!ac || G.melee || G.k === 'hammer') return; const now = ac.currentTime; if (now - lastBrass < .07) return; lastBrass = now;   // (a fast spray: not every case, or it is a wind chime)
+    const o = outFor(null, .55), d0 = .32 + Math.random() * .14, f0 = G.cat === 'Sniper' ? 3300 : G.cat === 'Sidearm' ? 5200 : 4400;
+    if (G.cat === 'Shotgun') { hiss(o, .05, .1, 'lowpass', 700, d0); tone(o, 220, .05, 'sine', .05, -60, d0); return; }
+    tone(o, f0 * (1 + (Math.random() - .5) * .12), .06, 'sine', .028, 0, d0); tone(o, f0 * 1.5, .04, 'sine', .016, 0, d0); tone(o, f0 * (1.05 + Math.random() * .1), .04, 'sine', .016, 0, d0 + .09 + Math.random() * .05);
   }
   // your spray as it is heard: when it began, its last real shot, and the shots started ahead of time
   const SPR = { live: false, pt: 0, gap: 0, last: 0, k: '', q: [] }, BEEP = { q: null };
@@ -132,7 +171,7 @@
     if (BEEP.q && !(M && M.planted && M.phase === 'live' && !M.defused)) { if (BEEP.q.st > now) try { BEEP.q.src.stop(); } catch (er) {} BEEP.q = null; }
   }
   on('shot', (f, S, first) => {
-    if (!first || !canHear()) return; const G = gun(f), mine = f === ear(), out = outFor(f, mine ? .6 : 1);
+    if (!first || !canHear()) return; const G = gun(f), mine = f === ear(), out = outFor(f, mine ? .6 : 1); if (mine && f === me()) casing(G);
     if (G.rail) { tone(out, 1800, .25, 'sawtooth', .12, -1500); hiss(out, .3, .3, 'highpass', 2500); tone(out, 70, .25, 'sine', .6, -30); return; }
     const B = baked[G.k];
     if (B) {
@@ -218,7 +257,7 @@
     else if (key === 'novaq') { tone(o, 260, .4, 'sawtooth', .07, 620); tone(o, 520, .35, 'square', .03, 900, .05); hiss(o, .35, .08, 'bandpass', 2600, 0, 2); }
     else if (key === 'novae' || key === 'emberq') { hiss(o, .14, .14, 'bandpass', 1400, 0, 1.2); tone(o, 500, .1, 'triangle', .06, 260); }
     else if (key === 'wraithq') { tone(o, 1100, .6, 'sine', .07, -820); hiss(o, .6, .05, 'highpass', 5200); }
-    else if (key === 'wraithe') hiss(o, .2, .06, 'highpass', 4000);
+    else if (key === 'wraithe') { tone(o, 1100, .35, 'sine', .07, -500); tone(o, 1650, .3, 'sine', .04, -700, .05); }   // Mirage: a glassy shimmer
     else if (key === 'talonq') { hiss(o, .1, .16, 'highpass', 2600); tone(o, 1400, .06, 'triangle', .05, -400); }
     else if (key === 'talone' || key === 'axiome') { tone(o, 1250, .05, 'square', .05); tone(o, 1650, .05, 'square', .05, 0, .08); }
     else if (key === 'axiomq') { tone(o, 200, .22, 'square', .06, 240); tone(o, 900, .07, 'square', .05, 0, .26); tone(o, 1200, .07, 'square', .05, 0, .36); }
@@ -249,6 +288,7 @@
   // the things the newer operatives leave in the world
   const at = (x, y, z) => ({ x, y: y - 1, z });
   cue('wavePop', w => { const o = outFor(at(w.x, w.y, w.z), 1.3); tone(o, 90, .45, 'sine', .5, -50); hiss(o, .35, .35, 'bandpass', 900, 0, .8); tone(o, 1800, .3, 'sawtooth', .05, -1400, .02); });
+  cue('decoyPop', () => { const o = outFor(null); hiss(o, .3, .2, 'highpass', 3500); tone(o, 1400, .3, 'triangle', .08, -1000); });
   cue('lureStep', L => { const o = outFor(at(L.x, hAt(L.x, L.z) + 1, L.z)); hiss(o, .06, .32, 'lowpass', 420); tone(o, 95, .05, 'sine', .14, -30); });
   cue('lureShot', L => { const o = outFor(at(L.x, hAt(L.x, L.z) + 1, L.z)); const [d, cf, tf, tail, v] = SHOT.Rifle; hiss(o, d, .5 * v, 'bandpass', cf, 0, .6); hiss(o, tail, .16 * v, 'lowpass', 900, .02); tone(o, tf, .11, 'sine', .5 * v, -tf * .55); });
   cue('dartStick', D => tone(outFor(at(D.x, D.y, D.z)), 2200, .05, 'square', .05, -900));
