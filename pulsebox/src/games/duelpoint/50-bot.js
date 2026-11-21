@@ -158,7 +158,7 @@
       const h = B.home || [f.x, f.z]; f.yaw = yawTo(f.x, f.z, e.x, e.z); I.mx = Math.hypot(f.x - h[0], f.z - h[1]) > 2.5 ? Math.sign(Math.cos(f.yaw) * (h[0] - f.x) - Math.sin(f.yaw) * (h[1] - f.z)) : Math.sin(M.time * 1.1 + h[0]) > 0 ? 1 : -1;
       I.walk = Math.sin(M.time * .37 + h[1]) > .3; I.crouch = Math.sin(M.time * .23 + h[0]) > .8; return I;
     }
-    if (M.phase === 'buy') { if (!B.bought) { B.bought = true; botBuy(f); f.ready = true; } return I; }
+    if (M.phase === 'buy') { if (!B.bought) { B.bought = true; botBuy(f); f.ready = true; } if (sideOf(f) !== 'def' || loadingNow() || M.mode === 'range' || M.mode === 'demo') return I; }   // defenders go and take up their spots (the barrier keeps them on their own half; nothing fires before the round)
     if (M.phase === 'end') return I;
     const side = sideOf(f), dE = Math.hypot(e.x - f.x, e.z - f.z), toE = yawTo(f.x, f.z, e.x, e.z);
     if (B.ph == null) { B.ph = R() * 9; B.hp0 = f.hp; B.rx = D.react; }

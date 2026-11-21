@@ -538,7 +538,7 @@ function kit2Checks() {
   // signatures that come back
   [M, P, F] = setup('iris'); T.ability(P, 'e', false); ok(!P.ab.e, 'Iris has used her Flare'); for (let i = 0; i < 41 * 60 && !P.ab.e; i++) T.tick(DT); ok(P.ab.e === 1, 'and it comes back after 40 s', P.eT.toFixed(1));
   // bots use them
-  { let used = 0; const seen = new Set(); T.on('ability', (f, k) => { if (k === 'c' && f.bot) { used++; seen.add(f.op); } }); for (let m = 0; m < 6; m++) { T.seed(100 + m); T.startMatch({ mode: 'bot', diff: 2, size: 4 }); for (let i = 0; i < 60 * 90 && !T.M.over; i++) T.tick(DT); }
+  { let used = 0; const seen = new Set(); T.on('ability', (f, k) => { if (k === 'c' && f.bot) { used++; seen.add(f.op); } }); for (let m = 0; m < 6; m++) { T.seed(100 + m); T.startMatch({ mode: 'bot', diff: 2, size: 4 }); for (let i = 0; i < 60 * 260 && !T.M.over; i++) T.tick(DT); }
     ok(used > 0, 'bots buy and use their C abilities', used + ' uses by ' + [...seen].join(', ')); }
 }
 function loadChecks() {

@@ -402,7 +402,7 @@ const GAME = {
     { n: 'Legend', react: .27, lag: .11, err: .045, flick: .26, jit: .01, turn: 7.2, spray: .84, hs: .36, hear: 30 },
   ];
   const LOAD_T = 5;   // the loading screen before the first round: added to that round's buy phase, so no buy time is lost
-  let WIN_ROUNDS = 5; const BUY_T = 15, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
+  let WIN_ROUNDS = 5; const BUY_T = 28, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
   const MATCH_LENS = [3, 4, 5, 6], winOf = w => MATCH_LENS.includes(+w) ? +w : 5, HALF = () => WIN_ROUNDS - 1;
   // overtime: tied at one short of the target after both halves, rounds go on (sides swap every round, credits topped up) until
   // one team is two ahead; after OT_MAX overtime rounds still level, the next round settles it (sudden death)
@@ -916,6 +916,19 @@ const GAME = {
       for (const p of SPAWN[side]) { const k = idx(Math.floor(p[0] / CS), Math.floor(p[1] / CS)); if (k >= 0 && !Z[k]) { Z[k] = 1; q.push([k, 0]); } }
       while (q.length) { const [k, d] = q.shift(); if (d >= 3) continue; const i = k % GW, j = Math.floor(k / GW);
         for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(i + di, j + dj); if (nk < 0 || Z[nk] || !NAV[nk] || TPX[nk] >= 0 || PADX[nk] >= 0 || CH[nk] > STEP) continue; Z[nk] = 2; q.push([nk, d + 1]); } }
+    }
+    /* The defenders are not penned in their spawn: in the buy phase they may go anywhere on their own half (every cell a good
+       way nearer their spawn than the attackers'), sites included, to set up before the attackers come; the barrier stands
+       across the ways in, a few cells short of the middle. */
+    if (SPAWN.def.length && SPAWN.att.length) {
+      const dist = side => { const D = new Int16Array(NC).fill(-1), q = []; for (const p of SPAWN[side]) { const k = idx(Math.floor(p[0] / CS), Math.floor(p[1] / CS)); if (k >= 0 && D[k] < 0) { D[k] = 0; q.push(k); } }
+        for (let h = 0; h < q.length; h++) { const k = q[h], i = k % GW, j = Math.floor(k / GW); for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(i + di, j + dj); if (nk < 0 || D[nk] >= 0 || !NAV[nk] || CH[nk] > STEP) continue; D[nk] = D[k] + 1; q.push(nk); } }
+        return D; };
+      const dD = dist('def'), dA = dist('att'), Z = ZONE.def, q = [];
+      for (let k = 0; k < NC; k++) if (Z[k]) q.push(k);
+      for (let h = 0; h < q.length; h++) { const k = q[h], i = k % GW, j = Math.floor(k / GW);
+        for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(i + di, j + dj); if (nk < 0 || Z[nk] || !NAV[nk] || TPX[nk] >= 0 || PADX[nk] >= 0 || CH[nk] > STEP || dD[nk] < 0) continue;
+          if (dA[nk] >= 0 && dD[nk] > dA[nk] - 5) continue; Z[nk] = 2; q.push(nk); } }
     }
   }
   const inZone = (side, x, z) => { const Z = ZONE[side]; for (const [ox, oz] of [[-RAD, -RAD], [RAD, -RAD], [-RAD, RAD], [RAD, RAD]]) { const k = idx(Math.floor((x + ox) / CS), Math.floor((z + oz) / CS)); if (k < 0 || !Z[k]) return false; } return true; };
@@ -2272,7 +2285,7 @@ const GAME = {
       const h = B.home || [f.x, f.z]; f.yaw = yawTo(f.x, f.z, e.x, e.z); I.mx = Math.hypot(f.x - h[0], f.z - h[1]) > 2.5 ? Math.sign(Math.cos(f.yaw) * (h[0] - f.x) - Math.sin(f.yaw) * (h[1] - f.z)) : Math.sin(M.time * 1.1 + h[0]) > 0 ? 1 : -1;
       I.walk = Math.sin(M.time * .37 + h[1]) > .3; I.crouch = Math.sin(M.time * .23 + h[0]) > .8; return I;
     }
-    if (M.phase === 'buy') { if (!B.bought) { B.bought = true; botBuy(f); f.ready = true; } return I; }
+    if (M.phase === 'buy') { if (!B.bought) { B.bought = true; botBuy(f); f.ready = true; } if (sideOf(f) !== 'def' || loadingNow() || M.mode === 'range' || M.mode === 'demo') return I; }   // defenders go and take up their spots (the barrier keeps them on their own half; nothing fires before the round)
     if (M.phase === 'end') return I;
     const side = sideOf(f), dE = Math.hypot(e.x - f.x, e.z - f.z), toE = yawTo(f.x, f.z, e.x, e.z);
     if (B.ph == null) { B.ph = R() * 9; B.hp0 = f.hp; B.rx = D.react; }
@@ -7719,7 +7732,9 @@ const GAME = {
       if (Math.random() < .7) spark([B.x, B.y, B.z], [rnd(-.3, .3), rnd(-.2, .4), rnd(-.3, .3)], B.k === 'talonc' ? '#d8ffb0' : col, .35); });
     list(K.glooms, K2.glooms, (g, G2) => { const k = Math.min(1, (3.5 - G2.t) / .25) * Math.min(1, G2.t / .8); g.position.set(G2.x, G2.y + 1, G2.z); g.userData.puffs.forEach((s, i) => { const a = i * 2.4 + X.t * (.3 + i * .03), r = 1.2 + (i % 3) * 1.3; s.position.set(Math.cos(a) * r, Math.sin(i * 1.7 + X.t) * .6, Math.sin(a) * r); s.scale.setScalar((2.6 + (i % 4)) * k); s.material.opacity = .85 * k; s.material.rotation = X.t * .2 + i; });
       g.userData.glow.material.opacity = .5 * k; g.userData.glow.scale.setScalar(4 * k); });
-    list(K.eyes, K2.eyes.filter(W => W.by.team === P.team || Math.hypot(W.x - P.x, W.z - P.z) < 12), (g, W) => { g.position.set(W.x, W.y, W.z); g.rotation.y = W.yaw; const spot = (W.flashT || 0) > X.t; g.userData.cone.visible = W.by.team === P.team; g.userData.cone.material.uniforms.op.value = spot ? 1 : .35 + .1 * Math.sin(X.t * 3); g.userData.halo.material.opacity = spot ? 1 : .5; g.userData.iris.rotation.z = X.t * 2; });
+    // (big and glowing enough to find: a rival sees it, through the walls' gaps, from 45 m, swelling and fading so it catches the eye)
+    list(K.eyes, K2.eyes.filter(W => W.by.team === P.team || Math.hypot(W.x - P.x, W.z - P.z) < 45), (g, W) => { const mine = W.by.team === P.team, beat = .5 + .5 * Math.sin(X.t * 5), sc = mine ? 1.5 : 2 + .25 * beat; g.position.set(W.x, W.y, W.z); g.rotation.y = W.yaw; g.scale.setScalar(sc); const spot = (W.flashT || 0) > X.t;
+      g.userData.cone.visible = mine; g.userData.cone.scale.setScalar(1 / sc); g.userData.cone.position.z = -3 / sc; g.userData.cone.material.uniforms.op.value = spot ? 1 : .35 + .1 * Math.sin(X.t * 3); g.userData.halo.material.opacity = spot ? 1 : mine ? .6 : .55 + .4 * beat; g.userData.halo.scale.setScalar((mine ? .9 : 1.1 + .35 * beat) * .7); g.userData.iris.rotation.z = X.t * 2; });
     list(K.anchors, M.fs.filter(f => f.tether && (f.team === P.team)).map(f => f.tether), (g, T) => { g.position.set(T.x, T.y, T.z); g.userData.ring.rotation.z = X.t; g.userData.ring2.rotation.z = -X.t * 1.6; g.userData.beam.material.uniforms.op.value = .6 + .2 * Math.sin(X.t * 4); });
     list(K.sunders, K2.sunders, (g, B) => { g.position.set(B.x + B.dx * B.s, B.y + B.dy * B.s, B.z + B.dz * B.s); g.lookAt(g.position.x + B.dx, g.position.y + B.dy, g.position.z + B.dz); if (Math.random() < .8) spark([g.position.x, g.position.y, g.position.z], [rnd(-.5, .5), rnd(-.5, .5), rnd(-.5, .5)], OPS.vanta.col, .3); });
     for (const m of K.beams) { const u = m.userData; u.t += dt; m.visible = u.t < .45; if (m.visible) { m.material.opacity = 1 - u.t / .45; m.scale.x = m.scale.y = 1 + u.t * 4; } }
@@ -10890,7 +10905,7 @@ const GAME = {
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
     team: () => ({ dropHeld, dropCharge, giveCharge, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
-    renderFrame, updateAgent, DOORS, botMe: d => { me().bot = { diff: d }; me().local = false; }, touchEdit: () => openTouchEdit(), get TE() { return TE; }, INS, INSPECT, startInspect, showInspect, sideOf: f => sideOf(f), plantAt, nextSpec, WH, openWheel, spinWheel, wheelSlices, wheelDay, touchAt, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, VKF, animParts, aimArms, onEvent: on, audioCtx: () => K.ac, soundLag: () => lag(), shotBuf: k => baked[k], shotBufs: k => [baked[k], ...(bakedV[k] || [])].filter(Boolean),
+    renderFrame, updateAgent, DOORS, ZONE, SRC, get GW() { return GW; }, get GH() { return GH; }, botMe: d => { me().bot = { diff: d }; me().local = false; }, touchEdit: () => openTouchEdit(), get TE() { return TE; }, INS, INSPECT, startInspect, showInspect, sideOf: f => sideOf(f), plantAt, nextSpec, WH, openWheel, spinWheel, wheelSlices, wheelDay, touchAt, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, VKF, animParts, aimArms, onEvent: on, audioCtx: () => K.ac, soundLag: () => lag(), shotBuf: k => baked[k], shotBufs: k => [baked[k], ...(bakedV[k] || [])].filter(Boolean),
   };
 })();
 

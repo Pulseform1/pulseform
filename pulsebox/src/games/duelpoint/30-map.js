@@ -143,6 +143,19 @@
       while (q.length) { const [k, d] = q.shift(); if (d >= 3) continue; const i = k % GW, j = Math.floor(k / GW);
         for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(i + di, j + dj); if (nk < 0 || Z[nk] || !NAV[nk] || TPX[nk] >= 0 || PADX[nk] >= 0 || CH[nk] > STEP) continue; Z[nk] = 2; q.push([nk, d + 1]); } }
     }
+    /* The defenders are not penned in their spawn: in the buy phase they may go anywhere on their own half (every cell a good
+       way nearer their spawn than the attackers'), sites included, to set up before the attackers come; the barrier stands
+       across the ways in, a few cells short of the middle. */
+    if (SPAWN.def.length && SPAWN.att.length) {
+      const dist = side => { const D = new Int16Array(NC).fill(-1), q = []; for (const p of SPAWN[side]) { const k = idx(Math.floor(p[0] / CS), Math.floor(p[1] / CS)); if (k >= 0 && D[k] < 0) { D[k] = 0; q.push(k); } }
+        for (let h = 0; h < q.length; h++) { const k = q[h], i = k % GW, j = Math.floor(k / GW); for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(i + di, j + dj); if (nk < 0 || D[nk] >= 0 || !NAV[nk] || CH[nk] > STEP) continue; D[nk] = D[k] + 1; q.push(nk); } }
+        return D; };
+      const dD = dist('def'), dA = dist('att'), Z = ZONE.def, q = [];
+      for (let k = 0; k < NC; k++) if (Z[k]) q.push(k);
+      for (let h = 0; h < q.length; h++) { const k = q[h], i = k % GW, j = Math.floor(k / GW);
+        for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(i + di, j + dj); if (nk < 0 || Z[nk] || !NAV[nk] || TPX[nk] >= 0 || PADX[nk] >= 0 || CH[nk] > STEP || dD[nk] < 0) continue;
+          if (dA[nk] >= 0 && dD[nk] > dA[nk] - 5) continue; Z[nk] = 2; q.push(nk); } }
+    }
   }
   const inZone = (side, x, z) => { const Z = ZONE[side]; for (const [ox, oz] of [[-RAD, -RAD], [RAD, -RAD], [-RAD, RAD], [RAD, RAD]]) { const k = idx(Math.floor((x + ox) / CS), Math.floor((z + oz) / CS)); if (k < 0 || !Z[k]) return false; } return true; };
   function placeOrbs() {
