@@ -242,7 +242,7 @@
 
     // your gun
     const vsk = skinFor(P, G.k) || '';
-    if (X.viewKey !== G.k + P.op + vsk) { if (X.viewGun) X.view.remove(X.viewGun); X.viewGun = viewGun(G.k, P.op, vsk); if (G.melee) X.viewGun.scale.setScalar(1.35); X.view.add(X.viewGun); X.viewKey = G.k + P.op + vsk; X.viewGun.add(X.mflash); X.drawD = Math.max(.35, (G.equip || .75) * .7); X.drawT = X.drawD; X.recP = X.recV = 0; }
+    if (X.viewKey !== G.k + P.op + vsk) { X.inspT = 0; if (X.viewGun) X.view.remove(X.viewGun); X.viewGun = viewGun(G.k, P.op, vsk); if (G.melee) X.viewGun.scale.setScalar(1.35); X.view.add(X.viewGun); X.viewKey = G.k + P.op + vsk; X.viewGun.add(X.mflash); X.drawD = Math.max(.35, (G.equip || .75) * .7); X.drawT = X.drawD; X.recP = X.recV = 0; }
     // drawing: the gun comes up from below, then the class's chambering action (slide, charging handle, pump, bolt, cylinder; the knife flips)
     X.drawT = Math.max(0, (X.drawT || 0) - dt); const dq = 1 - X.drawT / (X.drawD || .35), raise = X.drawT > 0 ? 1 - sm(cl(dq / .5, 0, 1)) : 0, chamber = X.drawT > 0 && dq > .42 ? cl((dq - .42) / .52, 0, 1) : -1;
     // recoil on a spring: each shot kicks it, it settles by itself (sub-stepped so a slow frame cannot blow it up)
@@ -266,19 +266,20 @@
     X.view.position.set(VO[0] + bobX + swayX + X.lag * .5 + RK[0] - X.runK * .03 + sideK * .02, VO[1] + Math.abs(bob) * .6 + sway + RK[1] + seat * .012 - rk * .22 - raise * raise * .3 - X.dip * .5 - X.runK * .035 + X.air + climb * .028, VO[2] + RK[2] + rk * .9 + raise * .05 + X.runK * .02 + climb * .02);
     X.view.rotation.set(rk * 1.6 + RK[3] + seat * .05 - raise * .7 - X.runK * .14 - dry * .035 + climb * .2, .02 + RK[4] + X.lag + X.runK * .38 - sideK * .35, RK[5] + raise * .35 + X.lag * .6 + X.runK * .26 - sideK * .3);
     { const bo = X.viewGun.userData.bore; X.mflash.position.set(0, bo ? bo.y : .025, -(X.viewGun.userData.len || .5) - .03); } X.mflash.visible = X.flashT > 0 && !G.melee; X.mflash.rotation.z = Math.random() * 3; X.mflash.scale.setScalar(G.cat === 'Sniper' || G.cat === 'Shotgun' ? 1.5 : G.cat === 'Sidearm' ? .8 : 1);
-    viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / INSP_D : -1 });
+    viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / (X.inspD || INSP_D) : -1 });
     { const pb = X.viewGun.userData.parts.boltL; if (pb) { X.view.rotation.z += pb.rotation.z * .14; X.view.position.y -= pb.rotation.z * .012; } }   // working a bolt rolls the rifle
     // the knife turns over in the fingers as it is drawn, and twice when you look it over: the blade rolls about its own
     // length while the hand and arm stay where they are (the hand is turned back by the same amount)
-    { const rh = X.viewGun.userData.parts.rhand, iqk = X.inspT > 0 ? 1 - X.inspT / INSP_D : -1, spin = !G.melee ? 0 : X.drawT > 0 ? (1 - sm(cl(dq, 0, 1))) * TAU : iqk > 0 ? sm(cl((iqk - .28) / .34, 0, 1)) * TAU * 2 : 0;
+    { const rh = X.viewGun.userData.parts.rhand, iqk = X.inspT > 0 ? 1 - X.inspT / (X.inspD || INSP_D) : -1, spin = !G.melee ? 0 : X.drawT > 0 ? (1 - sm(cl(dq, 0, 1))) * TAU : iqk > 0 && !(X.inspLine && INSPECT[X.inspLine]) ? sm(cl((iqk - .28) / .34, 0, 1)) * TAU * 2 : 0;
       X.viewGun.rotation.z = spin; if (rh && G.melee) rh.rotation.z = -spin; }
     if (G.melee) { X.view.rotation.x += .28; X.view.rotation.y += .5; X.view.rotation.z -= .2; }
     if (P.swing) {   // a slash winds up to one side, cuts across and follows through; a stab draws back to the hip and drives straight in
       const d = P.swing.heavy ? .55 : .32, q = Math.min(1, P.swing.t / d), k = kfAt(P.swing.heavy ? KNIFE.stab : P.swing.side > 0 ? KNIFE.r : KNIFE.l, q);
       X.view.position.x += k[0]; X.view.position.y += k[1]; X.view.position.z += k[2]; X.view.rotation.x += k[3]; X.view.rotation.y += k[4]; X.view.rotation.z += k[5];
     }
-    if (X.inspT > 0) { if (P.reloadT > 0 || P.kick > 0) X.inspT = 0; else X.inspT -= dt; }
-    if (X.inspT > 0) { const k = vkf('inspect', G, 1 - X.inspT / INSP_D); X.view.position.x += k[0]; X.view.position.y += k[1]; X.view.position.z += k[2]; X.view.rotation.x += k[3]; X.view.rotation.y += k[4]; X.view.rotation.z += k[5]; }
+    if (X.inspT > 0) { if (P.reloadT > 0 || P.kick > 0 || P.scoped || P.plant > 0 || P.defuse > 0 || P.castT > 0 || !P.alive) X.inspT = 0; else X.inspT -= dt; }   // (anything else you do with the gun ends the look)
+    if (X.inspT > 0) { const iq = 1 - X.inspT / (X.inspD || INSP_D), k = X.inspLine && INSPECT[X.inspLine] ? insPose(G, X.inspLine, iq) : vkf('inspect', G, iq); X.view.position.x += k[0]; X.view.position.y += k[1]; X.view.position.z += k[2]; X.view.rotation.x += k[3]; X.view.rotation.y += k[4]; X.view.rotation.z += k[5]; }
+    insView(P, G, dt);   // a Legendary or better: its own show, on the gun as it is now held
     X.adsK = lp(X.adsK || 0, P.scoped && !G.scope && P.alive ? 1 : 0, Math.min(1, dt * 16));
     if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - rk * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + rk * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, rk * .5, a); }
     if (X.flashT > 0) X.flashT -= dt;
@@ -326,7 +327,7 @@
     if (X.camHook) X.camHook(cam);   // the map checks: a camera of their own (an overhead view)
     X.renderer.render(X.scene, cam);
     if (X.view.visible) {   // your gun, over the world, with its own depth
-      X.vroot.position.copy(cam.position); X.vroot.quaternion.copy(cam.quaternion); updateCasings(dt); updateDrops(dt); X.vmuzzle.intensity = X.flashT > 0 ? 3 : 0;
+      X.vroot.position.copy(cam.position); X.vroot.quaternion.copy(cam.quaternion); updateCasings(dt); updateDrops(dt); insLight();
       aimArms(X.viewGun); const ac = X.renderer.autoClear; X.renderer.autoClear = false; X.renderer.clearDepth(); X.renderer.render(X.vscene, cam); X.renderer.autoClear = ac;
     }
   }

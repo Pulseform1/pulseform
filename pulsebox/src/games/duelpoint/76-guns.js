@@ -562,7 +562,7 @@
   function viewGun(k, op, skin) { return gunModel(k, { hands: true, op, skin }); }
   // a gun model that is finished with: free the shapes it alone owns (materials and textures are shared and cached;
   // shapes marked shared, like the skin effects', stay), and hand back any reload rig still on it
-  function disposeGun(G) { if (!G) return; if (G.userData.rig) rfxDrop(G.userData.rig); G.traverse(o => { if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose(); }); const ct = G.userData.parts && G.userData.parts.counter; if (ct && ct.t) ct.t.dispose(); }
+  function disposeGun(G) { if (!G) return; if (INS.rig && INS.rig.gun === G) insEnd(); if (G.userData.rig) rfxDrop(G.userData.rig); G.traverse(o => { if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose(); }); const ct = G.userData.parts && G.userData.parts.counter; if (ct && ct.t) ct.t.dispose(); }
   // the armory pictures: each gun rendered side-on into a small transparent image, once
   // (a new picture costs a model, its shaders and a read back from the GPU: at most one is made a frame, so opening the
   // store or the locker never freezes; the rest fill in over the next few frames, and most are made ahead of time anyway)

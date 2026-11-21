@@ -85,7 +85,7 @@
     const sp = tier >= 5 ? 2.6 : tier >= 4 ? 2.1 : 1.6, fsp = tier >= 5 ? 1.1 : tier >= 4 ? .8 : .5;
     SKIN_LIVE.push(t => {
       // it breathes; a Paragon's heart also beats
-      const k = .8 + .2 * Math.sin(t * sp) + (tier >= 5 ? .35 * Math.pow(Math.max(0, Math.sin(t * sp * .5)), 12) : 0);
+      const k = (.8 + .2 * Math.sin(t * sp) + (tier >= 5 ? .35 * Math.pow(Math.max(0, Math.sin(t * sp * .5)), 12) : 0)) * (1 + (F.boost || 0)); F.boost = 0;   // (boost: an inspect's show swells the glow, frame by frame)
       F.glowA.color.copy(ca).multiplyScalar(.85 + .45 * k); F.glowB.color.copy(cb).multiplyScalar(.6 + .4 * k); F.flow.color.copy(ca).multiplyScalar(.9 + .5 * k);
       F.halo.opacity = .45 + .4 * k; F.haloB.opacity = .35 + .35 * k; F.rune.opacity = .6 + .35 * k; F.tear.opacity = .7 + .3 * Math.sin(t * 17) * Math.sin(t * 5.3);
       F.shard.emissiveIntensity = .4 + .5 * k; F.ice.emissiveIntensity = .3 + .4 * k;
@@ -254,11 +254,11 @@
   function skinFx(Gm, P, G, r, insp, dt, fp, full) {
     const U = Gm.userData; if (U.sightGlow && U.sightGlow.length && fp) { const show = !(X.adsK > .2); for (const s of U.sightGlow) s.visible = show; }
     const L = U.line && LINES[U.line]; let rig = U.rig; if (!L || !L.rl) { if (rig) rfxDrop(rig); return; }
-    const tier = RARITY[L.r].tier, mode = r >= 0 && P.alive !== false && !G.melee ? 'reload' : fp && insp > 0 && tier >= 4 ? 'inspect' : null;
+    const mode = r >= 0 && P.alive !== false && !G.melee ? 'reload' : null;   // (an inspect has its own show: 78-inspect)
     if (!mode || (rig && rig.mode !== mode)) { if (rig) rfxDrop(rig); rig = null; if (!mode) return; }
     if (!rig) { rig = rfxTake(Gm, L.rl, mode, full); if (!rig) return; }
     rig.stamp = RFX.frame; rig.pm.uniforms.scale.value = screenScale();
-    if (mode === 'reload') rfxReload(rig, r, Math.min(dt, .05), G); else rfxInspect(rig, insp, Math.min(dt, .05));
+    rfxReload(rig, r, Math.min(dt, .05), G);
   }
   const env = (q, a, b, c, d) => q < a || q > d ? 0 : q < b ? sm((q - a) / (b - a)) : q <= c ? 1 : 1 - sm((q - c) / (d - c));
   function rfxEmit(rig, n, fn) { for (const p of rig.P) { if (n <= 0) break; if (p.age < p.life) continue; p.age = 0; p.hot = 0; p.g = 0; p.vx = p.vy = p.vz = 0; p.at = null; fn(p); n--; } }
@@ -318,15 +318,6 @@
       else if (kind === 'rise') { if (r > .2 && r < .84) { rig.acc += dt * 38 * pk; const n = Math.floor(rig.acc); rig.acc -= n; rfxEmit(rig, n, p => { const a = MR() * TAU, rr = A.w * (1.1 + MR() * .5); p.x = A.bottom.x + Math.cos(a) * rr; p.y = A.bottom.y; p.z = A.bottom.z + Math.sin(a) * rr; p.vx = -Math.cos(a) * .02; p.vz = -Math.sin(a) * .02; p.vy = .09 + MR() * .07; p.g = 0; p.life = .5 + MR() * .3; p.s = (.0036 + MR() * .002) * sz; p.mode = 'fly'; p.hot = MR() < .3; }); } }
     }
     rfxPoints(rig, dt, mc);
-  }
-  // a Mythic or Paragon, inspected: a ring of light sweeps from the back of the gun to the muzzle, shedding sparks
-  function rfxInspect(rig, q, dt) {
-    const Gm = rig.gun, U = Gm.userData, len = U.len || .6, k = cl((q - .25) / .5, 0, 1), z = lp(.08, -len, sm(k)), on = q > .25 && q < .8;
-    rig.ring.visible = on; rig.halo.visible = on; rig.rune.visible = false; rig.rune2.visible = false; rig.ring2.visible = false; rig.sw.visible = rig.swh.visible = false; for (const a of rig.arcs) a.visible = false;
-    if (on) { const a = Math.sin(k * Math.PI); rig.ring.position.set(0, .025, z); rig.ring.rotation.set(0, 0, 0); rig.ring.scale.setScalar(.075 + a * .02); rig.ring.material.opacity = a; rig.ring.material.color.copy(rig.l1).lerp(rig.l2, a * .5);
-      rig.halo.position.set(0, .025, z); rig.halo.scale.setScalar(.07); rig.halo.material.opacity = a * .8; rig.halo.material.color.copy(rig.l1);
-      rfxEmit(rig, MR() < dt * 40 ? 1 : 0, p => { const an = MR() * TAU; p.x = Math.cos(an) * .03; p.y = .025 + Math.sin(an) * .03; p.z = z; p.vx = Math.cos(an) * .05; p.vy = Math.sin(an) * .05 + .03; p.vz = .05; p.g = 0; p.life = .4; p.s = .003; p.mode = 'fly'; p.hot = MR() < .5; }); }
-    rfxPoints(rig, dt, V3(0, .025, z));
   }
   // step the points and write them out
   function rfxPoints(rig, dt, mc) {

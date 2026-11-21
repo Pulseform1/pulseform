@@ -464,7 +464,8 @@
     M.feed.forEach((k, i) => { const w = 250 * u, x = V.x1 - 14 - w, y = V.y0 + (touch ? 58 : 14) * u + i * 30 * u; rr(g, x, y, w, 25 * u, 5, k.mine ? 'rgba(53,224,200,.28)' : 'rgba(255,138,61,.28)'); tx(g, `${k.a}   ${k.w}${k.head ? ' ◎' : ''}   ${k.b}`, x + w - 10 * u, y + 13 * u, 12.5 * u, BONE, 'right'); });
     // --- health, weapon and abilities
     const A = P.ammo[G.k] || { mag: 0, res: 0 }, hpCol = P.hp > 30 ? BONE : WARN;
-    if (touch) {   // one strip, bottom centre, clear of both thumbs
+    if (touch) {   // one strip, bottom centre, clear of both thumbs (a tap on it looks your gun over)
+      if (P === me() && P.alive && X && !UI.armory) zone(640 - 205 * u, V.y1 - 10 - 44 * u, 410 * u, 44 * u, () => { if (P.reloadT <= 0 && !(X.inspT > 0)) startInspect(P); });
       g.save(); g.translate(640, V.y1 - 10); g.scale(u, u); rr(g, -205, -44, 410, 44, 8, GLASS);
       tx(g, String(Math.ceil(P.hp)), -186, -22, 28, hpCol, 'left'); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(-128, -27, 84, 7); g.fillStyle = hpCol; g.fillRect(-128, -27, 84 * P.hp / 100, 7); if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(-128, -17, 84 * P.sh / 50, 5); }
       tx(g, G.n.toUpperCase(), 0, -22, 15, G.col); tx(g, G.melee ? '—' : `${A.mag} / ${A.res}`, 186, -22, 24, A.mag || G.melee ? BONE : WARN, 'right'); if (carries(P) && !M.planted) tx(g, '◆ YOU CARRY THE CHARGE', 0, canBuy() ? -84 : -54, 12, GOLD, 'center', 900); g.restore();   // above the credits while you can still buy

@@ -5,7 +5,7 @@
      at the press of a button). Buying one plays a reveal in the rarity's colour and puts it on the gun at once.
      LOCKER: every weapon, the skins you own for it (rarest first, a page at a time), and what it is wearing now. Prices
      are in coins, which matches pay (see the results screen). */
-  const SH = { show: null, reveal: null, locker: 'vesper', msg: null, spin: 0, hov: null, demo: null, lpage: 0 };
+  const SH = { show: null, reveal: null, locker: 'vesper', msg: null, spin: 0, hov: null, demo: null, insp: null, lpage: 0 };
   function gunShowScene() {
     if (X.gs) return X.gs; const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(28, 1, .02, 30);
     scene.add(new THREE.HemisphereLight('#ffffff', '#4a5260', 1.25));
@@ -30,12 +30,17 @@
     if (k !== 'knife' && S.model.userData.parts) { const G = GUNS[k], P = S.fake || (S.fake = { ammo: { [k]: { mag: G.mag, res: 99 } }, fireT: -1, reloadT: 0, wind: 0, alive: true }), D = SH.demo && SH.demo.id === id ? SH.demo : null;
       const q = D ? (D.hold != null ? D.hold : (performance.now() - D.t0) / 1000 / G.rel) : -1; P.reloadT = q >= 0 && q < 1 ? G.rel * (1 - q) : 0; if (D && D.hold == null && q >= 1) SH.demo = null;
       animParts(S.model, P, G, dt, false, { show: true }); }
+    // an inspect's show, on the turning gun: at the press of a button, and once on its own after an unlock
+    { if (rv && rt > 1.9 && !rv.shown && sk && INSPECT[sk.line]) { rv.shown = true; showInspect(id); }
+      const I = SH.insp && SH.insp.id === id && sk && INSPECT[sk.line] ? SH.insp : null, iq = I ? (I.hold != null ? I.hold : (performance.now() - I.t0) / 1000 / INSPECT[sk.line].dur) : -1;
+      if (I && iq < 1) insFrame(S.model, S.scene, sk.line, Math.max(0, iq), dt, GUNS[k], S.cam.position); else { if (I) SH.insp = null; if (INS.rig && INS.rig.gun === S.model) insEnd(); } }
     const W = innerWidth, H = innerHeight, cam = S.cam; cam.aspect = W / H; cam.fov = 26; const d = S.size / (2 * Math.tan(13 * D2R)) * (UI.panel === 'locker' && !rv ? 1.35 : rv ? 1.05 : 1.08);
     cam.position.set(0, S.size * .06, d); cam.lookAt(0, 0, 0); cam.setViewOffset(W, H, rv ? 0 : W * (UI.panel === 'locker' ? -.14 : .17), rv ? -H * .04 : 0, W, H); cam.updateProjectionMatrix();
     S.rim.color.set(sk ? sk.R.col : '#9fd8ff');
     S.scene.background = new THREE.Color(rv && sk ? sk.R.col : '#0b0e13').lerp(new THREE.Color('#07090c'), rv ? .82 : 0);
     X.renderer.render(S.scene, cam); cam.clearViewOffset(); return true;
   }
+  function showInspect(id) { const sk = skinOfId(id), D = sk && INSPECT[sk.line]; if (!D) return; SH.insp = { id, t0: performance.now() }; SH.demo = null; insSound(D); }
   const owns = id => STATS.skins.includes(id);
   // every skin on every weapon; returns the line to show
   function unlockAllSkins() {
@@ -90,6 +95,9 @@
     const py = tight ? y + 18 * u : y + h - 20 * u * (big ? 1.25 : 1); if (own) tx(g, 'OWNED', x + w - 14 * u, py, 12 * u, YOU, 'right', 900); else coinTag(g, x + w - 14 * u, py, 15 * u, skinPrice(id));
   }
   const RELOAD_FX_N = { snap: 'a flash as it seats', sparks: 'sparks and a shock ring', flame: 'a burst of flame', frost: 'ice forms on the magazine', bolt: 'lightning to the magazine', void: 'light drawn into the well', digital: 'the magazine rebuilt in pixels', runes: 'a ring of runes', gold: 'gilded glints', motes: 'spiralling light', cell: 'an energy magazine', neon: 'it flickers on like neon', forge: 'the magazine forged white-hot', rift: 'a portal, pixels, a power surge', glyph: 'circles of runes and a surge' };
+  const INSPECT_N = { inferno: 'a torch lit at the muzzle', storm: 'ball lightning, discharged', nebula: 'a galaxy over the receiver', phoenix: 'wings of flame', aurora: 'curtains of polar light', tempest: 'a thunderhead strikes it', prism: 'light split into a rainbow', magmaflow: 'lava poured, then an eruption', permafrost: 'ice grows and shatters', fission: 'an atom spun to a flash', cinderwake: 'a wake of fire',
+    voidline: 'a black hole at the muzzle', solaris: 'a sunrise behind the sight', celestial: 'a constellation, star by star', abyss: 'cracks that beat like a heart', spectrum: 'split into red, green and blue', eclipse: 'a total eclipse', overclock: 'a boot sequence and an overvolt', ghostfire: 'a spirit circles it and dives in',
+    starforge: 'a star gathered, hammered and lit', riftborn: 'pushed through a tear in the air', glyphbound: 'rune rings, a seal, a pillar of light' };
   const SIG_N = { star: 'a captive star in three rings', rift: 'a tear in the air, shards circling', glyph: 'turning circles of runes', crescent: 'a crescent moon', icicles: 'glowing ice', fans: 'spinning RGB fans' };
   function featureList(sk) {
     const L = sk.L, t = sk.R.tier, gk = L.gk, f = [['Finish', t >= 5 ? 'alive: it breathes, flows and beats' : t >= 3 ? 'living, animated' : gk ? 'glowing, breathing' : 'its own paint']];
@@ -97,6 +105,7 @@
     if (gk && sk.k !== 'knife') f.push(['Glow', [gk.strips && 'energy strips', gk.rings && 'rings', gk.cell && 'energy cell', (gk.sight || gk.muzzle) && 'halos'].filter(Boolean).join(', ')]);
     if (L.rl && sk.k !== 'knife') f.push(['Reload', RELOAD_FX_N[L.rl.kind] || 'its own']);
     if (L.fx && L.fx.tracer) f.push(['Tracers', 'coloured']); if (L.fx && L.fx.idle) f.push(['Idle effect', (gk && gk.pts) || L.fx.idle]);
+    if (INSPECT[sk.line]) f.push(['Inspect', INSPECT_N[sk.line] || 'its own show']);
     if (L.emblem) f.push(['Kill banner', L.emblem.shape + ' emblem']); if (L.kill) f.push(['Kill effect', { shards: 'ice shatter', coins: 'gold burst', flame: 'flame burst', bolt: 'lightning strike', void: 'implosion', sun: 'solar flare', nova: 'supernova', rift: 'the air tears open', glyph: 'rune circle and a pillar of light' }[L.kill.kind]]);
     if (L.sound) f.push(['Sounds', t >= 5 ? 'its own kill and reload sounds' : 'its own kill sound']); return f;
   }
@@ -158,7 +167,9 @@
     let y = py + 112 * u; if (y + 16 * u + feats.length * 24 * u + 40 * u <= room) y = para(g, L.blurb, px, y, 380 * u, 14 * u, '#c9cfd8') + 16 * u; else y += 4 * u;
     const rowH = cl((room - y) / Math.max(1, feats.length), 16 * u, 24 * u);
     for (const [a, b] of feats) { g.fillStyle = sk.R.col; g.fillRect(px, y - 5 * u, 4 * u, 10 * u); tx(g, a.toUpperCase(), px + 12 * u, y, 11 * u, DIM, 'left', 800); fitTx(g, b, px + 130 * u, y, 13 * u, BONE, 'left', 700, V.x1 - 12 * u - (px + 130 * u)); y += rowH; }
-    if (L.rl && sk.k !== 'knife') { const playing = SH.demo && SH.demo.id === id; btn(g, px, Math.min(y + 6 * u, by - 50 * u), 185 * u, 38 * u, playing ? 'RELOADING…' : 'WATCH THE RELOAD', () => { SH.demo = { id, t0: performance.now() }; }, { px: 12 * u, edge: sk.R.col + 'aa', off: playing }); }
+    { const yb = Math.min(y + 6 * u, by - 50 * u), busy = (SH.demo && SH.demo.id === id) || (SH.insp && SH.insp.id === id);
+      if (L.rl && sk.k !== 'knife') { const playing = SH.demo && SH.demo.id === id; btn(g, px, yb, 185 * u, 38 * u, playing ? 'RELOADING…' : 'WATCH THE RELOAD', () => { SH.demo = { id, t0: performance.now() }; SH.insp = null; }, { px: 12 * u, edge: sk.R.col + 'aa', off: !!busy }); }
+      if (INSPECT[sk.line]) { const playing = SH.insp && SH.insp.id === id; btn(g, px + (L.rl && sk.k !== 'knife' ? 195 * u : 0), yb, 185 * u, 38 * u, playing ? 'INSPECTING…' : 'WATCH THE INSPECT', () => showInspect(id), { px: 12 * u, edge: sk.R.col + 'aa', off: !!busy }); } }
     if (own) { const on = STATS.equip[sk.k] === id; btn(g, bx, by, 380 * u, 60 * u, on ? 'EQUIPPED' : 'EQUIP', () => equipSkin(sk.k, on ? null : id), { on: !on, fill: YOU, solid: true, col: INK, px: 22 * u, sub: on ? 'press again to take it off' : '' }); }
     else { const can = STATS.coins >= price; btn(g, bx, by, 380 * u, 60 * u, `BUY  ·  ${price}`, () => buySkin(id), { on: can, fill: sk.R.col, solid: can, col: can ? INK : BONE, px: 22 * u, sub: can ? `you have ${STATS.coins}` : `${STATS.coins} coins` }); }
     btn(g, bx, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; }, { px: 13 * u }); btn(g, bx + 195 * u, by + 70 * u, 185 * u, 40 * u, 'TRY IN THE RANGE', () => tryInRange(id), { px: 12 * u });
