@@ -260,7 +260,7 @@
     const walk = (o, inGun) => { if (o.userData.isOL || o.userData.px) return; inGun = inGun || o === gh; if (o.isMesh && !o.userData.ol && !(inGun && o.material && o.material.transparent)) add.push(o); for (const c of o.children) walk(c, inGun); };
     walk(root, false);
     // copies made for pieces since thrown away (an old gun, old arms) give their memory back
-    U.olGeos = (U.olGeos || []).filter(m => { let q = m; while (q && q !== root) q = q.parent; if (q) return true; m.geometry.dispose(); return false; });
+    U.olGeos = (U.olGeos || []).filter(m => { let q = m; while (q && q !== root && !(q.userData.cachedGun && U.gunCache && [...U.gunCache.values()].includes(q))) q = q.parent; if (q) return true; m.geometry.dispose(); return false; });
     const hook = (o, m) => { o.userData.ol = m;
       const b0 = o.onBeforeRender, a0 = o.onAfterRender, own = THREE.Object3D.prototype;   // keep any hooks a piece already has
       o.onBeforeRender = b0 === own.onBeforeRender ? olMark : function (...a) { b0.apply(this, a); olMark.apply(this, a); };
@@ -282,11 +282,21 @@
     }
     root.traverse(o => { if (o.userData.isOL) o.visible = show; });
   }
+  let agentWarmT = -1;
   function updateAgent(f, dt) {
     let A = X.agents.get(f);
     if (!A || A.userData.op !== f.op) { if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); } A = agentModel(f); X.agents.set(f, A); }
     const U = A.userData, fk0 = gun(f).k, fsk = skinFor(f, fk0) || '', fk = fk0;
-    if (U.gk !== fk || U.gsk !== fsk) { U.gsk = fsk; while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]); const gm = gunModel(fk, { cast: false, flash: true, skin: fsk }); gm.scale.setScalar(1.08); U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
+    if (U.gk !== fk || U.gsk !== fsk) {   // a gun once built for this fighter is kept, outline and all: switching back to it costs nothing
+      U.gsk = fsk; while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]);
+      const GC = U.gunCache || (U.gunCache = new Map()), gkey = fk + '|' + fsk; let gm = GC.get(gkey);
+      if (!gm) { gm = gunModel(fk, { cast: false, flash: true, skin: fsk }); gm.scale.setScalar(1.08); gm.userData.cachedGun = true; GC.set(gkey, gm); if (GC.size > 6) GC.delete(GC.keys().next().value); }
+      else { GC.delete(gkey); GC.set(gkey, gm); gm.traverse(o => { if (o.userData.isOL) o.visible = !!U.olOn; }); }
+      U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
+    // and the guns in its other slots are built ahead, one gun a frame across the whole field, so a swap or a buy never builds one mid-fight
+    if (agentWarmT !== X.t && f.guns) for (const sl of [1, 2, 3]) { const k = f.guns[sl]; if (!k || !GUNS[k]) continue; const sk2 = skinFor(f, k) || '', GC = U.gunCache || (U.gunCache = new Map());
+      if (GC.has(k + '|' + sk2)) continue; agentWarmT = X.t; const g2 = gunModel(k, { cast: false, flash: true, skin: sk2 }); g2.scale.setScalar(1.08); g2.userData.cachedGun = true;
+      g2.traverse(o => { if (o.isMesh && o.geometry && !(o.material && o.material.transparent)) olNormals(o.geometry); }); GC.set(k + '|' + sk2, g2); if (GC.size > 6) GC.delete(GC.keys().next().value); break; }
     A.visible = !M || duelOk(viewer(), f); A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;   // (a Duel Field hides those in it from everyone else, and everyone else from them)
     { const P = M ? me() : null, foeSide = !!P && f.team !== P.team, op = f.cloak > 0 && f.alive ? (foeSide ? .07 : .35) : 1; U.cop = lp(U.cop == null ? 1 : U.cop, op, Math.min(1, dt * 10));
       // the fade goes on this fighter's own copies of its materials (everyone playing the same operative shares the

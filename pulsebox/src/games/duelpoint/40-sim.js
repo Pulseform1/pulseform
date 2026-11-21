@@ -740,8 +740,9 @@
       if (f.net) { netFollow(f, dt); continue; }
       let I = !f.alive ? NEUTRAL : f.bot ? botThink(f, dt) : readInput(f);
       if (f.chan || f.lock > 0) { I = Object.assign({}, I, { fire: false }); if (f.chan) Object.assign(I, { mx: 0, mz: 0, jump: false, sprint: false }); }
+      const held = !!I.fire;   // the trigger as pressed, before a readied ability takes it
       if (f.rdy) { if (!f.alive || (!hasAb(f, f.rdy) && !tetherBack(f, f.rdy))) unready(f); else { const press = I.fire && !f.semiHeld; f.semiHeld = !!I.fire; I = Object.assign({}, I, { fire: false, spin: false }); if (press) castReady(f, false); } }   // a readied ability takes the trigger
-      if (f.noFire) { if (!I.fire) f.noFire = false; else I = Object.assign({}, I, { fire: false }); }   // (the click that used it does not then fire the gun)
+      if (f.noFire) { if (!held) f.noFire = false; else I = Object.assign({}, I, { fire: false, press: false, rapid: false }); }   // (the click that used it does not then fire the gun)
       stepBody(f, I, dt); stepGun(f, dt); stepObjective(f, I, dt);
       if (I.fire && f.sprinting) { f.sprinting = false; f.fireT = Math.max(f.fireT, .1); }
       { const G = gun(f); f.wind = G.wind ? cl((f.wind || 0) + ((I.fire || I.spin) && f.alive && f.reloadT <= 0 ? dt / G.wind : -dt / (G.wind * 1.6)), 0, 1) : 0; }   // a rotary gun spins up before it fires

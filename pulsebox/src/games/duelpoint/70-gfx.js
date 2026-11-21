@@ -79,6 +79,9 @@
   function tunePixels(dt) {
     if (dt > .034) X.slow += dt; else X.slow = Math.max(0, X.slow - dt * .5);
     if (X.slow > 1.2 && X.pr > .8) { X.pr = Math.max(.75, X.pr - .25); X.renderer.setPixelRatio(X.pr); X.renderer.setSize(innerWidth, innerHeight, false); X.slow = 0; }
-    else if (X.slow > 2 && X.renderer.shadowMap.enabled) { X.renderer.shadowMap.enabled = false; X.sun.castShadow = false; X.scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; }); X.slow = 0; }
+    // (turning shadows off outright rebuilt every shader in the scene at once, a freeze of seconds on a slow laptop just
+    // when it was already struggling: instead they are drawn every third frame, which changes no shader)
+    else if (X.slow > 2 && X.renderer.shadowMap.enabled && !X.shadowEvery) { X.shadowEvery = 3; X.renderer.shadowMap.autoUpdate = false; X.slow = 0; }
+    if (X.shadowEvery) X.renderer.shadowMap.needsUpdate = (X.shadowN = (X.shadowN || 0) + 1) % X.shadowEvery === 0;
   }
   (async () => { try { if (typeof document === 'undefined') return; await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'); initGfx(); ready = true; } catch (e) { console.error(e); failed = true; } })();

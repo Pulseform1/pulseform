@@ -350,7 +350,8 @@
     abHandFrame(P, dt); if (P.castT > 0) P.castT -= dt;
 
     // the rival
-    for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }
+    for (const [f, A] of X.agents) if (!f.decoy && !M.fs.includes(f)) {   // (a Mirage copy is kept: 79-kitfx2 uses it again)
+      X.scene.remove(A); X.agents.delete(f); }
     { const AP = X.agents.get(P); if (AP) AP.visible = false; } for (const f of M.fs) if (f !== P || X.deathCam) updateAgent(f, dt);   // on the death cam you see your own body fall
     // a fighter wholly behind walls is not drawn at all (nor its outline): a few lines from the camera to its head, chest, both
     // hips, feet and gun; if every one is blocked, nothing of it could show. (Not while the camera is inside a wall.)

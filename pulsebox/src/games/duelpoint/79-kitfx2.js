@@ -128,12 +128,16 @@
     list(K.rdy, M.fs.filter(f => f !== Vw && f.alive && f.rdy && duelOk(Vw, f) && (f.team === P.team || canSee(P, f) || f.reveal > 0)), (s, f) => { const y = f.yaw, rx = Math.cos(y), rz = -Math.sin(y), fx = -Math.sin(y), fz = -Math.cos(y); s.position.set(ipos(f, 'x') - rx * .24 + fx * .38, ipos(f, 'y') + 1.2 + lp(0, -.4, f.crouch), ipos(f, 'z') - rz * .24 + fz * .38);   // (in the off hand: left of them and ahead)
       s.material.color.set((OPS[f.op] || OPS.vex).col); s.scale.setScalar(.35 + .1 * Math.sin(X.t * 12)); });
     // Mirage: each copy drawn as the operative itself, running (the red edge a rival gets, too), shimmering as it fades
-    { const live = new Set(); X.decoyF = X.decoyF || new Map();
+    // (the copies are kept and used again, never rebuilt: a whole operative built mid-fight cost a frame; one or two are
+    // even built ahead, a frame at a time, for each side with a Wraith on it)
+    { const live = new Set(); X.decoyF = X.decoyF || new Map(); X.decoyPool = X.decoyPool || [];
+      for (const w of M.fs) { if (!OPS[w.op] || !OPS[w.op].e || OPS[w.op].e.n !== OPS.wraith.e.n) continue; const have = X.decoyPool.filter(q => q.op === w.op && q.team === w.team).length + [...X.decoyF.values()].filter(q => q.op === w.op && q.team === w.team).length;
+        if (have < 2) { const q = fighter({ op: w.op, key: 'mirage-pool' + X.decoyPool.length + w.team, name: '', team: w.team }); q.decoy = true; q.guns = Object.assign({}, w.guns); q.slot = w.slot; q.skins = Object.assign({}, w.skins || {}); Object.assign(q, { x: w.x, y: -50, z: w.z, px: w.x, py: -50, pz: w.z, alive: true }); updateAgent(q, dt); const A = X.agents.get(q); if (A) A.visible = false; X.decoyPool.push(q); break; } }
       for (const D of K2.decoys) { if (D.popped || !duelOk(Vw, D.by)) continue; live.add(D.id); let f = X.decoyF.get(D.id);
-        if (!f) { f = fighter({ op: D.by.op, key: 'mirage' + D.id, name: '', team: D.by.team }); f.guns = Object.assign({}, D.by.guns); f.slot = D.by.slot; f.skins = Object.assign({}, D.by.skins || {}); X.decoyF.set(D.id, f); }
+        if (!f) { const pi = X.decoyPool.findIndex(q => q.op === D.by.op && q.team === D.by.team); f = pi >= 0 ? X.decoyPool.splice(pi, 1)[0] : fighter({ op: D.by.op, key: 'mirage' + D.id, name: '', team: D.by.team }); f.decoy = true; f.guns = Object.assign({}, D.by.guns); f.slot = D.by.slot; f.skins = Object.assign({}, D.by.skins || {}); X.decoyF.set(D.id, f); }
         Object.assign(f, { x: D.x, y: D.y, z: D.z, px: D.x, py: D.y, pz: D.z, vx: D.moving ? D.dx * SPD : 0, vz: D.moving ? D.dz * SPD : 0, yaw: Math.atan2(-D.dx, -D.dz), pitch: 0, alive: true, walkT: D.walkT, crouch: 0, ground: true, sprinting: false });
         updateAgent(f, dt); const A = X.agents.get(f); if (A) A.visible = !(D.t < .4 && Math.random() < .5); }   // (it flickers out at the end)
-      for (const [id, f] of X.decoyF) if (!live.has(id)) { const A = X.agents.get(f); if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); X.agents.delete(f); } X.decoyF.delete(id); } }
+      for (const [id, f] of X.decoyF) if (!live.has(id)) { const A = X.agents.get(f); if (A) A.visible = false; X.decoyF.delete(id); X.decoyPool.push(f); } }
     // Gloom: the fog closes in round you while it lasts
     { const k = Vw && Vw.murk > 0 ? Math.min(1, Vw.murk / .4, (3.5 - Vw.murk) / .25 + .2) : 0, fog = X.scene.fog;
       if (k > 0) { if (!X.murkBase) X.murkBase = { near: fog.near, far: fog.far, col: fog.color.clone(), bg: X.scene.background && X.scene.background.isColor ? X.scene.background.clone() : null };
