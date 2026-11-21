@@ -133,7 +133,8 @@
     const P = G.pat; if (!P) return [0, 0]; const n = Math.max(0, f.spray - G.acc.free);
     const up = P.n2 && n > P.n2 ? P.vk * P.n2 + P.vk2 * (n - P.n2) : P.vk * n;   // vk2: a steeper climb after the n2th shot
     // (the sway starts from the middle, toward a side picked at the start of each spray, so the crosshair never jumps)
-    return [n > P.hs0 ? P.hk * Math.sin((n - P.hs0) * .7) * (f.sseed < Math.PI ? 1 : -1) * D2R : 0, Math.min(P.vmax, up) * D2R];
+    const ads = f.scoped && !G.scope ? .85 : 1;   // aiming down sights steadies the climb and the sway a little
+    return [n > P.hs0 ? P.hk * Math.sin((n - P.hs0) * .7) * (f.sseed < Math.PI ? 1 : -1) * D2R * ads : 0, Math.min(P.vmax, up) * D2R * ads];
   }
   const viewDir = (yaw, pitch) => { const cp = Math.cos(pitch); return [-Math.sin(yaw) * cp, Math.sin(pitch), -Math.cos(yaw) * cp]; };
   // ray against a sphere / an axis-aligned box: the distance, or -1
