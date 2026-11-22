@@ -9,12 +9,12 @@
          is Lit (shown through walls to Tessel's side) for 2.5 s. It comes back 40 s after it is fired. One bullet from a
          rival into either post breaks a dormant one.
        TRIGGER (its own key, 4 by default): look at one of your dormant devices (the crosshair on it, within a small
-         radius) from within 20 m with a clear line of sight, and press it: the device fires. Only in the live round;
+         radius) from within 20 m with a clear line of sight, and press it (or F, the use key): the device fires. Only in the live round;
          both can be set in the buy phase, on your side of the barrier. Dormant devices last until fired, broken or the
          round ends, and a new one of a kind replaces the old. Tessel's side always sees them (faint, with a marker);
          a rival sees only a faint glint within 6 m.
        X Glasshouse: a 10 m square of Lightlines rises round the spot you point at (up to 30 m away) for 10 s, and rivals
-         inside it move at half speed.
+         inside it move at half speed. Its walls are solid to feet: no one walks in or out until it falls.
      A Lightline is a sheet standing on a line across the floor: sight (los) stops where a ray crosses it, shots go on. Who
      walks through one is worked out on every device for every fighter, from the line and where they stand, so all agree. */
   const LINE = { len: 20, wide: 8, h: 3.3, T: 14, lit: 2.5 }, LULL = { r: 4.5, T: 7 }, TRIG = { r: 20, ang: .05, rad: .5, see: 60, losEvery: .15, glint: 6 }, BLOOM = { R: 3.4, T: 9 }, HOUSE = { half: 5, T: 10, reach: 30 };
@@ -65,6 +65,14 @@
     const L = Math.hypot(o.bx - o.ax, o.bz - o.az), n = Math.max(1, Math.ceil(L / .25)); let k = 0;
     for (let i = 1; i <= n; i++) { const q = i / n; if (!inZoneP(sd, lp(o.ax, o.bx, q), lp(o.az, o.bz, q))) break; k = q; }
     if (k * L < 1.2) return null; o.bx = r2(lp(o.ax, o.bx, k)); o.bz = r2(lp(o.az, o.bz, k)); return o;
+  }
+  // a Glasshouse's walls are solid to feet, from either side: a move is refused if it would push the body further into a wall
+  // (who is inside stays in, who is outside stays out; one caught on the line when it rose can still step clear)
+  function glassBlocks(f, x, z) {
+    for (const H of M.kit.houses) { if (!(H.t > 0) || Math.abs(f.y - H.y) > 3) continue; const ins = Math.abs(f.x - H.x) < H.half && Math.abs(f.z - H.z) < H.half;
+      const pen = (px, pz) => { const m = Math.max(Math.abs(px - H.x), Math.abs(pz - H.z)); return ins ? m - (H.half - RAD) : (H.half + RAD) - m; };
+      const p1 = pen(x, z); if (p1 > 0 && p1 > pen(f.x, f.z) - 1e-6) return true; }
+    return false;
   }
   // a Lightline into the world
   function addLine(f, ax, az, bx, bz, y, T, low) {

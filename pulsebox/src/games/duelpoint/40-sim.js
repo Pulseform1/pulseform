@@ -47,8 +47,9 @@
   function groundAt(x, z, feet) { let g = 0; for (const [a, b] of [[0, 0], [RAD, 0], [-RAD, 0], [0, RAD], [0, -RAD]]) { const h = hMove(x + a, z + b); if (h <= feet + STEP && h > g) g = h; } return g; }
   function moveF(f, dx, dz) {
     const pen = M && M.phase === 'buy' && M.mode !== 'range' && !f.net ? sideOf(f) : null, held = (x, z) => pen && inZone(pen, f.x, f.z) && !inZone(pen, x, z);   // the spawn barrier
-    if (!blocked(f.x + dx, f.z, f.y) && !held(f.x + dx, f.z)) f.x += dx; else f.vx = 0;
-    if (!blocked(f.x, f.z + dz, f.y) && !held(f.x, f.z + dz)) f.z += dz; else f.vz = 0;
+    const caged = (x, z) => M && M.kit && M.kit.houses.length > 0 && glassBlocks(f, x, z);   // a Glasshouse's walls: no one walks through them
+    if (!blocked(f.x + dx, f.z, f.y) && !held(f.x + dx, f.z) && !caged(f.x + dx, f.z)) f.x += dx; else f.vx = 0;
+    if (!blocked(f.x, f.z + dz, f.y) && !held(f.x, f.z + dz) && !caged(f.x, f.z + dz)) f.z += dz; else f.vz = 0;
     const g = groundAt(f.x, f.z, f.y), was = f.ground;
     if (f.y > g + .001 || f.vy > 0) f.ground = false;
     if (f.y <= g) { if (!was && f.vy < -4) emit('land', f); f.y = g; f.vy = 0; f.ground = true; }
@@ -498,6 +499,7 @@
   function stepObjective(f, I, dt) {
     const press = I.use && !f.useHeld; let gated = false;
     if (press && GATES.length && f.alive && !f.plant && !f.defuse) { const g = gateNear(f); if (g >= 0) { toggleGate(g, f); gated = true; } }   // a gate's switch
+    if (press && !gated && f.op === 'tessel' && !f.net && f.alive && M.phase === 'live' && !f.plant && !f.defuse && tesselState(f) === 'ok' && tesselTrigger(f)) { gated = true; f.useLock = true; }   // F on a dormant device of Tessel's, under the crosshair: it fires (as the Trigger key does)
     f.useHeld = !!I.use;
     if (stepLoot(f, I, press && !gated && !(f.plant > 0) && !(f.defuse > 0))) f.useLock = true;   // F swapped a gun: that press plants nothing
     if (f.useLock) { if (!I.use) f.useLock = false; else I = Object.assign({}, I, { use: false }); }

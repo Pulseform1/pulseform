@@ -389,7 +389,7 @@ const GAME = {
     ember: { n: 'Inferno', d: 'Lob a great firebomb: a 5.5 m blaze that burns rivals for 40 a second, 8 s.', pts: 6 },
     axiom: { n: 'Lockdown', d: 'Plant a device; 2.5 s later every rival within 14 m is held: slowed, and unable to fire or use abilities, for 4 s.', pts: 7 },
     vanta: { n: 'Duel Field', d: 'Point at a spot: the rival nearest it, within 5 m, is pulled into a dome with you until one of you falls. Nobody else sees in, shoots in or gets in.', pts: 7 },
-    tessel: { n: 'Glasshouse', d: 'Point at a spot up to 30 m away: a 10 m square of Lightlines rises round it for 10 s, and rivals inside it move at half speed.', pts: 7 },
+    tessel: { n: 'Glasshouse', d: 'Point at a spot up to 30 m away: a 10 m square of Lightlines rises round it for 10 s. No one can walk through its walls, and rivals inside it move at half speed.', pts: 7 },
   };
   for (const k in OPS) { OPS[k].q.cost = ABQ[k][0]; OPS[k].q.max = ABQ[k][1]; OPS[k].x = ULTS[k]; }
   const ultCost = f => OPS[f.op] ? OPS[f.op].x.pts : 6;
@@ -1105,8 +1105,9 @@ const GAME = {
   function groundAt(x, z, feet) { let g = 0; for (const [a, b] of [[0, 0], [RAD, 0], [-RAD, 0], [0, RAD], [0, -RAD]]) { const h = hMove(x + a, z + b); if (h <= feet + STEP && h > g) g = h; } return g; }
   function moveF(f, dx, dz) {
     const pen = M && M.phase === 'buy' && M.mode !== 'range' && !f.net ? sideOf(f) : null, held = (x, z) => pen && inZone(pen, f.x, f.z) && !inZone(pen, x, z);   // the spawn barrier
-    if (!blocked(f.x + dx, f.z, f.y) && !held(f.x + dx, f.z)) f.x += dx; else f.vx = 0;
-    if (!blocked(f.x, f.z + dz, f.y) && !held(f.x, f.z + dz)) f.z += dz; else f.vz = 0;
+    const caged = (x, z) => M && M.kit && M.kit.houses.length > 0 && glassBlocks(f, x, z);   // a Glasshouse's walls: no one walks through them
+    if (!blocked(f.x + dx, f.z, f.y) && !held(f.x + dx, f.z) && !caged(f.x + dx, f.z)) f.x += dx; else f.vx = 0;
+    if (!blocked(f.x, f.z + dz, f.y) && !held(f.x, f.z + dz) && !caged(f.x, f.z + dz)) f.z += dz; else f.vz = 0;
     const g = groundAt(f.x, f.z, f.y), was = f.ground;
     if (f.y > g + .001 || f.vy > 0) f.ground = false;
     if (f.y <= g) { if (!was && f.vy < -4) emit('land', f); f.y = g; f.vy = 0; f.ground = true; }
@@ -1556,6 +1557,7 @@ const GAME = {
   function stepObjective(f, I, dt) {
     const press = I.use && !f.useHeld; let gated = false;
     if (press && GATES.length && f.alive && !f.plant && !f.defuse) { const g = gateNear(f); if (g >= 0) { toggleGate(g, f); gated = true; } }   // a gate's switch
+    if (press && !gated && f.op === 'tessel' && !f.net && f.alive && M.phase === 'live' && !f.plant && !f.defuse && tesselState(f) === 'ok' && tesselTrigger(f)) { gated = true; f.useLock = true; }   // F on a dormant device of Tessel's, under the crosshair: it fires (as the Trigger key does)
     f.useHeld = !!I.use;
     if (stepLoot(f, I, press && !gated && !(f.plant > 0) && !(f.defuse > 0))) f.useLock = true;   // F swapped a gun: that press plants nothing
     if (f.useLock) { if (!I.use) f.useLock = false; else I = Object.assign({}, I, { use: false }); }
@@ -2174,12 +2176,12 @@ const GAME = {
          is Lit (shown through walls to Tessel's side) for 2.5 s. It comes back 40 s after it is fired. One bullet from a
          rival into either post breaks a dormant one.
        TRIGGER (its own key, 4 by default): look at one of your dormant devices (the crosshair on it, within a small
-         radius) from within 20 m with a clear line of sight, and press it: the device fires. Only in the live round;
+         radius) from within 20 m with a clear line of sight, and press it (or F, the use key): the device fires. Only in the live round;
          both can be set in the buy phase, on your side of the barrier. Dormant devices last until fired, broken or the
          round ends, and a new one of a kind replaces the old. Tessel's side always sees them (faint, with a marker);
          a rival sees only a faint glint within 6 m.
        X Glasshouse: a 10 m square of Lightlines rises round the spot you point at (up to 30 m away) for 10 s, and rivals
-         inside it move at half speed.
+         inside it move at half speed. Its walls are solid to feet: no one walks in or out until it falls.
      A Lightline is a sheet standing on a line across the floor: sight (los) stops where a ray crosses it, shots go on. Who
      walks through one is worked out on every device for every fighter, from the line and where they stand, so all agree. */
   const LINE = { len: 20, wide: 8, h: 3.3, T: 14, lit: 2.5 }, LULL = { r: 4.5, T: 7 }, TRIG = { r: 20, ang: .05, rad: .5, see: 60, losEvery: .15, glint: 6 }, BLOOM = { R: 3.4, T: 9 }, HOUSE = { half: 5, T: 10, reach: 30 };
@@ -2230,6 +2232,14 @@ const GAME = {
     const L = Math.hypot(o.bx - o.ax, o.bz - o.az), n = Math.max(1, Math.ceil(L / .25)); let k = 0;
     for (let i = 1; i <= n; i++) { const q = i / n; if (!inZoneP(sd, lp(o.ax, o.bx, q), lp(o.az, o.bz, q))) break; k = q; }
     if (k * L < 1.2) return null; o.bx = r2(lp(o.ax, o.bx, k)); o.bz = r2(lp(o.az, o.bz, k)); return o;
+  }
+  // a Glasshouse's walls are solid to feet, from either side: a move is refused if it would push the body further into a wall
+  // (who is inside stays in, who is outside stays out; one caught on the line when it rose can still step clear)
+  function glassBlocks(f, x, z) {
+    for (const H of M.kit.houses) { if (!(H.t > 0) || Math.abs(f.y - H.y) > 3) continue; const ins = Math.abs(f.x - H.x) < H.half && Math.abs(f.z - H.z) < H.half;
+      const pen = (px, pz) => { const m = Math.max(Math.abs(px - H.x), Math.abs(pz - H.z)); return ins ? m - (H.half - RAD) : (H.half + RAD) - m; };
+      const p1 = pen(x, z); if (p1 > 0 && p1 > pen(f.x, f.z) - 1e-6) return true; }
+    return false;
   }
   // a Lightline into the world
   function addLine(f, ax, az, bx, bz, y, T, low) {
@@ -10268,9 +10278,9 @@ const GAME = {
     }
     // --- Tessel: the dormant device under the crosshair, and whether it can be fired; or a device of yours to pick up or reinforce
     if (P === me() && P.alive && (M.phase === 'live' || M.phase === 'buy') && !demo && !UI.armory) {
-      const hy = M.phase === 'buy' ? 470 : V.y0 + 206 * u, st = P.op === 'tessel' ? tesselState(P) : null;   // (in the buy phase, under the crosshair: the round's banner is above it)
+      const hy = V.y1 - (touch ? 250 : 100) * u, st = P.op === 'tessel' ? tesselState(P) : null;   // (near the bottom of the screen, just above the health and ability bar; a phone's buttons and banner sit lower)
       if (st) { const D = tesselLook(P), nm = D.k === 'q' ? 'LULL' : 'LIGHTLINE', live = M.phase === 'live';
-        hint(g, !live ? nm + '  ·  FIRES ONCE THE ROUND IS LIVE' : st === 'ok' ? (touch ? 'TRIGGER' : keyLabel('trig')) + ' · TRIGGER ' + nm : st === 'far' ? nm + '  ·  TOO FAR: WITHIN 20 m' : nm + '  ·  NO CLEAR SIGHT', hy, 16 * u, live && st === 'ok' ? OPS.tessel.col : live ? WARN : DIM); }
+        hint(g, !live ? nm + '  ·  FIRES ONCE THE ROUND IS LIVE' : st === 'ok' ? (touch ? 'TRIGGER' : keyLabel('use')) + ' · TRIGGER ' + nm : st === 'far' ? nm + '  ·  TOO FAR: WITHIN 20 m' : nm + '  ·  NO CLEAR SIGHT', hy, 16 * u, live && st === 'ok' ? OPS.tessel.col : live ? WARN : DIM); }
       else { const h = kitAltHint(P, k => touch ? k.toUpperCase() : keyLabel('ab' + k)); if (h) hint(g, h, hy, 15 * u, OPS[P.op].col); }
     }
     // --- banners

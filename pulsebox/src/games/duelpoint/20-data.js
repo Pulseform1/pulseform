@@ -95,7 +95,7 @@
     ember: { n: 'Inferno', d: 'Lob a great firebomb: a 5.5 m blaze that burns rivals for 40 a second, 8 s.', pts: 6 },
     axiom: { n: 'Lockdown', d: 'Plant a device; 2.5 s later every rival within 14 m is held: slowed, and unable to fire or use abilities, for 4 s.', pts: 7 },
     vanta: { n: 'Duel Field', d: 'Point at a spot: the rival nearest it, within 5 m, is pulled into a dome with you until one of you falls. Nobody else sees in, shoots in or gets in.', pts: 7 },
-    tessel: { n: 'Glasshouse', d: 'Point at a spot up to 30 m away: a 10 m square of Lightlines rises round it for 10 s, and rivals inside it move at half speed.', pts: 7 },
+    tessel: { n: 'Glasshouse', d: 'Point at a spot up to 30 m away: a 10 m square of Lightlines rises round it for 10 s. No one can walk through its walls, and rivals inside it move at half speed.', pts: 7 },
   };
   for (const k in OPS) { OPS[k].q.cost = ABQ[k][0]; OPS[k].q.max = ABQ[k][1]; OPS[k].x = ULTS[k]; }
   const ultCost = f => OPS[f.op] ? OPS[f.op].x.pts : 6;

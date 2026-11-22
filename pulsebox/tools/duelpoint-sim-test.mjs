@@ -581,6 +581,11 @@ function kit2Checks() {
   runPinned(.5, F, 48, 3); ok(F.slowF > 0 && !T.canSee(P, F), 'a rival inside is slowed, and cannot see out', 'slow ' + (F.slowF || 0).toFixed(2));
   F.reveal = 0; for (let x = 48; x <= 56; x += .25) { pin(F, x, 3); T.tick(DT); } ok(F.reveal > 1.5, 'walking out through its wall, they are Lit', 'reveal ' + F.reveal.toFixed(1));
   runPinned(10, null); ok(!M.kit.houses.length && !M.kit.lines.length, 'it is gone after 10 s');
+  // its walls are solid to feet, from inside and from outside (Tessel's own included)
+  [M, P, F] = setup('tessel'); pin(F, 48, 3); { const o = [P.x, T.eyeY(P), P.z], dy = F.y + 1 - o[1]; P.pitch = Math.atan2(dy, 8); } T.ability(P, 'x', false);
+  { const H = M.kit.houses[0]; if (H) { Object.assign(P, { x: H.x, z: H.z, vx: 0, vz: 0, yaw: -Math.PI / 2 }); I = { ...idle(), mz: 1 }; run(2.5); const inX = P.x;
+      Object.assign(P, { x: H.x + H.half + 3, z: H.z, vx: 0, vz: 0, yaw: Math.PI / 2 }); run(2.5); const outX = P.x; I = idle();
+      ok(inX < H.x + H.half && outX > H.x + H.half, 'Glasshouse: no one walks out through its walls, or in', `stopped ${(H.x + H.half - inX).toFixed(2)} m inside, ${(outX - H.x - H.half).toFixed(2)} m outside`); } else ok(false, 'Glasshouse: no one walks out through its walls, or in', 'none cast'); }
   // bots on Tessel use the whole kit
   { const usedT = {}; T.on('ability', (f, k) => { if (f.op === 'tessel' && f.bot) usedT[k] = (usedT[k] || 0) + 1; }); T.on('devFire', D => { if (D.by.bot) usedT['fire' + D.k] = (usedT['fire' + D.k] || 0) + 1; }); let errT = 0;
     for (let m = 0; m < 6; m++) { try { T.seed(300 + m); T.startMatch({ mode: 'demo', map: m % T.MAPS.length }); const M2 = T.M; M2.fs[0].op = 'tessel'; M2.fs[1].op = m % 2 ? 'vex' : 'tessel'; for (const f of M2.fs) if (f.bot) f.bot.diff = 2; for (let i = 0; i < 60 * 60 * 6 && !M2.over; i++) T.tick(DT); } catch (e2) { errT++; console.log(String(e2 && e2.stack).split('\n').slice(0, 4).join(' | ')); } }
@@ -739,6 +744,9 @@ function lockChecks() {
     P.yaw -= .12 - .03; T.tick(DT); ok(T.tesselLook(P) === D && T.tesselState(P) === 'ok', 'a little off (within the aim tolerance) still counts', 'state ' + T.tesselState(P));
     ok(T.tesselTrigger(P) && M.kit.lenses.length === 1 && !M.kit.devs.length, 'looked at, in reach and in sight, the Trigger key fires it');
     runPinned(.3, F, D.x + .6, D.z); ok(F.slowF > 0, 'and the rival by it is slowed', 'slow ' + (F.slowF || 0).toFixed(2)); }
+  // F (the use key) does the same
+  [M, P, F] = setup('tessel'); P.pitch = -.3; T.ability(P, 'q', false); lobbed(M, 3); D = M.kit.devs[0];
+  if (D) { aimAt(P, pt(D)); T.tick(DT); I = { ...idle(), use: true }; T.tick(DT); I = idle(); T.tick(DT); ok(M.kit.lenses.length === 1 && !M.kit.devs.length, 'F, looking at it, fires it too'); }
   // too far, out of sight
   [M, P, F] = setup('tessel'); P.pitch = -.3; T.ability(P, 'q', false); lobbed(M, 3); D = M.kit.devs[0];
   if (D) { Object.assign(D, { x: 61.5, z: 3, y: T.hAt(61.5, 3) }); aimAt(P, pt(D)); T.tick(DT);
