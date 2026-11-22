@@ -8290,16 +8290,38 @@ const GAME = {
       const g = new THREE.Group(); for (const sx of [-1, 1]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(.03, .04, .22, 6), devM); p.position.set(sx * .55, .11, 0); g.add(p); }
       const ring = disc(.9, glow('#ffffff', { map: ringT, color: '#7bd65a', opacity: .55 })); ring.position.y = .03; g.add(ring); g.userData = { ring }; g.visible = false; X.kf.snares.push(add(g));
     }
-    const bodyM = lit('#343c48'), lightM = lit('#7a8494'), stripeM = glow('#5aa0ff', { opacity: .9 });
-    for (let i = 0; i < 4; i++) {   // sentries: a tripod, a body, and a turning head with a barrel and an eye
-      const g = new THREE.Group(); for (let k = 0; k < 3; k++) { const a = k / 3 * TAU, l = new THREE.Mesh(new THREE.CylinderGeometry(.022, .022, .6, 6), bodyM); l.position.set(Math.cos(a) * .17, .27, Math.sin(a) * .17); l.rotation.set(Math.sin(a) * .5, 0, -Math.cos(a) * .5); g.add(l); }
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(.13, .15, .2, 10), lightM); body.position.y = .58; g.add(body);
-      const head = new THREE.Group(); head.position.y = .78; g.add(head); const hb = new THREE.Mesh(new THREE.BoxGeometry(.26, .18, .3), bodyM); head.add(hb);
-      const bar = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .34, 8), lightM); bar.rotation.x = Math.PI / 2; bar.position.set(0, -.01, -.3); head.add(bar);
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), glow('#5aa0ff', { opacity: 1 })); eye.position.set(0, .03, -.155); head.add(eye);
-      for (const sx of [-1, 1]) { const st = new THREE.Mesh(new THREE.BoxGeometry(.012, .1, .2), stripeM); st.position.set(sx * .132, 0, 0); head.add(st); }   // Axiom's blue down the sides
-      const fl = new THREE.Mesh(new THREE.PlaneGeometry(.22, .22), glow('#ffe0a0', { map: X.starT, opacity: 1 })); fl.position.z = -.5; head.add(fl);
-      g.userData = { head, eye, fl }; g.visible = false; X.kf.sentries.push(add(g));
+    // sentries: a braced tripod on a footplate, a column with a glowing collar, and a turret that turns on a yoke:
+    // an armoured gun pod (it tilts between the yoke arms) with twin barrels, a sensor eye, side plates, an ammo box and fins
+    const bodyM = lit('#2c333e'), plateM = lit('#8a95a6'), midM = lit('#4c5664'), stripeM = glow('#5aa0ff', { opacity: .9 });
+    const Y = new THREE.Vector3(0, 1, 0), bx = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); return o; };
+    const cyl = (r0, r1, h, n, m, x, y, z) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, h, n), m); o.position.set(x, y, z); return o; };
+    const strut = (a, b, r, m) => { const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 6), m); o.position.copy(A).addScaledVector(d, .5); o.quaternion.setFromUnitVectors(Y, d.normalize()); return o; };
+    for (let i = 0; i < 4; i++) {
+      const g = new THREE.Group();
+      g.add(cyl(.2, .24, .05, 8, bodyM, 0, .025, 0)); g.add(cyl(.17, .2, .02, 8, midM, 0, .06, 0));   // footplate
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + Math.PI / 6, c = Math.cos(a), sn = Math.sin(a);   // folding legs: an upper strut, a brace and a foot pad
+        g.add(strut([c * .08, .36, sn * .08], [c * .3, .03, sn * .3], .022, midM)); g.add(strut([c * .1, .14, sn * .1], [c * .22, .14, sn * .22], .012, bodyM));
+        const ft = bx(.07, .03, .13, bodyM, c * .31, .015, sn * .31); ft.rotation.y = -a + Math.PI / 2; g.add(ft); }
+      g.add(cyl(.065, .095, .42, 10, plateM, 0, .29, 0));   // column
+      g.add(cyl(.13, .12, .07, 12, bodyM, 0, .52, 0)); const col = new THREE.Mesh(new THREE.TorusGeometry(.128, .011, 6, 24), stripeM); col.rotation.x = Math.PI / 2; col.position.y = .52; g.add(col);   // collar and its blue ring
+      const head = new THREE.Group(); head.position.y = .56; g.add(head);   // (turns: the yoke and everything on it)
+      head.add(cyl(.12, .13, .04, 12, midM, 0, .02, 0));
+      for (const sx of [-1, 1]) { head.add(bx(.03, .22, .11, bodyM, sx * .148, .12, .02)); const tr = cyl(.042, .042, .045, 10, plateM, sx * .148, .22, 0); tr.rotation.z = Math.PI / 2; head.add(tr); }   // yoke arms and trunnions
+      const ant = cyl(.005, .007, .2, 4, midM, .1, .14, .09); head.add(ant); const tip = new THREE.Mesh(new THREE.SphereGeometry(.014, 6, 4), stripeM); tip.position.set(.1, .245, .09); head.add(tip);   // a whip antenna
+      const pod = new THREE.Group(); pod.position.y = .22; head.add(pod);   // (tilts: the gun pod)
+      pod.add(bx(.2, .15, .3, bodyM, 0, 0, 0)); const cw = bx(.17, .045, .24, plateM, 0, .088, .01); cw.rotation.x = -.06; pod.add(cw);   // body and top cowl
+      const wedge = bx(.2, .1, .08, midM, 0, -.035, -.16); wedge.rotation.x = .45; pod.add(wedge);   // a sloped chin
+      const man = cyl(.075, .09, .07, 8, plateM, 0, .005, -.18); man.rotation.x = Math.PI / 2; pod.add(man);   // the mantlet the barrels come out of
+      const bars = new THREE.Group(); pod.add(bars);
+      for (const sx of [-1, 1]) { const br = cyl(.017, .019, .3, 8, midM, sx * .035, -.005, -.33); br.rotation.x = Math.PI / 2; bars.add(br); bars.add(bx(.048, .036, .05, bodyM, sx * .035, -.005, -.47));
+        const sh = cyl(.026, .026, .1, 8, bodyM, sx * .035, -.005, -.25); sh.rotation.x = Math.PI / 2; bars.add(sh); }   // twin barrels, their heat shrouds and muzzle brakes
+      for (const sx of [-1, 1]) { pod.add(bx(.018, .13, .25, plateM, sx * .108, 0, .005)); pod.add(bx(.005, .022, .2, stripeM, sx * .119, .025, .005)); }   // side plates, Axiom's blue down them
+      const eh = cyl(.048, .052, .07, 10, bodyM, 0, .12, -.08); eh.rotation.x = Math.PI / 2; pod.add(eh);   // the sensor housing on top
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(.04, .007, 6, 16), plateM); ring.position.set(0, .12, -.116); pod.add(ring);
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 8), glow('#5aa0ff', { opacity: 1 })); eye.position.set(0, .12, -.112); eye.scale.z = .5; pod.add(eye);
+      pod.add(bx(.14, .1, .07, midM, 0, -.01, .185)); for (let k = 0; k < 4; k++) pod.add(bx(.006, .05, .06, plateM, -.045 + k * .03, .09, .12));   // ammo box at the back, cooling fins on top
+      const fl = new THREE.Mesh(new THREE.PlaneGeometry(.24, .24), glow('#ffe0a0', { map: X.starT, opacity: 1 })); fl.position.set(0, -.005, -.52); pod.add(fl);
+      g.userData = { head, pod, bars, eye, tip, fl }; g.visible = false; X.kf.sentries.push(add(g));
     }
     for (let i = 0; i < 6; i++) { const m = add(disc(1, glow('#ffffff', { map: ringT, opacity: .6 }))); m.visible = false; X.kf.rings.push(m); }   // status rings under fighters (Surge, a daze, a snare)
     for (let i = 0; i < 2; i++) { const m = add(new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), glow('#ffb060', { opacity: .8 }))); m.visible = false; m.userData = { t: 9 }; X.kf.booms.push(m); }
@@ -8345,8 +8367,8 @@ const GAME = {
     for (const m of kf.booms) { const u = m.userData; u.t += dt; m.visible = u.t < .45; if (m.visible) { m.scale.setScalar(.4 + u.t / .45 * 3.4); m.material.opacity = .8 * (1 - u.t / .45); } }
     list(kf.mines, K2 && K2.mines && K2.mines.filter(m => mine(m) || near(m, 5)), (g, m) => { g.position.set(m.x, m.y, m.z); const rate = m.fuse >= 0 ? 30 : m.arm > 0 ? 3 : 6; g.userData.lamp.visible = Math.sin(X.t * rate) > 0 || m.fuse >= 0; g.userData.lamp.material.color.set(m.arm > 0 ? '#ffb347' : '#ff3b3b'); });
     list(kf.snares, K2 && K2.snares && K2.snares.filter(s => mine(s) || s.sprung || near(s, SNARE.see)), (g, s) => { g.position.set(s.x, s.y, s.z); g.userData.ring.material.opacity = (s.sprung ? .8 : mine(s) ? .55 : .26) * (s.arm > 0 ? .4 : 1) * (.75 + Math.sin(X.t * (s.sprung ? 14 : 4)) * .25); });
-    list(kf.sentries, K2 && K2.sentries, (g, s) => { const U = g.userData; g.position.set(s.x, s.y, s.z); U.head.rotation.set(s.pitch || 0, s.aim, 0, 'YXZ'); U.eye.material.color.set(s.flash > 0 ? '#ffffff' : s.target ? (s.lockT > 0 ? '#ffb347' : '#ff5a4d') : '#5aa0ff');   // (blue sweeping, amber locking on, red firing)
-      s.muzzle = Math.max(0, (s.muzzle || 0) - dt); U.fl.visible = s.muzzle > 0; U.fl.rotation.z = Math.random() * 6; });
+    list(kf.sentries, K2 && K2.sentries, (g, s, i) => { const U = g.userData; g.position.set(s.x, s.y, s.z); U.head.rotation.y = s.aim; U.pod.rotation.x = s.pitch || 0; const ec = s.flash > 0 ? '#ffffff' : s.target ? (s.lockT > 0 ? '#ffb347' : '#ff5a4d') : '#5aa0ff'; U.tip.visible = !!s.target || Math.sin(X.t * 4 + i) > -.3; U.eye.material.color.set(ec); U.eye.scale.setScalar(s.target ? 1.25 : 1); U.eye.scale.z = .5;   // (blue sweeping, amber locking on, red firing)
+      s.muzzle = Math.max(0, (s.muzzle || 0) - dt); U.fl.visible = s.muzzle > 0; U.fl.rotation.z = Math.random() * 6; U.bars.position.z = s.muzzle * 1.2; });   // (the barrels kick back on a shot)
     // the ultimates: orbs waiting to be taken, Piercer's bolts, Lockdown's dome, Nightwalk gathering and where it comes out
     list(kf.orbs, M.orbs && M.orbs.filter(o => !o.taken), (g, o, i) => { g.position.set(o.x, hAt(o.x, o.z), o.z); g.userData.gem.rotation.y = X.t * 2 + i; g.userData.gem.position.y = 1.1 + Math.sin(X.t * 2.4 + i) * .12; g.userData.halo.rotation.y = -X.t; g.userData.halo.position.y = g.userData.gem.position.y; });
     list(kf.beams, K2 && K2.bolts, (m, B) => { const dx = B.b[0] - B.a[0], dy = B.b[1] - B.a[1], dz = B.b[2] - B.a[2], L = Math.hypot(dx, dy, dz); m.position.set(B.a[0] + dx / 2, B.a[1] + dy / 2, B.a[2] + dz / 2); m.scale.set(1 + (.5 - B.t) * 3, L, 1 + (.5 - B.t) * 3); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx / L, dy / L, dz / L)); m.material.opacity = B.t / .5; });
