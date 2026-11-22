@@ -78,33 +78,78 @@
   // the daily spin, your card and your coins. (The crosshair has its own button on the Settings page.)
   const MENU_TABS = [['home', 'PLAY'], ['agents', 'AGENTS'], ['store', 'STORE'], ['pass', 'PASS'], ['locker', 'LOCKER'], ['crosshair', 'CROSSHAIR'], ['career', 'CAREER'], ['settings', 'SETTINGS']];
   const NAV_L = [['agents', 'AGENTS'], ['locker', 'LOCKER'], ['career', 'CAREER']], NAV_R = [['pass', 'PASS'], ['store', 'STORE'], ['settings', 'SETTINGS']];
+  // a small line icon for each page of the menu
+  function navIcon(g, k, cx, cy, s, col) {
+    g.save(); g.translate(cx, cy); g.strokeStyle = col; g.fillStyle = col; g.lineWidth = Math.max(1.3, s * .13); g.lineCap = 'round'; g.lineJoin = 'round';
+    if (k === 'agents') { g.beginPath(); g.arc(0, -s * .04, s * .5, Math.PI, TAU); g.lineTo(s * .5, s * .4); g.lineTo(-s * .5, s * .4); g.closePath(); g.stroke(); g.fillRect(-s * .32, -s * .06, s * .64, s * .2); }
+    else if (k === 'locker') { g.beginPath(); g.moveTo(-s * .58, -s * .32); g.lineTo(s * .58, -s * .32); g.lineTo(s * .58, -s * .04); g.lineTo(-s * .08, -s * .04); g.lineTo(-s * .2, s * .46); g.lineTo(-s * .5, s * .46); g.lineTo(-s * .4, -s * .04); g.lineTo(-s * .58, -s * .04); g.closePath(); g.stroke(); }
+    else if (k === 'career') { [[-1, .38], [0, .68], [1, 1]].forEach(([i, hh]) => g.fillRect(i * s * .36 - s * .12, s * .46 - hh * s * .92, s * .24, hh * s * .92)); }
+    else if (k === 'pass') { g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? s * .25 : s * .58; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.closePath(); g.fill(); }
+    else if (k === 'store') { g.strokeRect(-s * .44, -s * .16, s * .88, s * .62); g.beginPath(); g.arc(0, -s * .16, s * .22, Math.PI, TAU); g.stroke(); }
+    else if (k === 'settings') { g.beginPath(); g.arc(0, 0, s * .25, 0, TAU); g.stroke(); for (let i = 0; i < 8; i++) { const a = i * TAU / 8; g.beginPath(); g.moveTo(Math.cos(a) * s * .42, Math.sin(a) * s * .42); g.lineTo(Math.cos(a) * s * .58, Math.sin(a) * s * .58); g.stroke(); } }
+    g.restore();
+  }
+  /* The top bar: the mark and the name, three pages each side of PLAY (an icon and a word, lit when you are on it), then
+     the daily spin, your card (your agent in a ring that fills with your level's XP) and your coins. PLAY hangs below the
+     bar and says so when you are in a party or searching. It shrinks in steps on narrow screens. */
   function drawTopBar(g, V, u) {
-    const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u, mid = 640, go = k => { if (k === 'agents') { if (screen === 'party') UI.returnTo = 'party'; openSelect(null); } else { UI.panel = k; SH.show = null; UI.returnTo = null; screen = k === 'home' && MP.online() && !M ? 'party' : 'menu'; } click(); };
-    g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
-    // what fits: less space round each tab, then no name on the left, then a narrower PLAY and shorter words, then smaller
-    let cardX = V.x1 - 352 * u, slim = false, px = 13 * u, pad = 16 * u, logo = true, pw = 176 * u, NL = NAV_L, NR = NAV_R;
-    const need = L2 => { g.font = `900 ${fitPx(g, px)}px ${FONT}`; return L2.reduce((a, [, n]) => a + g.measureText(n).width + pad * 2, 0); };
-    const fits = () => need(NL) <= mid - pw / 2 - 6 * u - (logo ? x0 + 150 * u : x0 + 4 * u) && need(NR) <= cardX - 8 * u - (mid + pw / 2 + 6 * u);
-    if (!fits()) pad = 9 * u; if (!fits()) logo = false; if (!fits()) { pw = 120 * u; NR = NAV_R.map(([k, n]) => [k, k === 'settings' ? 'SETUP' : n]); } if (!fits()) { slim = true; cardX = V.x1 - 206 * u; } while (!fits() && px > 8 * u) px -= .5 * u;   // (slim: your card is just its picture)
-    // PLAY
-    const ph = h + 10 * u, onP = UI.panel === 'home', hotP = zone(mid - pw / 2, V.y0, pw, ph, () => go('home'));
-    g.beginPath(); g.moveTo(mid - pw / 2, V.y0); g.lineTo(mid + pw / 2, V.y0); g.lineTo(mid + pw / 2 - 16 * u, V.y0 + ph); g.lineTo(mid - pw / 2 + 16 * u, V.y0 + ph); g.closePath();
-    g.fillStyle = onP ? FOE : hotP ? 'rgba(244,63,63,.32)' : 'rgba(244,63,63,.14)'; g.fill(); g.strokeStyle = onP ? 'rgba(255,255,255,.35)' : FOE; g.lineWidth = 1.5; g.stroke();
-    tx(g, 'PLAY', mid, V.y0 + ph / 2 + 1, Math.min(24 * u, pw * .16), onP ? INK : BONE, 'center', 900);
-    if (logo) { g.fillStyle = FOE; g.fillRect(x0, V.y0 + 17 * u, 4 * u, 22 * u); tx(g, 'DUELPOINT', x0 + 12 * u, V.y0 + h / 2 + 1, 19 * u, BONE, 'left', 900); }
-    const tabs = (L2, x, dir) => { g.font = `900 ${fitPx(g, px)}px ${FONT}`; const ws = L2.map(([, n]) => g.measureText(n).width + pad * 2); if (dir < 0) x -= ws.reduce((a, b) => a + b, 0);
-      L2.forEach(([k, n], i) => { const tw = ws[i], on = UI.panel === k || (k === 'settings' && (UI.panel === 'crosshair' || UI.panel === 'keys')), hot = zone(x, V.y0, tw, h, () => go(k));
-        tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, px, on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + pad, V.y0 + h - 4 * u, tw - pad * 2, 3 * u); } x += tw; }); };
-    tabs(NL, mid - pw / 2 - 6 * u, -1); tabs(NR, mid + pw / 2 + 6 * u, 1);
+    const h = 60 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u, mid = 640, t = performance.now() / 1000;
+    const go = k => { if (k === 'agents') { if (screen === 'party') UI.returnTo = 'party'; openSelect(null); } else { UI.panel = k; SH.show = null; UI.returnTo = null; screen = k === 'home' && MP.online() && !M ? 'party' : 'menu'; } click(); };
+    // the bar: dark glass, lighter at the top, a hairline under it
+    { const gr = g.createLinearGradient(0, V.y0, 0, V.y0 + h); gr.addColorStop(0, 'rgba(20,25,34,.97)'); gr.addColorStop(1, 'rgba(8,10,14,.95)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, h);
+      g.fillStyle = 'rgba(239,233,220,.1)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1); }
+    // what fits: less space round each tab, then no icons, then no name on the left, then a narrower PLAY and shorter words, then smaller
+    let cardX = V.x1 - 352 * u, slim = false, px = 11 * u, pad = 15 * u, logo = true, pw = 176 * u, NL = NAV_L, NR = NAV_R;
+    const need = L2 => { g.font = `900 ${fitPx(g, px)}px ${FONT}`; return L2.reduce((a, [, n]) => a + Math.max(g.measureText(n).width, 18 * u) + pad * 2, 0); };
+    const fits = () => need(NL) <= mid - pw / 2 - 8 * u - (logo ? x0 + 160 * u : x0 + 40 * u) && need(NR) <= cardX - 6 * u - (mid + pw / 2 + 8 * u);
+    if (!fits()) pad = 12 * u; if (!fits()) pad = 9 * u; if (!fits()) logo = false; if (!fits()) { pw = 124 * u; NR = NAV_R.map(([k, n]) => [k, k === 'settings' ? 'SETUP' : n]); } if (!fits()) { slim = true; cardX = V.x1 - 216 * u; } while (!fits() && px > 8 * u) px -= .5 * u;   // (slim: your card is just its picture)
+    // the mark: two chevrons facing each other (the duel) round a point, and the name
+    { const cx = x0 + 15 * u, cy = V.y0 + h / 2, r = 13 * u; g.lineWidth = 3.2 * u; g.lineCap = 'butt'; g.lineJoin = 'miter';
+      g.strokeStyle = YOU; g.beginPath(); g.moveTo(cx - r * .25, cy - r); g.lineTo(cx - r, cy); g.lineTo(cx - r * .25, cy + r); g.stroke();
+      g.strokeStyle = FOE; g.beginPath(); g.moveTo(cx + r * .25, cy - r); g.lineTo(cx + r, cy); g.lineTo(cx + r * .25, cy + r); g.stroke();
+      g.fillStyle = BONE; g.beginPath(); g.moveTo(cx, cy - 4.2 * u); g.lineTo(cx + 4.2 * u, cy); g.lineTo(cx, cy + 4.2 * u); g.lineTo(cx - 4.2 * u, cy); g.closePath(); g.fill();
+      if (logo) { tx(g, 'DUEL', x0 + 36 * u, cy + 1, 18 * u, BONE, 'left', 900); g.font = `900 ${fitPx(g, 18 * u)}px ${FONT}`; tx(g, 'POINT', x0 + 36 * u + g.measureText('DUEL').width + 1, cy + 1, 18 * u, FOE, 'left', 900); } }
+    // the pages
+    const tabs = (L2, x, dir) => { g.font = `900 ${fitPx(g, px)}px ${FONT}`; const ws = L2.map(([, n]) => Math.max(g.measureText(n).width, 18 * u) + pad * 2); if (dir < 0) x -= ws.reduce((a, b) => a + b, 0);
+      L2.forEach(([k, n], i) => { const tw = ws[i], on = UI.panel === k || (k === 'settings' && (UI.panel === 'crosshair' || UI.panel === 'keys')), hot = zone(x, V.y0, tw, h, () => go(k)), sk = 8 * u;
+        if (on || hot) { g.beginPath(); g.moveTo(x + sk, V.y0 + 5 * u); g.lineTo(x + tw, V.y0 + 5 * u); g.lineTo(x + tw - sk, V.y0 + h - 5 * u); g.lineTo(x, V.y0 + h - 5 * u); g.closePath(); g.fillStyle = on ? 'rgba(244,63,63,.16)' : 'rgba(239,233,220,.07)'; g.fill(); }
+        const col = on ? BONE : hot ? '#dfe4ec' : DIM;
+        navIcon(g, k, x + tw / 2, V.y0 + 21 * u, 15 * u, on ? FOE : col); tx(g, n, x + tw / 2, V.y0 + 43 * u, px, col, 'center', 900);   // the icon over its word
+        if (on) { g.save(); g.shadowColor = FOE; g.shadowBlur = 10 * u; g.fillStyle = FOE; g.fillRect(x + pad * .6, V.y0 + h - 3 * u, tw - pad * 1.2, 3 * u); g.restore(); }
+        if (k === 'pass') { const fr = passTier() >= PASS_TIERS ? 1 : (myPass().xp % PASS_XP) / PASS_XP, bw = tw - pad * 2, by = V.y0 + 51 * u; g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x + pad, by, bw, 2 * u); g.fillStyle = GOLD; g.fillRect(x + pad, by, bw * fr, 2 * u); }   // how far through this tier of the pass
+        x += tw; }); };
+    tabs(NL, mid - pw / 2 - 8 * u, -1); tabs(NR, mid + pw / 2 + 8 * u, 1);
+    // PLAY: hangs below the bar, lit when you are on it, a slow sheen across it
+    { const ph = h + 12 * u, onP = UI.panel === 'home' || screen === 'party', hotP = zone(mid - pw / 2, V.y0, pw, ph, () => go('home')), sk = 18 * u, inParty = MP.online(), search = !!QUE.mode && !QUE.found;
+      const path = () => { g.beginPath(); g.moveTo(mid - pw / 2, V.y0); g.lineTo(mid + pw / 2, V.y0); g.lineTo(mid + pw / 2 - sk, V.y0 + ph); g.lineTo(mid - pw / 2 + sk, V.y0 + ph); g.closePath(); };
+      g.save(); if (onP) { g.shadowColor = 'rgba(244,63,63,.75)'; g.shadowBlur = 22 * u; } path();
+      const gr = g.createLinearGradient(0, V.y0, 0, V.y0 + ph); if (onP) { gr.addColorStop(0, '#ff5a52'); gr.addColorStop(1, '#d42c2c'); } else { gr.addColorStop(0, hotP ? 'rgba(244,63,63,.42)' : 'rgba(244,63,63,.22)'); gr.addColorStop(1, hotP ? 'rgba(244,63,63,.28)' : 'rgba(244,63,63,.1)'); }
+      g.fillStyle = gr; g.fill(); g.restore();
+      g.save(); path(); g.clip(); const k = (t * .4) % 2.2 - .4, shx = mid - pw / 2 + k * pw, sg = g.createLinearGradient(shx - 40 * u, 0, shx + 40 * u, 0); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, onP ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.1)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = sg; g.fillRect(mid - pw / 2, V.y0, pw, ph);
+      g.fillStyle = 'rgba(255,255,255,.22)'; g.fillRect(mid - pw / 2, V.y0, pw, 2 * u); g.restore();
+      path(); g.strokeStyle = onP ? 'rgba(255,255,255,.4)' : FOE; g.lineWidth = 1.5; g.stroke();
+      const sub = search ? 'SEARCHING' : inParty ? 'IN A PARTY' : '', big = Math.min(26 * u, pw * .17);
+      tx(g, 'PLAY', mid, V.y0 + ph / 2 + (sub ? -6 * u : 1), big, onP ? INK : BONE, 'center', 900);
+      if (sub) { g.globalAlpha = search ? .65 + .35 * Math.sin(t * 5) : 1; tx(g, sub, mid, V.y0 + ph / 2 + 15 * u, 9.5 * u, onP ? 'rgba(12,16,22,.85)' : GOLD, 'center', 900); g.globalAlpha = 1; } }
     // the daily spin: a little wheel beside your card, with a dot while today's spin is waiting
-    { const s = 40 * u, wx = cardX + 10 * u, wy = V.y0 + 8 * u, hot = zone(wx, wy, s, s, openWheel), ready = wheelReady(), c = wx + s / 2, cy2 = wy + s / 2, rr2 = s * .38, t2 = K.t || 0;
-      rr(g, wx, wy, s, s, 8, hot ? 'rgba(255,214,102,.18)' : 'rgba(255,255,255,.05)', hot || ready ? GOLD : 'rgba(239,233,220,.2)', 1.5);
+    { const s = 38 * u, wx = cardX + 2 * u, wy = V.y0 + (h - s) / 2, hot = zone(wx, wy, s, s, openWheel), ready = wheelReady(), c = wx + s / 2, cy2 = wy + s / 2, rr2 = s * .36, t2 = K.t || 0;
+      g.beginPath(); g.arc(c, cy2, s / 2, 0, TAU); g.fillStyle = hot ? 'rgba(255,214,102,.18)' : 'rgba(255,255,255,.05)'; g.fill(); g.strokeStyle = hot || ready ? GOLD : 'rgba(239,233,220,.2)'; g.lineWidth = 1.5; g.stroke();
       const cols = ['#a7b1bd', '#4fa3ff', '#b56bff', '#ffb020', '#ff5ac8', '#c6ff3a']; for (let i = 0; i < 6; i++) { const a0 = t2 * (ready ? .8 : 0) + i * TAU / 6; g.beginPath(); g.moveTo(c, cy2); g.arc(c, cy2, rr2, a0, a0 + TAU / 6); g.closePath(); g.fillStyle = cols[i]; g.fill(); }
-      g.fillStyle = INK; g.beginPath(); g.arc(c, cy2, rr2 * .3, 0, TAU); g.fill(); g.fillStyle = GOLD; g.beginPath(); g.moveTo(c, wy + 4 * u); g.lineTo(c - 4 * u, wy - 1 * u); g.lineTo(c + 4 * u, wy - 1 * u); g.closePath(); g.fill();
-      if (ready) { g.fillStyle = FOE; g.beginPath(); g.arc(wx + s - 4 * u, wy + 5 * u, 5 * u, 0, TAU); g.fill(); } }
-    const cpx = cardX + 62 * u; portraitTile(g, CFG.op, cpx, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
-    if (!slim) { const op = OPS[CFG.op] || OPS.vex; tx(g, (MP.name || 'You').toUpperCase(), cpx + 50 * u, V.y0 + 21 * u, 13 * u, BONE, 'left', 900); const lv = myLevel(), ls = 'LV ' + lv; tx(g, ls, cpx + 50 * u, V.y0 + 38 * u, 10 * u, lvCol(lv), 'left', 900); const lw = g.measureText(ls).width; tx(g, '·  ' + op.n, cpx + 56 * u + lw, V.y0 + 38 * u, 10 * u, op.col, 'left', 800); }
-    coinTag(g, V.x1 - 22 * u, V.y0 + h / 2, 17 * u, STATS.coins);
+      g.fillStyle = INK; g.beginPath(); g.arc(c, cy2, rr2 * .3, 0, TAU); g.fill(); g.fillStyle = GOLD; g.beginPath(); g.moveTo(c, wy + 7 * u); g.lineTo(c - 4 * u, wy + 1 * u); g.lineTo(c + 4 * u, wy + 1 * u); g.closePath(); g.fill();
+      if (ready) { g.fillStyle = FOE; g.beginPath(); g.arc(wx + s - 5 * u, wy + 6 * u, 5 * u, 0, TAU); g.fill(); } }
+    // your card: your agent in a ring that fills as you earn this level's XP; a click opens your career
+    { const L = levelOf(STATS.xp | 0), lv = L.l, r = 18 * u, cx = cardX + 50 * u + r + 3 * u, cy = V.y0 + h / 2, op = OPS[CFG.op] || OPS.vex;
+      g.font = `900 ${fitPx(g, 13 * u)}px ${FONT}`; const nm = (MP.name || 'You').toUpperCase(), cw = slim ? r * 2 + 8 * u : r * 2 + 16 * u + Math.max(g.measureText(nm).width, 70 * u), hot = zone(cx - r - 4 * u, V.y0 + 6 * u, cw, h - 12 * u, () => go('career'));
+      if (hot) rr(g, cx - r - 6 * u, V.y0 + 6 * u, cw + 4 * u, h - 12 * u, 24 * u, 'rgba(239,233,220,.07)', null);
+      g.save(); g.beginPath(); g.arc(cx, cy, r, 0, TAU); g.clip(); portraitTile(g, CFG.op, cx - r, cy - r, r * 2, r * 2, { r: 0 }); g.restore();
+      g.lineWidth = 3 * u; g.strokeStyle = 'rgba(255,255,255,.12)'; g.beginPath(); g.arc(cx, cy, r + 2.5 * u, 0, TAU); g.stroke();
+      g.strokeStyle = lvCol(lv); g.lineCap = 'round'; g.beginPath(); g.arc(cx, cy, r + 2.5 * u, -Math.PI / 2, -Math.PI / 2 + TAU * cl(L.into / L.need, .02, 1)); g.stroke(); g.lineCap = 'butt';
+      if (!slim) { tx(g, nm, cx + r + 12 * u, cy - 8 * u, 13 * u, BONE, 'left', 900);
+        const ls = 'LV ' + lv; g.font = `900 ${fitPx(g, 9.5 * u)}px ${FONT}`; const lw = g.measureText(ls).width + 10 * u; rr(g, cx + r + 12 * u, cy + 2 * u, lw, 15 * u, 4 * u, 'rgba(255,255,255,.08)', null); tx(g, ls, cx + r + 12 * u + lw / 2, cy + 10 * u, 9.5 * u, lvCol(lv), 'center', 900);
+        tx(g, op.n, cx + r + 18 * u + lw, cy + 10 * u, 10 * u, op.col, 'left', 800); } }
+    // your coins: a pill that opens the store
+    { g.font = `800 ${fitPx(g, 16 * u)}px ${FONT}`; const cw = g.measureText(String(STATS.coins)).width + 16 * u * 1.5 + 22 * u, cx = V.x1 - 14 * u - cw, ch = 30 * u, cy = V.y0 + (h - ch) / 2, hot = zone(cx, cy, cw, ch, () => go('store'));
+      rr(g, cx, cy, cw, ch, ch / 2, hot ? 'rgba(255,201,74,.2)' : 'rgba(255,201,74,.09)', hot ? COIN : 'rgba(255,201,74,.35)', 1.5); coinTag(g, cx + cw - 12 * u, V.y0 + h / 2 + 1, 16 * u, STATS.coins); }
     return h;
   }
   function drawMenu(g) {
