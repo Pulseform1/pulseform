@@ -3,8 +3,8 @@
        C Bloom: a lobbed seed of light that opens into a 3.4 m globe of glare for 9 s. It blocks sight as a smoke does.
        Q Lull: a lobbed lens that settles where it lands and waits, dormant. Triggered, for 7 s rivals within 4.5 m of it
          move at half speed. One bullet from a rival breaks the lens, dormant or not.
-       E Lightline: two small posts and the line between them: from your feet along your aim (up to 20 m, stopping at the
-         first wall), or with the other click across your view (up to 16 m wide). It waits, dormant. Triggered, a curtain
+       E Lightline: two small posts and the line between them: from your feet along your aim (20 m, straight through
+         walls), or with the other click across your view (16 m wide, through walls); its posts stand on open floor. It waits, dormant. Triggered, a curtain
          rises on the line for 14 s: it blocks sight both ways, but not bullets and not feet; a rival who walks through it
          is Lit (shown through walls to Tessel's side) for 2.5 s. It comes back 40 s after it is fired. One bullet from a
          rival into either post breaks a dormant one.
@@ -30,11 +30,11 @@
     let hx = d[0], hz = d[2]; const hl = Math.hypot(hx, hz);
     if (hl < .2) { hx = -Math.sin(f.yaw); hz = -Math.cos(f.yaw); } else { hx /= hl; hz /= hl; }
     if (key === 'tessele') {
-      if (!alt) {   // along your aim, from your feet to the first wall
-        const ax = f.x + hx * .7, az = f.z + hz * .7, n = Math.max(1.5, Math.min(LINE.len, rayGrid(ax, f.y + 1.7, az, hx, 0, hz, LINE.len) - .15));
-        return zoneClip(f, { ax: r2(ax), az: r2(az), bx: r2(ax + hx * n), bz: r2(az + hz * n), y: r2(f.y) });
+      if (!alt) {   // along your aim, from your feet, its full length (through walls)
+        const ax = f.x + hx * .7, az = f.z + hz * .7, n = LINE.len;
+        return zoneClip(f, openEnds({ ax: r2(ax), az: r2(az), bx: r2(ax + hx * n), bz: r2(az + hz * n), y: r2(f.y) }));
       }
-      return zoneClip(f, acrossLine(f, hx, hz, Math.max(hl, .2) * (S.dist || 10)));
+      return zoneClip(f, openEnds(acrossLine(f, hx, hz, Math.max(hl, .2) * (S.dist || 10))));
     }
     if (key === 'tesselx') {   // where your aim meets the world (up to 30 m), brought to the floor
       const L = Math.max(2, Math.min(HOUSE.reach, S.dist || HOUSE.reach) - .3); let x = f.x + d[0] * L, z = f.z + d[2] * L;
@@ -46,8 +46,16 @@
   // across a view (hx, hz flat and of length 1), where it looks (2 to 10 m out), each side running on until a wall
   function acrossLine(f, hx, hz, dist) {
     const out = Math.max(2, Math.min(10, dist - .6, rayGrid(f.x, f.y + 1.7, f.z, hx, 0, hz, 10) - .5)), cx = f.x + hx * out, cz = f.z + hz * out, y = hAt(cx, cz), px = -hz, pz = hx;
-    const l1 = Math.max(.5, Math.min(LINE.wide, rayGrid(cx, y + 1.7, cz, px, 0, pz, LINE.wide) - .15)), l2 = Math.max(.5, Math.min(LINE.wide, rayGrid(cx, y + 1.7, cz, -px, 0, -pz, LINE.wide) - .15));
+    const l1 = LINE.wide, l2 = LINE.wide;   // (through the walls either side: openEnds brings the posts back to open floor)
     return { ax: r2(cx + px * l1), az: r2(cz + pz * l1), bx: r2(cx - px * l2), bz: r2(cz - pz * l2), y: r2(y) };
+  }
+  // a Lightline runs through walls; only its two posts must stand in the open (on the map, not inside a wall), so each end is
+  // drawn back along the line to the nearest open floor
+  function openEnds(o) {
+    if (!o) return o; const open = (x, z) => x > .3 && z > .3 && x < MW - .3 && z < MH - .3 && hAt(x, z) < o.y + 1.2;
+    for (const [e, s] of [['b', 'a'], ['a', 'b']]) { const x0 = o[e + 'x'], z0 = o[e + 'z'], sx = o[s + 'x'], sz = o[s + 'z'], n = Math.max(1, Math.ceil(Math.hypot(x0 - sx, z0 - sz) / .25)); let x = x0, z = z0;
+      for (let i = 1; i <= n && !open(x, z); i++) { x = lp(x0, sx, i / n); z = lp(z0, sz, i / n); } o[e + 'x'] = r2(x); o[e + 'z'] = r2(z); }
+    return Math.hypot(o.bx - o.ax, o.bz - o.az) < 1.2 ? null : o;
   }
   // in the buy phase a line keeps to your side of the barrier: it stops where the barrier starts (none at all if it starts past it)
   function zoneClip(f, o) {
@@ -205,8 +213,8 @@
     if (f.ab.e && !de) {
       let D = null;
       if (engaged && e && e.alive && f.hp < 60 && dE > 4 && R() < dt * 2) { const mx = (f.x + e.x) / 2, mz = (f.z + e.z) / 2, dx = e.x - f.x, dz = e.z - f.z, L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L, w = 5; botCast(f, 'e', { ax: r2(mx + px * w), az: r2(mz + pz * w), bx: r2(mx - px * w), bz: r2(mz - pz * w), y: r2(hAt(mx, mz)), id: id() }); D = tesselDorm(f, 'e'); }
-      else if (!sees && side === 'att' && P.k === 'push' && near < 22 && near > 8 && R() < dt * .5) { const tg = siteOfPlan(P, f), dx = tg[0] - f.x, dz = tg[1] - f.z, L = Math.hypot(dx, dz) || 1, hx = dx / L, hz = dz / L, n = Math.max(1.5, Math.min(LINE.len, rayGrid(f.x, f.y + 1.7, f.z, hx, 0, hz, LINE.len) - .15)); botCast(f, 'e', { ax: r2(f.x), az: r2(f.z), bx: r2(f.x + hx * n), bz: r2(f.z + hz * n), y: r2(f.y), id: id() }); D = tesselDorm(f, 'e'); }
-      else if (!sees && side === 'def' && P.k === 'hold' && there && look && R() < dt * .5) { const dx = look[0] - f.x, dz = look[1] - f.z, L = Math.hypot(dx, dz); if (L > 4) { const o = acrossLine(f, dx / L, dz / L, Math.min(L, 10)); o.id = id(); botCast(f, 'e', o); } }
+      else if (!sees && side === 'att' && P.k === 'push' && near < 22 && near > 8 && R() < dt * .5) { const tg = siteOfPlan(P, f), dx = tg[0] - f.x, dz = tg[1] - f.z, L = Math.hypot(dx, dz) || 1, hx = dx / L, hz = dz / L, n = LINE.len, o = openEnds({ ax: r2(f.x), az: r2(f.z), bx: r2(f.x + hx * n), bz: r2(f.z + hz * n), y: r2(f.y) }); if (o) { o.id = id(); botCast(f, 'e', o); D = tesselDorm(f, 'e'); } }
+      else if (!sees && side === 'def' && P.k === 'hold' && there && look && R() < dt * .5) { const dx = look[0] - f.x, dz = look[1] - f.z, L = Math.hypot(dx, dz); if (L > 4) { const o = openEnds(acrossLine(f, dx / L, dz / L, Math.min(L, 10))); if (o) { o.id = id(); botCast(f, 'e', o); } } }
       if (D) botFireDev(f, D);
     }
     // the trigger, a few times a second: a device a rival has come near (one in sight, or just heard), or the Lull by a charge being defused
