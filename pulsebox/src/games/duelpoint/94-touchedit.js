@@ -3,8 +3,8 @@
      top sizes it. The move stick takes a size (it still appears wherever your left thumb lands). RESET THIS puts the picked
      one back, RESET ALL the lot. The layout is saved with the other settings (CFG.tlay), and those go to your account. */
   const TE = { sel: 'fire', grab: null };
-  const TE_LABEL = { fire: 'FIRE', alt: 'AIM', jump: 'JUMP', crouch: 'DUCK', reload: 'LOAD', swap: 'SWAP', q: 'Q', e: 'E', x: 'ULT', nade: 'SMOKE', use: 'USE', drop: 'DROP', move: 'MOVE' };
-  const TE_NAME = { fire: 'Fire', alt: 'Aim / scope', jump: 'Jump', crouch: 'Duck / slide', reload: 'Reload', swap: 'Swap gun', q: 'Ability Q', e: 'Ability E', x: 'Ultimate', nade: 'Smoke', use: 'Use (plant, defuse, pick up)', drop: 'Drop', move: 'Move stick' };
+  const TE_LABEL = { fire: 'FIRE', alt: 'AIM', jump: 'JUMP', crouch: 'DUCK', reload: 'LOAD', swap: 'SWAP', c: 'C', q: 'Q', e: 'E', x: 'ULT', nade: 'SMOKE', use: 'USE', drop: 'DROP', trig: 'TRIG', move: 'MOVE' };
+  const TE_NAME = { fire: 'Fire', alt: 'Aim / scope', jump: 'Jump', crouch: 'Duck / slide', reload: 'Reload', swap: 'Swap gun', c: 'Ability C', q: 'Ability Q', e: 'Ability E', x: 'Ultimate', nade: 'Smoke', use: 'Use (plant, defuse, pick up)', drop: 'Drop', trig: 'Trigger (Tessel)', move: 'Move stick' };
   function openTouchEdit() { UI.tedit = true; TE.sel = 'fire'; TE.grab = null; }
   function closeTouchEdit() { UI.tedit = false; TE.grab = null; const L = CFG.tlay || {}; for (const k of Object.keys(L)) { const o = L[k]; if (!o || (!o.x && !o.y && (o.s || 1) === 1)) delete L[k]; } saveAll(true); }
   function drawTouchEdit(g) {

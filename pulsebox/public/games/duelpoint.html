@@ -349,25 +349,25 @@ const GAME = {
   const OPS = {
     vex: { n: 'VEX', role: 'Shade', col: '#8f6bff', bio: 'Smoke and a sudden step: Vex fights where you cannot see.', q: { n: 'Blink', d: 'Dash 6 m the way you are moving.' }, e: { n: 'Veil', d: 'Throw a smoke cloud that blocks sight for 12 s.' } },
     iris: { n: 'IRIS', role: 'Seer', col: '#35e0c8', bio: 'Iris sees through walls. Then she makes you look away.', q: { n: 'Ping', d: 'See rivals through walls for 2 s.' }, e: { n: 'Flare', d: 'A flash that blinds whoever is looking at it.' } },
-    bastion: { n: 'BASTION', role: 'Warden', col: '#ffb347', bio: 'A wall, a patch, and a refusal to move.', q: { n: 'Rampart', d: 'Raise a wall in front of you for 12 s.' }, e: { n: 'Patch', d: 'Heal 60 health over 3 s.' } },
+    bastion: { n: 'BASTION', role: 'Warden', col: '#ffb347', bio: 'A wall, a patch, and a refusal to move.', q: { n: 'Rampart', d: 'Raise a wall in front of you for 20 s. It has 500 health; press Q again near it to reinforce it, once.' }, e: { n: 'Patch', d: 'Heal 60 health over 3 s.' } },
     nova: { n: 'NOVA', role: 'Striker', col: '#ffe14d', bio: 'A courier who outran everything once. She still does.', q: { n: 'Surge', d: '3.5 s of speed, and your sprays settle twice as fast.' }, e: { n: 'Shockwave', d: 'A blast where you aim: rivals caught are slowed, shaky and stung for 15.' } },
     wraith: { n: 'WRAITH', role: 'Phantom', col: '#a9b8ff', bio: 'Nobody has seen Wraith arrive. That is the point.', q: { n: 'Shroud', d: 'Nearly invisible beyond 5 m and silent for 5 s. Firing ends it.' }, e: { n: 'Mirage', d: 'A copy of you runs ahead for 4 s. Rivals see a real Wraith; whoever shoots it, or stares it down, is blinded and marked.' } },
-    talon: { n: 'TALON', role: 'Tracker', col: '#7bd65a', bio: 'A ranger who reads a room like tracks in snow.', q: { n: 'Recon Dart', d: 'A dart that sticks where it lands and pulses twice, revealing rivals in its sight.' }, e: { n: 'Snare', d: 'A trap on the floor ahead: the first rival over it is slowed and revealed.' } },
+    talon: { n: 'TALON', role: 'Tracker', col: '#7bd65a', bio: 'A ranger who reads a room like tracks in snow.', q: { n: 'Recon Dart', d: 'A dart that sticks where it lands and pulses twice, revealing rivals in its sight.' }, e: { n: 'Snare', d: 'A trap on the floor where you aim. The first rival over it is leashed to it for 3 s, slowed and revealed. E again beside it picks it up.' } },
     ember: { n: 'EMBER', role: 'Pyre', col: '#ff7a2f', bio: 'Foundry-born. Thinks every problem is a fuel problem.', q: { n: 'Ignite', d: 'Lob a firebomb: its pool burns rivals for 30 a second, 5 s.' }, e: { n: 'Heat Haze', d: 'A wall of amber haze across your view that blocks sight for 10 s.' } },
-    axiom: { n: 'AXIOM', role: 'Engineer', col: '#5aa0ff', bio: 'Builds the thing that holds the angle, then goes for coffee.', q: { n: 'Sentry', d: 'A turret that fires on rivals in front of it until it is shot down.' }, e: { n: 'Tripmine', d: 'A mine at your feet. Armed, it bursts for up to 75 when a rival comes near.' } },
+    axiom: { n: 'AXIOM', role: 'Engineer', col: '#5aa0ff', bio: 'Builds the thing that holds the angle, then goes for coffee.', q: { n: 'Sentry', d: 'A turret that guards a 90° arc. A rival it sees is revealed, then fired on after a short lock. Q again beside it picks it up.' }, e: { n: 'Tripwire', d: 'A wire across the doorway you aim at. A rival who walks across is revealed, then caught in a burst (up to 60). Jumping clears it.' } },
     vanta: { n: 'VANTA', role: 'Duelist', col: '#e25cff', bio: 'A fixer who settles things one on one. Nobody asks for a second meeting.', q: { n: 'Sunder', d: 'A bolt that strikes instantly down your aim: a headshot kills, any hit Exposes (25% more damage for 4 s). It goes on through walls, Exposing rivals behind them.' }, e: { n: 'Overcharge', d: 'For 12 s, a rival you kill leaves a charge: shoot it for a ward that stops the next hit. Back after 2 kills.' } },
-    tessel: { n: 'TESSEL', role: 'Architect', col: '#ff9ec7', bio: 'She built stage sets until the stages got smaller and the crowds came armed. Now she builds the room first, then lets you walk in.', q: { n: 'Lull', d: 'Lob a glass lens: for 7 s, rivals within 4.5 m of it move at half speed. One bullet from a rival breaks it.' }, e: { n: 'Lightline', d: 'Draw a curtain of light from your feet along your aim (up to 20 m), or across your view with the other click. For 14 s it blocks sight both ways, not bullets; a rival who walks through it is shown through walls for 2.5 s.' } },
+    tessel: { n: 'TESSEL', role: 'Architect', col: '#ff9ec7', bio: 'She built stage sets until the stages got smaller and the crowds came armed. Now she builds the room first, then lets you walk in.', q: { n: 'Lull', d: 'Lob a glass lens that waits where it lands. Look at it within 20 m and press Trigger (4): for 7 s, rivals within 4.5 m move at half speed. One rival bullet breaks it.' }, e: { n: 'Lightline', d: 'Set a line of light from your feet along your aim, or across your view with the other click. Trigger it and a curtain rises for 14 s: it blocks sight, not bullets, and shows rivals who cross it.' } },
   };
   /* C: the second bought ability (cheaper, a smaller trick), one per operative */
   const ABC_KIT = {
     vex: [{ n: 'Gloom', d: 'Lob an orb that bursts into dark: rivals caught can see only 5 m for 3.5 s.' }, 200, 1],
     iris: [{ n: 'Watcher', d: 'Fix an eye where you aim: it stays all round, asleep and unseen. Press C again to wake it for 6 s: it marks rivals in its view, and they can see it and shoot it out.' }, 200, 1],
-    bastion: [{ n: 'Ward Beacon', d: 'Set a beacon: you and teammates within 6 m gain 30 shield, up to 50.' }, 200, 1],
+    bastion: [{ n: 'Ward Beacon', d: 'Set a beacon for 20 s: you and teammates within 6 m gain 15 shield, then 5 more every 2 s, up to 50. It can be shot out.' }, 200, 1],
     nova: [{ n: 'Updraft', d: 'Launch straight up, high enough to reach a ledge.' }, 100, 2],
     wraith: [{ n: 'Tether', d: 'Leave an anchor at your feet; press again later to step back to it.' }, 200, 1],
     talon: [{ n: 'Shock Bolt', d: 'A bolt that bounces once, then bursts for up to 45.' }, 150, 2],
     ember: [{ n: 'Flashpoint', d: 'A flash that bends round a corner: left click bends it left, right click right.' }, 200, 2],
-    axiom: [{ n: 'Slow Field', d: 'Lob a canister: a 5 m field that slows rivals inside for 6 s.' }, 200, 1],
+    axiom: [{ n: 'Slow Field', d: 'Lob a canister that waits where it lands. A rival who comes near opens a 5 m field that slows rivals for 6 s.' }, 200, 1],
     vanta: [{ n: 'Phase Front', d: 'A wall of light rolls slowly 14 m ahead of you, straight through walls, stopping bullets and sight. Rivals just ahead of it stay shown to your side. Anyone can walk through it.' }, 200, 1],
     tessel: [{ n: 'Bloom', d: 'Lob a seed of light: where it lands it opens into a globe of glare that blocks sight for 9 s.' }, 150, 2],
   };
@@ -935,6 +935,8 @@ const GAME = {
           if (dA[nk] >= 0 && dD[nk] > dA[nk] - 5) continue; Z[nk] = 2; q.push(nk); } }
     }
   }
+  // one point on your side of the barrier (for the ends of a line drawn across the floor)
+  const inZoneP = (side, x, z) => { const k = idx(Math.floor(x / CS), Math.floor(z / CS)); return k >= 0 && !!ZONE[side][k]; };
   const inZone = (side, x, z) => { const Z = ZONE[side]; for (const [ox, oz] of [[-RAD, -RAD], [RAD, -RAD], [-RAD, RAD], [RAD, RAD]]) { const k = idx(Math.floor((x + ox) / CS), Math.floor((z + oz) / CS)); if (k < 0 || !Z[k]) return false; } return true; };
   function placeOrbs() {
     ORBS.length = 0;
@@ -1221,16 +1223,16 @@ const GAME = {
   }
   // a bullet from f's eyes along d: what it meets first (the world, a Rampart, or the rival)
   function castShot(f, d) {
-    const o = [f.x, eyeY(f), f.z]; let dist = rayGrid(o[0], o[1], o[2], d[0], d[1], d[2], 140), hit = null; const n = [rayN[0], rayN[1], rayN[2]];
-    for (const w of M.walls) { const t = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (t > 0 && t < dist) { dist = t; n[0] = -Math.sign(d[0]) * (w.x1 - w.x0 < 1 ? 1 : 0); n[1] = 0; n[2] = -Math.sign(d[2]) * (w.x1 - w.x0 < 1 ? 0 : 1); } }
-    let sentry = null, eye = null; for (const b of sentryBoxes(f)) { const t = rayBox(o, d, b.mn, b.mx); if (t > 0 && t < dist) { dist = t; sentry = b.s; } }   // an enemy sentry is in the way
-    if (M.kit) for (const W of M.kit.eyes) if (W.act > 0 && enemyOf(W.by, f)) { const t = raySphere(o, d, [W.x, W.y, W.z], .3); if (t > 0 && t < dist) { dist = t; sentry = null; eye = W; } }   // an enemy Watcher, awake
+    const o = [f.x, eyeY(f), f.z]; let dist = rayGrid(o[0], o[1], o[2], d[0], d[1], d[2], 140), hit = null, wall = null; const n = [rayN[0], rayN[1], rayN[2]];
+    for (const w of M.walls) { const t = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (t > 0 && t < dist) { dist = t; wall = w; n[0] = -Math.sign(d[0]) * (w.x1 - w.x0 < 1 ? 1 : 0); n[1] = 0; n[2] = -Math.sign(d[2]) * (w.x1 - w.x0 < 1 ? 0 : 1); } }
+    let sentry = null, eye = null; for (const b of sentryBoxes(f)) { const t = rayBox(o, d, b.mn, b.mx); if (t > 0 && t < dist) { dist = t; sentry = b.s; wall = null; } }   // an enemy sentry is in the way
+    if (M.kit) for (const W of M.kit.eyes) if (W.act > 0 && enemyOf(W.by, f)) { const t = raySphere(o, d, [W.x, W.y, W.z], .3); if (t > 0 && t < dist) { dist = t; sentry = null; eye = W; wall = null; } }   // an enemy Watcher, awake
     for (const v of M.fs) if (v.team !== f.team && v.alive && duelOk(f, v)) {   // whichever part of them the bullet meets first (a Duel Field keeps its two to themselves)
       const hb = hitboxes(v), th = raySphere(o, d, hb.head, hb.hr), tb = rayFrame(o, d, hb, hb.body), ta = rayFrame(o, d, hb, hb.arms);
       const tbody = tb > 0 && (ta <= 0 || tb <= ta) ? tb : ta, near = th > 0 && (tbody <= 0 || th <= tbody) ? th : tbody;
-      if (near > 0 && near < dist) { dist = near; sentry = null; eye = null; hit = near === th ? { f: v, head: true } : { f: v, head: false, leg: near === tb && o[1] + d[1] * tb < hb.leg }; }
+      if (near > 0 && near < dist) { dist = near; sentry = null; eye = null; wall = null; hit = near === th ? { f: v, head: true } : { f: v, head: false, leg: near === tb && o[1] + d[1] * tb < hb.leg }; }
     }
-    return { o, d, dist, hit, sentry, eye, n, end: [o[0] + d[0] * dist, o[1] + d[1] * dist, o[2] + d[2] * dist] };
+    return { o, d, dist, hit, sentry, eye, wall, n, end: [o[0] + d[0] * dist, o[1] + d[1] * dist, o[2] + d[2] * dist] };
   }
   // pull the trigger: one shot, a burst (the Pip's alternate fire, the Mako aimed down sights), or a knife swing
   function fire(f, alt) {
@@ -1258,10 +1260,12 @@ const GAME = {
       if (p === 0 && !f.net && M.kit && M.kit.hexes.length && hexShot(f, S)) continue;   // Overcharge: the shot took the charge
       if (p === 0 && !f.net && M.kit && M.kit.decoys.length && decoyShot(f, S)) continue;   // Mirage: the shot hit the copy
       if (p === 0 && !f.net && M.kit && M.kit.lenses && M.kit.lenses.length && lensShot(f, S)) continue;   // Lull: the shot broke the lens
+      if (p === 0 && !f.net && M.kit && trapShot(f, S, G)) continue;   // a rival's trap or device: one bullet breaks most of them (48)
       emit('shot', f, S, p === 0);
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k, S.hit.leg); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);
       else if (S.eye && !f.net) breakEye(S.eye, false);   // one hit puts a Watcher out
+      else if (S.wall && !f.net && S.wall.hp != null && enemyOf(S.wall.by, f)) hurtWall(S.wall, dmgAt(G, S.dist, 2), false);   // a rival's Rampart takes the shot (48)
       else if (!S.hit && !f.net && BRKS.length) { const e = S.end, k = idx(Math.floor((e[0] + S.d[0] * .06) / CS), Math.floor((e[2] + S.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], dmgAt(G, S.dist, 2), f); }   // a breakable wall
     }
     if (landed) f.stat.hits++;
@@ -1405,7 +1409,7 @@ const GAME = {
   function ultGain(f, n) { if (!M || M.mode === 'range' || !f || !OPS[f.op]) return; const c = ultCost(f), was = f.ult | 0; f.ult = Math.min(c, was + n); if (was < c && f.ult >= c) emit('ultReady', f); }
   // in the buy phase you can set up: move, wall off, place a trap, a turret, a smoke or an eye (no ultimates, nothing that
   // harms, blinds or scouts); what is placed at a spot must be on your side of the barrier
-  const BUY_AB = new Set(['vexq', 'vexe', 'irisc', 'bastionq', 'bastione', 'bastionc', 'novac', 'novaq', 'wraithc', 'wraithq', 'talone', 'embere', 'axiomq', 'axiome', 'vantac', 'vantae', 'tessele']);
+  const BUY_AB = new Set(['vexq', 'vexe', 'irisc', 'bastionq', 'bastione', 'bastionc', 'novac', 'novaq', 'wraithc', 'wraithq', 'talone', 'embere', 'axiomq', 'axiome', 'axiomc', 'vantac', 'vantae', 'tessele', 'tesselq']);
   const abBlocked = (f, k) => !f.alive || !M || (M.phase !== 'live' && !(k && M.phase === 'buy' && M.mode !== 'range' && M.mode !== 'demo' && !loadingNow() && BUY_AB.has(f.op + k))) || f.plant > 0 || f.defuse > 0 || f.lock > 0 || !!f.chan;
   // where it goes, worked out on the user's device (the same sum the preview shows)
   function abData(f, k, alt) {
@@ -1421,9 +1425,12 @@ const GAME = {
   function ability(f, k, alt) {
     if (abBlocked(f, k)) return false;
     if (!tetherBack(f, k) && !hasAb(f, k)) return false;
-    const data = abData(f, k, alt); if (!data) return false;
+    if (pkWait(f, k)) { emit('abNo', f, k); if (f === me()) say('READY AGAIN IN ' + Math.ceil(pkWait(f, k)) + ' s', DIM); return false; }   // (just picked up: a moment before it goes down again)
+    const data = abData(f, k, alt); if (!data) { emit('abNo', f, k); if (f === me() && NO_SPOT[f.op + k]) say(NO_SPOT[f.op + k], WARN); return false; }
     if (data.fail) { emit('abNo', f, k); return false; }   // (aimed where it can do nothing: not spent)
     if (M.phase === 'buy' && data.x != null && data.vx == null && f.op + k !== 'vantac' && f.op + k !== 'tessele' && sideOf(f) && !inZone(sideOf(f), data.x, data.z)) { emit('abNo', f, k); if (f === me()) say('NOT PAST THE BARRIER', WARN); return false; }
+    if (M.phase === 'buy' && data.bx != null && sideOf(f) && (!inZoneP(sideOf(f), data.ax, data.az) || !inZoneP(sideOf(f), data.bx, data.bz))) { emit('abNo', f, k); if (f === me()) say('NOT PAST THE BARRIER', WARN); return false; }   // (a line: both its ends on your side)
+    if (data.id == null && !data.free) data.id = f.key + ':' + k + ':' + M.round + ':' + Math.round(M.time * 100);   // (what it leaves in the world goes by this name on every device)
     if (!data.free) spendAb(f, k); if (M.mode === 'range') f.abT = 4;
     applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key });
     return true;
@@ -1431,8 +1438,9 @@ const GAME = {
   // your key: ready it (or use it, for the quick ones); pressed again, it is put away
   function readyAb(f, k) {
     if (f.rdy === k) { f.rdy = null; emit('abReady', f, null); return true; }
+    if (kitAltTry(f, k)) { unready(f); return true; }   // the key again by what it left: pick it up, or reinforce it (48)
     if (abInstant(f, k)) { if (f.rdy) { f.rdy = null; emit('abReady', f, null); } return ability(f, k, false); }
-    if (abBlocked(f, k) || !hasAb(f, k)) { emit('abNo', f, k); return false; }
+    if (abBlocked(f, k) || !hasAb(f, k) || pkWait(f, k)) { emit('abNo', f, k); if (f === me() && pkWait(f, k)) say('READY AGAIN IN ' + Math.ceil(pkWait(f, k)) + ' s', DIM); return false; }
     f.rdy = k; f.scoped = 0; f.burst = null; f.reloadT = 0; f.autoReload = 0; emit('abReady', f, k); return true;
   }
   function unready(f) { if (f && f.rdy) { f.rdy = null; emit('abReady', f, null); } }
@@ -1444,7 +1452,7 @@ const GAME = {
     if (key === 'vexe') { const s = { x: d.x, z: d.z, y: hAt(d.x, d.z) > 2 ? 0 : hAt(d.x, d.z), r: 0, R: 3.8, t: 12, T: 12 }; M.smokes.push(s); emit('smoke', s); }
     if (key === 'irisq') { for (const q of M.fs) if (q.team !== f.team) q.reveal = 2.2; if (me().team !== f.team) say('YOU ARE REVEALED', WARN); else if (f === me()) say(M.fs.length > 2 ? 'RIVALS REVEALED' : 'RIVAL REVEALED', YOU); }
     if (key === 'irise') { const fl = { x: d.x, y: d.y, z: d.z, t: .55, by: f }; M.flares.push(fl); emit('flare', fl); }
-    if (key === 'bastionq') { const w = d.ax ? { x0: d.x - .3, x1: d.x + .3, z0: d.z - 2.6, z1: d.z + 2.6 } : { x0: d.x - 2.6, x1: d.x + 2.6, z0: d.z - .3, z1: d.z + .3 }; w.t = 12; w.grow = 0; M.walls.push(w); emit('wall', w); }
+    if (key === 'bastionq') placeRampart(f, d);   // (48: it has health now, and Bastion can reinforce it)
     if (key === 'bastione') f.heal = { t: 3 };
     kitApply(f, key, d);
     f.stat.ab = (f.stat.ab || 0) + 1; emit('ability', f, k);
@@ -1683,7 +1691,8 @@ const GAME = {
     M.fs.forEach(f => {
       const side = sideOf(f), sp = SPAWN[side], p = sp[(n + order.filter(q => sideOf(q) === side).indexOf(f)) % sp.length];
       if (!f.alive || pistolRound(n) || ot === 1) { f.guns = { 1: null, 2: 'pip', 3: 'knife' }; f.sh = 0; f.ammo = {}; f.smokes = 0; }   // you keep what you survived with
-      if (!f.net && n === HALF() + 1) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; if (n === HALF() + 1 || ot === 1) f.lossRun = 0;   // the loss bonus starts again with the new half f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
+      if (!f.net && n === HALF() + 1) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; if (n === HALF() + 1 || ot === 1) f.lossRun = 0;   // the loss bonus starts again with the new half
+      f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, surge: 0, cloak: 0, daze: 0, snare: 0, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
       f.ab.e = 1; if (n === 1 || n === HALF() + 1 || ot === 1) { f.ab.q = 0; f.ab.c = 0; } if (n === 1) f.ult = 0;
       Object.assign(f, { rdy: null, noFire: false, murk: 0, exposed: 0, ward: 0, over: 0, duel: null, tether: null, eT: 0, eK: 0 });
@@ -1840,15 +1849,15 @@ const GAME = {
      WRAITH (Phantom)  Q Shroud: 5 s nearly invisible beyond 5 m, silent feet; firing ends it.  E Ghost Step: fake
                        footsteps then a burst of fake gunfire where you aim, which rivals (and bots) hear as real.
      TALON (Tracker)   Q Recon Dart: a dart that sticks where it lands and pulses twice, revealing rivals in its sight.
-                       E Snare: a trap on the ground ahead; the first rival over it is slowed and revealed.
+                       E Snare: a trap on the floor where you aim; the first rival over it is leashed to it (48).
      EMBER (Pyre)      Q Ignite: a lobbed firebomb that leaves a burning pool (30 a second) for 5 s.  E Heat Haze: a
                        line of amber haze across your view that blocks sight for 10 s.
-     AXIOM (Engineer)  Q Sentry: a turret that fires on rivals in front of it until it is shot down (60 health).
-                       E Tripmine: a mine at your feet that arms, then bursts for up to 75 when a rival comes near.
+     AXIOM (Engineer)  Q Sentry: a turret that guards a 90 degree arc, locks on, then fires (48).
+                       E Tripwire: a wire across a doorway; a rival who crosses it sets off a burst (48).
      The things they leave in the world live in M.kit and are stepped by stepKits. Like damage, every effect on a fighter
      is worked out on that fighter's own device: a trap or mine that goes off there tells the others, so all screens agree. */
-  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], decoys: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [], lines: [], lenses: [], houses: [] };
-  const freshKit = () => Object.fromEntries(Object.keys(KIT_N).map(k => [k, []]));
+  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], decoys: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [], lines: [], lenses: [], houses: [], devs: [], wires: [], cans: [] };
+  const freshKit = () => Object.assign(Object.fromEntries(Object.keys(KIT_N).map(k => [k, []])), { held: {} });   // (held: a picked-up sentry's health, for when it goes down again)
   const enemyOf = (a, b) => a.team !== b.team;
   const kitId = (f, k) => f.key + ':' + k + ':' + M.round;
   // where an ability goes, worked out on the caster's device; returns the data every device applies
@@ -1857,11 +1866,11 @@ const GAME = {
     if (key === 'novae') { const dd = Math.max(1, Math.min(S.dist, 18) - .4); return { x: f.x + d[0] * dd, y: e + d[1] * dd, z: f.z + d[2] * dd }; }   // aimed at a rival, it goes off on them
     if (key === 'wraithe') { const L = Math.hypot(d[0], d[2]) || 1; return { x: f.x, z: f.z, dx: d[0] / L, dz: d[2] / L }; }   // Mirage: it runs the way you look
     if (key === 'talonq') return { x: f.x + d[0] * .5, y: e + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * 42, vy: d[1] * 42 + 1.5, vz: d[2] * 42 };
-    if (key === 'talone') { const dd = Math.min(reach(5, .4), 5); return { x: f.x - Math.sin(f.yaw) * dd, z: f.z - Math.cos(f.yaw) * dd }; }
+    if (key === 'talone') { const dd = Math.min(reach(SNARE.reach, .4), SNARE.reach); return { x: f.x - Math.sin(f.yaw) * dd, z: f.z - Math.cos(f.yaw) * dd }; }
     if (key === 'emberq') { const sp = alt ? 8.5 : 15; return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + (alt ? 2.2 : 3), vz: d[2] * sp + f.vz * .4 }; }   // the other click: a short underhand lob
     if (key === 'embere') { const dd = Math.min(reach(10), 10); return { x: f.x + d[0] * dd, z: f.z + d[2] * dd, px: Math.cos(f.yaw), pz: -Math.sin(f.yaw) }; }
     if (key === 'axiomq') { const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw), dd = walkLine(f.x, f.z, f.x + fx * 1.4, f.z + fz * 1.4) ? 1.4 : .6; return { x: f.x + fx * dd, z: f.z + fz * dd, yaw: f.yaw }; }
-    if (key === 'axiome') return { x: f.x, z: f.z };
+    if (key === 'axiome') return wireAim(f, d, S);   // (48: across the doorway you look at, or nowhere)
     // the ultimates
     if (key === 'vexx') { const dd = Math.max(2, Math.min(S.hit ? S.dist : S.dist, 30) - .8); let x = f.x + d[0] * dd, z = f.z + d[2] * dd; const [ci, cj] = nearestNav(x, z); x = (ci + .5) * CS; z = (cj + .5) * CS; return { x, z }; }
     if (key === 'emberx') { const sp = alt ? 9.5 : 17; return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + (alt ? 2.5 : 3.5), vz: d[2] * sp + f.vz * .4 }; }
@@ -1876,11 +1885,11 @@ const GAME = {
     if (key === 'wraithq') { f.cloak = 5; return true; }
     if (key === 'wraithe') { const D = { id: kitId(f, 'e') + ':' + Math.round(M.time * 10), x: d.x + d.dx * .8, z: d.z + d.dz * .8, dx: d.dx, dz: d.dz, t: 4, T: 4, by: f, seen: {}, walkT: 0 }; D.y = hAt(D.x, D.z); K2.decoys.push(D); emit('decoy', D); return true; }
     if (key === 'talonq') { K2.darts.push({ x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, stuck: -1, pulses: 0, by: f }); return true; }
-    if (key === 'talone') { K2.snares.push({ id: kitId(f, 'e'), x: d.x, z: d.z, y: hAt(d.x, d.z), arm: .8, by: f }); return true; }
+    if (key === 'talone') return placeSnare(f, d);   // (48)
     if (key === 'emberq') { K2.bombs.push({ x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f }); return true; }
     if (key === 'embere') { for (const o of [-2.6, 0, 2.6]) { const x = d.x + d.px * o, z = d.z + d.pz * o, s = { x, z, y: hAt(x, z) > 2 ? 0 : hAt(x, z), r: 0, R: 2.1, t: 10, T: 10, heat: 1 }; M.smokes.push(s); emit('smoke', s); } return true; }
-    if (key === 'axiomq') { K2.sentries.push({ id: kitId(f, 'q'), x: d.x, z: d.z, y: hAt(d.x, d.z), yaw: d.yaw, aim: d.yaw, pitch: 0, hp: 60, cd: .8, by: f, target: null, flash: 0 }); return true; }
-    if (key === 'axiome') { K2.mines.push({ id: kitId(f, 'e'), x: d.x, z: d.z, y: hAt(d.x, d.z), arm: 1.5, fuse: -1, by: f }); return true; }
+    if (key === 'axiomq') return placeSentry(f, d);   // (48)
+    if (key === 'axiome') return placeWire(f, d);   // (48)
     // the ultimates
     if (key === 'vexx') { f.chan = { t: 1.1, T: 1.1, x: d.x, z: d.z, fx: f.x, fz: f.z }; if (f === me()) say('NIGHTWALK', OPS.vex.col); return true; }
     if (key === 'irisx') { for (const q of M.fs) if (enemyOf(f, q)) q.reveal = Math.max(q.reveal, 6); if (me().team !== f.team) say('ALLSIGHT: YOU ARE SEEN', WARN); else if (f === me()) say('ALLSIGHT', OPS.iris.col); return true; }
@@ -1903,18 +1912,16 @@ const GAME = {
     return false; }
   // the fighters this device is in charge of
   const localFs = () => M.fs.filter(v => !v.net && v.alive);
-  // a mine or snare set off: on the victim's device first, then on every other device by message
+  // a trap set off (a Snare, a Tripwire, a Slow Field canister): on the victim's device first, then on every other device by message
   function kitTrip(id, vKey, fromNet) {
-    const K2 = M.kit; if (!K2) return;
-    const sn = K2.snares.find(s => s.id === id);
-    if (sn) { const v = M.byKey[vKey]; K2.snares = K2.snares.filter(s => s !== sn); if (v) { v.snare = 2.6; v.reveal = Math.max(v.reveal, 3); if (v === me()) say('SNARED', WARN); } emit('snared', sn, v); }
-    const mn = K2.mines.find(m => m.id === id); if (mn && mn.fuse < 0) { mn.fuse = .35; emit('mineArm', mn); }
-    if (!fromNet) net({ t: 'kx', id, v: vKey });
+    const K2 = M.kit; if (!K2 || typeof id !== 'string') return;
+    if (lockTrip(id, M.byKey[vKey] || null) && !fromNet) net({ t: 'kx', id, v: vKey });   // (48)
   }
   // a shot or blast against a sentry, decided by the shooter's device
+  // (and a Ward Beacon, which also takes a few shots)
   function hurtSentry(s, dmg, fromNet) {
-    const K2 = M.kit; if (!K2 || !K2.sentries.includes(s)) return; s.hp -= dmg; s.flash = .12; emit('sentryHit', s);
-    if (s.hp <= 0) { K2.sentries = K2.sentries.filter(q => q !== s); emit('sentryDown', s); }
+    const K2 = M.kit, bk = !!K2 && K2.beacons.includes(s); if (!K2 || !(bk || K2.sentries.includes(s)) || !(dmg > 0)) return; s.hp -= dmg; s.flash = .12; emit(bk ? 'beaconHit' : 'sentryHit', s);
+    if (s.hp <= 0) { if (bk) { K2.beacons = K2.beacons.filter(q => q !== s); emit('beaconDown', s); } else { K2.sentries = K2.sentries.filter(q => q !== s); emit('sentryDown', s); } }
     if (!fromNet) net({ t: 'kd', id: s.id, d: dmg });
   }
   // the sentries rivals' shots can hit: a small box on its legs
@@ -1983,38 +1990,17 @@ const GAME = {
       for (const v of localFs()) if (enemyOf(F.by, v) && Math.hypot(v.x - F.x, v.z - F.z) < F.r && Math.abs(v.y - F.y) < 1.6) { applyDamage(v, F.big ? 10 : 7.5, F.by, false, F.big ? 'inferno' : 'ignite'); if (v.bot) v.bot.hitBy = { x: F.x, z: F.z, t: M.time }; }
     }
     K2.fires = K2.fires.filter(F => F.t > 0);
-    // Snare: arms, then waits for a rival's feet (worked out where that rival is run)
-    for (const s of K2.snares) { if (s.arm > 0) { s.arm -= dt; continue; } const v = localFs().find(q => enemyOf(s.by, q) && Math.hypot(q.x - s.x, q.z - s.z) < 1.3 && Math.abs(q.y - s.y) < 1); if (v) { kitTrip(s.id, v.key, false); break; } }
-    // Tripmine: arms, a rival comes near, a short beep, then the burst
-    for (const m of K2.mines) {
-      if (m.arm > 0) { m.arm -= dt; continue; }
-      if (m.fuse < 0) { const v = localFs().find(q => enemyOf(m.by, q) && Math.hypot(q.x - m.x, q.z - m.z) < 2.2 && Math.abs(q.y - m.y) < 1.4); if (v) kitTrip(m.id, v.key, false); continue; }
-      if ((m.fuse -= dt) <= 0) {
-        for (const v of localFs()) { if (!enemyOf(m.by, v)) continue; const d = Math.hypot(v.x - m.x, v.y + .8 - m.y - .2, v.z - m.z); if (d > 3.4 || los(m.x, m.y + .25, m.z, v.x, v.y + .9, v.z, false) < d - .5) continue; applyDamage(v, Math.round(75 * cl(1.25 - d / 3.4, .35, 1)), m.by, false, 'tripmine'); if (v.bot) v.bot.hitBy = { x: m.x, z: m.z, t: M.time }; }
-        m.done = true; emit('mineBoom', m);
-      }
-    }
-    K2.mines = K2.mines.filter(m => !m.done);
-    // Sentry: turns to the nearest rival it can see in front of it and fires; damage lands on the victim's own device
-    for (const s of K2.sentries) {
-      s.cd -= dt; s.flash = Math.max(0, s.flash - dt); const hy = s.y + .78; let best = null, bd = 1e9;
-      for (const v of M.fs) { if (!v.alive || !enemyOf(s.by, v)) continue; const d = Math.hypot(v.x - s.x, v.z - s.z); if (d > 22 || d >= bd || (v.cloak > 0 && d > 5)) continue;
-        if (Math.abs(angDiff(yawTo(s.x, s.z, v.x, v.z), s.yaw)) > 1.3) continue; if (los(s.x, hy, s.z, v.x, v.y + 1.1, v.z) < Math.hypot(d, v.y + 1.1 - hy) - .4) continue; best = v; bd = d; }
-      s.target = best;
-      if (best) { const want = yawTo(s.x, s.z, best.x, best.z); s.aim += cl(angDiff(want, s.aim), -4 * dt, 4 * dt); s.pitch = Math.atan2(best.y + 1.1 - hy, bd);
-        if (s.cd <= 0 && Math.abs(angDiff(want, s.aim)) < .12) { s.cd = .28; emit('sentryShot', s, best); if (!best.net && Math.random() < cl(1.15 - bd / 28, .3, .85)) { applyDamage(best, 11, s.by, false, 'sentry'); if (best.bot) best.bot.hitBy = { x: s.x, z: s.z, t: M.time }; if (best === me()) M.hurtDir = Math.atan2(s.x - best.x, s.z - best.z); } } }
-      else s.aim += cl(angDiff(s.yaw, s.aim), -1.5 * dt, 1.5 * dt);
-    }
+    stepLock(dt);   // (48: Sentry, Tripwire, Slow Field canisters, Snare, Ward Beacon)
   }
   /* ---------- 46 kit, second part: every operative's C, and VANTA ----------
      VEX     C Gloom: a lobbed orb that bursts into dark; rivals caught see only 5 m for 3.5 s.
      IRIS    C Watcher: an eye fixed where you aim (up to 22 m); for 20 s it marks rivals who walk into its view.
-     BASTION C Ward Beacon: set at your feet; a moment later you and teammates within 6 m gain 30 shield (up to 50).
+     BASTION C Ward Beacon: set at your feet, it stays and pulses shield into teammates near it (48).
      NOVA    C Updraft: straight up, high enough for a ledge.
      WRAITH  C Tether: an anchor at your feet; the key again steps you back to it (free), any time that round.
      TALON   C Shock Bolt: bounces once, then bursts for up to 45 within 3.5 m.
      EMBER   C Flashpoint: a flash that flies ahead and bends round the corner, left (left click) or right (right click).
-     AXIOM   C Slow Field: a lobbed canister; a 5 m field where rivals move at half speed for 6 s.
+     AXIOM   C Slow Field: a lobbed canister that waits where it lands; a rival near it opens a 5 m slowing field (48).
      VANTA (Duelist)
              C Phase Front: a wall of light rolls 14 m out ahead along the nearest straight line, stopping bullets and sight
                (anyone can walk through it); it holds 5 s where it stops.
@@ -2065,10 +2051,10 @@ const GAME = {
   function kitApply2(f, key, d) {
     const K2 = M.kit;
     if (key.startsWith('tessel')) return tesselApply(f, key, d);   // (47: Tessel)
-    if (key === 'vexc' || key === 'talonc' || key === 'axiomc') { K2.lobs.push({ k: key, x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, bounce: key === 'talonc' ? 1 : 0 }); return true; }
+    if (key === 'vexc' || key === 'talonc' || key === 'axiomc') { if (![d.x, d.y, d.z, d.vx, d.vy, d.vz].every(finite) || Math.hypot(d.vx, d.vy, d.vz) > 40) return false; K2.lobs.push({ k: key, x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, bounce: key === 'talonc' ? 1 : 0, id: typeof d.id === 'string' ? d.id.slice(0, 48) : kitId(f, 'c') }); return true; }
     if (key === 'irisc') { if (d.act) { const W = irisEye(f); if (W) { W.act = EYE_ON; W.tick = .15; emit('eyeWake', W); } return true; }
       K2.eyes = K2.eyes.filter(W => W.by !== f); K2.eyes.push({ id: kitId(f, 'c') + ':' + (K2.eyeN = (K2.eyeN || 0) + 1), x: d.x, y: d.y, z: d.z, yaw: d.yaw, act: 0, cd: 0, tick: 0, by: f, seen: 0 }); return true; }   // (it stays, asleep, until woken or shot)
-    if (key === 'bastionc') { K2.beacons.push({ x: d.x, y: hAt(d.x, d.z), z: d.z, t: .8, by: f }); return true; }
+    if (key === 'bastionc') return placeBeacon(f, d);   // (48)
     // (Updraft: high enough to land on a shipping container, 3 m)
     if (key === 'novac') { if (!f.net) { f.vy = 13; f.ground = false; } emit('updraft', f); return true; }
     if (key === 'wraithc') {
@@ -2125,7 +2111,8 @@ const GAME = {
     for (const f of M.fs) {
       for (const k of ['murk', 'exposed', 'ward', 'over', 'slowF']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
       // signatures that come back with time
-      const E = OPS[f.op] && OPS[f.op].e; if (E && E.rech && (f.ab.e | 0) < 1 && M.phase === 'live' && !f.net) { f.eT = (f.eT || 0) + dt; if (f.eT >= E.rech) { f.ab.e = 1; f.eT = 0; emit('abBack', f, 'e'); } }
+      const E = OPS[f.op] && OPS[f.op].e; if (E && E.rech && (f.ab.e | 0) < 1 && M.phase === 'live' && !f.net && !(f.op === 'tessel' && tesselDorm(f, 'e'))) {   // (a Lightline set and not yet fired is still in use)
+        f.eT = (f.eT || 0) + dt; if (f.eT >= E.rech) { f.ab.e = 1; f.eT = 0; emit('abBack', f, 'e'); } }
     }
     // the lobbed ones: Gloom, Shock Bolt (one bounce), Slow Field
     for (const B of K2.lobs) {
@@ -2147,9 +2134,7 @@ const GAME = {
         if (los(W.x, W.y, W.z, v.x, eyeY(v) - .1, v.z) < Math.hypot(dd, eyeY(v) - .1 - W.y) - .4) continue; v.reveal = Math.max(v.reveal, 1.4); n++; if (v === me()) say('A WATCHER SEES YOU', WARN); }
       W.seen = n; if (n) emit('eyeSpot', W); }
     K2.eyes = K2.eyes.filter(W => !W.down);
-    // Ward Beacon: a beat, then shields for the team round it (each device for its own)
-    for (const B of K2.beacons) if ((B.t -= dt) <= 0) { for (const v of localFs()) if (v.team === B.by.team && Math.hypot(v.x - B.x, v.z - B.z) < 6 && Math.abs(v.y - B.y) < 2.5) { v.sh = Math.min(50, (v.sh | 0) + 30); if (v === me()) say('+30 SHIELD', OPS.bastion.col); } B.done = true; emit('beaconPop', B); }
-    K2.beacons = K2.beacons.filter(B => !B.done);
+    // (Ward Beacon: 48)
     // Phase Front: rolls out 14 m, through walls and all, then holds
     for (const w of M.walls) { const F = w.front; if (!F) continue;
       // rivals just ahead of it (within its width, up to 5 m in front) stay shown to Vanta's side through it
@@ -2176,22 +2161,28 @@ const GAME = {
       for (const v of localFs()) { if (!enemyOf(B.by, v)) continue; const d = Math.hypot(v.x - x, v.z - z); if (d > 6 || los(x, G2.y + .4, z, v.x, eyeY(v), v.z, false) < Math.hypot(d, eyeY(v) - G2.y - .4) - .4) continue; v.murk = 3.5; if (v === me()) say('GLOOM', OPS.vex.col); } }
     if (B.k === 'talonc') { emit('shockPop', { x, y: B.y, z, by: B.by });
       for (const v of localFs()) { if (!enemyOf(B.by, v)) continue; const d = Math.hypot(v.x - x, v.y + .9 - B.y, v.z - z); if (d > 3.5 || los(x, B.y + .2, z, v.x, v.y + .9, v.z, false) < d - .5) continue; applyDamage(v, Math.round(45 * cl(1.25 - d / 3.5, .3, 1)), B.by, false, 'shockbolt'); } }
-    if (B.k === 'axiomc') { const F = { x, y, z, r: 5, t: 6, T: 6, by: B.by }; K2.fields.push(F); emit('fieldStart', F); }
+    if (B.k === 'axiomc') placeCan(B, x, y, z);   // (48: it waits where it lands)
   }
   /* ---------- 47 kit, third part: TESSEL (Architect) ----------
      Tessel builds the room a fight happens in, out of light.
        C Bloom: a lobbed seed of light that opens into a 3.4 m globe of glare for 9 s. It blocks sight as a smoke does.
-       Q Lull: a lobbed lens that settles where it lands; for 7 s rivals within 4.5 m of it move at half speed. One bullet
-         from a rival breaks the lens and ends it.
-       E Lightline: a curtain of light drawn from your feet along your aim (up to 20 m, stopping at the first wall), or with
-         the other click across your view (up to 16 m wide). For 14 s it blocks sight both ways, but not bullets and not
-         feet; a rival who walks through it is Lit (shown through walls to Tessel's side) for 2.5 s. It comes back 40 s
-         after it is used.
+       Q Lull: a lobbed lens that settles where it lands and waits, dormant. Triggered, for 7 s rivals within 4.5 m of it
+         move at half speed. One bullet from a rival breaks the lens, dormant or not.
+       E Lightline: two small posts and the line between them: from your feet along your aim (up to 20 m, stopping at the
+         first wall), or with the other click across your view (up to 16 m wide). It waits, dormant. Triggered, a curtain
+         rises on the line for 14 s: it blocks sight both ways, but not bullets and not feet; a rival who walks through it
+         is Lit (shown through walls to Tessel's side) for 2.5 s. It comes back 40 s after it is fired. One bullet from a
+         rival into either post breaks a dormant one.
+       TRIGGER (its own key, 4 by default): look at one of your dormant devices (the crosshair on it, within a small
+         radius) from within 20 m with a clear line of sight, and press it: the device fires. Only in the live round;
+         both can be set in the buy phase, on your side of the barrier. Dormant devices last until fired, broken or the
+         round ends, and a new one of a kind replaces the old. Tessel's side always sees them (faint, with a marker);
+         a rival sees only a faint glint within 6 m.
        X Glasshouse: a 10 m square of Lightlines rises round the spot you point at (up to 30 m away) for 10 s, and rivals
          inside it move at half speed.
      A Lightline is a sheet standing on a line across the floor: sight (los) stops where a ray crosses it, shots go on. Who
      walks through one is worked out on every device for every fighter, from the line and where they stand, so all agree. */
-  const LINE = { len: 20, wide: 8, h: 3.3, T: 14, lit: 2.5 }, LULL = { r: 4.5, T: 7 }, BLOOM = { R: 3.4, T: 9 }, HOUSE = { half: 5, T: 10, reach: 30 };
+  const LINE = { len: 20, wide: 8, h: 3.3, T: 14, lit: 2.5 }, LULL = { r: 4.5, T: 7 }, TRIG = { r: 20, ang: .05, rad: .5, see: 60, losEvery: .15, glint: 6 }, BLOOM = { R: 3.4, T: 9 }, HOUSE = { half: 5, T: 10, reach: 30 };
   const finite = v => typeof v === 'number' && isFinite(v);
   // in-place removal of what has run out (no new array each frame)
   const keepLive = o => o.t > 0;
@@ -2206,12 +2197,9 @@ const GAME = {
     if (key === 'tessele') {
       if (!alt) {   // along your aim, from your feet to the first wall
         const ax = f.x + hx * .7, az = f.z + hz * .7, n = Math.max(1.5, Math.min(LINE.len, rayGrid(ax, f.y + 1.7, az, hx, 0, hz, LINE.len) - .15));
-        return { ax: r2(ax), az: r2(az), bx: r2(ax + hx * n), bz: r2(az + hz * n), y: r2(f.y) };
+        return zoneClip(f, { ax: r2(ax), az: r2(az), bx: r2(ax + hx * n), bz: r2(az + hz * n), y: r2(f.y) });
       }
-      // across your view, where you look (2 to 10 m out), each side running on until a wall
-      const out = Math.max(2, Math.min(10, (S.dist || 10) * Math.max(hl, .2) - .6, rayGrid(f.x, f.y + 1.7, f.z, hx, 0, hz, 10) - .5)), cx = f.x + hx * out, cz = f.z + hz * out, y = hAt(cx, cz), px = -hz, pz = hx;
-      const l1 = Math.max(.5, Math.min(LINE.wide, rayGrid(cx, y + 1.7, cz, px, 0, pz, LINE.wide) - .15)), l2 = Math.max(.5, Math.min(LINE.wide, rayGrid(cx, y + 1.7, cz, -px, 0, -pz, LINE.wide) - .15));
-      return { ax: r2(cx + px * l1), az: r2(cz + pz * l1), bx: r2(cx - px * l2), bz: r2(cz - pz * l2), y: r2(y) };
+      return zoneClip(f, acrossLine(f, hx, hz, Math.max(hl, .2) * (S.dist || 10)));
     }
     if (key === 'tesselx') {   // where your aim meets the world (up to 30 m), brought to the floor
       const L = Math.max(2, Math.min(HOUSE.reach, S.dist || HOUSE.reach) - .3); let x = f.x + d[0] * L, z = f.z + d[2] * L;
@@ -2219,6 +2207,20 @@ const GAME = {
       return { x: r2(x), z: r2(z) };
     }
     return undefined;
+  }
+  // across a view (hx, hz flat and of length 1), where it looks (2 to 10 m out), each side running on until a wall
+  function acrossLine(f, hx, hz, dist) {
+    const out = Math.max(2, Math.min(10, dist - .6, rayGrid(f.x, f.y + 1.7, f.z, hx, 0, hz, 10) - .5)), cx = f.x + hx * out, cz = f.z + hz * out, y = hAt(cx, cz), px = -hz, pz = hx;
+    const l1 = Math.max(.5, Math.min(LINE.wide, rayGrid(cx, y + 1.7, cz, px, 0, pz, LINE.wide) - .15)), l2 = Math.max(.5, Math.min(LINE.wide, rayGrid(cx, y + 1.7, cz, -px, 0, -pz, LINE.wide) - .15));
+    return { ax: r2(cx + px * l1), az: r2(cz + pz * l1), bx: r2(cx - px * l2), bz: r2(cz - pz * l2), y: r2(y) };
+  }
+  // in the buy phase a line keeps to your side of the barrier: it stops where the barrier starts (none at all if it starts past it)
+  function zoneClip(f, o) {
+    if (!o || !M || M.phase !== 'buy' || M.mode === 'range' || M.mode === 'demo' || !sideOf(f)) return o; const sd = sideOf(f);
+    if (!inZoneP(sd, o.ax, o.az)) { if (!inZoneP(sd, o.bx, o.bz)) return null; let t = o.ax; o.ax = o.bx; o.bx = t; t = o.az; o.az = o.bz; o.bz = t; }
+    const L = Math.hypot(o.bx - o.ax, o.bz - o.az), n = Math.max(1, Math.ceil(L / .25)); let k = 0;
+    for (let i = 1; i <= n; i++) { const q = i / n; if (!inZoneP(sd, lp(o.ax, o.bx, q), lp(o.az, o.bz, q))) break; k = q; }
+    if (k * L < 1.2) return null; o.bx = r2(lp(o.ax, o.bx, k)); o.bz = r2(lp(o.az, o.bz, k)); return o;
   }
   // a Lightline into the world
   function addLine(f, ax, az, bx, bz, y, T, low) {
@@ -2234,7 +2236,7 @@ const GAME = {
     }
     if (key === 'tessele') {
       if (![d.ax, d.az, d.bx, d.bz, d.y].every(finite) || Math.hypot(d.bx - d.ax, d.bz - d.az) > LINE.len + 1) return false;
-      const L = addLine(f, d.ax, d.az, d.bx, d.bz, d.y, LINE.T); emit('lightline', L, f); return true;
+      setDev({ id: typeof d.id === 'string' && d.id ? d.id.slice(0, 48) : kitId(f, 'e'), k: 'e', ax: d.ax, az: d.az, bx: d.bx, bz: d.bz, y: d.y, x: (d.ax + d.bx) / 2, z: (d.az + d.bz) / 2, by: f }); return true;
     }
     if (key === 'tesselx') {
       if (![d.x, d.z].every(finite) || d.x < 0 || d.z < 0 || d.x > GW * CS || d.z > GH * CS) return false;
@@ -2251,7 +2253,66 @@ const GAME = {
   function tesselLand(B, x, z) {
     const K2 = M.kit, y = hAt(x, z);
     if (B.k === 'tesselc') { const s = { x, z, y, r: 0, R: BLOOM.R, t: BLOOM.T, T: BLOOM.T, glare: 1 }; M.smokes.push(s); emit('smoke', s); emit('bloomPop', s); }
-    if (B.k === 'tesselq') { const Z = { id: B.id, x, y, z, r: LULL.r, t: LULL.T, T: LULL.T, by: B.by }; K2.lenses.push(Z); emit('lullStart', Z); }
+    if (B.k === 'tesselq') { if (!buyLandOk(B, x, z, 'q')) return; setDev({ id: B.id, k: 'q', x, y, z, by: B.by }); }
+  }
+  // a lob that comes down past the barrier in the buy phase is not set: the charge comes back (the same on every device)
+  function buyLandOk(B, x, z, k) {
+    if (!M || M.phase !== 'buy' || M.mode === 'range' || M.mode === 'demo' || !B.by || !sideOf(B.by) || inZoneP(sideOf(B.by), x, z)) return true;
+    const O = OPS[B.by.op], mx = (O && O[k] && O[k].max) || 1; B.by.ab[k] = Math.min(mx, (B.by.ab[k] | 0) + 1); if (B.by === me()) say('NOT PAST THE BARRIER', WARN); emit('abNo', B.by, k); return false;
+  }
+  /* ---- dormant devices: set, looked at, fired, broken ---- */
+  // a new one of a kind replaces Tessel's old one
+  function setDev(D) { const K2 = M.kit; for (let i = K2.devs.length - 1; i >= 0; i--) { const o = K2.devs[i]; if (o.by === D.by && o.k === D.k) { K2.devs.splice(i, 1); emit('devGone', o); } } K2.devs.push(D); emit('devSet', D); }
+  const tesselDorm = (f, k) => { const Ds = M && M.kit && M.kit.devs; if (Ds) for (let i = 0; i < Ds.length; i++) if (Ds[i].by === f && Ds[i].k === k) return Ds[i]; return null; };
+  // the points of a device you can look at (and shoot): a Lull's lens; a Lightline's two posts and the middle of its line
+  const devN = D => D.k === 'q' ? 1 : 3;
+  function devPt(D, i, o) { if (D.k === 'q') { o[0] = D.x; o[1] = D.y + .28; o[2] = D.z; } else if (i === 0) { o[0] = D.ax; o[1] = D.y + .5; o[2] = D.az; } else if (i === 1) { o[0] = D.bx; o[1] = D.y + .5; o[2] = D.bz; } else { o[0] = D.x; o[1] = D.y + .5; o[2] = D.z; } return o; }
+  // how far a spot on the floor is from a device: from the lens, or from the line
+  function devDist(D, x, z) { if (D.k === 'q') return Math.hypot(x - D.x, z - D.z); const ex = D.bx - D.ax, ez = D.bz - D.az, s = cl(((x - D.ax) * ex + (z - D.az) * ez) / Math.max(1e-4, ex * ex + ez * ez), 0, 1); return Math.hypot(x - D.ax - ex * s, z - D.az - ez * s); }
+  const TLP = [0, 0, 0];
+  /* which of her dormant devices Tessel is looking at: the crosshair within TRIG.ang (about 3 degrees) of one of its points,
+     or within TRIG.rad metres of it, whichever is wider (forgiving up close); the nearest to the crosshair wins. Worked
+     out once a frame; no sight check here (that is tesselState's, a few times a second) */
+  function tesselLook(f) {
+    if (f.tlAt === M.time && f.tlM === M) return f.tlD; f.tlAt = M.time; f.tlM = M; f.tlD = null;
+    const Ds = M.kit && M.kit.devs; if (!Ds || !Ds.length || !f.alive) return null;
+    const cp = Math.cos(f.pitch), dx = -Math.sin(f.yaw) * cp, dy = Math.sin(f.pitch), dz = -Math.cos(f.yaw) * cp, ey = eyeY(f); let ba = 1e9;
+    for (let n = 0; n < Ds.length; n++) { const D = Ds[n]; if (D.by !== f) continue;
+      for (let i = 0; i < devN(D); i++) { devPt(D, i, TLP); const vx = TLP[0] - f.x, vy = TLP[1] - ey, vz = TLP[2] - f.z, L = Math.hypot(vx, vy, vz); if (L > TRIG.see || L < .05) continue;
+        const a = Math.acos(cl((vx * dx + vy * dy + vz * dz) / L, -1, 1)); if (a > Math.max(TRIG.ang, Math.atan2(TRIG.rad, L)) || a >= ba) continue; ba = a; f.tlD = D; f.tlI = i; f.tlDist = L; } }
+    return f.tlD;
+  }
+  // 'ok' (in reach and in sight: it can be fired), 'far', 'hidden' (something in the way), or null (not looking at one)
+  function tesselState(f) {
+    const D = tesselLook(f); if (!D) return null; if (f.tlDist > TRIG.r) return 'far';
+    if (f.tlLosD !== D || f.tlLosI !== f.tlI || !(M.time - f.tlLosT <= TRIG.losEvery) || f.tlLosT > M.time) { f.tlLosD = D; f.tlLosI = f.tlI; f.tlLosT = M.time; devPt(D, f.tlI, TLP); f.tlLos = los(f.x, eyeY(f), f.z, TLP[0], TLP[1], TLP[2]) >= f.tlDist - .35; }
+    return f.tlLos ? 'ok' : 'hidden';
+  }
+  // the Trigger key
+  function tesselTrigger(f) {
+    if (!M || !f || f.op !== 'tessel' || !f.alive) return false; f.tlAt = -1; const D = tesselLook(f), mine = f === me();   // (looked at afresh: the aim may have moved since this frame's look)
+    if (M.phase !== 'live') { emit('abNo', f, 't'); if (mine && D) say('IT FIRES ONCE THE ROUND IS LIVE', DIM); return false; }
+    if (f.lock > 0 || f.chan || f.plant > 0 || f.defuse > 0) { emit('abNo', f, 't'); return false; }
+    if (!D) { emit('abNo', f, 't'); if (mine) say(tesselDorm(f, 'q') || tesselDorm(f, 'e') ? 'LOOK AT A DEVICE TO TRIGGER IT' : 'NOTHING SET TO TRIGGER', DIM); return false; }
+    f.tlLosT = -9; const st = tesselState(f);
+    if (st !== 'ok') { emit('abNo', f, 't'); if (mine) say(st === 'far' ? 'TOO FAR: WITHIN 20 m' : 'NO CLEAR SIGHT OF IT', WARN); return false; }
+    fireDev(D, false); return true;
+  }
+  // a dormant device goes off: the same on every device (online it comes as a message)
+  function fireDev(D, fromNet) {
+    const K2 = M.kit, i = K2 ? K2.devs.indexOf(D) : -1; if (i < 0) return false; K2.devs.splice(i, 1);
+    if (D.k === 'q') { const Z = { id: D.id, x: D.x, y: D.y, z: D.z, r: LULL.r, t: LULL.T, T: LULL.T, by: D.by }; K2.lenses.push(Z); emit('lullStart', Z); }
+    else { const L = addLine(D.by, D.ax, D.az, D.bx, D.bz, D.y, LINE.T); emit('lightline', L, D.by); }
+    emit('devFire', D); if (D.by === me()) say(D.k === 'q' ? 'LULL' : 'LIGHTLINE', OPS.tessel.col);
+    if (!fromNet) net({ t: 'tt', id: D.id, f: D.by.key }); return true;
+  }
+  // how near a fighter stands to the nearest of a device's points (the network check on a trigger)
+  function devReach(D, f) { let b = 1e9; for (let i = 0; i < devN(D); i++) { devPt(D, i, TLP); b = Math.min(b, Math.hypot(TLP[0] - f.x, TLP[1] - eyeY(f), TLP[2] - f.z)); } return b; }
+  // a bot fires one when it is in reach and in sight of a point of it (the nearest)
+  function botFireDev(f, D) {
+    if (M.phase !== 'live' || f.lock > 0 || f.chan) return false; let bi = -1, bd = TRIG.r; const ey = eyeY(f);
+    for (let i = 0; i < devN(D); i++) { devPt(D, i, TLP); const d = Math.hypot(TLP[0] - f.x, TLP[1] - ey, TLP[2] - f.z); if (d < bd) { bd = d; bi = i; } }
+    if (bi < 0) return false; devPt(D, bi, TLP); if (los(f.x, ey, f.z, TLP[0], TLP[1], TLP[2]) < bd - .35) return false; return fireDev(D, false);
   }
   /* sight against Lightlines: how far along the ray (o, d, both 3D, d of length 1) it first crosses one, or tmax. Each line
      is a sheet over the segment a-b on the floor plan, from y0 to y1 */
@@ -2290,26 +2351,266 @@ const GAME = {
     for (const H of K2.houses) { H.t -= dt; for (const v of M.fs) if (!v.net && v.alive && enemyOf(H.by, v) && Math.abs(v.x - H.x) < H.half && Math.abs(v.z - H.z) < H.half && Math.abs(v.y - H.y) < 3) { if (!(v.slowF > 0) && v === me()) say('SLOWED', WARN); v.slowF = .2; } }
     prune(K2.houses, keepLive);
   }
-  // bots: each ability with a reason
+  // bots: each ability with a reason. Lull and Lightline are set where rivals will come and fired when one does
   function tesselBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt, last, roll) {
-    const lobAt = (k, tx, tz) => { const dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 13, .45, 1.1), y0 = eyeY(f) - .1, ty = hAt(tx, tz) + .1;
-      botCast(f, k, { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + LOB_G / 2 * T * T) / T, vz: dz / T, id: f.key + ':' + M.round + ':' + Math.round(M.time * 100) }); };
+    const id = () => f.key + ':' + M.round + ':' + Math.round(M.time * 100), there = P.path && !P.path.length, look = P.look || (B.last ? [B.last.x, B.last.z] : null);
+    const lobAt = (k, tx, tz) => { const dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 13, .45, 1.1), y0 = eyeY(f) - .1, ty = hAt(tx, tz) + .1, n = id();
+      botCast(f, k, { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + LOB_G / 2 * T * T) / T, vz: dz / T, id: n }); return n; };
+    const dq = tesselDorm(f, 'q'), de = tesselDorm(f, 'e');
     // C Bloom: glare on a spot ahead of a push, or where a rival was last seen
     if (f.ab.c && !sees && side === 'att' && P.k === 'push' && near < 24 && near > 7 && roll) { const hs = HOLDS.filter(q => q.lane === P.lane || q.lane === 'any'), h = hs.length ? pick(hs) : null; if (h && Math.hypot(h.p[0] - f.x, h.p[1] - f.z) < 22) lobAt('c', h.p[0], h.p[1]); }
     else if (f.ab.c && last && !sees && dE > 6 && dE < 20 && side === 'def' && roll) lobAt('c', last.x, last.z);
-    // Q Lull: where a rival was heard or seen, or on the charge while it is being defused
-    if (f.ab.q && !sees && ((last && dE > 5 && dE < 18 && roll) || (side === 'att' && M.planted && e && e.defuse > 0))) { const tg = side === 'att' && M.planted && e && e.defuse > 0 ? [M.planted.x, M.planted.z] : [last.x, last.z]; lobAt('q', tg[0], tg[1]); }
-    // E Lightline: cut the sight line to a rival when losing a fight; or draw one along a push to cover a crossing
-    if (f.ab.e) {
-      if (engaged && e && e.alive && f.hp < 60 && dE > 4 && R() < dt * 2) { const mx = (f.x + e.x) / 2, mz = (f.z + e.z) / 2, dx = e.x - f.x, dz = e.z - f.z, L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L, w = 5; botCast(f, 'e', { ax: r2(mx + px * w), az: r2(mz + pz * w), bx: r2(mx - px * w), bz: r2(mz - pz * w), y: r2(hAt(mx, mz)) }); }
-      else if (!sees && side === 'att' && P.k === 'push' && near < 22 && near > 8 && R() < dt * .5) { const tg = siteOfPlan(P, f), dx = tg[0] - f.x, dz = tg[1] - f.z, L = Math.hypot(dx, dz) || 1, hx = dx / L, hz = dz / L, n = Math.max(1.5, Math.min(LINE.len, rayGrid(f.x, f.y + 1.7, f.z, hx, 0, hz, LINE.len) - .15)); botCast(f, 'e', { ax: r2(f.x), az: r2(f.z), bx: r2(f.x + hx * n), bz: r2(f.z + hz * n), y: r2(f.y) }); }
+    // Q Lull: set on the way rivals come to a hold, or by the charge after a plant; on a rival just heard, it fires as it lands
+    if (f.ab.q && !dq && !sees) {
+      if (side === 'def' && P.k === 'hold' && there && look && Math.hypot(look[0] - f.x, look[1] - f.z) > 4 && roll) lobAt('q', look[0], look[1]);
+      else if (side === 'att' && M.planted && P.k === 'post' && roll) lobAt('q', M.planted.x + rnd(-1.5, 1.5), M.planted.z + rnd(-1.5, 1.5));
+      else if (last && dE > 5 && dE < 18 && roll) B.tAuto = lobAt('q', last.x, last.z);
     }
+    // E Lightline: set across the way into a hold (fired when a rival comes); drawn and fired at once to cut a losing fight or cover a push
+    if (f.ab.e && !de) {
+      let D = null;
+      if (engaged && e && e.alive && f.hp < 60 && dE > 4 && R() < dt * 2) { const mx = (f.x + e.x) / 2, mz = (f.z + e.z) / 2, dx = e.x - f.x, dz = e.z - f.z, L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L, w = 5; botCast(f, 'e', { ax: r2(mx + px * w), az: r2(mz + pz * w), bx: r2(mx - px * w), bz: r2(mz - pz * w), y: r2(hAt(mx, mz)), id: id() }); D = tesselDorm(f, 'e'); }
+      else if (!sees && side === 'att' && P.k === 'push' && near < 22 && near > 8 && R() < dt * .5) { const tg = siteOfPlan(P, f), dx = tg[0] - f.x, dz = tg[1] - f.z, L = Math.hypot(dx, dz) || 1, hx = dx / L, hz = dz / L, n = Math.max(1.5, Math.min(LINE.len, rayGrid(f.x, f.y + 1.7, f.z, hx, 0, hz, LINE.len) - .15)); botCast(f, 'e', { ax: r2(f.x), az: r2(f.z), bx: r2(f.x + hx * n), bz: r2(f.z + hz * n), y: r2(f.y), id: id() }); D = tesselDorm(f, 'e'); }
+      else if (!sees && side === 'def' && P.k === 'hold' && there && look && R() < dt * .5) { const dx = look[0] - f.x, dz = look[1] - f.z, L = Math.hypot(dx, dz); if (L > 4) { const o = acrossLine(f, dx / L, dz / L, Math.min(L, 10)); o.id = id(); botCast(f, 'e', o); } }
+      if (D) botFireDev(f, D);
+    }
+    // the trigger, a few times a second: a device a rival has come near (one in sight, or just heard), or the Lull by a charge being defused
+    if ((B.tT = (B.tT || 0) - dt) <= 0 && M.kit.devs.length && M.phase === 'live') { B.tT = .25; const at = sees && e ? e : last;
+      for (const D of M.kit.devs) { if (D.by !== f) continue;
+        const go = D.id === B.tAuto || (at && devDist(D, at.x, at.z) < (D.k === 'q' ? LULL.r - .8 : 2.5)) || (D.k === 'q' && side === 'att' && M.planted && e && e.defuse > 0 && devDist(D, M.planted.x, M.planted.z) < LULL.r);
+        if (go && botFireDev(f, D)) { if (D.id === B.tAuto) B.tAuto = null; break; } } }
   }
   // the ultimate: on a rival in sight, or over the charge in a retake or after a plant
   function tesselUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt) {
     const at = (x, z) => botCast(f, 'x', { x: r2(x), z: r2(z) });
     if (sees && e && e.alive && dE > 4 && dE < 25 && R() < dt * 1.5) at(e.x, e.z);
     else if (M.planted && !sees && fresh && R() < dt * .8 && ((P.k === 'retake' && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 26) || (side === 'att' && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 20))) at(M.planted.x, M.planted.z);
+  }
+  /* ---------- 48 kit, fourth part: holding a site ----------
+     The tools whose job is to lock a site down, rebuilt so each is strong where it is put, readable to both sides, and has
+     an answer. Everything here can be set in the buy phase (on your side of the barrier) and is shown to rivals in some way.
+     AXIOM   Q Sentry: guards a 90 degree arc round the way it was set facing (its head sweeps it, and the arc shows on the
+               floor). A rival who walks into the arc in its sight is revealed at once, the eye turns amber, and after a
+               0.6 s lock it fires (10 a shot, 4 a second). 80 health. The Q key again beside it picks it up.
+             E Tripwire: a wire at shin height across the doorway you look at (two walls no more than 8 m apart, up to 6 m
+               out). It arms in 1.5 s. A rival who walks across it is revealed for 3 s and, 0.4 s later, a burst where they
+               crossed does up to 60 within 3.2 m. Jump over it and it never knows. Rivals see the wire within 10 m; one
+               bullet into either anchor breaks it. The E key again beside it picks it up.
+             C Slow Field: the canister waits where it lands. Armed after 1 s, a rival within 3.5 m opens the 5 m field
+               (half speed, 6 s). It blinks; rivals see it within 12 m, and one bullet breaks it.
+     BASTION Q Rampart: 500 health and 20 s. Rivals' bullets wear it down (body damage), and a bar on top shows what is
+               left. The Q key again within 4.5 m reinforces it, once: full health and 8 s more.
+             C Ward Beacon: it stays (20 s of the live round) and pulses: +15 shield at once to teammates within 6 m, then
+               +5 every 2 s, up to 50. A tall amber light anyone can see; 60 health.
+     TALON   E Snare: set on the floor where you aim, up to 8 m. The first rival over it is leashed to it: they cannot get
+               more than 2.2 m away for 3 s, move at a third of their speed, and are revealed for 4 s. Rivals see it within
+               6 m. One bullet into it breaks it, and frees whoever it holds. The E key again beside it picks it up.
+     Picking up gives the charge back; it can go down again 6 s later (1.5 s in the buy phase). A picked-up sentry keeps
+     its damage. As with every ability, what happens to a fighter is worked out on that fighter's own device and told to
+     the others; what happens to a device (set, set off, picked up, broken, hurt) goes as a message with its name. */
+  const SENTRY = { hp: 80, arc: .785, range: 22, lock: .6, rate: .25, dmg: 10, scan: .2, reveal: 1.5 };
+  const WIRE = { reach: 6, len: 8, h: .45, arm: 1.5, fuse: .4, r: 3.2, dmg: 60, lit: 3, see: 10 };
+  const CAN = { arm: 1, trip: 3.5, r: 5, T: 6, see: 12 };
+  const RAMP = { hp: 500, T: 20, more: 8, reach: 4.5 };
+  const BEACON = { hp: 60, T: 20, first: 15, every: 2, pulse: 5, r: 6, cap: 50 };
+  const SNARE = { reach: 8, arm: .8, trip: 1.3, hold: 3, leash: 2.2, lit: 4, see: 6 };
+  const PICK = { r: 2.5, cd: 6, cdBuy: 1.5 };
+  // the name a thing left in the world goes by on every device (the caster's device makes it; see ability())
+  const devId = (f, k, d) => typeof d.id === 'string' && d.id ? d.id.slice(0, 48) : kitId(f, k) + ':' + (M.kit.n = (M.kit.n || 0) + 1);
+  // what the player is told when a placement has nowhere to go
+  const NO_SPOT = { axiome: 'NO DOORWAY THERE: AIM BETWEEN TWO WALLS', tessele: 'NOT PAST THE BARRIER' };
+  // seconds before a picked-up device can go down again (0: ready)
+  const pkWait = (f, k) => f && f.pkT && f.pkT[k] > M.time ? f.pkT[k] - M.time : 0;
+
+  /* ---- placing ---- */
+  function placeSentry(f, d) {
+    if (![d.x, d.z, d.yaw].every(finite)) return false; const K2 = M.kit, hk = f.key + ':q', hp = K2.held[hk] > 0 ? Math.min(SENTRY.hp, K2.held[hk]) : SENTRY.hp; delete K2.held[hk];
+    K2.sentries.push({ id: devId(f, 'q', d), x: d.x, z: d.z, y: hAt(d.x, d.z), yaw: d.yaw, aim: d.yaw, pitch: 0, hp, cd: 0, by: f, target: null, lockT: 0, scanT: 0, bd: 0, flash: 0 }); return true;
+  }
+  // the Tripwire's anchors: where the aim meets the floor ahead (up to 6 m), then across it, wall to wall
+  function wireAim(f, d, S) {
+    let hx = d[0], hz = d[2]; const hl = Math.hypot(hx, hz); if (hl < .2) { hx = -Math.sin(f.yaw); hz = -Math.cos(f.yaw); } else { hx /= hl; hz /= hl; }
+    const out = Math.max(.8, Math.min(WIRE.reach, (S ? S.dist : WIRE.reach) * Math.max(hl, .2) - .3, rayGrid(f.x, f.y + WIRE.h, f.z, hx, 0, hz, WIRE.reach) - .4));
+    const cx = f.x + hx * out, cz = f.z + hz * out, y = hAt(cx, cz), h = y + WIRE.h, px = -hz, pz = hx; if (Math.abs(y - f.y) > 1.3) return null;
+    const l1 = rayGrid(cx, h, cz, px, 0, pz, WIRE.len), l2 = rayGrid(cx, h, cz, -px, 0, -pz, WIRE.len); if (l1 + l2 > WIRE.len || l1 + l2 < .8) return null;
+    return { ax: r2(cx + px * (l1 - .06)), az: r2(cz + pz * (l1 - .06)), bx: r2(cx - px * (l2 - .06)), bz: r2(cz - pz * (l2 - .06)), y: r2(y) };
+  }
+  function placeWire(f, d) {
+    if (![d.ax, d.az, d.bx, d.bz, d.y].every(finite)) return false; const ex = d.bx - d.ax, ez = d.bz - d.az, L = Math.hypot(ex, ez); if (L > WIRE.len + .5 || L < .3) return false;
+    const K2 = M.kit; K2.wires = K2.wires.filter(W => W.by !== f);
+    K2.wires.push({ id: devId(f, 'e', d), ax: d.ax, az: d.az, bx: d.bx, bz: d.bz, ex, ez, len2: L * L, y: d.y, x: (d.ax + d.bx) / 2, z: (d.az + d.bz) / 2, arm: WIRE.arm, fuse: -1, by: f, sd: {} }); return true;
+  }
+  // the Slow Field canister comes down (46's lobLand) and waits
+  function placeCan(B, x, y, z) {
+    if (!buyLandOk(B, x, z, 'c')) return; const K2 = M.kit; K2.cans = K2.cans.filter(C => C.by !== B.by);
+    K2.cans.push({ id: B.id || kitId(B.by, 'c'), x, y, z, arm: CAN.arm, by: B.by }); emit('canSet', K2.cans[K2.cans.length - 1]);
+  }
+  function placeRampart(f, d) {
+    if (![d.x, d.z].every(finite)) return false; const ax = d.ax ? 1 : 0, w = ax ? { x0: d.x - .3, x1: d.x + .3, z0: d.z - 2.6, z1: d.z + 2.6 } : { x0: d.x - 2.6, x1: d.x + 2.6, z0: d.z - .3, z1: d.z + .3 };
+    Object.assign(w, { t: RAMP.T, grow: 0, hp: RAMP.hp, max: RAMP.hp, by: f, id: devId(f, 'q', d), re: 0 }); M.walls.push(w); emit('wall', w); return true;
+  }
+  function placeBeacon(f, d) {
+    if (![d.x, d.z].every(finite)) return false; const K2 = M.kit; K2.beacons = K2.beacons.filter(B => B.by !== f);
+    K2.beacons.push({ id: devId(f, 'c', d), x: d.x, y: hAt(d.x, d.z), z: d.z, t: BEACON.T, tick: .8, n: 0, hp: BEACON.hp, flash: 0, by: f }); return true;
+  }
+  function placeSnare(f, d) {
+    if (![d.x, d.z].every(finite)) return false; const K2 = M.kit; K2.snares = K2.snares.filter(s => s.by !== f);
+    K2.snares.push({ id: devId(f, 'e', d), x: d.x, z: d.z, y: hAt(d.x, d.z), arm: SNARE.arm, by: f, sprung: '', t: 0 }); return true;
+  }
+
+  /* ---- the key again: pick it up (Sentry, Tripwire, Snare) or reinforce it (Rampart) ---- */
+  const near2 = (f, x, z, r) => Math.hypot(x - f.x, z - f.z) < r;
+  function pickDev(f, k) {
+    const K2 = M && M.kit; if (!K2 || !f.alive) return null; const key = f.op + k, O = OPS[f.op], mx = k === 'e' ? 1 : (O && O[k] && O[k].max) || 1; if ((f.ab[k] | 0) >= mx) return null;
+    if (key === 'axiomq') { for (const s of K2.sentries) if (s.by === f && near2(f, s.x, s.z, PICK.r)) return s; }
+    else if (key === 'axiome') { for (const W of K2.wires) if (W.by === f && W.fuse < 0 && (near2(f, W.ax, W.az, PICK.r) || near2(f, W.bx, W.bz, PICK.r) || near2(f, W.x, W.z, PICK.r))) return W; }
+    else if (key === 'talone') { for (const s of K2.snares) if (s.by === f && !s.sprung && near2(f, s.x, s.z, PICK.r)) return s; }
+    return null;
+  }
+  function rampOf(f) { if (!M || f.op !== 'bastion' || !f.alive) return null; for (const w of M.walls) if (w.by === f && w.hp > 0 && !w.re && near2(f, (w.x0 + w.x1) / 2, (w.z0 + w.z1) / 2, RAMP.reach)) return w; return null; }
+  function pickUp(f, k, D, fromNet) {
+    const K2 = M.kit; let A = null; for (const a of [K2.sentries, K2.wires, K2.snares]) if (a.includes(D)) A = a; if (!A) return false;
+    A.splice(A.indexOf(D), 1); if (A === K2.sentries) K2.held[f.key + ':q'] = D.hp;
+    const O = OPS[f.op], mx = k === 'e' ? 1 : (O && O[k] && O[k].max) || 1; f.ab[k] = Math.min(mx, (f.ab[k] | 0) + 1);
+    f.pkT = f.pkT || {}; f.pkT[k] = M.time + (M.phase === 'buy' ? PICK.cdBuy : PICK.cd); emit('kitPick', f, D);
+    if (f === me()) say((O && O[k] ? O[k].n.toUpperCase() : 'IT') + ' PICKED UP', O ? O.col : BONE);
+    if (!fromNet) net({ t: 'pk', k, id: D.id, f: f.key }); return true;
+  }
+  function reinforce(w, fromNet) { if (!w || w.re || !(w.hp > 0)) return false; w.re = 1; w.hp = w.max; w.t += RAMP.more; emit('wallMend', w); if (w.by === me()) say('RAMPART REINFORCED', OPS.bastion.col); if (!fromNet) net({ t: 'rf', id: w.id, f: w.by.key }); return true; }
+  // (from readyAb: true if the key press was used this way)
+  function kitAltTry(f, k) {
+    if (!M || !f || !f.alive || abBlocked(f, k)) return false;
+    const D = pickDev(f, k); if (D) return pickUp(f, k, D, false);
+    if (k === 'q' && f.op === 'bastion') { const w = rampOf(f); if (w) return reinforce(w, false); }
+    return false;
+  }
+  // the hint for it, under the crosshair ('' when there is nothing to pick up or reinforce)
+  function kitAltHint(f, keyOf) {
+    if (!M || !f || !f.alive || (M.phase !== 'live' && M.phase !== 'buy')) return '';
+    for (const k of ['q', 'e']) if (pickDev(f, k)) return keyOf(k) + ' · PICK UP ' + OPS[f.op][k].n.toUpperCase();
+    if (rampOf(f)) return keyOf('q') + ' · REINFORCE RAMPART';
+    return '';
+  }
+
+  /* ---- set off, broken, hurt ---- */
+  // a trap set off by a rival (from kitTrip: the victim's own device decided it); true if it was there to set off
+  function lockTrip(id, v) {
+    const K2 = M.kit;
+    for (const s of K2.snares) if (s.id === id) { if (s.sprung) return false; s.sprung = v ? v.key : '-'; s.t = SNARE.hold; s.arm = 0;
+      if (v) { v.snare = Math.max(v.snare || 0, SNARE.hold); v.reveal = Math.max(v.reveal || 0, SNARE.lit); if (v === me()) say('SNARED: YOU ARE LEASHED', WARN); else if (s.by === me()) say('SNARE SPRUNG', OPS.talon.col); }
+      emit('snared', s, v); return true; }
+    for (const W of K2.wires) if (W.id === id) { if (W.fuse >= 0) return false; W.fuse = WIRE.fuse;
+      if (v) { const q = cl(((v.x - W.ax) * W.ex + (v.z - W.az) * W.ez) / W.len2, 0, 1); W.x = W.ax + W.ex * q; W.z = W.az + W.ez * q; v.reveal = Math.max(v.reveal || 0, WIRE.lit); if (v === me()) say('TRIPWIRE!', WARN); else if (W.by === me()) say('TRIPWIRE CROSSED', OPS.axiom.col); }
+      emit('mineArm', W); return true; }
+    for (let i = 0; i < K2.cans.length; i++) { const C = K2.cans[i]; if (C.id !== id) continue; K2.cans.splice(i, 1); const F = { x: C.x, y: C.y, z: C.z, r: CAN.r, t: CAN.T, T: CAN.T, by: C.by }; K2.fields.push(F); emit('fieldStart', F); return true; }
+    return false;
+  }
+  // one bullet: a rival's dormant Tessel device, Tripwire anchor, canister or Snare breaks
+  function kitBreak(id, fromNet) {
+    const K2 = M && M.kit; if (!K2 || typeof id !== 'string') return false;
+    for (const [A, kind] of [[K2.devs, 'dev'], [K2.wires, 'wire'], [K2.cans, 'can'], [K2.snares, 'snare']]) for (let i = 0; i < A.length; i++) { const o = A[i]; if (o.id !== id) continue;
+      A.splice(i, 1); if (kind === 'snare' && o.sprung) { const v = M.byKey[o.sprung]; if (v) v.snare = Math.min(v.snare || 0, .2); }
+      emit('kitBreak', o, kind); if (o.by === me()) say(kind === 'dev' ? (o.k === 'q' ? 'YOUR LULL WAS BROKEN' : 'YOUR LIGHTLINE WAS BROKEN') : kind === 'wire' ? 'TRIPWIRE BROKEN' : kind === 'can' ? 'SLOW FIELD BROKEN' : 'SNARE BROKEN', DIM);
+      if (!fromNet) net({ t: 'kb', id }); return true; }
+    return false;
+  }
+  // a rival's bullet against the small things: the nearest it meets before whatever else it hit. Beacons take damage; the
+  // rest break. Decided on the shooter's device, told to the others
+  const TSP = [0, 0, 0];
+  function trapShot(f, S, G) {
+    const K2 = M.kit; if (!(K2.devs.length || K2.wires.length || K2.cans.length || K2.snares.length || K2.beacons.length)) return false; let best = null, bt = S.dist + .2;
+    const test = (o, x, y, z, r) => { TSP[0] = x; TSP[1] = y; TSP[2] = z; const t = raySphere(S.o, S.d, TSP, r); if (t > 0 && t < bt) { bt = t; best = o; } };
+    for (const D of K2.devs) if (enemyOf(D.by, f)) for (let i = 0; i < devN(D) && i < 2; i++) { devPt(D, i, TSP); test(D, TSP[0], D.k === 'q' ? TSP[1] : D.y + .4, TSP[2], D.k === 'q' ? .3 : .22); }
+    for (const W of K2.wires) if (enemyOf(W.by, f)) { test(W, W.ax, W.y + WIRE.h, W.az, .2); test(W, W.bx, W.y + WIRE.h, W.bz, .2); }
+    for (const C of K2.cans) if (enemyOf(C.by, f)) test(C, C.x, C.y + .2, C.z, .25);
+    for (const s of K2.snares) if (enemyOf(s.by, f)) test(s, s.x, s.y + .1, s.z, .32);
+    for (const B of K2.beacons) if (enemyOf(B.by, f)) test(B, B.x, B.y + .5, B.z, .3);
+    if (!best) return false;
+    if (K2.beacons.includes(best)) hurtSentry(best, dmgAt(G, bt, 2), false); else kitBreak(best.id, false);
+    return true;
+  }
+  function hurtWall(w, dmg, fromNet) {
+    if (!w || !(w.hp > 0) || !(dmg > 0) || !M.walls.includes(w)) return; w.hp -= dmg; w.hitT = .15; emit('wallHit', w);
+    if (w.hp <= 0) { w.hp = 0; w.t = 0; emit('wallBreak', w); if (w.by === me()) say('RAMPART DOWN', WARN); }
+    if (!fromNet) net({ t: 'wd', id: w.id, d: dmg });
+  }
+
+  /* ---- every frame ---- */
+  // a fighter crossing a line on the floor (Tripwire, as for a Lightline): which side they stand, remembered per fighter
+  function crossed(W, v, high) {
+    const px = v.x - W.ax, pz = v.z - W.az, s = (px * W.ex + pz * W.ez) / W.len2; if (s < -.02 || s > 1.02 || Math.abs(v.y - W.y) > 1.5) { W.sd[v.key] = 0; return false; }
+    const side = W.ex * pz - W.ez * px > 0 ? 1 : -1, was = W.sd[v.key]; W.sd[v.key] = side; return !high && !!was && was !== side;
+  }
+  function stepLock(dt) {
+    const K2 = M.kit, live = M.phase === 'live';
+    // Sentry: a look round its arc five times a second; whoever it has is revealed, then fired on once it has locked
+    for (const s of K2.sentries) {
+      s.cd -= dt; s.flash = Math.max(0, s.flash - dt); const hy = s.y + .78;
+      if ((s.scanT -= dt) <= 0) { s.scanT = SENTRY.scan; let best = null, bd = 1e9;
+        if (live) for (const v of M.fs) { if (!v.alive || !enemyOf(s.by, v) || !duelOk(s.by, v) || v.phase > 0) continue; const d = Math.hypot(v.x - s.x, v.z - s.z); if (d > SENTRY.range || d >= bd || (v.cloak > 0 && d > 5)) continue;
+          if (Math.abs(angDiff(yawTo(s.x, s.z, v.x, v.z), s.yaw)) > SENTRY.arc) continue; if (los(s.x, hy, s.z, v.x, v.y + 1.1, v.z) < Math.hypot(d, v.y + 1.1 - hy) - .4) continue; best = v; bd = d; }
+        if (best !== s.target) { s.target = best; s.lockT = SENTRY.lock; if (best) { emit('sentryLock', s, best); if (best === me()) say('A SENTRY HAS YOU', WARN); } }
+        if (best) best.reveal = Math.max(best.reveal || 0, SENTRY.reveal); }
+      const v = s.target;
+      if (v && v.alive) { const d = Math.hypot(v.x - s.x, v.z - s.z), want = yawTo(s.x, s.z, v.x, v.z); s.bd = d; s.aim += cl(angDiff(want, s.aim), -4 * dt, 4 * dt); s.pitch = Math.atan2(v.y + 1.1 - hy, d); s.lockT -= dt;
+        if (s.lockT <= 0 && s.cd <= 0 && Math.abs(angDiff(want, s.aim)) < .12) { s.cd = SENTRY.rate; emit('sentryShot', s, v);
+          if (!v.net && Math.random() < cl(1.15 - d / 28, .3, .85)) { applyDamage(v, SENTRY.dmg, s.by, false, 'sentry'); if (v.bot) v.bot.hitBy = { x: s.x, z: s.z, t: M.time }; if (v === me()) M.hurtDir = Math.atan2(s.x - v.x, s.z - v.z); } } }
+      else { s.target = null; const sw = s.yaw + Math.sin(M.time * .9 + s.x) * SENTRY.arc * .85; s.aim += cl(angDiff(sw, s.aim), -1.2 * dt, 1.2 * dt); s.pitch *= .9; }   // (idle, it sweeps its arc: you can see what it guards)
+    }
+    // Tripwire: arms, then waits for a rival's feet to cross it (worked out where that rival is run); a beat, then the burst
+    for (const W of K2.wires) {
+      if (W.arm > 0) { W.arm -= dt; continue; }
+      if (W.fuse < 0) { if (!live) continue; for (const v of M.fs) { if (v.net || !v.alive || !enemyOf(W.by, v)) continue; if (crossed(W, v, v.y > W.y + WIRE.h - .05)) { kitTrip(W.id, v.key, false); break; } } continue; }
+      if ((W.fuse -= dt) <= 0) { W.done = true; emit('mineBoom', W);
+        for (const v of M.fs) { if (v.net || !v.alive || !enemyOf(W.by, v)) continue; const d = Math.hypot(v.x - W.x, v.y + .8 - W.y - WIRE.h, v.z - W.z); if (d > WIRE.r || los(W.x, W.y + .5, W.z, v.x, v.y + .9, v.z, false) < d - .5) continue;
+          applyDamage(v, Math.round(WIRE.dmg * cl(1.2 - d / WIRE.r, .35, 1)), W.by, false, 'tripwire'); if (v.bot) v.bot.hitBy = { x: W.x, z: W.z, t: M.time }; } }
+    }
+    if (K2.wires.length) K2.wires = K2.wires.filter(W => !W.done);
+    // Slow Field canisters: arm, then a rival near opens the field
+    for (const C of K2.cans) { if (C.arm > 0) { C.arm -= dt; continue; } if (!live) continue;
+      let hit = null; for (const v of M.fs) if (!v.net && v.alive && enemyOf(C.by, v) && Math.hypot(v.x - C.x, v.z - C.z) < CAN.trip && Math.abs(v.y - C.y) < 2) { hit = v; break; }
+      if (hit) { kitTrip(C.id, hit.key, false); break; } }
+    // Snare: arms, waits for a rival's feet; sprung, it holds them on a leash
+    for (const s of K2.snares) {
+      if (s.sprung) { const v = M.byKey[s.sprung]; if ((s.t -= dt) <= 0 || !v || !v.alive) { s.done = true; continue; }
+        if (!v.net) { const dx = v.x - s.x, dz = v.z - s.z, L = Math.hypot(dx, dz), R2 = SNARE.leash; if (L > R2) { const k = R2 / L, nx = s.x + dx * k, nz = s.z + dz * k; if (!blocked(nx, nz, v.y)) { v.x = nx; v.z = nz; } v.vx *= .3; v.vz *= .3; } }
+        continue; }
+      if (s.arm > 0) { s.arm -= dt; continue; } if (!live) continue;
+      let hit = null; for (const v of M.fs) if (!v.net && v.alive && enemyOf(s.by, v) && Math.hypot(v.x - s.x, v.z - s.z) < SNARE.trip && Math.abs(v.y - s.y) < 1) { hit = v; break; }
+      if (hit) { kitTrip(s.id, hit.key, false); break; }
+    }
+    if (K2.snares.length) K2.snares = K2.snares.filter(s => !s.done);
+    // Ward Beacon: waits through the buy phase, then pulses shield into its team for 20 s (each device for its own)
+    for (const B of K2.beacons) { B.flash = Math.max(0, (B.flash || 0) - dt); if (!live) continue; B.t -= dt; if ((B.tick -= dt) > 0) continue; B.tick = BEACON.every; const give = B.n++ ? BEACON.pulse : BEACON.first;
+      for (const v of M.fs) if (!v.net && v.alive && v.team === B.by.team && Math.hypot(v.x - B.x, v.z - B.z) < BEACON.r && Math.abs(v.y - B.y) < 2.5 && (v.sh | 0) < BEACON.cap) { v.sh = Math.min(BEACON.cap, (v.sh | 0) + give); if (v === me()) say('+' + give + ' SHIELD', OPS.bastion.col); }
+      emit(B.n === 1 ? 'beaconPop' : 'beaconPulse', B); }
+    if (K2.beacons.length) K2.beacons = K2.beacons.filter(B => B.t > 0);
+    for (const w of M.walls) if (w.hitT > 0) w.hitT -= dt;
+  }
+
+  /* ---- bots ---- */
+  // Axiom's Tripwire and Slow Field, and Bastion's Ward Beacon, set at a hold; the rest is in 50-bot
+  function lockBot(f, B, P, side, sees, there, look, dt) {
+    if (M.phase !== 'live' || !look) return;
+    const hold = (side === 'def' && P.k === 'hold') || (side === 'att' && P.k === 'post' && M.planted);
+    if (!hold || !there || sees) return;
+    if (f.op === 'axiom' && f.ab.e && !(B.wireT > M.time)) { B.wireT = M.time + 1.5; const yaw = yawTo(f.x, f.z, look[0], look[1]); for (const o of [0, .5, -.5, 1, -1]) { const q = wireAim(f, viewDir(yaw + o, 0), null); if (q) { botCast(f, 'e', q); break; } } }
+    if (f.op === 'axiom' && f.ab.c && R() < dt * .4) { const dx = look[0] - f.x, dz = look[1] - f.z, L = Math.hypot(dx, dz); if (L > 4) { const tx = f.x + dx / L * Math.min(L * .7, 12), tz = f.z + dz / L * Math.min(L * .7, 12), T = cl(Math.hypot(tx - f.x, tz - f.z) / 13, .45, 1.1), y0 = eyeY(f) - .1, ty = hAt(tx, tz) + .1;
+      botCast(f, 'c', { x: f.x, y: y0, z: f.z, vx: (tx - f.x) / T, vy: (ty - y0 + LOB_G / 2 * T * T) / T, vz: (tz - f.z) / T }); } }
+    if (f.op === 'bastion' && f.ab.c && M.t < roundT() - 3 && R() < dt * .5) botCast(f, 'c', { x: f.x, y: f.y, z: f.z });
+  }
+  const trapLive = o => { const K2 = M.kit; return !!K2 && (K2.sentries.includes(o) || K2.beacons.includes(o) || K2.wires.includes(o) || K2.cans.includes(o) || K2.snares.includes(o) || K2.devs.includes(o)); };
+  // a rival's device a bot can see near it: the nearest worth a bullet (a sentry, a beacon, a trap within sight of it)
+  function botTrapTarget(f, B) {
+    if (B.trapAt > M.time && B.trapM === M.kit) return B.trap && trapLive(B.trap.o) ? B.trap : null; B.trapM = M.kit; B.trapAt = M.time + .25; B.trap = null; const K2 = M.kit; if (!K2) return null; const ey = eyeY(f); let bd = 1e9;
+    const consider = (o, x, y, z, r) => { const d = Math.hypot(x - f.x, z - f.z); if (d > r || d >= bd) return; if (los(f.x, ey, f.z, x, y, z) < Math.hypot(d, y - ey) - .35) return; bd = d; B.trap = { o, x, y, z }; };
+    for (const s of K2.sentries) if (enemyOf(s.by, f)) consider(s, s.x, s.y + .6, s.z, 20);
+    for (const b of K2.beacons) if (enemyOf(b.by, f)) consider(b, b.x, b.y + .5, b.z, 20);
+    for (const W of K2.wires) if (enemyOf(W.by, f)) consider(W, W.ax, W.y + WIRE.h, W.az, WIRE.see * .8);
+    for (const C of K2.cans) if (enemyOf(C.by, f)) consider(C, C.x, C.y + .2, C.z, CAN.see * .8);
+    for (const s of K2.snares) if (enemyOf(s.by, f) && !s.sprung) consider(s, s.x, s.y + .1, s.z, SNARE.see * .8);
+    for (const D of K2.devs) if (enemyOf(D.by, f) && devReach(D, f) < TRIG.glint) { devPt(D, 0, TSP); consider(D, TSP[0], D.k === 'q' ? TSP[1] : D.y + .4, TSP[2], TRIG.glint); }
+    return B.trap;
   }
   /* ---------- 50 bot: a player with the same body, guns and accuracy rules, and no knowledge it has not earned ----------
      Each tick botThink returns the same intent a person's input would. What a bot knows about its rival is only what it
@@ -2424,7 +2725,7 @@ const GAME = {
     } else if (f.op === 'axiom') {
       if (f.ab.q && there && ((side === 'def' && P.k === 'hold') || (side === 'att' && P.k === 'post')) && holdLook) {
         const yaw = yawTo(f.x, f.z, holdLook[0], holdLook[1]), fx = -Math.sin(yaw), fz = -Math.cos(yaw); botCast(f, 'q', { x: f.x + fx * 1.2, z: f.z + fz * 1.2, yaw }); }
-      if (f.ab.e && ((side === 'def' && P.k === 'hold' && there && M.t < roundT() - 6) || (side === 'att' && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 2))) botCast(f, 'e', { x: f.x, z: f.z });
+      // (Tripwire: 48's lockBot)
     }
   }
   // every operative's C, and Vanta's kit
@@ -2451,7 +2752,7 @@ const GAME = {
     if (f.op === 'tessel') tesselBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt, last, roll);   // (47)
   }
   // use an ability at a chosen place, without having to look there first
-  function botCast(f, k, data) { if (!hasAb(f, k) || M.phase !== 'live' || f.lock > 0 || f.chan) return; spendAb(f, k); applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
+  function botCast(f, k, data) { if (!hasAb(f, k) || M.phase !== 'live' || f.lock > 0 || f.chan || pkWait(f, k)) return; if (data && data.id == null) data.id = f.key + ':' + k + ':' + M.round + ':' + Math.round(M.time * 100); spendAb(f, k); applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
   // the ultimate, when there is a reason for it
   function botUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt) {
     const op = f.op, push = side === 'att' && P.k === 'push', retake = P.k === 'retake', chance = R() < dt * .8;
@@ -2585,9 +2886,9 @@ const GAME = {
       if (lk) { const d = Math.max(1.5, Math.hypot(lk[0] - f.x, lk[1] - f.z)); tYaw = yawTo(f.x, f.z, lk[0], lk[1]); tPitch = Math.atan2(hAt(lk[0], lk[1]) + 1.5 - eyeY(f), d); }
       if (G.scope && f.scoped) f.scoped = 0;
     }
-    if (!sees && M.kit && M.kit.sentries.length && !gun(f).melee) {
-      const st = M.kit.sentries.find(q => q.by.team !== f.team && Math.hypot(q.x - f.x, q.z - f.z) < 20 && los(f.x, eyeY(f), f.z, q.x, q.y + .6, q.z) >= Math.hypot(q.x - f.x, q.z - f.z, q.y + .6 - eyeY(f)) - .4);
-      if (st) { const d = Math.hypot(st.x - f.x, st.z - f.z); tYaw = yawTo(f.x, f.z, st.x, st.z) + Math.sin(M.time * 3 + B.ph) * D.jit; tPitch = Math.atan2(st.y + .6 - eyeY(f), d); if (Math.abs(angDiff(tYaw, f.yaw)) < Math.atan2(.25, d) + .01 && Math.abs(tPitch - f.pitch) < .05) I.fire = true; }
+    if (!sees && M.kit && M.phase === 'live' && !gun(f).melee) {   // a rival's sentry, beacon or trap in sight: shoot it out (48; looked for four times a second)
+      const st = botTrapTarget(f, B);
+      if (st) { const d = Math.hypot(st.x - f.x, st.z - f.z); tYaw = yawTo(f.x, f.z, st.x, st.z) + Math.sin(M.time * 3 + B.ph) * D.jit; tPitch = Math.atan2(st.y - eyeY(f), d); if (Math.abs(angDiff(tYaw, f.yaw)) < Math.atan2(.18, d) + .006 && Math.abs(tPitch - f.pitch) < Math.atan2(.18, d) + .01) I.fire = true; }
     }
     B.breaking = false;
     if (!sees && P.k === 'push' && P.brk != null && BRKS[P.brk] && BRKS[P.brk].hp > 0 && !gun(f).melee) {
@@ -2613,9 +2914,10 @@ const GAME = {
       if (f.op === 'vex' && f.ab.q && engaged && f.hp < 45 && Math.hypot(f.vx, f.vz) > 2) ability(f, 'q');
       if (f.op === 'iris' && f.ab.q && (side === 'att' ? near < 26 : M.t < roundT() - 10 || fresh)) ability(f, 'q');
       if (f.op === 'iris' && f.ab.e && !sees && fresh && B.last.heard && dE > 6 && dE < 16 && R() < dt * 1.5) botCast(f, 'e', { x: B.last.x, y: 1.6, z: B.last.z });
-      if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5) ability(f, 'q');
+      if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5 && !rampOf(f)) ability(f, 'q');
+      if (f.op === 'bastion') { const w = rampOf(f); if (w && w.hp < w.max * .45) kitAltTry(f, 'q'); }   // (a Rampart being shot through: reinforce it)
       if (f.op === 'bastion' && f.ab.e && f.hp < 60 && !sees) ability(f, 'e');
-      kitBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt); kitBot2(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
+      kitBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt); kitBot2(f, B, P, side, sees, engaged, fresh, near, dE, e, dt); lockBot(f, B, P, side, sees, P.path && !P.path.length, P.look || (B.last ? [B.last.x, B.last.z] : null), dt);
       if (hasAb(f, 'x')) botUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
       // smoke grenades: attackers cover a corner before stepping onto the site; defenders smoke the lane they just heard someone in
       if (f.smokes > 0 && !sees && !(B.nadeT > M.time)) {
@@ -2749,10 +3051,15 @@ const GAME = {
       case 'hx': { const F2 = M.byKey[m.f], h = M.kit && M.kit.hexes.find(q => q.id === m.id); if (F2 && h) takeHex(F2, h, true); else if (F2) F2.ward = 20; break; }
       case 'ab': if (!(m.d && m.d.free)) spendAb(F, m.k); applyAbility(F, m.k, m.d || {}); break;
       case 'orb': takeOrb(m.i | 0, F); break;   // someone took an ultimate orb
-      case 'kx': kitTrip(m.id, m.v, true); break;   // a snare or mine went off on the victim's device
+      case 'kx': if (typeof m.id === 'string' && m.v != null) kitTrip(m.id.slice(0, 64), String(m.v), true); break;   // a snare or mine went off on the victim's device
       case 'ed': { const W = M.kit && M.kit.eyes.find(q => q.id === m.id); if (W) breakEye(W, true); break; }   // someone shot out a Watcher
       case 'lz': { const Z = typeof m.id === 'string' && M.kit && M.kit.lenses && M.kit.lenses.find(q => q.id === m.id); if (Z) breakLens(Z, true); break; }   // someone shot out a Lull lens
-      case 'kd': { const s2 = M.kit && M.kit.sentries.find(q => q.id === m.id); if (s2) hurtSentry(s2, m.d, true); break; }   // someone shot a sentry
+      case 'kd': { const s2 = typeof m.id === 'string' && M.kit && (M.kit.sentries.find(q => q.id === m.id) || M.kit.beacons.find(q => q.id === m.id)), d = +m.d; if (s2 && d > 0 && d <= 300) hurtSentry(s2, d, true); break; }   // someone shot a sentry or a Ward Beacon
+      case 'tt': { const D = typeof m.id === 'string' && M.kit && M.kit.devs.find(q => q.id === m.id); if (D && D.by === F && F.alive && M.phase === 'live' && devReach(D, F) < TRIG.r + 6) fireDev(D, true); break; }   // Tessel fired one of her devices (hers, live, and near enough)
+      case 'kb': if (typeof m.id === 'string') kitBreak(m.id.slice(0, 64), true); break;   // someone shot out a dormant device or a trap
+      case 'pk': { const k = m.k === 'q' || m.k === 'e' ? m.k : null, K2 = M.kit, D = k && typeof m.id === 'string' && K2 && [...K2.sentries, ...K2.wires, ...K2.snares].find(q => q.id === m.id); if (D && D.by === F) pickUp(F, k, D, true); break; }   // a device picked back up
+      case 'rf': { const w = typeof m.id === 'string' && M.walls.find(q => q.id === m.id); if (w && w.by === F) reinforce(w, true); break; }   // a Rampart reinforced
+      case 'wd': { const w = typeof m.id === 'string' && M.walls.find(q => q.id === m.id), d = +m.d; if (w && d > 0 && d <= 300) hurtWall(w, d, true); break; }   // someone shot a Rampart
       case 'nd': F.smokes = Math.max(0, (F.smokes || 0) - 1); F.throwT = .6; addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); emit('throw', F); break;
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;
       case 'df': defuseDone(F); break;
@@ -8001,7 +8308,8 @@ const GAME = {
     X.kf.orbs = []; for (let i = 0; i < 3; i++) { const g = add(new THREE.Group()), gem = new THREE.Mesh(new THREE.OctahedronGeometry(.32, 0), glow('#b8f0ff', { opacity: .95 })); gem.position.y = 1.1; g.add(gem);
       const halo = new THREE.Mesh(new THREE.OctahedronGeometry(.5, 0), glow('#5ad1ff', { opacity: .25, wireframe: true })); halo.position.y = 1.1; g.add(halo); const base = disc(.9, glow('#5ad1ff', { map: ringT, opacity: .5 })); base.position.y = .03; g.add(base); g.userData = { gem, halo }; g.visible = false; X.kf.orbs.push(g); }
     X.kf.beams = []; for (let i = 0; i < 3; i++) { const m = add(new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 1, 8, 1, true), glow('#b6ff8a', { opacity: .9 }))); m.visible = false; X.kf.beams.push(m); }
-    X.kf.domes = []; for (let i = 0; i < 2; i++) { const g = add(new THREE.Group()), dome = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 20, 0, TAU, 0, Math.PI / 2), energyMat('#5aa0ff', { hex: 9, rim: 1.3, scan: .8, rx: 4, base: .05 }));   // (79-kitfx2: the energy look) g.add(dome);
+    X.kf.domes = []; for (let i = 0; i < 2; i++) { const g = add(new THREE.Group()), dome = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 20, 0, TAU, 0, Math.PI / 2), energyMat('#5aa0ff', { hex: 9, rim: 1.3, scan: .8, rx: 4, base: .05 }));   // (79-kitfx2: the energy look)
+      g.add(dome);
       const core = new THREE.Mesh(new THREE.CylinderGeometry(.22, .28, .5, 10), lit('#2a2e36')); core.position.y = .25; g.add(core); const eye = new THREE.Mesh(new THREE.SphereGeometry(.12, 10, 8), glow('#5aa0ff', { opacity: 1 })); eye.position.y = .58; g.add(eye); g.userData = { dome, eye }; g.visible = false; X.kf.domes.push(g); }
     X.kf.chans = []; for (let i = 0; i < 2; i++) { const g = add(new THREE.Group()); for (let k = 0; k < 3; k++) { const r = new THREE.Mesh(new THREE.TorusGeometry(.7 + k * .25, .04, 6, 28), glow('#8f6bff', { opacity: .7 })); r.rotation.x = Math.PI / 2; g.add(r); }
       const col = new THREE.Mesh(new THREE.CylinderGeometry(.6, .9, 3.2, 20, 1, true), glow('#3a1a7a', { opacity: .35 })); col.position.y = 1.6; g.add(col); g.visible = false; X.kf.chans.push(g); }
@@ -8036,8 +8344,8 @@ const GAME = {
     for (const m of kf.shells) { const u = m.userData; u.t += dt; m.visible = u.t < .4; if (m.visible) { m.scale.setScalar(.3 + u.t / .4 * 4.5); m.material.opacity = .5 * (1 - u.t / .4); } }
     for (const m of kf.booms) { const u = m.userData; u.t += dt; m.visible = u.t < .45; if (m.visible) { m.scale.setScalar(.4 + u.t / .45 * 3.4); m.material.opacity = .8 * (1 - u.t / .45); } }
     list(kf.mines, K2 && K2.mines && K2.mines.filter(m => mine(m) || near(m, 5)), (g, m) => { g.position.set(m.x, m.y, m.z); const rate = m.fuse >= 0 ? 30 : m.arm > 0 ? 3 : 6; g.userData.lamp.visible = Math.sin(X.t * rate) > 0 || m.fuse >= 0; g.userData.lamp.material.color.set(m.arm > 0 ? '#ffb347' : '#ff3b3b'); });
-    list(kf.snares, K2 && K2.snares && K2.snares.filter(s => mine(s) || near(s, 4)), (g, s) => { g.position.set(s.x, s.y, s.z); g.userData.ring.material.opacity = (mine(s) ? .55 : .22) * (s.arm > 0 ? .4 : 1) * (.75 + Math.sin(X.t * 4) * .25); });
-    list(kf.sentries, K2 && K2.sentries, (g, s) => { const U = g.userData; g.position.set(s.x, s.y, s.z); U.head.rotation.set(s.pitch || 0, s.aim, 0, 'YXZ'); U.eye.material.color.set(s.flash > 0 ? '#ffffff' : s.target ? '#ff5a4d' : '#5aa0ff');
+    list(kf.snares, K2 && K2.snares && K2.snares.filter(s => mine(s) || s.sprung || near(s, SNARE.see)), (g, s) => { g.position.set(s.x, s.y, s.z); g.userData.ring.material.opacity = (s.sprung ? .8 : mine(s) ? .55 : .26) * (s.arm > 0 ? .4 : 1) * (.75 + Math.sin(X.t * (s.sprung ? 14 : 4)) * .25); });
+    list(kf.sentries, K2 && K2.sentries, (g, s) => { const U = g.userData; g.position.set(s.x, s.y, s.z); U.head.rotation.set(s.pitch || 0, s.aim, 0, 'YXZ'); U.eye.material.color.set(s.flash > 0 ? '#ffffff' : s.target ? (s.lockT > 0 ? '#ffb347' : '#ff5a4d') : '#5aa0ff');   // (blue sweeping, amber locking on, red firing)
       s.muzzle = Math.max(0, (s.muzzle || 0) - dt); U.fl.visible = s.muzzle > 0; U.fl.rotation.z = Math.random() * 6; });
     // the ultimates: orbs waiting to be taken, Piercer's bolts, Lockdown's dome, Nightwalk gathering and where it comes out
     list(kf.orbs, M.orbs && M.orbs.filter(o => !o.taken), (g, o, i) => { g.position.set(o.x, hAt(o.x, o.z), o.z); g.userData.gem.rotation.y = X.t * 2 + i; g.userData.gem.position.y = 1.1 + Math.sin(X.t * 2.4 + i) * .12; g.userData.halo.rotation.y = -X.t; g.userData.halo.position.y = g.userData.gem.position.y; });
@@ -8118,7 +8426,7 @@ const GAME = {
   // a burst: kind 'ring' | 'shell' | 'pillar', where, colour, size, how long
   function burst(kind, x, y, z, col, r, T, h) { const K = X && X.kf2; if (!K) return; K.bursts.push({ kind, x, y, z, col, r, T, t: 0, h: h || 3 }); }
   // the preview for a readied ability: what kind, and where (from the same sums the ability uses)
-  const PV = { vexe: 'spot', irise: 'mark', vexx: 'spot', axiomx: 'self', bastionq: 'wall', embere: 'haze', talone: 'floor', axiomq: 'floor', axiome: 'floor', bastionc: 'floor', wraithc: 'floor',
+  const PV = { vexe: 'spot', irise: 'mark', vexx: 'spot', axiomx: 'self', bastionq: 'wall', embere: 'haze', talone: 'floor', axiomq: 'floor', axiome: 'wire', bastionc: 'floor', wraithc: 'floor',
     emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'zone', wraithe: 'run',
     tesselc: 'lob', tesselq: 'lob', tessele: 'line', tesselx: 'house' };
   const PV_R = { vexe: 3.8, vexx: 1, axiomx: 14, emberq: 3.2, emberx: 5.5, vexc: 6, talonc: 3.5, axiomc: 5, wraithe: 1.2, talone: 1.3, axiomq: .6, axiome: 2.2, bastionc: 6, wraithc: .5, novae: 4.5, tesselc: 3.4, tesselq: 4.5 };
@@ -8145,6 +8453,7 @@ const GAME = {
       K.pvWall.visible = true; K.pvWall.position.set(cx, hAt(cx, cz) + h / 2, cz); K.pvWall.scale.set(ax ? .12 : w, h, ax ? w : .12); K.pvWall.material.uniforms.col.value.set(col); K.pvWall.material.uniforms.op.value = .45 + .15 * pulse;
       if (kind === 'front') { const L = 14, ex = cx + (d.ax ? d.dir * L : 0), ez = cz + (d.ax ? 0 : d.dir * L); K.pvBeam.visible = true; K.pvBeam.position.set(cx, hAt(cx, cz) + .05, cz); K.pvBeam.lookAt(ex, hAt(cx, cz) + .05, ez); K.pvBeam.scale.set(3, 3, L); K.pvBeam.material.color.set(col); K.pvBeam.material.opacity = .45; } }
     else if (kind === 'line' || kind === 'house') previewTessel(P, d, kind, col, pulse);
+    else if (kind === 'wire') { const y = d.y + WIRE.h, L = Math.hypot(d.bx - d.ax, d.bz - d.az); K.pvBeam.visible = true; K.pvBeam.position.set(d.ax, y, d.az); K.pvBeam.lookAt(d.bx, y, d.bz); K.pvBeam.scale.set(1.6, 1.6, L); K.pvBeam.material.color.set(col); K.pvBeam.material.opacity = .8 * pulse; ring((d.ax + d.bx) / 2, d.y, (d.az + d.bz) / 2, .4); }   // (Tripwire: the wire across the doorway)
     else if (kind === 'curve') { const pos = K.pvArc.geometry.attributes.position, e = eyeY(P); for (let i = 0; i < 40; i++) { const q = i / 39, a = Math.min(1, q * 2), b = Math.max(0, q * 2 - 1); pos.setXYZ(i, lp(P.x, d.ax, a) + (d.x - d.ax) * b, e + .3 * q, lp(P.z, d.az, a) + (d.z - d.az) * b); } pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); K.pvMark.visible = true; K.pvMark.position.set(d.x, d.y, d.z); K.pvMark.material.color.set('#fff6d6'); }
     else if (kind === 'run') { const pos = K.pvArc.geometry.attributes.position, e = P.y + .08; let x = d.x, z = d.z, n = 0; for (let s = 0; s < 40; s++) { const nx = x + d.dx * .55, nz = z + d.dz * .55; if (blocked(nx, nz, P.y)) break; x = nx; z = nz; pos.setXYZ(n++, x, hAt(x, z) + .08, z); } for (let i = n; i < 40; i++) pos.setXYZ(i, x, hAt(x, z) + .08, z); pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); ring(x, hAt(x, z), z, .6); }   // Mirage: where the copy will run
     else if (kind === 'zone') { ring(d.px, d.py, d.pz, 5, !d.t); if (d.t && M.byKey[d.t]) { const v = M.byKey[d.t]; K.pvMark.visible = true; K.pvMark.position.set(ipos(v, 'x'), ipos(v, 'y') + 2.3, ipos(v, 'z')); K.pvMark.material.color.set(col); K.pvMark.scale.setScalar(.45 * pulse + .25); } }   // (Duel Field: the circle it opens, and whoever it would take)
@@ -8244,7 +8553,10 @@ const GAME = {
      LIGHTLINE: a curtain of rose light standing on a line across the floor: a bright body (so you cannot see through it),
      the energy lattice climbing it, a hot edge along its foot and its top. It rises in a quarter second and thins out over
      its last half second. LULL: a glass lens on the floor in a field whose ripples run inward to it. GLASSHOUSE: its four
-     walls are Lightlines; the floor inside glows. BLOOM: a cloud of glare (78-fx draws the cloud; here, its glow).
+     walls are Lightlines; the floor inside glows. BLOOM: a cloud of glare (78-fx draws the cloud; here, its glow). DORMANT devices: a small glass lens, or two small posts
+     with a faint line between them; her side sees them always (faint, a small marker over each that shows through walls),
+     a rival only a faint twinkling glint from within 6 m. The one under her crosshair gets a ring: white when it can be
+     fired, red when it is too far or out of sight.
      Everything is made once (buildKitFx3) and pooled; nothing is made in a frame. */
   function buildKitFx3() {
     const K = X.kf2, col = OPS.tessel.col, add = o => { X.scene.add(o); o.visible = false; return o; };
@@ -8271,6 +8583,18 @@ const GAME = {
     // previews: a ghost of the curtain, and the Glasshouse's square
     K3.pvLine = add(new THREE.Group()); { const s = new THREE.Mesh(sheet, energyMat('#ffffff', { hex: 4, op: .5, scan: 1, rim: 0, base: .14, rx: 4 })), f = new THREE.Mesh(edgeG, basic('#ffffff', { opacity: .9 })); f.position.y = .04; K3.pvLine.add(s, f); K3.pvLine.userData = { s, f }; }
     K3.pvSquare = add(flat(new THREE.RingGeometry(.97, 1, 4, 1), basic('#ffffff', { opacity: .9, blending: THREE.NormalBlending }))); K3.pvSquare.rotation.z = Math.PI / 4;
+    // dormant devices: the lens, the posts and their line, the marker (seen through walls by her side), and the ring on the one she looks at
+    const markT = canvasTex(64, 64, g => { g.translate(32, 32); g.rotate(Math.PI / 4); g.strokeStyle = 'rgba(20,8,14,.8)'; g.lineWidth = 11; g.strokeRect(-13, -13, 26, 26); g.strokeStyle = '#ffffff'; g.lineWidth = 6; g.strokeRect(-13, -13, 26, 26); g.fillStyle = '#ffffff'; g.fillRect(-5, -5, 10, 10); });
+    const ringT = canvasTex(128, 128, g => { g.strokeStyle = '#ffffff'; g.lineWidth = 8; g.beginPath(); g.arc(64, 64, 50, 0, TAU); g.stroke(); g.globalAlpha = .5; g.lineWidth = 3; for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(64, 64, 60, i * TAU / 4 + .25, (i + 1) * TAU / 4 - .25); g.stroke(); } });
+    const mark = () => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: markT, color: col, transparent: true, depthWrite: false, depthTest: false, toneMapped: false })); m.scale.setScalar(.36); m.renderOrder = 6; return m; };
+    const glint = () => new THREE.Sprite(new THREE.SpriteMaterial({ map: K.glowT, color: '#ff6fb0', transparent: true, depthWrite: false, toneMapped: false }));   // (normal blending: it stays rose on a pale floor)
+    const glass = () => new THREE.MeshBasicMaterial({ color: '#ff8cc0', transparent: true, opacity: .5, depthWrite: false, toneMapped: false });
+    K3.dLens = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), lens = new THREE.Mesh(new THREE.SphereGeometry(.2, 16, 8), glass()), gl = glint(), mk = mark(); lens.scale.set(1, .45, 1); lens.position.y = .28; gl.position.y = .3; mk.position.y = .85; g.add(lens, gl, mk); g.userData = { lens, gl, mk }; K3.dLens.push(add(g)); }
+    const postG = new THREE.CylinderGeometry(.03, .05, .8, 8); postG.translate(0, .4, 0);
+    K3.dLines = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), posts = [0, 1].map(() => { const q = new THREE.Group(), m = new THREE.Mesh(postG, glass()), gl = glint(); gl.position.y = .82; q.add(m, gl); g.add(q); q.userData = { m, gl }; return q; });
+      const path = flat(new THREE.PlaneGeometry(1, .07), basic(col, { opacity: .3 })), mk = mark(); path.geometry.translate(.5, 0, 0); path.position.y = .04; g.add(path, mk); g.userData = { posts, path, mk }; K3.dLines.push(add(g)); }
+    K3.tRing = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: ringT, color: '#ffffff', transparent: true, depthWrite: false, depthTest: false, toneMapped: false }))); K3.tRing.renderOrder = 7; K3.tWarn = new THREE.Color(WARN); K3.tOk = new THREE.Color('#ffffff');
+    buildKitFx4();   // (79-kitfx4: holding a site)
   }
   // place a curtain (a group whose +x runs from a to b) on a line
   function setLine(g, ax, az, bx, bz, y, h) { const len = Math.hypot(bx - ax, bz - az); g.position.set(ax, y, az); g.rotation.y = Math.atan2(-(bz - az), bx - ax); return len; }
@@ -8301,8 +8625,26 @@ const GAME = {
     // Bloom's glow, inside each glare cloud
     let n = 0; for (const s of M.smokes) { if (!s.glare || n >= K3.glares.length) continue; const sp = K3.glares[n++]; sp.visible = true; sp.position.set(s.x, s.y + 1.4, s.z); sp.scale.setScalar(s.r * 2.6); sp.material.opacity = .5 + .1 * Math.sin(X.t * 2 + n); }
     for (; n < K3.glares.length; n++) K3.glares[n].visible = false;
+    dormantFx(K3, K2);
+    kitFx4(dt);   // (79-kitfx4: holding a site)
   }
-  function hideKitFx3() { const K3 = X && X.kf3; if (!K3) return; for (const k of ['lines', 'lenses', 'floors', 'glares']) for (const m of K3[k]) m.visible = false; hidePreviewTessel(); }
+  // Tessel's dormant devices, and the ring on the one under her crosshair
+  const DFP = [0, 0, 0];
+  function dormantFx(K3, K2) {
+    const P = me(); let nl = 0, nn = 0; if (!P) return;
+    for (const D of K2.devs) { const ours = D.by.team === P.team, tw = .5 + .5 * Math.sin(X.t * (ours ? 3 : 9) + D.x * 3);
+      if (D.k === 'q') { if (nl >= K3.dLens.length || (!ours && Math.hypot(D.x - P.x, D.z - P.z) > TRIG.glint)) continue; const g = K3.dLens[nl++], u = g.userData;
+        g.visible = true; g.position.set(D.x, D.y, D.z); u.lens.material.opacity = ours ? .5 : .16; u.gl.material.opacity = ours ? .45 + .2 * tw : .35 * tw; u.gl.scale.setScalar(ours ? .6 : .25 + .3 * tw); u.mk.visible = ours; u.lens.rotation.y = X.t * .6; continue; }
+      if (nn >= K3.dLines.length) continue; const na = Math.hypot(D.ax - P.x, D.az - P.z) < TRIG.glint, nb = Math.hypot(D.bx - P.x, D.bz - P.z) < TRIG.glint; if (!ours && !na && !nb) continue;
+      const g = K3.dLines[nn++], u = g.userData, len = setLine(g, D.ax, D.az, D.bx, D.bz, D.y, 0); g.visible = true; u.posts[1].position.x = len; u.path.scale.x = len; u.path.visible = ours; u.path.material.opacity = .18 + .1 * tw;
+      u.mk.visible = ours; u.mk.position.set(len / 2, 1, 0);
+      for (let i = 0; i < 2; i++) { const q = u.posts[i], vis = ours || (i ? nb : na); q.visible = vis; q.userData.m.material.opacity = ours ? .55 : .18; q.userData.gl.material.opacity = ours ? .45 + .2 * tw : .35 * tw; q.userData.gl.scale.setScalar(ours ? .45 : .2 + .25 * tw); } }
+    for (; nl < K3.dLens.length; nl++) K3.dLens[nl].visible = false;
+    for (; nn < K3.dLines.length; nn++) K3.dLines[nn].visible = false;
+    const st = P.op === 'tessel' && P.alive && P === viewer() ? tesselState(P) : null, R0 = K3.tRing; R0.visible = !!st;
+    if (st) { devPt(P.tlD, P.tlI, DFP); const go = st === 'ok' && M.phase === 'live'; R0.position.set(DFP[0], DFP[1], DFP[2]); R0.scale.setScalar((.45 + P.tlDist * .025) * (1 + .08 * Math.sin(X.t * 8))); R0.material.color.copy(go ? K3.tOk : K3.tWarn); R0.material.opacity = go ? .95 : .7; R0.material.rotation = X.t * .8; }
+  }
+  function hideKitFx3() { const K3 = X && X.kf3; if (!K3) return; for (const k of ['lines', 'lenses', 'floors', 'glares', 'dLens', 'dLines']) for (const m of K3[k]) m.visible = false; K3.tRing.visible = false; hidePreviewTessel(); hideKitFx4(); }
   // the moments
   const fx3 = () => X && ready && X.kf3 && M;
   on('lightline', L => { if (!fx3()) return; const c = OPS.tessel.col; burst('ring', L.ax, L.y, L.az, c, 1.6, .45); burst('ring', L.bx, L.y, L.bz, c, 1.6, .45);
@@ -8311,12 +8653,92 @@ const GAME = {
   on('bloomPop', s => { if (!fx3()) return; burst('shell', s.x, s.y + 1.3, s.z, '#ffe0ee', 3.6, .4); burst('ring', s.x, s.y, s.z, OPS.tessel.col, 4, .5); X.flashL.position.set(s.x, s.y + 1.4, s.z); X.flashL.intensity = 10;
     for (let i = 0; i < 18; i++) spark([s.x, s.y + 1.3, s.z], [rnd(-5, 5), rnd(-1, 5), rnd(-5, 5)], i % 3 ? '#fff4fa' : OPS.tessel.col, .5); });
   on('lullStart', Z => { if (!fx3()) return; burst('ring', Z.x, Z.y, Z.z, OPS.tessel.col, Z.r, .5); burst('shell', Z.x, Z.y + .3, Z.z, '#ffd6ea', 1.2, .35); });
+  on('devFire', D => { if (!fx3()) return; const c = OPS.tessel.col; if (D.k === 'q') burst('pillar', D.x, D.y, D.z, c, .35, .45, 2.2); else { burst('pillar', D.ax, D.y, D.az, c, .3, .4, 2); burst('pillar', D.bx, D.y, D.bz, c, .3, .4, 2); } });
+  on('devSet', D => { if (!fx3() || !me() || D.by.team !== me().team) return; burst('ring', D.k === 'q' ? D.x : D.ax, D.y + .02, D.k === 'q' ? D.z : D.az, OPS.tessel.col, .8, .35); if (D.k === 'e') burst('ring', D.bx, D.y + .02, D.bz, OPS.tessel.col, .8, .35); });
   on('lensBreak', Z => { if (!fx3()) return; burst('shell', Z.x, Z.y + .3, Z.z, '#ffffff', 1.4, .3); for (let i = 0; i < 22; i++) spark([Z.x, Z.y + .3, Z.z], [rnd(-4, 4), rnd(1, 5), rnd(-4, 4)], i % 2 ? '#ffffff' : OPS.tessel.col, .5); });
   on('lit', (L, v) => { L.pulseT = X ? X.t + .5 : 0; if (!fx3()) return; burst('shell', v.x, v.y + 1.1, v.z, OPS.tessel.col, 1.3, .45); burst('ring', v.x, v.y, v.z, '#ffffff', 1.4, .4); });
   // a bullet through a Lightline: a spray of light where it passed
   const SH3 = [0, 0, 0];
   on('shot', (f, S) => { if (!fx3() || !S || !M.kit || !M.kit.lines || !M.kit.lines.length) return; const t = lineT(S.o, S.d, S.dist); if (t >= S.dist) return;
     SH3[0] = S.o[0] + S.d[0] * t; SH3[1] = S.o[1] + S.d[1] * t; SH3[2] = S.o[2] + S.d[2] * t; for (let i = 0; i < 3; i++) spark(SH3, [rnd(-1, 1), rnd(-.5, 1.5), rnd(-1, 1)], i ? OPS.tessel.col : '#ffffff', .3); });
+  /* ---------- 79 kit effects, fourth part: holding a site (48) ----------
+     SENTRY: the arc it guards lies faint on the floor for everyone (blue sweeping, amber locking on, red firing; 79-kitfx
+     colours its eye the same). TRIPWIRE: two anchors and a hot wire at shin height; rivals see it within 10 m. SLOW FIELD
+     canister: a squat can with a blinking light (rivals see it within 12 m; its own side also sees the ring it watches).
+     RAMPART: a health bar along its top. WARD BEACON: a tall amber light anyone can see, and its reach on the floor for
+     its own side. SNARE, sprung: the leash from the trap to whoever it holds.
+     Everything is pooled and made once (buildKitFx4, from buildKitFx3) so nothing compiles mid-round; nothing is made in a
+     frame. */
+  function buildKitFx4() {
+    const K = X.kf2, add = o => { X.scene.add(o); o.visible = false; return o; };
+    const basic = (c, o) => new THREE.MeshBasicMaterial(Object.assign({ color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }, o || {}));
+    const lit = c => new THREE.MeshLambertMaterial({ color: LC(c) }), flat = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.rotation.x = -Math.PI / 2; return m; };
+    const sprite = (c, s) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: K.glowT, color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false })); sp.scale.setScalar(s); return sp; };
+    const ax = OPS.axiom.col, bs = OPS.bastion.col, devM = lit('#2a2e36');
+    const K4 = X.kf4 = { up: new THREE.Vector3(0, 1, 0), v: new THREE.Vector3(), c: { idle: new THREE.Color(ax), lock: new THREE.Color('#ffb347'), fire: new THREE.Color('#ff5a4d'), bar: new THREE.Color(bs), mended: new THREE.Color('#fff0c8'), low: new THREE.Color('#ff7a4a') } };
+    // the Sentry's arc: a faint fan with a brighter rim, 3.5 m out (it guards 22 m; this only shows which way)
+    K4.arcs = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), th0 = Math.PI / 2 - SENTRY.arc, th = SENTRY.arc * 2, fan = flat(new THREE.CircleGeometry(3.5, 20, th0, th), basic(ax, { opacity: .1 })), rim = flat(new THREE.RingGeometry(3.36, 3.5, 20, 1, th0, th), basic(ax, { opacity: .45 }));
+      fan.position.y = .03; rim.position.y = .035; g.add(fan, rim); g.userData = { fan, rim }; K4.arcs.push(add(g)); }
+    // the Tripwire: a group whose +x runs from one anchor to the other
+    K4.wires = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), wire = new THREE.Mesh(new THREE.BoxGeometry(1, .022, .022), basic('#ff5a2a', { opacity: .9, blending: THREE.NormalBlending })); wire.geometry.translate(.5, 0, 0); wire.position.y = WIRE.h;   // (normal blending: it stays red on a pale floor)
+      const anc = [0, 1].map(() => { const a = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(.1, .18, .1), devM), lamp = sprite('#ff7a4a', .28); b.position.y = WIRE.h; lamp.position.y = WIRE.h + .12; a.add(b, lamp); g.add(a); a.userData = { lamp }; return a; });
+      g.add(wire); g.userData = { wire, anc }; K4.wires.push(add(g)); }
+    // the Slow Field canister
+    K4.cans = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), body = new THREE.Mesh(new THREE.CylinderGeometry(.1, .12, .3, 10), lit('#3a4250')), band = new THREE.Mesh(new THREE.TorusGeometry(.112, .016, 6, 16), basic(ax)), lamp = sprite(ax, .4), ring = flat(new THREE.RingGeometry(.95, 1, 40), basic(ax, { opacity: .35 }));
+      body.position.y = .15; band.rotation.x = Math.PI / 2; band.position.y = .22; lamp.position.y = .36; ring.position.y = .03; ring.scale.setScalar(CAN.trip); g.add(body, band, lamp, ring); g.userData = { lamp, ring }; K4.cans.push(add(g)); }
+    // the Ward Beacon
+    K4.beacons = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), base = new THREE.Mesh(new THREE.CylinderGeometry(.16, .2, .18, 10), lit('#3c3428')), core = new THREE.Mesh(new THREE.SphereGeometry(.11, 10, 8), basic('#ffe2b0', { blending: THREE.NormalBlending, transparent: false })),
+      beam = new THREE.Mesh(new THREE.CylinderGeometry(.05, .12, 2.6, 10, 1, true), basic(bs, { opacity: .45 })), halo = sprite(bs, 1.1), reach = flat(new THREE.RingGeometry(.97, 1, 48), basic(bs, { opacity: .3 }));
+      base.position.y = .09; core.position.y = .3; beam.position.y = 1.6; halo.position.y = .35; reach.position.y = .03; reach.scale.setScalar(BEACON.r); g.add(base, core, beam, halo, reach); g.userData = { beam, halo, reach, core }; K4.beacons.push(add(g)); }
+    // a Rampart's health: a dark bar along its top, filled in amber from one end
+    K4.bars = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), back = new THREE.Mesh(new THREE.BoxGeometry(1, .16, .1), new THREE.MeshBasicMaterial({ color: '#14100a', transparent: true, opacity: .75, depthWrite: false, toneMapped: false })), fill = new THREE.Mesh(new THREE.BoxGeometry(1, .18, .12), basic(bs, { opacity: .95, blending: THREE.NormalBlending }));
+      fill.geometry.translate(.5, 0, 0); g.add(back, fill); g.userData = { back, fill }; K4.bars.push(add(g)); }
+    // a sprung Snare's leash
+    K4.leashes = []; for (let i = 0; i < 2; i++) { const m = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, 1, 6, 1, true), basic(OPS.talon.col, { opacity: .85 })); m.geometry.translate(0, .5, 0); K4.leashes.push(add(m)); }
+  }
+  // a rival sees one of these only from near enough; its own side always
+  const seen4 = (o, P, x, z, r) => o.by.team === P.team || Math.hypot(x - P.x, z - P.z) < r;
+  function kitFx4(dt) {
+    const K4 = X.kf4, K2 = M.kit, P = me(); if (!K4 || !K2 || !P) return; const C = K4.c; let n = 0;
+    for (const s of K2.sentries) { if (n >= K4.arcs.length) break; const g = K4.arcs[n++], u = g.userData, c = s.target ? (s.lockT > 0 ? C.lock : C.fire) : C.idle, hot = s.target ? 1 : .4;
+      g.visible = true; g.position.set(s.x, s.y, s.z); g.rotation.y = s.yaw; u.fan.material.color.copy(c); u.rim.material.color.copy(c); u.fan.material.opacity = .05 + .06 * hot; u.rim.material.opacity = .2 + .35 * hot * (s.target && s.lockT > 0 ? .6 + .4 * Math.sin(X.t * 30) : 1); }
+    for (; n < K4.arcs.length; n++) K4.arcs[n].visible = false;
+    n = 0; for (const W of K2.wires) { if (n >= K4.wires.length) break; const mine = W.by.team === P.team;
+      if (!mine && !(Math.hypot(W.ax - P.x, W.az - P.z) < WIRE.see || Math.hypot(W.bx - P.x, W.bz - P.z) < WIRE.see || Math.hypot(W.x - P.x, W.z - P.z) < WIRE.see)) continue;
+      const g = K4.wires[n++], u = g.userData, len = Math.hypot(W.bx - W.ax, W.bz - W.az), hot = W.fuse >= 0, arming = W.arm > 0;
+      g.visible = true; g.position.set(W.ax, W.y, W.az); g.rotation.y = Math.atan2(-(W.bz - W.az), W.bx - W.ax); u.wire.scale.x = len; u.anc[1].position.x = len;
+      u.wire.material.opacity = hot ? .6 + .4 * Math.sin(X.t * 40) : arming ? .15 + .15 * Math.sin(X.t * 8) : mine ? .75 : .3 + .2 * Math.sin(X.t * 5 + W.x);
+      for (const a of u.anc) a.userData.lamp.material.opacity = hot || Math.sin(X.t * (arming ? 10 : 3)) > 0 ? .9 : .3; }
+    for (; n < K4.wires.length; n++) K4.wires[n].visible = false;
+    n = 0; for (const Cn of K2.cans) { if (n >= K4.cans.length) break; if (!seen4(Cn, P, Cn.x, Cn.z, CAN.see)) continue; const g = K4.cans[n++], u = g.userData;
+      g.visible = true; g.position.set(Cn.x, Cn.y, Cn.z); u.lamp.material.opacity = Math.sin(X.t * (Cn.arm > 0 ? 14 : 4)) > 0 ? .95 : .2; u.ring.visible = Cn.by.team === P.team; u.ring.material.opacity = .2 + .15 * Math.sin(X.t * 3); }
+    for (; n < K4.cans.length; n++) K4.cans[n].visible = false;
+    n = 0; for (const B of K2.beacons) { if (n >= K4.beacons.length) break; const g = K4.beacons[n++], u = g.userData, live = M.phase === 'live', k = live ? Math.min(1, B.t / 1) : .6;
+      g.visible = true; g.position.set(B.x, B.y, B.z); u.beam.material.opacity = (.3 + .15 * Math.sin(X.t * 3)) * k + (B.flash > 0 ? .4 : 0); u.halo.material.opacity = (.6 + .3 * Math.sin(X.t * 5)) * k; u.reach.visible = B.by.team === P.team; u.reach.material.opacity = .15 + .2 * Math.max(0, 1 - (B.tick || 0) / BEACON.every * 4); }
+    for (; n < K4.beacons.length; n++) K4.beacons[n].visible = false;
+    n = 0; for (const w of M.walls) { if (w.hp == null || n >= K4.bars.length) continue; const g = K4.bars[n++], u = g.userData, along = w.x1 - w.x0 < 1, L = along ? w.z1 - w.z0 : w.x1 - w.x0, q = Math.max(0, w.hp / w.max);
+      g.visible = w.grow > .2; g.position.set((w.x0 + w.x1) / 2, 3 * w.grow + .3, (w.z0 + w.z1) / 2); g.rotation.y = along ? Math.PI / 2 : 0; u.back.scale.x = L; u.fill.position.x = -L / 2; u.fill.scale.x = Math.max(.001, L * q);
+      u.fill.material.color.copy(w.re ? C.mended : q < .3 ? C.low : C.bar); u.fill.material.opacity = w.hitT > 0 ? 1 : .85; }
+    for (; n < K4.bars.length; n++) K4.bars[n].visible = false;
+    n = 0; for (const s of K2.snares) { if (!s.sprung || n >= K4.leashes.length) continue; const v = M.byKey[s.sprung]; if (!v || !v.alive) continue; const m = K4.leashes[n++], vx = ipos(v, 'x') - s.x, vy = ipos(v, 'y') + .9 - s.y - .12, vz = ipos(v, 'z') - s.z, L = Math.hypot(vx, vy, vz) || 1;
+      m.visible = true; m.position.set(s.x, s.y + .12, s.z); K4.v.set(vx / L, vy / L, vz / L); m.quaternion.setFromUnitVectors(K4.up, K4.v); m.scale.set(1, L, 1); m.material.opacity = .6 + .3 * Math.sin(X.t * 12); }
+    for (; n < K4.leashes.length; n++) K4.leashes[n].visible = false;
+  }
+  function hideKitFx4() { const K4 = X && X.kf4; if (!K4) return; for (const k of ['arcs', 'wires', 'cans', 'beacons', 'bars', 'leashes']) for (const m of K4[k]) m.visible = false; }
+  // the moments
+  const fx4 = () => X && ready && X.kf4 && M;
+  on('beaconPulse', B => { if (fx4()) { burst('ring', B.x, B.y, B.z, OPS.bastion.col, BEACON.r, .6); B.flash = .3; } });
+  on('beaconPop', B => { if (fx4()) { burst('ring', B.x, B.y, B.z, '#ffffff', BEACON.r, .7); burst('pillar', B.x, B.y, B.z, OPS.bastion.col, .6, .6, 3); B.flash = .5; } });
+  on('beaconHit', B => { if (fx4()) for (let i = 0; i < 5; i++) spark([B.x, B.y + .4, B.z], [rnd(-2, 2), rnd(0, 3), rnd(-2, 2)], OPS.bastion.col, .3); });
+  on('beaconDown', B => { if (fx4()) for (let i = 0; i < 16; i++) spark([B.x, B.y + .5, B.z], [rnd(-3, 3), rnd(0, 4), rnd(-3, 3)], OPS.bastion.col, .5); });
+  on('sentryLock', s => { if (fx4()) burst('ring', s.x, s.y + .02, s.z, '#ffb347', 1.2, .35); });
+  on('wallHit', w => { if (!fx4()) return; const cx = (w.x0 + w.x1) / 2, cz = (w.z0 + w.z1) / 2; spark([cx + rnd(-1, 1) * (w.x1 - w.x0) / 2, rnd(.5, 2.5), cz + rnd(-1, 1) * (w.z1 - w.z0) / 2], [rnd(-2, 2), rnd(0, 2), rnd(-2, 2)], OPS.bastion.col, .3); });
+  on('wallBreak', w => { if (!fx4()) return; const cx = (w.x0 + w.x1) / 2, cz = (w.z0 + w.z1) / 2; for (let i = 0; i < 26; i++) spark([cx + rnd(-1, 1) * (w.x1 - w.x0) / 2, rnd(.2, 2.8), cz + rnd(-1, 1) * (w.z1 - w.z0) / 2], [rnd(-3, 3), rnd(0, 4), rnd(-3, 3)], i % 2 ? OPS.bastion.col : '#c8b8a0', .6); X.shake = Math.max(X.shake || 0, .15); });
+  on('wallMend', w => { if (fx4()) burst('shell', (w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2, OPS.bastion.col, 3.2, .5); });
+  on('kitBreak', (o, kind) => { if (!fx4()) return; const x = kind === 'wire' ? o.ax : o.x, z = kind === 'wire' ? o.az : o.z, y = (o.y || 0) + (kind === 'wire' ? WIRE.h : .3), c = kind === 'dev' ? OPS.tessel.col : kind === 'snare' ? OPS.talon.col : OPS.axiom.col;
+    for (let i = 0; i < 14; i++) spark([x, y, z], [rnd(-3, 3), rnd(.5, 4), rnd(-3, 3)], i % 2 ? '#ffffff' : c, .45); });
+  on('kitPick', (f, D) => { if (fx4()) burst('ring', D.x != null ? D.x : D.ax, (D.y || 0) + .02, D.z != null ? D.z : D.az, (OPS[f.op] || OPS.vex).col, 1, .4); });
+  on('canSet', Cn => { if (fx4()) burst('ring', Cn.x, Cn.y + .02, Cn.z, OPS.axiom.col, .8, .4); });
   /* ---------- 80 audio: every sound is synthesised, and placed ----------
      A sound made by the rival is quieter with distance, panned left or right by where it is relative to your facing, and
      muffled when a wall is in the way, so footsteps and gunfire tell you where they are. Your own sounds play dead centre.
@@ -8630,6 +9052,15 @@ const GAME = {
   cue('fireStart', F => { const o = outFor(at(F.x, F.y + 1, F.z), 1.2); hiss(o, .5, .45, 'lowpass', 700); hiss(o, 1.2, .12, 'bandpass', 1200, .1, .7); tone(o, 70, .4, 'sine', .3, -20); });
   cue('mineArm', m => { const o = outFor(at(m.x, m.y + 1, m.z)); tone(o, 1900, .06, 'square', .08); tone(o, 1900, .06, 'square', .08, 0, .14); tone(o, 2400, .08, 'square', .09, 0, .27); });
   cue('mineBoom', m => { const o = outFor(at(m.x, m.y + 1, m.z), 1.5); hiss(o, .7, .6, 'lowpass', 600); tone(o, 55, .6, 'sine', .6, -25); hiss(o, .2, .3, 'bandpass', 1800); });
+  cue('sentryLock', s => { const o = outFor(at(s.x, s.y + 1, s.z)); tone(o, 1200, .07, 'square', .05); tone(o, 1600, .09, 'square', .05, 0, .12); });   // (the lock before it fires: a warning you can hear)
+  cue('devSet', D => { if (!M || D.by.team !== me().team) return; tone(outFor(at(D.x, D.y + .5, D.z)), 1760, .12, 'sine', .03, -300); });
+  cue('devFire', D => { const o = outFor(at(D.x, D.y + .5, D.z)); tone(o, 1320, .25, 'triangle', .06, 400); tone(o, 1980, .3, 'sine', .03, 0, .05); });
+  cue('kitBreak', o => { const q = outFor(at(o.x != null ? o.x : o.ax, (o.y || 0) + .4, o.z != null ? o.z : o.az)); hiss(q, .18, .14, 'highpass', 5000); tone(q, 2600, .08, 'square', .03, -1200); });
+  cue('kitPick', (f, D) => { if (f === me()) tone(outFor(null), 900, .08, 'triangle', .05, 300); });
+  cue('wallHit', w => tone(outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2)), 140, .06, 'square', .05, -40));
+  cue('wallBreak', w => { const o = outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2), 1.3); hiss(o, .5, .4, 'lowpass', 900); tone(o, 70, .4, 'sine', .3, -30); });
+  cue('wallMend', w => { const o = outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2)); tone(o, 330, .35, 'triangle', .08, 200); });
+  cue('beaconPulse', B => { if (M && B.by.team === me().team) tone(outFor(at(B.x, B.y + 1, B.z)), 780, .18, 'sine', .025, 120); });
   cue('sentryShot', s => { const o = outFor(at(s.x, s.y + 1.6, s.z), .8); hiss(o, .05, .32, 'bandpass', 2600, 0, .7); tone(o, 220, .06, 'square', .06, -120); });
   cue('sentryHit', s => tone(outFor(at(s.x, s.y + 1.6, s.z), .7), 1700, .04, 'square', .05, -500));
   cue('sentryDown', s => { const o = outFor(at(s.x, s.y + 1.6, s.z), 1.2); hiss(o, .5, .35, 'lowpass', 900); tone(o, 400, .5, 'sawtooth', .08, -330); });
@@ -8856,7 +9287,7 @@ const GAME = {
      the usual keys. The arrows, right Shift and Ctrl and Z keep working beside your binds; Escape and Enter are never bound. */
   const BINDS = [['fwd', 'Forward', 'KeyW'], ['back', 'Back', 'KeyS'], ['left', 'Left', 'KeyA'], ['right', 'Right', 'KeyD'], ['jump', 'Jump', 'Space'], ['crouch', 'Crouch', 'ControlLeft'], ['walk', 'Walk', 'ShiftLeft'],
     ['use', 'Use / plant / defuse', 'KeyF'], ['fire', 'Fire (key)', 'KeyV'], ['reload', 'Reload', 'KeyR'], ['s1', 'Main gun', 'Digit1'], ['s2', 'Sidearm', 'Digit2'], ['s3', 'Knife', 'Digit3'],
-    ['nade', 'Grenade', 'KeyG'], ['abc', 'Ability C', 'KeyC'], ['abq', 'Ability Q', 'KeyQ'], ['abe', 'Ability E', 'KeyE'], ['abx', 'Ultimate', 'KeyX'],
+    ['nade', 'Grenade', 'KeyG'], ['abc', 'Ability C', 'KeyC'], ['abq', 'Ability Q', 'KeyQ'], ['abe', 'Ability E', 'KeyE'], ['abx', 'Ultimate', 'KeyX'], ['trig', 'Trigger device (Tessel)', 'Digit4'],
     ['inspect', 'Inspect', 'KeyY'], ['drop', 'Drop gun', 'KeyT'], ['dropc', 'Drop charge', 'KeyH'], ['ping', 'Ping', 'KeyJ'], ['armory', 'Armory', 'KeyB'], ['opts', 'Settings', 'KeyO']];
   const BIND_DEF = Object.fromEntries(BINDS.map(b => [b[0], b[2]]));
   const bindOf = id => (CFG.binds && CFG.binds[id]) || BIND_DEF[id];
@@ -8901,12 +9332,13 @@ const GAME = {
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
     else if (c === 'KeyG') throwNade(P); else if (c === 'KeyC') readyAb(P, 'c'); else if (c === 'KeyQ') readyAb(P, 'q'); else if (c === 'KeyE') readyAb(P, 'e'); else if (c === 'KeyX') readyAb(P, 'x');   // ready it (the key again puts it away); a click uses it
+    else if (c === 'Digit4') tesselTrigger(P);   // Tessel: fire the dormant device under the crosshair
     else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) startInspect(P);
     else if (c === 'KeyT') dropHeld(P); else if (c === 'KeyH') dropCharge(P); else if (c === 'KeyJ') ping(P);   // drop the gun in your hand, or the charge, for a teammate
   }
   if (typeof document !== 'undefined') {
     // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser
-    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[remapKey(e.code)] || /^(Key[BRQEFYOXTHJC]|Digit[1-3]|Tab)$/.test(remapKey(e.code) || '') || (CFG.binds && Object.values(CFG.binds).includes(e.code)))) e.preventDefault(); }, true);
+    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[remapKey(e.code)] || /^(Key[BRQEFYOXTHJC]|Digit[1-4]|Tab)$/.test(remapKey(e.code) || '') || (CFG.binds && Object.values(CFG.binds).includes(e.code)))) e.preventDefault(); }, true);
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       if (UI.armory) { const V = K.view, s = 1 / pxPer(); ptr = { x: cl(ptr.x + e.movementX * s, V.x0 + 2, V.x1 - 4), y: cl(ptr.y + e.movementY * s, V.y0 + 2, V.y1 - 4) }; KNAV.on = false; if (dragZ) dragZ.fn(ptr.x, ptr.y); return; }   // the armory's cursor
       const P = me(); if (!P.alive) return;   // the dead don't turn: the body stays as it fell
@@ -8934,12 +9366,12 @@ const GAME = {
   // where each touch button sits by default (round the right thumb, in the HUD's units) and how big. Settings > Button
   // layout moves and sizes them (CFG.tlay: per button an offset from here, in the HUD's units, and a size), so a layout
   // holds on any screen; it is saved with the other settings, which go to your account
-  const TOUCH_KEYS = ['fire', 'alt', 'jump', 'crouch', 'reload', 'swap', 'c', 'q', 'e', 'x', 'nade', 'use', 'drop'];
+  const TOUCH_KEYS = ['fire', 'alt', 'jump', 'crouch', 'reload', 'swap', 'c', 'q', 'e', 'x', 'nade', 'use', 'drop', 'trig'];
   function touchHome(k) {
     const V = K.view, u = uiScale(), fx = V.x1 - 150 * u, fy = V.y1 - 150 * u;
     if (k === 'move') return [V.x0 + 170 * u, V.y1 - 150 * u, 62];
     return { fire: [fx, fy, 62], alt: [fx - 22 * u, fy - 116 * u, 38], jump: [fx + 104 * u, fy - 44 * u, 38], crouch: [fx + 100 * u, fy + 66 * u, 36], reload: [fx - 110 * u, fy + 56 * u, 36], swap: [fx + 72 * u, fy - 128 * u, 36],
-      c: [fx - 282 * u, fy - 60 * u, 34], q: [fx - 118 * u, fy - 46 * u, 38], x: [fx - 290 * u, fy + 30 * u, 36], e: [fx - 204 * u, fy + 4 * u, 38], nade: [fx - 196 * u, fy - 104 * u, 34], use: [640, V.y1 - 200 * u, 58], drop: [fx - 300 * u, fy - 150 * u, 32] }[k];
+      c: [fx - 282 * u, fy - 60 * u, 34], q: [fx - 118 * u, fy - 46 * u, 38], x: [fx - 290 * u, fy + 30 * u, 36], e: [fx - 204 * u, fy + 4 * u, 38], nade: [fx - 196 * u, fy - 104 * u, 34], use: [640, V.y1 - 200 * u, 58], drop: [fx - 300 * u, fy - 150 * u, 32], trig: [fx - 110 * u, fy - 192 * u, 40] }[k];
   }
   const touchSize = k => (((CFG.tlay || {})[k] || {}).s) || 1;
   function touchAt(k) {
@@ -8964,6 +9396,7 @@ const GAME = {
       { k: 'e', ...at('e'), t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, on: P.rdy === 'e', col: op.col },
       { k: 'nade', ...at('nade'), t: 'SMOKE ' + (P.smokes || 0), show: P.alive && live && P.smokes > 0, off: !(P.smokes > 0), col: NADE.col },
       { k: 'use', ...at('use'), t: P.nearLoot ? (lootFree(P) ? 'PICK UP' : 'SWAP GUN') : orbNear ? 'TAKE ORB' : canUse ? (sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE') : 'DOOR', show: canUse || (P.alive && !!P.nearLoot) || (live && P.alive && (orbNear || doorNear)), col: P.nearLoot ? BONE : orbNear ? op.col : FOE },
+      { k: 'trig', ...at('trig'), t: 'TRIGGER', show: P.alive && live && P.op === 'tessel' && tesselState(P) === 'ok', col: op.col },   // (only while a dormant device can be fired)
       { k: 'drop', ...at('drop'), t: carries(P) && !M.planted ? 'DROP ◆' : 'DROP', show: P.alive && M.mode !== 'range' && M.phase !== 'end' && ((carries(P) && !M.planted) || (M.phase === 'buy' && !!(P.guns[1] || P.guns[2] !== 'pip'))), col: carries(P) ? GOLD : BONE },
     ].filter(b => b.show);
   }
@@ -8974,7 +9407,7 @@ const GAME = {
       else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (canSlide(me())) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
       // an ability button readies it (FIRE uses it, the alt button its other way; tap again to put it away)
       else if (b.k === 'c' || b.k === 'q' || b.k === 'e' || b.k === 'x') readyAb(P, b.k);
-      else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);   // (USE and JUMP are held)
+      else if (b.k === 'trig') tesselTrigger(P); else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);   // (USE and JUMP are held)
       return;
     }
     if (M && screen === 'play' && !me().alive && UI.spec && X && M.mode !== 'range') { nextSpec(); return; }   // dead: a tap moves to the next teammate
@@ -9210,7 +9643,7 @@ const GAME = {
   /* ---- ability icons: a small line drawing for each, in the bar and the armory */
   const ABICON = { vexc: 'orb', vexq: 'dash', vexe: 'smoke', vexx: 'portal', irisc: 'eye', irisq: 'wave', irise: 'flash', irisx: 'eye', bastionc: 'beacon', bastionq: 'wall', bastione: 'heart', bastionx: 'shield',
     novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'shroud', wraithe: 'twin', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
-    emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'mine', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel',
+    emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'wire', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel',
     tesselc: 'bloom', tesselq: 'lull', tessele: 'lightline', tesselx: 'glasshouse' };
   // what the other click does, for the hint under the bar
   const ABALT = { vexc: 'A SHORT LOB', talonc: 'A SHORT LOB', axiomc: 'A SHORT LOB', emberq: 'A SHORT LOB', emberx: 'A SHORT LOB', emberc: 'BENT RIGHT', bastionq: 'TURNED ALONG YOUR VIEW', tesselc: 'A SHORT LOB', tesselq: 'A SHORT LOB', tessele: 'ACROSS YOUR VIEW' };
@@ -9241,6 +9674,7 @@ const GAME = {
     else if (kind === 'flame') { g.beginPath(); g.moveTo(0, .9 * r); g.bezierCurveTo(-.8 * r, .7 * r, -.6 * r, -.1 * r, -.1 * r, -.9 * r); g.bezierCurveTo(-.05 * r, -.3 * r, .2 * r, -.35 * r, .25 * r, -.5 * r); g.bezierCurveTo(.8 * r, 0, .7 * r, .7 * r, 0, .9 * r); g.fill(); }
     else if (kind === 'rings') { for (const q of [.3, .6, .9]) { C(0, 0, q); g.stroke(); } }
     else if (kind === 'turret') { g.fillRect(-.45 * r, -.35 * r, .9 * r, .5 * r); g.fillRect(0, -.22 * r, .9 * r, .2 * r); P2([[-.3, .15], [-.6, .85]]); g.stroke(); P2([[.3, .15], [.6, .85]]); g.stroke(); }
+    else if (kind === 'wire') { for (const x of [-.75, .75]) g.fillRect((x - .1) * r, -.2 * r, .2 * r, 1 * r); g.strokeStyle = acc; P2([[-.75, .3], [.75, .3]]); g.stroke(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6; P2([[Math.cos(a) * .12, -.45 + Math.sin(a) * .12], [Math.cos(a) * .34, -.45 + Math.sin(a) * .34]]); g.stroke(); } }   // Tripwire: two anchors and the wire across between them
     else if (kind === 'mine') { C(0, .2, .55, Math.PI, 0); g.fill(); g.fillRect(-.7 * r, .2 * r, 1.4 * r, .2 * r); C(0, -.45, .12); g.fill(); }
     else if (kind === 'hex') { P2([0, 1, 2, 3, 4, 5].map(i => [Math.cos(i * Math.PI / 3 + Math.PI / 6) * .85, Math.sin(i * Math.PI / 3 + Math.PI / 6) * .85]), true); g.stroke(); C(0, 0, .3); g.fill(); }
     // Tessel's: a seed of light opening (Bloom), an hourglass over a ripple (Lull), a curtain stood on a line (Lightline), a room of light (Glasshouse)
@@ -9729,6 +10163,13 @@ const GAME = {
       if (M.fs.some(q => q.team !== P.team && q.alive && q.defuse > 0)) tx(g, M.fs.length > 2 ? 'THEY ARE DEFUSING' : 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);   // any of them, not just the nearest
       if (P.nearLoot && GUNS[P.nearLoot.k]) hint(g, `${touch ? 'PICK UP' : 'F'}: ${lootFree(P) ? '' : 'swap for '}${GUNS[P.nearLoot.k].n}`, V.y0 + 172 * u, 15 * u, GOLD);
       if (GATES.length && P.plant <= 0 && P.defuse <= 0) { const gi = gateNear(P); if (gi >= 0) hint(g, (touch ? 'Tap' : 'F') + (GATES[gi].open ? ': shut door' : ': open door'), V.y0 + 140 * u, 16 * u, GOLD); }
+    }
+    // --- Tessel: the dormant device under the crosshair, and whether it can be fired; or a device of yours to pick up or reinforce
+    if (P === me() && P.alive && (M.phase === 'live' || M.phase === 'buy') && !demo && !UI.armory) {
+      const hy = M.phase === 'buy' ? 470 : V.y0 + 206 * u, st = P.op === 'tessel' ? tesselState(P) : null;   // (in the buy phase, under the crosshair: the round's banner is above it)
+      if (st) { const D = tesselLook(P), nm = D.k === 'q' ? 'LULL' : 'LIGHTLINE', live = M.phase === 'live';
+        hint(g, !live ? nm + '  ·  FIRES ONCE THE ROUND IS LIVE' : st === 'ok' ? (touch ? 'TRIGGER' : keyLabel('trig')) + ' · TRIGGER ' + nm : st === 'far' ? nm + '  ·  TOO FAR: WITHIN 20 m' : nm + '  ·  NO CLEAR SIGHT', hy, 16 * u, live && st === 'ok' ? OPS.tessel.col : live ? WARN : DIM); }
+      else { const h = kitAltHint(P, k => touch ? k.toUpperCase() : keyLabel('ab' + k)); if (h) hint(g, h, hy, 15 * u, OPS[P.op].col); }
     }
     // --- banners
     if (TOAST) { const t = (performance.now() - TOAST.at) / 1000; if (t > 4) TOAST = null; else { g.globalAlpha = cl(Math.min(t * 4, (4 - t) * 2), 0, 1); rr(g, 640 - 230 * u, V.y0 + 64 * u, 460 * u, 34 * u, 8, 'rgba(12,16,22,.85)', GOLD, 1.5); tx(g, TOAST.s, 640, V.y0 + 81 * u, 15 * u, BONE); g.globalAlpha = 1; } }
@@ -10630,8 +11071,8 @@ const GAME = {
      top sizes it. The move stick takes a size (it still appears wherever your left thumb lands). RESET THIS puts the picked
      one back, RESET ALL the lot. The layout is saved with the other settings (CFG.tlay), and those go to your account. */
   const TE = { sel: 'fire', grab: null };
-  const TE_LABEL = { fire: 'FIRE', alt: 'AIM', jump: 'JUMP', crouch: 'DUCK', reload: 'LOAD', swap: 'SWAP', q: 'Q', e: 'E', x: 'ULT', nade: 'SMOKE', use: 'USE', drop: 'DROP', move: 'MOVE' };
-  const TE_NAME = { fire: 'Fire', alt: 'Aim / scope', jump: 'Jump', crouch: 'Duck / slide', reload: 'Reload', swap: 'Swap gun', q: 'Ability Q', e: 'Ability E', x: 'Ultimate', nade: 'Smoke', use: 'Use (plant, defuse, pick up)', drop: 'Drop', move: 'Move stick' };
+  const TE_LABEL = { fire: 'FIRE', alt: 'AIM', jump: 'JUMP', crouch: 'DUCK', reload: 'LOAD', swap: 'SWAP', c: 'C', q: 'Q', e: 'E', x: 'ULT', nade: 'SMOKE', use: 'USE', drop: 'DROP', trig: 'TRIG', move: 'MOVE' };
+  const TE_NAME = { fire: 'Fire', alt: 'Aim / scope', jump: 'Jump', crouch: 'Duck / slide', reload: 'Reload', swap: 'Swap gun', c: 'Ability C', q: 'Ability Q', e: 'Ability E', x: 'Ultimate', nade: 'Smoke', use: 'Use (plant, defuse, pick up)', drop: 'Drop', trig: 'Trigger (Tessel)', move: 'Move stick' };
   function openTouchEdit() { UI.tedit = true; TE.sel = 'fire'; TE.grab = null; }
   function closeTouchEdit() { UI.tedit = false; TE.grab = null; const L = CFG.tlay || {}; for (const k of Object.keys(L)) { const o = L[k]; if (!o || (!o.x && !o.y && (o.s || 1) === 1)) delete L[k]; } saveAll(true); }
   function drawTouchEdit(g) {
@@ -10971,7 +11412,8 @@ const GAME = {
       const I = SH.insp && SH.insp.id === id && sk && INSPECT[sk.line] ? SH.insp : null, iq = I ? (I.hold != null ? I.hold : (performance.now() - I.t0) / 1000 / INSPECT[sk.line].dur) : -1;
       if (I && iq < 1) insFrame(S.model, S.scene, sk.line, Math.max(0, iq), dt, GUNS[k], S.cam.position); else { if (I) SH.insp = null; if (INS.rig && INS.rig.gun === S.model) insEnd(); } }
     const W = innerWidth, H = innerHeight, cam = S.cam; cam.aspect = W / H; cam.fov = 26; const d = S.size / (2 * Math.tan(13 * D2R)) * (UI.panel === 'locker' && !rv ? 1.5 : rv ? 1.05 : 1.08);
-    cam.position.set(0, S.size * .06, d); cam.lookAt(0, 0, 0); cam.setViewOffset(W, H, rv ? 0 : W * (UI.panel === 'locker' ? .19 : .17), rv ? -H * .04 : UI.panel === 'locker' ? -H * .02 : 0, W, H);   // (left of the middle: the panel, or the locker's cards, are on the right) cam.updateProjectionMatrix();
+    cam.position.set(0, S.size * .06, d); cam.lookAt(0, 0, 0); cam.setViewOffset(W, H, rv ? 0 : W * (UI.panel === 'locker' ? .19 : .17), rv ? -H * .04 : UI.panel === 'locker' ? -H * .02 : 0, W, H);   // (left of the middle: the panel, or the locker's cards, are on the right)
+    cam.updateProjectionMatrix();
     S.rim.color.set(sk ? sk.R.col : '#9fd8ff');
     S.scene.background = new THREE.Color(rv && sk ? sk.R.col : '#0b0e13').lerp(new THREE.Color('#07090c'), rv ? .82 : 0);
     X.renderer.render(S.scene, cam); cam.clearViewOffset(); return true;
@@ -11793,6 +12235,7 @@ const GAME = {
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
     team: () => ({ dropHeld, dropCharge, giveCharge, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
+    kit: () => ({ tesselTrigger, tesselState, tesselLook, devPt, wireAim, kitAltTry, hurtWall, viewDir, castShot, fire, giveAmmo, eyeY, yawTo, ability, readyAb }),   // (Tessel's Trigger and the site-holding tools, for the browser checks)
     renderFrame, updateAgent, DOORS, ZONE, SRC, get GW() { return GW; }, get GH() { return GH; }, botMe: d => { me().bot = { diff: d }; me().local = false; }, touchEdit: () => openTouchEdit(), get TE() { return TE; }, INS, INSPECT, startInspect, showInspect, sideOf: f => sideOf(f), plantAt, nextSpec, WH, openWheel, spinWheel, wheelSlices, wheelDay, touchAt, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams, startParty }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, VKF, animParts, aimArms, onEvent: on, audioCtx: () => K.ac, soundLag: () => lag(), shotBuf: k => baked[k], shotBufs: k => [baked[k], ...(bakedV[k] || [])].filter(Boolean),
   };
 })();

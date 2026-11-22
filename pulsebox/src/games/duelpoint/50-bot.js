@@ -111,7 +111,7 @@
     } else if (f.op === 'axiom') {
       if (f.ab.q && there && ((side === 'def' && P.k === 'hold') || (side === 'att' && P.k === 'post')) && holdLook) {
         const yaw = yawTo(f.x, f.z, holdLook[0], holdLook[1]), fx = -Math.sin(yaw), fz = -Math.cos(yaw); botCast(f, 'q', { x: f.x + fx * 1.2, z: f.z + fz * 1.2, yaw }); }
-      if (f.ab.e && ((side === 'def' && P.k === 'hold' && there && M.t < roundT() - 6) || (side === 'att' && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 2))) botCast(f, 'e', { x: f.x, z: f.z });
+      // (Tripwire: 48's lockBot)
     }
   }
   // every operative's C, and Vanta's kit
@@ -138,7 +138,7 @@
     if (f.op === 'tessel') tesselBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt, last, roll);   // (47)
   }
   // use an ability at a chosen place, without having to look there first
-  function botCast(f, k, data) { if (!hasAb(f, k) || M.phase !== 'live' || f.lock > 0 || f.chan) return; spendAb(f, k); applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
+  function botCast(f, k, data) { if (!hasAb(f, k) || M.phase !== 'live' || f.lock > 0 || f.chan || pkWait(f, k)) return; if (data && data.id == null) data.id = f.key + ':' + k + ':' + M.round + ':' + Math.round(M.time * 100); spendAb(f, k); applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
   // the ultimate, when there is a reason for it
   function botUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt) {
     const op = f.op, push = side === 'att' && P.k === 'push', retake = P.k === 'retake', chance = R() < dt * .8;
@@ -272,9 +272,9 @@
       if (lk) { const d = Math.max(1.5, Math.hypot(lk[0] - f.x, lk[1] - f.z)); tYaw = yawTo(f.x, f.z, lk[0], lk[1]); tPitch = Math.atan2(hAt(lk[0], lk[1]) + 1.5 - eyeY(f), d); }
       if (G.scope && f.scoped) f.scoped = 0;
     }
-    if (!sees && M.kit && M.kit.sentries.length && !gun(f).melee) {
-      const st = M.kit.sentries.find(q => q.by.team !== f.team && Math.hypot(q.x - f.x, q.z - f.z) < 20 && los(f.x, eyeY(f), f.z, q.x, q.y + .6, q.z) >= Math.hypot(q.x - f.x, q.z - f.z, q.y + .6 - eyeY(f)) - .4);
-      if (st) { const d = Math.hypot(st.x - f.x, st.z - f.z); tYaw = yawTo(f.x, f.z, st.x, st.z) + Math.sin(M.time * 3 + B.ph) * D.jit; tPitch = Math.atan2(st.y + .6 - eyeY(f), d); if (Math.abs(angDiff(tYaw, f.yaw)) < Math.atan2(.25, d) + .01 && Math.abs(tPitch - f.pitch) < .05) I.fire = true; }
+    if (!sees && M.kit && M.phase === 'live' && !gun(f).melee) {   // a rival's sentry, beacon or trap in sight: shoot it out (48; looked for four times a second)
+      const st = botTrapTarget(f, B);
+      if (st) { const d = Math.hypot(st.x - f.x, st.z - f.z); tYaw = yawTo(f.x, f.z, st.x, st.z) + Math.sin(M.time * 3 + B.ph) * D.jit; tPitch = Math.atan2(st.y - eyeY(f), d); if (Math.abs(angDiff(tYaw, f.yaw)) < Math.atan2(.18, d) + .006 && Math.abs(tPitch - f.pitch) < Math.atan2(.18, d) + .01) I.fire = true; }
     }
     B.breaking = false;
     if (!sees && P.k === 'push' && P.brk != null && BRKS[P.brk] && BRKS[P.brk].hp > 0 && !gun(f).melee) {
@@ -300,9 +300,10 @@
       if (f.op === 'vex' && f.ab.q && engaged && f.hp < 45 && Math.hypot(f.vx, f.vz) > 2) ability(f, 'q');
       if (f.op === 'iris' && f.ab.q && (side === 'att' ? near < 26 : M.t < roundT() - 10 || fresh)) ability(f, 'q');
       if (f.op === 'iris' && f.ab.e && !sees && fresh && B.last.heard && dE > 6 && dE < 16 && R() < dt * 1.5) botCast(f, 'e', { x: B.last.x, y: 1.6, z: B.last.z });
-      if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5) ability(f, 'q');
+      if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5 && !rampOf(f)) ability(f, 'q');
+      if (f.op === 'bastion') { const w = rampOf(f); if (w && w.hp < w.max * .45) kitAltTry(f, 'q'); }   // (a Rampart being shot through: reinforce it)
       if (f.op === 'bastion' && f.ab.e && f.hp < 60 && !sees) ability(f, 'e');
-      kitBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt); kitBot2(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
+      kitBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt); kitBot2(f, B, P, side, sees, engaged, fresh, near, dE, e, dt); lockBot(f, B, P, side, sees, P.path && !P.path.length, P.look || (B.last ? [B.last.x, B.last.z] : null), dt);
       if (hasAb(f, 'x')) botUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
       // smoke grenades: attackers cover a corner before stepping onto the site; defenders smoke the lane they just heard someone in
       if (f.smokes > 0 && !sees && !(B.nadeT > M.time)) {

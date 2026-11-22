@@ -165,16 +165,16 @@
   }
   // a bullet from f's eyes along d: what it meets first (the world, a Rampart, or the rival)
   function castShot(f, d) {
-    const o = [f.x, eyeY(f), f.z]; let dist = rayGrid(o[0], o[1], o[2], d[0], d[1], d[2], 140), hit = null; const n = [rayN[0], rayN[1], rayN[2]];
-    for (const w of M.walls) { const t = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (t > 0 && t < dist) { dist = t; n[0] = -Math.sign(d[0]) * (w.x1 - w.x0 < 1 ? 1 : 0); n[1] = 0; n[2] = -Math.sign(d[2]) * (w.x1 - w.x0 < 1 ? 0 : 1); } }
-    let sentry = null, eye = null; for (const b of sentryBoxes(f)) { const t = rayBox(o, d, b.mn, b.mx); if (t > 0 && t < dist) { dist = t; sentry = b.s; } }   // an enemy sentry is in the way
-    if (M.kit) for (const W of M.kit.eyes) if (W.act > 0 && enemyOf(W.by, f)) { const t = raySphere(o, d, [W.x, W.y, W.z], .3); if (t > 0 && t < dist) { dist = t; sentry = null; eye = W; } }   // an enemy Watcher, awake
+    const o = [f.x, eyeY(f), f.z]; let dist = rayGrid(o[0], o[1], o[2], d[0], d[1], d[2], 140), hit = null, wall = null; const n = [rayN[0], rayN[1], rayN[2]];
+    for (const w of M.walls) { const t = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (t > 0 && t < dist) { dist = t; wall = w; n[0] = -Math.sign(d[0]) * (w.x1 - w.x0 < 1 ? 1 : 0); n[1] = 0; n[2] = -Math.sign(d[2]) * (w.x1 - w.x0 < 1 ? 0 : 1); } }
+    let sentry = null, eye = null; for (const b of sentryBoxes(f)) { const t = rayBox(o, d, b.mn, b.mx); if (t > 0 && t < dist) { dist = t; sentry = b.s; wall = null; } }   // an enemy sentry is in the way
+    if (M.kit) for (const W of M.kit.eyes) if (W.act > 0 && enemyOf(W.by, f)) { const t = raySphere(o, d, [W.x, W.y, W.z], .3); if (t > 0 && t < dist) { dist = t; sentry = null; eye = W; wall = null; } }   // an enemy Watcher, awake
     for (const v of M.fs) if (v.team !== f.team && v.alive && duelOk(f, v)) {   // whichever part of them the bullet meets first (a Duel Field keeps its two to themselves)
       const hb = hitboxes(v), th = raySphere(o, d, hb.head, hb.hr), tb = rayFrame(o, d, hb, hb.body), ta = rayFrame(o, d, hb, hb.arms);
       const tbody = tb > 0 && (ta <= 0 || tb <= ta) ? tb : ta, near = th > 0 && (tbody <= 0 || th <= tbody) ? th : tbody;
-      if (near > 0 && near < dist) { dist = near; sentry = null; eye = null; hit = near === th ? { f: v, head: true } : { f: v, head: false, leg: near === tb && o[1] + d[1] * tb < hb.leg }; }
+      if (near > 0 && near < dist) { dist = near; sentry = null; eye = null; wall = null; hit = near === th ? { f: v, head: true } : { f: v, head: false, leg: near === tb && o[1] + d[1] * tb < hb.leg }; }
     }
-    return { o, d, dist, hit, sentry, eye, n, end: [o[0] + d[0] * dist, o[1] + d[1] * dist, o[2] + d[2] * dist] };
+    return { o, d, dist, hit, sentry, eye, wall, n, end: [o[0] + d[0] * dist, o[1] + d[1] * dist, o[2] + d[2] * dist] };
   }
   // pull the trigger: one shot, a burst (the Pip's alternate fire, the Mako aimed down sights), or a knife swing
   function fire(f, alt) {
@@ -202,10 +202,12 @@
       if (p === 0 && !f.net && M.kit && M.kit.hexes.length && hexShot(f, S)) continue;   // Overcharge: the shot took the charge
       if (p === 0 && !f.net && M.kit && M.kit.decoys.length && decoyShot(f, S)) continue;   // Mirage: the shot hit the copy
       if (p === 0 && !f.net && M.kit && M.kit.lenses && M.kit.lenses.length && lensShot(f, S)) continue;   // Lull: the shot broke the lens
+      if (p === 0 && !f.net && M.kit && trapShot(f, S, G)) continue;   // a rival's trap or device: one bullet breaks most of them (48)
       emit('shot', f, S, p === 0);
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k, S.hit.leg); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);
       else if (S.eye && !f.net) breakEye(S.eye, false);   // one hit puts a Watcher out
+      else if (S.wall && !f.net && S.wall.hp != null && enemyOf(S.wall.by, f)) hurtWall(S.wall, dmgAt(G, S.dist, 2), false);   // a rival's Rampart takes the shot (48)
       else if (!S.hit && !f.net && BRKS.length) { const e = S.end, k = idx(Math.floor((e[0] + S.d[0] * .06) / CS), Math.floor((e[2] + S.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], dmgAt(G, S.dist, 2), f); }   // a breakable wall
     }
     if (landed) f.stat.hits++;
@@ -349,7 +351,7 @@
   function ultGain(f, n) { if (!M || M.mode === 'range' || !f || !OPS[f.op]) return; const c = ultCost(f), was = f.ult | 0; f.ult = Math.min(c, was + n); if (was < c && f.ult >= c) emit('ultReady', f); }
   // in the buy phase you can set up: move, wall off, place a trap, a turret, a smoke or an eye (no ultimates, nothing that
   // harms, blinds or scouts); what is placed at a spot must be on your side of the barrier
-  const BUY_AB = new Set(['vexq', 'vexe', 'irisc', 'bastionq', 'bastione', 'bastionc', 'novac', 'novaq', 'wraithc', 'wraithq', 'talone', 'embere', 'axiomq', 'axiome', 'vantac', 'vantae', 'tessele']);
+  const BUY_AB = new Set(['vexq', 'vexe', 'irisc', 'bastionq', 'bastione', 'bastionc', 'novac', 'novaq', 'wraithc', 'wraithq', 'talone', 'embere', 'axiomq', 'axiome', 'axiomc', 'vantac', 'vantae', 'tessele', 'tesselq']);
   const abBlocked = (f, k) => !f.alive || !M || (M.phase !== 'live' && !(k && M.phase === 'buy' && M.mode !== 'range' && M.mode !== 'demo' && !loadingNow() && BUY_AB.has(f.op + k))) || f.plant > 0 || f.defuse > 0 || f.lock > 0 || !!f.chan;
   // where it goes, worked out on the user's device (the same sum the preview shows)
   function abData(f, k, alt) {
@@ -365,9 +367,12 @@
   function ability(f, k, alt) {
     if (abBlocked(f, k)) return false;
     if (!tetherBack(f, k) && !hasAb(f, k)) return false;
-    const data = abData(f, k, alt); if (!data) return false;
+    if (pkWait(f, k)) { emit('abNo', f, k); if (f === me()) say('READY AGAIN IN ' + Math.ceil(pkWait(f, k)) + ' s', DIM); return false; }   // (just picked up: a moment before it goes down again)
+    const data = abData(f, k, alt); if (!data) { emit('abNo', f, k); if (f === me() && NO_SPOT[f.op + k]) say(NO_SPOT[f.op + k], WARN); return false; }
     if (data.fail) { emit('abNo', f, k); return false; }   // (aimed where it can do nothing: not spent)
     if (M.phase === 'buy' && data.x != null && data.vx == null && f.op + k !== 'vantac' && f.op + k !== 'tessele' && sideOf(f) && !inZone(sideOf(f), data.x, data.z)) { emit('abNo', f, k); if (f === me()) say('NOT PAST THE BARRIER', WARN); return false; }
+    if (M.phase === 'buy' && data.bx != null && sideOf(f) && (!inZoneP(sideOf(f), data.ax, data.az) || !inZoneP(sideOf(f), data.bx, data.bz))) { emit('abNo', f, k); if (f === me()) say('NOT PAST THE BARRIER', WARN); return false; }   // (a line: both its ends on your side)
+    if (data.id == null && !data.free) data.id = f.key + ':' + k + ':' + M.round + ':' + Math.round(M.time * 100);   // (what it leaves in the world goes by this name on every device)
     if (!data.free) spendAb(f, k); if (M.mode === 'range') f.abT = 4;
     applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key });
     return true;
@@ -375,8 +380,9 @@
   // your key: ready it (or use it, for the quick ones); pressed again, it is put away
   function readyAb(f, k) {
     if (f.rdy === k) { f.rdy = null; emit('abReady', f, null); return true; }
+    if (kitAltTry(f, k)) { unready(f); return true; }   // the key again by what it left: pick it up, or reinforce it (48)
     if (abInstant(f, k)) { if (f.rdy) { f.rdy = null; emit('abReady', f, null); } return ability(f, k, false); }
-    if (abBlocked(f, k) || !hasAb(f, k)) { emit('abNo', f, k); return false; }
+    if (abBlocked(f, k) || !hasAb(f, k) || pkWait(f, k)) { emit('abNo', f, k); if (f === me() && pkWait(f, k)) say('READY AGAIN IN ' + Math.ceil(pkWait(f, k)) + ' s', DIM); return false; }
     f.rdy = k; f.scoped = 0; f.burst = null; f.reloadT = 0; f.autoReload = 0; emit('abReady', f, k); return true;
   }
   function unready(f) { if (f && f.rdy) { f.rdy = null; emit('abReady', f, null); } }
@@ -388,7 +394,7 @@
     if (key === 'vexe') { const s = { x: d.x, z: d.z, y: hAt(d.x, d.z) > 2 ? 0 : hAt(d.x, d.z), r: 0, R: 3.8, t: 12, T: 12 }; M.smokes.push(s); emit('smoke', s); }
     if (key === 'irisq') { for (const q of M.fs) if (q.team !== f.team) q.reveal = 2.2; if (me().team !== f.team) say('YOU ARE REVEALED', WARN); else if (f === me()) say(M.fs.length > 2 ? 'RIVALS REVEALED' : 'RIVAL REVEALED', YOU); }
     if (key === 'irise') { const fl = { x: d.x, y: d.y, z: d.z, t: .55, by: f }; M.flares.push(fl); emit('flare', fl); }
-    if (key === 'bastionq') { const w = d.ax ? { x0: d.x - .3, x1: d.x + .3, z0: d.z - 2.6, z1: d.z + 2.6 } : { x0: d.x - 2.6, x1: d.x + 2.6, z0: d.z - .3, z1: d.z + .3 }; w.t = 12; w.grow = 0; M.walls.push(w); emit('wall', w); }
+    if (key === 'bastionq') placeRampart(f, d);   // (48: it has health now, and Bastion can reinforce it)
     if (key === 'bastione') f.heal = { t: 3 };
     kitApply(f, key, d);
     f.stat.ab = (f.stat.ab || 0) + 1; emit('ability', f, k);
@@ -627,7 +633,8 @@
     M.fs.forEach(f => {
       const side = sideOf(f), sp = SPAWN[side], p = sp[(n + order.filter(q => sideOf(q) === side).indexOf(f)) % sp.length];
       if (!f.alive || pistolRound(n) || ot === 1) { f.guns = { 1: null, 2: 'pip', 3: 'knife' }; f.sh = 0; f.ammo = {}; f.smokes = 0; }   // you keep what you survived with
-      if (!f.net && n === HALF() + 1) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; if (n === HALF() + 1 || ot === 1) f.lossRun = 0;   // the loss bonus starts again with the new half f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
+      if (!f.net && n === HALF() + 1) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; if (n === HALF() + 1 || ot === 1) f.lossRun = 0;   // the loss bonus starts again with the new half
+      f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, surge: 0, cloak: 0, daze: 0, snare: 0, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
       f.ab.e = 1; if (n === 1 || n === HALF() + 1 || ot === 1) { f.ab.q = 0; f.ab.c = 0; } if (n === 1) f.ult = 0;
       Object.assign(f, { rdy: null, noFire: false, murk: 0, exposed: 0, ward: 0, over: 0, duel: null, tether: null, eT: 0, eK: 0 });

@@ -311,6 +311,15 @@
   cue('fireStart', F => { const o = outFor(at(F.x, F.y + 1, F.z), 1.2); hiss(o, .5, .45, 'lowpass', 700); hiss(o, 1.2, .12, 'bandpass', 1200, .1, .7); tone(o, 70, .4, 'sine', .3, -20); });
   cue('mineArm', m => { const o = outFor(at(m.x, m.y + 1, m.z)); tone(o, 1900, .06, 'square', .08); tone(o, 1900, .06, 'square', .08, 0, .14); tone(o, 2400, .08, 'square', .09, 0, .27); });
   cue('mineBoom', m => { const o = outFor(at(m.x, m.y + 1, m.z), 1.5); hiss(o, .7, .6, 'lowpass', 600); tone(o, 55, .6, 'sine', .6, -25); hiss(o, .2, .3, 'bandpass', 1800); });
+  cue('sentryLock', s => { const o = outFor(at(s.x, s.y + 1, s.z)); tone(o, 1200, .07, 'square', .05); tone(o, 1600, .09, 'square', .05, 0, .12); });   // (the lock before it fires: a warning you can hear)
+  cue('devSet', D => { if (!M || D.by.team !== me().team) return; tone(outFor(at(D.x, D.y + .5, D.z)), 1760, .12, 'sine', .03, -300); });
+  cue('devFire', D => { const o = outFor(at(D.x, D.y + .5, D.z)); tone(o, 1320, .25, 'triangle', .06, 400); tone(o, 1980, .3, 'sine', .03, 0, .05); });
+  cue('kitBreak', o => { const q = outFor(at(o.x != null ? o.x : o.ax, (o.y || 0) + .4, o.z != null ? o.z : o.az)); hiss(q, .18, .14, 'highpass', 5000); tone(q, 2600, .08, 'square', .03, -1200); });
+  cue('kitPick', (f, D) => { if (f === me()) tone(outFor(null), 900, .08, 'triangle', .05, 300); });
+  cue('wallHit', w => tone(outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2)), 140, .06, 'square', .05, -40));
+  cue('wallBreak', w => { const o = outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2), 1.3); hiss(o, .5, .4, 'lowpass', 900); tone(o, 70, .4, 'sine', .3, -30); });
+  cue('wallMend', w => { const o = outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2)); tone(o, 330, .35, 'triangle', .08, 200); });
+  cue('beaconPulse', B => { if (M && B.by.team === me().team) tone(outFor(at(B.x, B.y + 1, B.z)), 780, .18, 'sine', .025, 120); });
   cue('sentryShot', s => { const o = outFor(at(s.x, s.y + 1.6, s.z), .8); hiss(o, .05, .32, 'bandpass', 2600, 0, .7); tone(o, 220, .06, 'square', .06, -120); });
   cue('sentryHit', s => tone(outFor(at(s.x, s.y + 1.6, s.z), .7), 1700, .04, 'square', .05, -500));
   cue('sentryDown', s => { const o = outFor(at(s.x, s.y + 1.6, s.z), 1.2); hiss(o, .5, .35, 'lowpass', 900); tone(o, 400, .5, 'sawtooth', .08, -330); });

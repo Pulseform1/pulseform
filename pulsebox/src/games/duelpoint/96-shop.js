@@ -35,7 +35,8 @@
       const I = SH.insp && SH.insp.id === id && sk && INSPECT[sk.line] ? SH.insp : null, iq = I ? (I.hold != null ? I.hold : (performance.now() - I.t0) / 1000 / INSPECT[sk.line].dur) : -1;
       if (I && iq < 1) insFrame(S.model, S.scene, sk.line, Math.max(0, iq), dt, GUNS[k], S.cam.position); else { if (I) SH.insp = null; if (INS.rig && INS.rig.gun === S.model) insEnd(); } }
     const W = innerWidth, H = innerHeight, cam = S.cam; cam.aspect = W / H; cam.fov = 26; const d = S.size / (2 * Math.tan(13 * D2R)) * (UI.panel === 'locker' && !rv ? 1.5 : rv ? 1.05 : 1.08);
-    cam.position.set(0, S.size * .06, d); cam.lookAt(0, 0, 0); cam.setViewOffset(W, H, rv ? 0 : W * (UI.panel === 'locker' ? .19 : .17), rv ? -H * .04 : UI.panel === 'locker' ? -H * .02 : 0, W, H);   // (left of the middle: the panel, or the locker's cards, are on the right) cam.updateProjectionMatrix();
+    cam.position.set(0, S.size * .06, d); cam.lookAt(0, 0, 0); cam.setViewOffset(W, H, rv ? 0 : W * (UI.panel === 'locker' ? .19 : .17), rv ? -H * .04 : UI.panel === 'locker' ? -H * .02 : 0, W, H);   // (left of the middle: the panel, or the locker's cards, are on the right)
+    cam.updateProjectionMatrix();
     S.rim.color.set(sk ? sk.R.col : '#9fd8ff');
     S.scene.background = new THREE.Color(rv && sk ? sk.R.col : '#0b0e13').lerp(new THREE.Color('#07090c'), rv ? .82 : 0);
     X.renderer.render(S.scene, cam); cam.clearViewOffset(); return true;

@@ -64,7 +64,7 @@
      the usual keys. The arrows, right Shift and Ctrl and Z keep working beside your binds; Escape and Enter are never bound. */
   const BINDS = [['fwd', 'Forward', 'KeyW'], ['back', 'Back', 'KeyS'], ['left', 'Left', 'KeyA'], ['right', 'Right', 'KeyD'], ['jump', 'Jump', 'Space'], ['crouch', 'Crouch', 'ControlLeft'], ['walk', 'Walk', 'ShiftLeft'],
     ['use', 'Use / plant / defuse', 'KeyF'], ['fire', 'Fire (key)', 'KeyV'], ['reload', 'Reload', 'KeyR'], ['s1', 'Main gun', 'Digit1'], ['s2', 'Sidearm', 'Digit2'], ['s3', 'Knife', 'Digit3'],
-    ['nade', 'Grenade', 'KeyG'], ['abc', 'Ability C', 'KeyC'], ['abq', 'Ability Q', 'KeyQ'], ['abe', 'Ability E', 'KeyE'], ['abx', 'Ultimate', 'KeyX'],
+    ['nade', 'Grenade', 'KeyG'], ['abc', 'Ability C', 'KeyC'], ['abq', 'Ability Q', 'KeyQ'], ['abe', 'Ability E', 'KeyE'], ['abx', 'Ultimate', 'KeyX'], ['trig', 'Trigger device (Tessel)', 'Digit4'],
     ['inspect', 'Inspect', 'KeyY'], ['drop', 'Drop gun', 'KeyT'], ['dropc', 'Drop charge', 'KeyH'], ['ping', 'Ping', 'KeyJ'], ['armory', 'Armory', 'KeyB'], ['opts', 'Settings', 'KeyO']];
   const BIND_DEF = Object.fromEntries(BINDS.map(b => [b[0], b[2]]));
   const bindOf = id => (CFG.binds && CFG.binds[id]) || BIND_DEF[id];
@@ -109,12 +109,13 @@
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
     else if (c === 'KeyG') throwNade(P); else if (c === 'KeyC') readyAb(P, 'c'); else if (c === 'KeyQ') readyAb(P, 'q'); else if (c === 'KeyE') readyAb(P, 'e'); else if (c === 'KeyX') readyAb(P, 'x');   // ready it (the key again puts it away); a click uses it
+    else if (c === 'Digit4') tesselTrigger(P);   // Tessel: fire the dormant device under the crosshair
     else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) startInspect(P);
     else if (c === 'KeyT') dropHeld(P); else if (c === 'KeyH') dropCharge(P); else if (c === 'KeyJ') ping(P);   // drop the gun in your hand, or the charge, for a teammate
   }
   if (typeof document !== 'undefined') {
     // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser
-    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[remapKey(e.code)] || /^(Key[BRQEFYOXTHJC]|Digit[1-3]|Tab)$/.test(remapKey(e.code) || '') || (CFG.binds && Object.values(CFG.binds).includes(e.code)))) e.preventDefault(); }, true);
+    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[remapKey(e.code)] || /^(Key[BRQEFYOXTHJC]|Digit[1-4]|Tab)$/.test(remapKey(e.code) || '') || (CFG.binds && Object.values(CFG.binds).includes(e.code)))) e.preventDefault(); }, true);
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       if (UI.armory) { const V = K.view, s = 1 / pxPer(); ptr = { x: cl(ptr.x + e.movementX * s, V.x0 + 2, V.x1 - 4), y: cl(ptr.y + e.movementY * s, V.y0 + 2, V.y1 - 4) }; KNAV.on = false; if (dragZ) dragZ.fn(ptr.x, ptr.y); return; }   // the armory's cursor
       const P = me(); if (!P.alive) return;   // the dead don't turn: the body stays as it fell
@@ -142,12 +143,12 @@
   // where each touch button sits by default (round the right thumb, in the HUD's units) and how big. Settings > Button
   // layout moves and sizes them (CFG.tlay: per button an offset from here, in the HUD's units, and a size), so a layout
   // holds on any screen; it is saved with the other settings, which go to your account
-  const TOUCH_KEYS = ['fire', 'alt', 'jump', 'crouch', 'reload', 'swap', 'c', 'q', 'e', 'x', 'nade', 'use', 'drop'];
+  const TOUCH_KEYS = ['fire', 'alt', 'jump', 'crouch', 'reload', 'swap', 'c', 'q', 'e', 'x', 'nade', 'use', 'drop', 'trig'];
   function touchHome(k) {
     const V = K.view, u = uiScale(), fx = V.x1 - 150 * u, fy = V.y1 - 150 * u;
     if (k === 'move') return [V.x0 + 170 * u, V.y1 - 150 * u, 62];
     return { fire: [fx, fy, 62], alt: [fx - 22 * u, fy - 116 * u, 38], jump: [fx + 104 * u, fy - 44 * u, 38], crouch: [fx + 100 * u, fy + 66 * u, 36], reload: [fx - 110 * u, fy + 56 * u, 36], swap: [fx + 72 * u, fy - 128 * u, 36],
-      c: [fx - 282 * u, fy - 60 * u, 34], q: [fx - 118 * u, fy - 46 * u, 38], x: [fx - 290 * u, fy + 30 * u, 36], e: [fx - 204 * u, fy + 4 * u, 38], nade: [fx - 196 * u, fy - 104 * u, 34], use: [640, V.y1 - 200 * u, 58], drop: [fx - 300 * u, fy - 150 * u, 32] }[k];
+      c: [fx - 282 * u, fy - 60 * u, 34], q: [fx - 118 * u, fy - 46 * u, 38], x: [fx - 290 * u, fy + 30 * u, 36], e: [fx - 204 * u, fy + 4 * u, 38], nade: [fx - 196 * u, fy - 104 * u, 34], use: [640, V.y1 - 200 * u, 58], drop: [fx - 300 * u, fy - 150 * u, 32], trig: [fx - 110 * u, fy - 192 * u, 40] }[k];
   }
   const touchSize = k => (((CFG.tlay || {})[k] || {}).s) || 1;
   function touchAt(k) {
@@ -172,6 +173,7 @@
       { k: 'e', ...at('e'), t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, on: P.rdy === 'e', col: op.col },
       { k: 'nade', ...at('nade'), t: 'SMOKE ' + (P.smokes || 0), show: P.alive && live && P.smokes > 0, off: !(P.smokes > 0), col: NADE.col },
       { k: 'use', ...at('use'), t: P.nearLoot ? (lootFree(P) ? 'PICK UP' : 'SWAP GUN') : orbNear ? 'TAKE ORB' : canUse ? (sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE') : 'DOOR', show: canUse || (P.alive && !!P.nearLoot) || (live && P.alive && (orbNear || doorNear)), col: P.nearLoot ? BONE : orbNear ? op.col : FOE },
+      { k: 'trig', ...at('trig'), t: 'TRIGGER', show: P.alive && live && P.op === 'tessel' && tesselState(P) === 'ok', col: op.col },   // (only while a dormant device can be fired)
       { k: 'drop', ...at('drop'), t: carries(P) && !M.planted ? 'DROP ◆' : 'DROP', show: P.alive && M.mode !== 'range' && M.phase !== 'end' && ((carries(P) && !M.planted) || (M.phase === 'buy' && !!(P.guns[1] || P.guns[2] !== 'pip'))), col: carries(P) ? GOLD : BONE },
     ].filter(b => b.show);
   }
@@ -182,7 +184,7 @@
       else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (canSlide(me())) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
       // an ability button readies it (FIRE uses it, the alt button its other way; tap again to put it away)
       else if (b.k === 'c' || b.k === 'q' || b.k === 'e' || b.k === 'x') readyAb(P, b.k);
-      else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);   // (USE and JUMP are held)
+      else if (b.k === 'trig') tesselTrigger(P); else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);   // (USE and JUMP are held)
       return;
     }
     if (M && screen === 'play' && !me().alive && UI.spec && X && M.mode !== 'range') { nextSpec(); return; }   // dead: a tap moves to the next teammate

@@ -2,7 +2,10 @@
      LIGHTLINE: a curtain of rose light standing on a line across the floor: a bright body (so you cannot see through it),
      the energy lattice climbing it, a hot edge along its foot and its top. It rises in a quarter second and thins out over
      its last half second. LULL: a glass lens on the floor in a field whose ripples run inward to it. GLASSHOUSE: its four
-     walls are Lightlines; the floor inside glows. BLOOM: a cloud of glare (78-fx draws the cloud; here, its glow).
+     walls are Lightlines; the floor inside glows. BLOOM: a cloud of glare (78-fx draws the cloud; here, its glow). DORMANT devices: a small glass lens, or two small posts
+     with a faint line between them; her side sees them always (faint, a small marker over each that shows through walls),
+     a rival only a faint twinkling glint from within 6 m. The one under her crosshair gets a ring: white when it can be
+     fired, red when it is too far or out of sight.
      Everything is made once (buildKitFx3) and pooled; nothing is made in a frame. */
   function buildKitFx3() {
     const K = X.kf2, col = OPS.tessel.col, add = o => { X.scene.add(o); o.visible = false; return o; };
@@ -29,6 +32,18 @@
     // previews: a ghost of the curtain, and the Glasshouse's square
     K3.pvLine = add(new THREE.Group()); { const s = new THREE.Mesh(sheet, energyMat('#ffffff', { hex: 4, op: .5, scan: 1, rim: 0, base: .14, rx: 4 })), f = new THREE.Mesh(edgeG, basic('#ffffff', { opacity: .9 })); f.position.y = .04; K3.pvLine.add(s, f); K3.pvLine.userData = { s, f }; }
     K3.pvSquare = add(flat(new THREE.RingGeometry(.97, 1, 4, 1), basic('#ffffff', { opacity: .9, blending: THREE.NormalBlending }))); K3.pvSquare.rotation.z = Math.PI / 4;
+    // dormant devices: the lens, the posts and their line, the marker (seen through walls by her side), and the ring on the one she looks at
+    const markT = canvasTex(64, 64, g => { g.translate(32, 32); g.rotate(Math.PI / 4); g.strokeStyle = 'rgba(20,8,14,.8)'; g.lineWidth = 11; g.strokeRect(-13, -13, 26, 26); g.strokeStyle = '#ffffff'; g.lineWidth = 6; g.strokeRect(-13, -13, 26, 26); g.fillStyle = '#ffffff'; g.fillRect(-5, -5, 10, 10); });
+    const ringT = canvasTex(128, 128, g => { g.strokeStyle = '#ffffff'; g.lineWidth = 8; g.beginPath(); g.arc(64, 64, 50, 0, TAU); g.stroke(); g.globalAlpha = .5; g.lineWidth = 3; for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(64, 64, 60, i * TAU / 4 + .25, (i + 1) * TAU / 4 - .25); g.stroke(); } });
+    const mark = () => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: markT, color: col, transparent: true, depthWrite: false, depthTest: false, toneMapped: false })); m.scale.setScalar(.36); m.renderOrder = 6; return m; };
+    const glint = () => new THREE.Sprite(new THREE.SpriteMaterial({ map: K.glowT, color: '#ff6fb0', transparent: true, depthWrite: false, toneMapped: false }));   // (normal blending: it stays rose on a pale floor)
+    const glass = () => new THREE.MeshBasicMaterial({ color: '#ff8cc0', transparent: true, opacity: .5, depthWrite: false, toneMapped: false });
+    K3.dLens = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), lens = new THREE.Mesh(new THREE.SphereGeometry(.2, 16, 8), glass()), gl = glint(), mk = mark(); lens.scale.set(1, .45, 1); lens.position.y = .28; gl.position.y = .3; mk.position.y = .85; g.add(lens, gl, mk); g.userData = { lens, gl, mk }; K3.dLens.push(add(g)); }
+    const postG = new THREE.CylinderGeometry(.03, .05, .8, 8); postG.translate(0, .4, 0);
+    K3.dLines = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), posts = [0, 1].map(() => { const q = new THREE.Group(), m = new THREE.Mesh(postG, glass()), gl = glint(); gl.position.y = .82; q.add(m, gl); g.add(q); q.userData = { m, gl }; return q; });
+      const path = flat(new THREE.PlaneGeometry(1, .07), basic(col, { opacity: .3 })), mk = mark(); path.geometry.translate(.5, 0, 0); path.position.y = .04; g.add(path, mk); g.userData = { posts, path, mk }; K3.dLines.push(add(g)); }
+    K3.tRing = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: ringT, color: '#ffffff', transparent: true, depthWrite: false, depthTest: false, toneMapped: false }))); K3.tRing.renderOrder = 7; K3.tWarn = new THREE.Color(WARN); K3.tOk = new THREE.Color('#ffffff');
+    buildKitFx4();   // (79-kitfx4: holding a site)
   }
   // place a curtain (a group whose +x runs from a to b) on a line
   function setLine(g, ax, az, bx, bz, y, h) { const len = Math.hypot(bx - ax, bz - az); g.position.set(ax, y, az); g.rotation.y = Math.atan2(-(bz - az), bx - ax); return len; }
@@ -59,8 +74,26 @@
     // Bloom's glow, inside each glare cloud
     let n = 0; for (const s of M.smokes) { if (!s.glare || n >= K3.glares.length) continue; const sp = K3.glares[n++]; sp.visible = true; sp.position.set(s.x, s.y + 1.4, s.z); sp.scale.setScalar(s.r * 2.6); sp.material.opacity = .5 + .1 * Math.sin(X.t * 2 + n); }
     for (; n < K3.glares.length; n++) K3.glares[n].visible = false;
+    dormantFx(K3, K2);
+    kitFx4(dt);   // (79-kitfx4: holding a site)
   }
-  function hideKitFx3() { const K3 = X && X.kf3; if (!K3) return; for (const k of ['lines', 'lenses', 'floors', 'glares']) for (const m of K3[k]) m.visible = false; hidePreviewTessel(); }
+  // Tessel's dormant devices, and the ring on the one under her crosshair
+  const DFP = [0, 0, 0];
+  function dormantFx(K3, K2) {
+    const P = me(); let nl = 0, nn = 0; if (!P) return;
+    for (const D of K2.devs) { const ours = D.by.team === P.team, tw = .5 + .5 * Math.sin(X.t * (ours ? 3 : 9) + D.x * 3);
+      if (D.k === 'q') { if (nl >= K3.dLens.length || (!ours && Math.hypot(D.x - P.x, D.z - P.z) > TRIG.glint)) continue; const g = K3.dLens[nl++], u = g.userData;
+        g.visible = true; g.position.set(D.x, D.y, D.z); u.lens.material.opacity = ours ? .5 : .16; u.gl.material.opacity = ours ? .45 + .2 * tw : .35 * tw; u.gl.scale.setScalar(ours ? .6 : .25 + .3 * tw); u.mk.visible = ours; u.lens.rotation.y = X.t * .6; continue; }
+      if (nn >= K3.dLines.length) continue; const na = Math.hypot(D.ax - P.x, D.az - P.z) < TRIG.glint, nb = Math.hypot(D.bx - P.x, D.bz - P.z) < TRIG.glint; if (!ours && !na && !nb) continue;
+      const g = K3.dLines[nn++], u = g.userData, len = setLine(g, D.ax, D.az, D.bx, D.bz, D.y, 0); g.visible = true; u.posts[1].position.x = len; u.path.scale.x = len; u.path.visible = ours; u.path.material.opacity = .18 + .1 * tw;
+      u.mk.visible = ours; u.mk.position.set(len / 2, 1, 0);
+      for (let i = 0; i < 2; i++) { const q = u.posts[i], vis = ours || (i ? nb : na); q.visible = vis; q.userData.m.material.opacity = ours ? .55 : .18; q.userData.gl.material.opacity = ours ? .45 + .2 * tw : .35 * tw; q.userData.gl.scale.setScalar(ours ? .45 : .2 + .25 * tw); } }
+    for (; nl < K3.dLens.length; nl++) K3.dLens[nl].visible = false;
+    for (; nn < K3.dLines.length; nn++) K3.dLines[nn].visible = false;
+    const st = P.op === 'tessel' && P.alive && P === viewer() ? tesselState(P) : null, R0 = K3.tRing; R0.visible = !!st;
+    if (st) { devPt(P.tlD, P.tlI, DFP); const go = st === 'ok' && M.phase === 'live'; R0.position.set(DFP[0], DFP[1], DFP[2]); R0.scale.setScalar((.45 + P.tlDist * .025) * (1 + .08 * Math.sin(X.t * 8))); R0.material.color.copy(go ? K3.tOk : K3.tWarn); R0.material.opacity = go ? .95 : .7; R0.material.rotation = X.t * .8; }
+  }
+  function hideKitFx3() { const K3 = X && X.kf3; if (!K3) return; for (const k of ['lines', 'lenses', 'floors', 'glares', 'dLens', 'dLines']) for (const m of K3[k]) m.visible = false; K3.tRing.visible = false; hidePreviewTessel(); hideKitFx4(); }
   // the moments
   const fx3 = () => X && ready && X.kf3 && M;
   on('lightline', L => { if (!fx3()) return; const c = OPS.tessel.col; burst('ring', L.ax, L.y, L.az, c, 1.6, .45); burst('ring', L.bx, L.y, L.bz, c, 1.6, .45);
@@ -69,6 +102,8 @@
   on('bloomPop', s => { if (!fx3()) return; burst('shell', s.x, s.y + 1.3, s.z, '#ffe0ee', 3.6, .4); burst('ring', s.x, s.y, s.z, OPS.tessel.col, 4, .5); X.flashL.position.set(s.x, s.y + 1.4, s.z); X.flashL.intensity = 10;
     for (let i = 0; i < 18; i++) spark([s.x, s.y + 1.3, s.z], [rnd(-5, 5), rnd(-1, 5), rnd(-5, 5)], i % 3 ? '#fff4fa' : OPS.tessel.col, .5); });
   on('lullStart', Z => { if (!fx3()) return; burst('ring', Z.x, Z.y, Z.z, OPS.tessel.col, Z.r, .5); burst('shell', Z.x, Z.y + .3, Z.z, '#ffd6ea', 1.2, .35); });
+  on('devFire', D => { if (!fx3()) return; const c = OPS.tessel.col; if (D.k === 'q') burst('pillar', D.x, D.y, D.z, c, .35, .45, 2.2); else { burst('pillar', D.ax, D.y, D.az, c, .3, .4, 2); burst('pillar', D.bx, D.y, D.bz, c, .3, .4, 2); } });
+  on('devSet', D => { if (!fx3() || !me() || D.by.team !== me().team) return; burst('ring', D.k === 'q' ? D.x : D.ax, D.y + .02, D.k === 'q' ? D.z : D.az, OPS.tessel.col, .8, .35); if (D.k === 'e') burst('ring', D.bx, D.y + .02, D.bz, OPS.tessel.col, .8, .35); });
   on('lensBreak', Z => { if (!fx3()) return; burst('shell', Z.x, Z.y + .3, Z.z, '#ffffff', 1.4, .3); for (let i = 0; i < 22; i++) spark([Z.x, Z.y + .3, Z.z], [rnd(-4, 4), rnd(1, 5), rnd(-4, 4)], i % 2 ? '#ffffff' : OPS.tessel.col, .5); });
   on('lit', (L, v) => { L.pulseT = X ? X.t + .5 : 0; if (!fx3()) return; burst('shell', v.x, v.y + 1.1, v.z, OPS.tessel.col, 1.3, .45); burst('ring', v.x, v.y, v.z, '#ffffff', 1.4, .4); });
   // a bullet through a Lightline: a spray of light where it passed
