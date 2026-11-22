@@ -264,7 +264,8 @@
   }
   function txo(g, s2, x, y, px, col, u) { px = fitPx(g, px); g.font = `900 ${px}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = Math.max(3, px * .28); g.strokeStyle = 'rgba(6,8,12,.85)'; g.strokeText(s2, x, y); g.fillStyle = col; g.fillText(s2, x, y); }   // words with a dark edge
   function drawBanner(g, V, u) {
-    if (!banner) return; const B = banner, n = cl(B.n | 0, 1, 5), T = 2.1 + n * .12, t = B.pin != null ? B.pin : (performance.now() - B.t0) / 1000;   // (pin: the tests hold a moment) if (t > T) { banner = null; return; }
+    if (!banner) return; const B = banner, n = cl(B.n | 0, 1, 5), T = 2.1 + n * .12, t = B.pin != null ? B.pin : (performance.now() - B.t0) / 1000;   // (pin: the tests hold a moment)
+    if (t > T) { banner = null; return; }
     if (!B.sh) B.sh = bannerShards(n, Math.floor(B.t0 * 7));
     const E = B.em, acc = n >= 5 ? GOLD : E.glow, touch = isTouch(), cx = 640, cy = V.y1 - (touch ? 196 : 140) * u, R = (touch ? 33 : 40) * u * (1 + (n - 1) * .07);   // (a phone's health and ammo sit bottom centre: the banner rides above them, a little smaller)
     const inK = smooth(cl(t / .14, 0, 1)), pop = t < .14 ? 1.7 - .7 * inK : 1 + Math.sin(Math.min(1, (t - .14) / .22) * Math.PI) * .06, outK = Math.max(smooth(cl((t - (T - .35)) / .35, 0, 1)), isTouch() && M && M.phase === 'end' && M.last && M.last.t0 ? smooth(cl((performance.now() - M.last.t0 - 350) / 300, 0, 1)) : 0), a = (t < .06 ? t / .06 : 1) * (1 - outK), sc = pop * (1 - outK * .25);   // (on a phone it bows out once the round's result is up: no room for both)

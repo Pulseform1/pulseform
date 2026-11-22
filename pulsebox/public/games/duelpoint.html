@@ -1343,7 +1343,8 @@ const GAME = {
   on('kill', (v, by, head, wk) => {
     if (!M || !by || !v || v === by || by.team === v.team || M.mode === 'range') return; const s = by.stat;
     s.rk = (s.rk || 0) + 1; if (s.rk > 1) s.mb = (s.mb || 0) + 50; if (s.rk === 3) s.mk = (s.mk || 0) + 1;   // (mk: rounds with three kills)
-    { const c = GUNS[wk] ? GUNS[wk].cat : 'Utility'; s.cat = s.cat || {}; s.cat[c] = (s.cat[c] || 0) + 1; }   // kills by kind of weapon, for the challenges if (!M.fk) { M.fk = by.key; s.fk = (s.fk || 0) + 1; emit('firstKill', by, v); }
+    { const c = GUNS[wk] ? GUNS[wk].cat : 'Utility'; s.cat = s.cat || {}; s.cat[c] = (s.cat[c] || 0) + 1; }   // kills by kind of weapon, for the challenges
+    if (!M.fk) { M.fk = by.key; s.fk = (s.fk || 0) + 1; emit('firstKill', by, v); }
     const foes = M.fs.filter(q => q.team === v.team && !q.gone); if (foes.length >= 3 && s.rk >= foes.length && foes.every(q => !q.alive)) emit('ace', by);
     if (!M.clutch) for (const t of [0, 1]) { const up = M.fs.filter(q => q.team === t && q.alive), them = M.fs.filter(q => q.team !== t && q.alive); if (up.length === 1 && them.length >= 2) M.clutch = { key: up[0].key, team: t, vs: them.length }; }
   });
@@ -2731,7 +2732,8 @@ const GAME = {
     switch (m.t) {
       case 's':
         { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && Math.hypot(sn[sn.length - 1].x - m.x, sn[sn.length - 1].z - m.z) > 6) sn.length = 0; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
-        if (m.rt) F.rating = m.rt; if (m.cd) F.card = cardFrom(m.cd); if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.rdy = m.ar || null; F.wardV = !!m.wd; F.overV = !!m.ov; F.scoped = m.sc || 0; { const pl = +m.pl || 0, df = +m.df || 0; F.plant = pl > 0 ? (F.plant > 0 && Math.abs(F.plant - pl) < .5 ? F.plant : pl) : 0; F.defuse = df > 0 ? (F.defuse > 0 && Math.abs(F.defuse - df) < .5 ? F.defuse : df) : 0; }   // (kept running between messages by netFollow; a message only corrects it when it has drifted) F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
+        if (m.rt) F.rating = m.rt; if (m.cd) F.card = cardFrom(m.cd); if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.rdy = m.ar || null; F.wardV = !!m.wd; F.overV = !!m.ov; F.scoped = m.sc || 0; { const pl = +m.pl || 0, df = +m.df || 0; F.plant = pl > 0 ? (F.plant > 0 && Math.abs(F.plant - pl) < .5 ? F.plant : pl) : 0; F.defuse = df > 0 ? (F.defuse > 0 && Math.abs(F.defuse - df) < .5 ? F.defuse : df) : 0; }   // (kept running between messages by netFollow; a message only corrects it when it has drifted)
+        F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.c != null) { F.credits = +m.c || 0; F.guns[1] = GUNS[m.g1] ? m.g1 : null; F.guns[2] = GUNS[m.g2] ? m.g2 : 'pip'; F.smokes = m.sm | 0; F.ab.q = m.aq | 0; F.ab.c = m.ac | 0; }   // their credits and loadout
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
@@ -3884,7 +3886,8 @@ const GAME = {
       g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; for (let k = 0; k < 18; k++) { let x = Math.random() * w, y = Math.random() * h; g.beginPath(); g.moveTo(x, y); for (let q = 0; q < 5; q++) { x += (Math.random() - .5) * 120; y += (Math.random() - .5) * 120; g.lineTo(x, y); } g.stroke(); }
       for (let k = 0; k < 40; k++) { g.fillStyle = `rgba(255,255,255,${.1 + Math.random() * .2})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 10 + Math.random() * 50, 4 + Math.random() * 12, Math.random() * 3, 0, 7); g.fill(); } });
     const beltDraw = dir => (g, w, h) => { g.fillStyle = '#26282c'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(255,255,255,.05)'; for (let y = 0; y < h; y += 8) g.fillRect(0, y, w, 2);
-      g.translate(w / 2, h / 2); g.rotate([Math.PI / 2, 0, -Math.PI / 2, Math.PI][dir]);   // (the canvas's up lies along +z, south: east, south, west, north) g.strokeStyle = '#f2b51e'; g.lineWidth = 16; g.lineJoin = 'round'; g.beginPath(); g.moveTo(-38, 26); g.lineTo(0, -16); g.lineTo(38, 26); g.stroke(); g.setTransform(1, 0, 0, 1, 0, 0);
+      g.translate(w / 2, h / 2); g.rotate([Math.PI / 2, 0, -Math.PI / 2, Math.PI][dir]);   // (the canvas's up lies along +z, south: east, south, west, north)
+      g.strokeStyle = '#f2b51e'; g.lineWidth = 16; g.lineJoin = 'round'; g.beginPath(); g.moveTo(-38, 26); g.lineTo(0, -16); g.lineTo(38, 26); g.stroke(); g.setTransform(1, 0, 0, 1, 0, 0);
       g.fillStyle = '#111'; g.fillRect(0, 0, 6, h); g.fillRect(w - 6, 0, 6, h); };
     X.beltT = [0, 1, 2, 3].map(dir => { const t = canvasTex(128, 128, beltDraw(dir)); t.userData = { dir }; T['belt' + dir] = t; return t; });
     T.vent = canvasTex(128, 128, (g, w, h) => { g.fillStyle = '#2a2c30'; g.fillRect(0, 0, w, h); g.fillStyle = '#0c0d0f'; for (let x = 12; x < w - 8; x += 14) g.fillRect(x, 10, 7, h - 20); g.strokeStyle = '#5a5e66'; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6); });
@@ -8958,7 +8961,9 @@ const GAME = {
       const P = me(); click();
       if (b.k === 'fire') { TS.fire = id; TS.tap = true; TS.look = { id, x, y }; try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} }   // the fire thumb keeps aiming while it holds
       else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (canSlide(me())) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
-      else if (b.k === 'c' || b.k === 'q' || b.k === 'e' || b.k === 'x') readyAb(P, b.k);   // ready it (FIRE uses it, the alt button its other way; tap again to put it away) else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);
+      // an ability button readies it (FIRE uses it, the alt button its other way; tap again to put it away)
+      else if (b.k === 'c' || b.k === 'q' || b.k === 'e' || b.k === 'x') readyAb(P, b.k);
+      else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);   // (USE and JUMP are held)
       return;
     }
     if (M && screen === 'play' && !me().alive && UI.spec && X && M.mode !== 'range') { nextSpec(); return; }   // dead: a tap moves to the next teammate
@@ -9290,7 +9295,8 @@ const GAME = {
   }
   function txo(g, s2, x, y, px, col, u) { px = fitPx(g, px); g.font = `900 ${px}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = Math.max(3, px * .28); g.strokeStyle = 'rgba(6,8,12,.85)'; g.strokeText(s2, x, y); g.fillStyle = col; g.fillText(s2, x, y); }   // words with a dark edge
   function drawBanner(g, V, u) {
-    if (!banner) return; const B = banner, n = cl(B.n | 0, 1, 5), T = 2.1 + n * .12, t = B.pin != null ? B.pin : (performance.now() - B.t0) / 1000;   // (pin: the tests hold a moment) if (t > T) { banner = null; return; }
+    if (!banner) return; const B = banner, n = cl(B.n | 0, 1, 5), T = 2.1 + n * .12, t = B.pin != null ? B.pin : (performance.now() - B.t0) / 1000;   // (pin: the tests hold a moment)
+    if (t > T) { banner = null; return; }
     if (!B.sh) B.sh = bannerShards(n, Math.floor(B.t0 * 7));
     const E = B.em, acc = n >= 5 ? GOLD : E.glow, touch = isTouch(), cx = 640, cy = V.y1 - (touch ? 196 : 140) * u, R = (touch ? 33 : 40) * u * (1 + (n - 1) * .07);   // (a phone's health and ammo sit bottom centre: the banner rides above them, a little smaller)
     const inK = smooth(cl(t / .14, 0, 1)), pop = t < .14 ? 1.7 - .7 * inK : 1 + Math.sin(Math.min(1, (t - .14) / .22) * Math.PI) * .06, outK = Math.max(smooth(cl((t - (T - .35)) / .35, 0, 1)), isTouch() && M && M.phase === 'end' && M.last && M.last.t0 ? smooth(cl((performance.now() - M.last.t0 - 350) / 300, 0, 1)) : 0), a = (t < .06 ? t / .06 : 1) * (1 - outK), sc = pop * (1 - outK * .25);   // (on a phone it bows out once the round's result is up: no room for both)
@@ -11429,7 +11435,8 @@ const GAME = {
         if (cd.banner !== 'plain' && !picked) { g.save(); g.globalAlpha = .6; bannerBg(g, cx + 4 * u, y + 1.5, colW - 5.5 * u, cardH - 3, cd.banner, 7); g.restore(); }
         portraitTile(g, pr.op, cx + 10 * u, y + 8 * u, cardH - 16 * u, cardH - 16 * u, { r: 5 });
         const nx = cx + cardH + 4 * u, nm0 = p.name.toUpperCase() + (p.id === me2 ? '  (YOU)' : ''), npx = 16 * u * Math.max(.85, k); tx(g, nm0, nx, y + 26 * u * k, npx, BONE, 'left', 900);
-        if (cd.lv) { g.font = `900 ${fitPx(g, npx)}px ${FONT}`; const nw = g.measureText(nm0).width; if (nx + nw + 70 * u < cx + colW - 150 * u) lvChip(g, nx + nw + 10 * u, y + 26 * u * k, cd.lv, 10.5 * u); else lvChip(g, nx + (p.id === MP.hostId ? 44 * u : 0), y + 70 * u * k, cd.lv, 9.5 * u); }   // (a long name: on the line under the operative) { const clash = opClash(p, ps); tx(g, (OPS[pr.op] || OPS.vex).n + (clash ? (p.id === me2 ? '  ·  TAKEN, PICK ANOTHER' : '  ·  TAKEN') : cd.title ? '  ·  ' + cd.title.toUpperCase() : ''), nx, y + 48 * u * k, 12 * u, clash ? WARN : (OPS[pr.op] || OPS.vex).col, 'left', 800); }
+        if (cd.lv) { g.font = `900 ${fitPx(g, npx)}px ${FONT}`; const nw = g.measureText(nm0).width; if (nx + nw + 70 * u < cx + colW - 150 * u) lvChip(g, nx + nw + 10 * u, y + 26 * u * k, cd.lv, 10.5 * u); else lvChip(g, nx + (p.id === MP.hostId ? 44 * u : 0), y + 70 * u * k, cd.lv, 9.5 * u); }   // (a long name: on the line under the operative)
+        { const clash = opClash(p, ps); tx(g, (OPS[pr.op] || OPS.vex).n + (clash ? (p.id === me2 ? '  ·  TAKEN, PICK ANOTHER' : '  ·  TAKEN') : cd.title ? '  ·  ' + cd.title.toUpperCase() : ''), nx, y + 48 * u * k, 12 * u, clash ? WARN : (OPS[pr.op] || OPS.vex).col, 'left', 800); }
         if (isHost) tx(g, 'HOST', nx, y + 70 * u * k, 10 * u, GOLD, 'left', 900);
         { const mine = p.id === me2, rv = mine ? rankedOf(S2.size).rv : (pr.rk || {})[String(S2.size)] || 0, on = mine ? placed(rankedOf(S2.size)) : (pr.rkp || '')[S2.size - 1] === '1';   // the rank at this team size
           tierBadge(g, cx + colW - 30 * u, y + 30 * u * k, 13 * u * Math.max(.8, k), rv, on); tx(g, on ? rankLabel(rv).toUpperCase() : 'UNRANKED', cx + colW - 52 * u, y + 26 * u * k, 11 * u, on ? rankOf(rv).T.col : DIM, 'right', 800); tx(g, vsLabel(S2.size) + (on ? '  ' + rankOf(rv).rp + ' RP' : ''), cx + colW - 52 * u, y + 44 * u * k, 11 * u, BONE, 'right', 700); }
