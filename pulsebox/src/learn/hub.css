@@ -1,0 +1,24 @@
+/* the category page */
+.lhero { text-align: center; padding: clamp(24px, 6vw, 56px) 0 10px; }
+.lhero h1 { font-size: clamp(34px, 7vw, 64px); }
+.lhero h1 span { background: linear-gradient(135deg, #29e0ff, #c6ff3d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lhero p { color: var(--muted); max-width: 640px; margin: 10px auto 0; font-size: clamp(15px, 2vw, 18px); }
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; margin: 22px 0 18px; }
+.search { flex: 1 1 280px; max-width: 420px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 999px; background: var(--panel); border: 2px solid var(--edge); }
+.search:focus-within { border-color: #29e0ff; }
+.search input { flex: 1; min-width: 0; padding: 12px 0; background: none; border: 0; outline: none; font-weight: 700; }
+.fbtn { padding: 9px 14px; border-radius: 999px; background: var(--panel); border: 1px solid var(--edge); font-weight: 800; font-size: 14px; }
+.fbtn.on { background: var(--text); color: #07090e; border-color: var(--text); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: clamp(12px, 2vw, 18px); }
+.gcard { display: flex; flex-direction: column; border-radius: 20px; overflow: hidden; background: var(--panel); border: 1px solid var(--edge); text-decoration: none; transition: transform .18s, box-shadow .18s, border-color .18s; animation: rise .4s ease both; }
+.gcard:hover, .gcard:focus-visible { transform: translateY(-4px); border-color: var(--c); box-shadow: 0 16px 40px rgba(0,0,0,.4), 0 0 30px color-mix(in srgb, var(--c) 25%, transparent); }
+.gcard svg { display: block; width: 100%; aspect-ratio: 16 / 10; }
+.gcard .gb { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.gcard h3 { font-size: 19px; }
+.gcard p { margin: 0; color: var(--muted); font-size: 14px; }
+.gcard .tag { align-self: flex-start; margin: 0 0 2px; font-size: 10px; padding: 3px 8px; }
+.gcard .best { margin-top: auto; padding-top: 6px; font-size: 12px; font-weight: 800; color: var(--gold); min-height: 18px; }
+.sect { margin: 30px 0 12px; display: flex; align-items: center; gap: 10px; font-size: clamp(20px, 3vw, 26px); }
+.sect::before { content: ''; width: 4px; height: 1em; border-radius: 2px; background: var(--c); box-shadow: 0 0 10px var(--c); }
+.empty { text-align: center; color: var(--muted); padding: 30px; }
+.foot { text-align: center; color: var(--muted); font-size: 13px; margin-top: 36px; }
