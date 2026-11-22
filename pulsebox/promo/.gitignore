@@ -1,0 +1,7 @@
+# generated while building (rebuild with lib/make.sh)
+*/vo/
+*/preview/
+*/.frames/
+*/mix.wav
+*/cues.json
+__pycache__/

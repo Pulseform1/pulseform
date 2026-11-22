@@ -1,0 +1,20 @@
+{
+  "voice": "af_sky+bf_emma",
+  "start": 0.15,
+  "tail": 3.5,
+  "hot": ["REAL", "5.", "Ready?", "Turbo", "Laps!", "Dead", "Air!", "Axe", "Spin!", "Tiny", "Aquarium!", "Space", "Colony!", "hard.", "PULSEBOX.", "box.pulseform.org", "score."],
+  "lines": [
+    {"say": "Only real gamers can name all five of these games. Ready?", "cap": "Only REAL gamers can name all 5. Ready?", "speed": 1.1},
+    {"say": "Number one. An easy one.", "cap": "#1. An easy one.", "gap": 0.6},
+    {"say": "Turbo Laps!", "gap": 2.0},
+    {"say": "Number two. Don't look behind you.", "cap": "#2. Don't look behind you.", "gap": 0.6},
+    {"say": "Dead Air!", "gap": 2.0},
+    {"say": "Number three. Zoomed way in.", "cap": "#3. Zoomed way in.", "gap": 0.6},
+    {"say": "Axe Spin!", "gap": 2.0},
+    {"say": "Number four. Glub glub.", "cap": "#4. Glub glub.", "gap": 0.6},
+    {"say": "Tiny Aquarium!", "gap": 2.0},
+    {"say": "Last one. This one's hard.", "cap": "Last one. This one's hard.", "gap": 0.6},
+    {"say": "Space Colony! How many did you get?", "gap": 2.2},
+    {"say": "All five are free on Pulsebox. Box dot pulseform dot org. Comment your score.", "cap": "All 5 are free on PULSEBOX. box.pulseform.org Comment your score.", "gap": 0.6}
+  ]
+}

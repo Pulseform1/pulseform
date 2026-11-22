@@ -1,0 +1,20 @@
+{
+  "voice": "af_sky+bf_emma",
+  "start": 0.15,
+  "tail": 4.0,
+  "hot": ["ONE", "MORE", "GAME", "8", "HOURS", "race", "bots", "ghost", "lights", "Mars", "clouds", "fish", "birds", "PULSEBOX", "77", "free", "box.pulseform.org", "warned"],
+  "lines": [
+    {"say": "You said one more game.", "cap": "You said ONE MORE GAME.", "speed": 1.0},
+    {"say": "That was eight hours ago.", "cap": "That was 8 HOURS ago.", "gap": 0.35, "speed": 1.0},
+    {"say": "It started with one quick race.", "gap": 0.9},
+    {"say": "Then you had to beat the bots. Just once.", "gap": 0.6},
+    {"say": "Then a ghost hunt. With the lights off.", "gap": 0.7},
+    {"say": "Then you built a whole colony on Mars.", "gap": 0.7},
+    {"say": "Then you stacked a tower to the clouds.", "gap": 0.6},
+    {"say": "Then your fish got hungry.", "gap": 0.6},
+    {"say": "Now the birds are singing.", "gap": 0.8, "speed": 1.0},
+    {"say": "And you're still saying, one more game.", "cap": "And you're still saying... ONE MORE GAME.", "gap": 0.5, "speed": 1.05},
+    {"say": "It's called Pulsebox. Seventy-seven free games, right in your browser.", "cap": "It's called PULSEBOX. 77 free games, right in your browser.", "gap": 0.8},
+    {"say": "Box dot pulseform dot org. You've been warned.", "cap": "box.pulseform.org You've been warned.", "gap": 0.4}
+  ]
+}

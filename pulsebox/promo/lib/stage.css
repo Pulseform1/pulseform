@@ -1,0 +1,11 @@
+
+@font-face { font-family: Luckiest; src: url(../lib/fonts/LuckiestGuy.ttf); }
+@font-face { font-family: Chakra; src: url(../lib/fonts/ChakraPetch-Bold.ttf); }
+html, body { margin: 0; background: #0b0d1a; overflow: hidden; }
+#stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+svg { position: absolute; inset: 0; }
+#cap { position: absolute; left: 60px; right: 60px; text-align: center; font-family: Luckiest, Impact, sans-serif;
+  font-size: 104px; line-height: 1.02; text-transform: uppercase; letter-spacing: 2px; }
+#cap span { display: inline-block; margin: 0 14px; color: #fff; -webkit-text-stroke: 18px #0b0d1a; paint-order: stroke fill;
+  text-shadow: 0 10px 0 #0b0d1a; }
+#cap span.hot { color: #c6ff3d; }

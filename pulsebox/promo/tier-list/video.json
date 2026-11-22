@@ -1,0 +1,19 @@
+{
+  "voice": "af_sky+bf_emma",
+  "start": 0.15,
+  "tail": 3.5,
+  "hot": ["FREE", "#1", "shocked", "B", "A", "S", "S+", "noodles", "forever.", "350,", "neon.", "friends", "Lantern", "Keep.", "lantern.", "Easy.", "PULSEBOX.", "box.pulseform.org", "wrong?"],
+  "lines": [
+    {"say": "I ranked the games on a free website. Number one shocked me.", "cap": "I ranked the games on a FREE website. #1 shocked me.", "speed": 1.1},
+    {"say": "Neon Serpent. Snake, but it glows. B tier.", "gap": 0.6},
+    {"say": "Safecracker. You crack a safe, pin by pin. A tier.", "gap": 0.5},
+    {"say": "Flop Hoops. The players are made of noodles. A tier.", "gap": 0.5},
+    {"say": "Axe Spin. One more throw, forever. S tier.", "gap": 0.5},
+    {"say": "Hyperlane. Racing at three hundred fifty, in neon. S tier.", "cap": "Hyperlane. Racing at 350, in neon. S tier.", "gap": 0.5},
+    {"say": "Bumper Brawl. Knock your friends out of the ring. S tier.", "gap": 0.5},
+    {"say": "And number one?", "cap": "And #1?", "gap": 0.6, "speed": 1.0},
+    {"say": "Lantern Keep. A tower defence where every tower is a lantern. S plus. Easy.", "cap": "Lantern Keep. A tower defence where every tower is a lantern. S+ Easy.", "gap": 1.1},
+    {"say": "They're all free, on Pulsebox. Box dot pulseform dot org.", "cap": "They're all free, on PULSEBOX. box.pulseform.org", "gap": 0.6},
+    {"say": "Which one did I get wrong? Tell me in the comments.", "cap": "Which one did I get wrong? Tell me in the comments.", "gap": 0.4}
+  ]
+}

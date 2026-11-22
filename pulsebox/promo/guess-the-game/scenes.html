@@ -1,0 +1,93 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../lib/stage.css"></head>
+<body>
+<script src="timeline.js"></script>
+<script src="../lib/art.js"></script>
+<script src="../lib/more.js"></script>
+<script>
+/* "Guess the game": five clues, five real Pulsebox games. */
+const A = i => VO[i - 1];
+const lineEnd = i => TIMELINE.lines[i - 1].at + TIMELINE.lines[i - 1].dur;
+// [game, clue line, answer line, clue kind, colour]
+const ROUNDS = [['turbo-laps', 2, 3, 'icons', LIME], ['dead-air', 4, 5, 'dark', PINK], ['axe-spin', 6, 7, 'zoom', ORANGE], ['tiny-aquarium', 8, 9, 'icons', '#4fe3ff'], ['space-colony', 10, 11, 'blur', '#ffd84d']];
+
+// hand-drawn clue icons
+const ICONS = {
+  car: k => car(0, 0, 0, '#ff4f6e', k * 3),
+  palm: k => palm(0, 0, k * 3),
+  flag: k => G(`scale(${k})`, L(-60, 90, -60, -90, 12) + `<rect x="-60" y="-90" width="120" height="80" fill="url(#checker)" stroke="${INK}" stroke-width="7"/>`),
+  fish: k => fish(0, 0, k * 2.2, ORANGE, 1, window.__t || 0),
+  castle: k => G(`scale(${k * 1.1})`, R(-90, -60, 180, 120, 0, '#9aa3b8', 7) + R(-110, -110, 50, 170, 0, '#9aa3b8', 7) + R(60, -110, 50, 170, 0, '#9aa3b8', 7) + R(-25, 0, 50, 60, 25, '#4a4f66', 6)),
+  bubbles: k => G(`scale(${k})`, C(-30, 40, 34, '#bfe9ff', 7) + C(30, -20, 24, '#bfe9ff', 7) + C(-10, -70, 16, '#bfe9ff', 6) + C(-40, 30, 8, '#fff', 0)),
+};
+const CLUE_ICONS = { 'turbo-laps': ['car', 'palm', 'flag'], 'tiny-aquarium': ['fish', 'castle', 'bubbles'] };
+
+function scoreDots(t, upto) {   // five dots at the top, filled as answers are revealed
+  let s = ''; for (let i = 0; i < 5; i++) { const done = t >= A(ROUNDS[i][2]); s += C(340 + i * 100, 120, 30, done ? ROUNDS[i][4] : '#1b1f3a', 7) + (done ? P(`M${325 + i * 100} 120 L${337 + i * 100} 133 L${357 + i * 100} 106`, 'none', 7) : T(340 + i * 100, 134, String(i + 1), 40, '#8b93b8', 'middle', 'Luckiest')); }
+  return s;
+}
+function timerRing(t, t0, t1, x, y) {        // 3-2-1 countdown between the clue and the answer
+  const k = prog(t, t0, t1); if (k <= 0 || k >= 1) return '';
+  const n = 3 - Math.floor(k * 3), r = 110, c = 2 * Math.PI * r;
+  return G(`translate(${x} ${y}) scale(${eBack(prog(t, t0, t0 + .2))})`, C(0, 0, r + 20, '#0b0d1a', 8) + `<circle r="${r}" fill="none" stroke="#2a2f55" stroke-width="22"/>` +
+    `<circle r="${r}" fill="none" stroke="${LIME}" stroke-width="22" stroke-dasharray="${c}" stroke-dashoffset="${c * k}" transform="rotate(-90)" stroke-linecap="round"/>` + T(0, 50, String(n), 150, '#fff', 'middle', 'Luckiest'));
+}
+function round(t, lt, i) {
+  const [id, cl, al, kind, col] = ROUNDS[i], tA = A(al), shown = t >= tA - .05;
+  let s = R(-20, -20, 1120, 1960, 0, '#101330', 0) + rays(540, 960, 22, 1500, col, .07, t * .25);
+  const W = 960, H = 1180, x0 = 60, y0 = 360;
+  let clue;
+  if (shown) {                                  // the answer: the real game, wiping in
+    const w = eOut(prog(t, tA - .05, tA + .3));
+    clue = GAMES[id][1](t, W, H);
+    if (kind === 'zoom') clue = G(`translate(${W / 2} ${H * .36}) scale(${lerp(3.2, 1, w)}) translate(${-W / 2} ${-H * .36})`, clue);
+    if (kind === 'blur') clue = `<filter id="bq"><feGaussianBlur stdDeviation="${lerp(26, 0, w)}"/></filter><g filter="url(#bq)">${clue}</g>`;
+    if (kind === 'dark') clue += R(0, 0, W, H, 0, INK, 0, `opacity="${.85 * (1 - w)}"`);
+    if (kind === 'icons') clue = `<clipPath id="wp"><circle cx="${W / 2}" cy="${H / 2}" r="${w * 900}"/></clipPath>` + iconsClue(id, t, W, H) + `<g clip-path="url(#wp)">${clue}</g>`;
+  } else {
+    if (kind === 'icons') clue = iconsClue(id, t, W, H);
+    if (kind === 'dark') clue = GAMES[id][1](t, W, H) + R(0, 0, W, H, 0, INK, 0, 'opacity=".85"');
+    if (kind === 'zoom') clue = G(`translate(${W / 2} ${H * .36}) scale(3.2) translate(${-W / 2} ${-H * .36})`, GAMES[id][1](t, W, H));
+    if (kind === 'blur') clue = `<filter id="bq"><feGaussianBlur stdDeviation="26"/></filter><g filter="url(#bq)">${GAMES[id][1](t, W, H)}</g>`;
+  }
+  const k = lerp(.7, 1, eOut(prog(lt, 0, .25)));
+  s += G(`translate(540 950) scale(${k}) translate(-540 -950)`, R(x0 - 16, y0 - 16, W + 32, H + 32, 40, '#262b45', 9) + nest(x0, y0, W, H, clue) + R(x0, y0, W, H, 26, 'none', 7));
+  s += G(`translate(170 330) rotate(-8) scale(${pop(lt, .05, .25)})`, C(0, 0, 90, col, 9) + T(0, 30, '#' + (i + 1), 90, INK, 'middle', 'Luckiest'));
+  s += scoreDots(t);
+  s += timerRing(t, lineEnd(cl) + .1, tA - .05, 540, 1400);
+  if (shown) { s += tag(540, 1810, GAMES[id][0].toUpperCase(), col, pop(t, tA, .3), -3); s += G(`translate(870 420) scale(${pop(t, tA + .05, .25)})`, C(0, 0, 70, '#3ddc84', 8) + P('M-30 0 L-8 24 L32 -24', 'none', 12)); }
+  return s;
+}
+function iconsClue(id, t, W, H) {
+  let s = R(0, 0, W, H, 0, '#f5f1e8', 0) + T(W / 2, 130, 'GUESS THE GAME', 64, '#8b93b8', 'middle', 'Luckiest');
+  CLUE_ICONS[id].forEach((ic, j) => { const kk = eBack(prog(t, A(ROUNDS.find(r => r[0] === id)[1]) + j * .25, A(ROUNDS.find(r => r[0] === id)[1]) + j * .25 + .3));
+    s += G(`translate(${W * (.2 + j * .3)} ${H * .52 + Math.sin(t * 3 + j) * 14}) scale(${kk})`, ICONS[ic](1)); });
+  return s;
+}
+const SC = [
+  [0, (t, lt) => {                               // HOOK: five mystery cards, "only real gamers"
+    let s = R(-20, -20, 1120, 1960, 0, '#101330', 0) + rays(540, 900, 24, 1600, LIME, .08, t * .3);
+    const pos = [[220, 640], [540, 640], [860, 640], [380, 1000], [700, 1000]];
+    pos.forEach(([x, y], i) => { const k = pop(lt, .05 + i * .08, .25), wob = Math.sin(t * 5 + i) * 4;
+      s += G(`translate(${x} ${y}) rotate(${wob}) scale(${k})`, R(-130, -160, 260, 320, 28, ROUNDS[i][4], 9) + T(0, 50, '?', 200, INK, 'middle', 'Luckiest') + T(0, -100, '#' + (i + 1), 48, INK, 'middle', 'Luckiest')); });
+    s += kidFront(540, 1580, 1.0, { t, mouth: 'o', brow: 'up', talk: Math.abs(Math.sin(t * 14)) });
+    return G(`translate(540 900) scale(${lerp(1.3, 1, eOut(prog(lt, 0, .3)))}) translate(-540 -900)`, s);
+  }, 220],
+  ...ROUNDS.map((r, i) => [A(r[1]) - .1, (t, lt) => round(t, lt, i), 1590]),
+  [A(11) + 1.0, (t, lt) => {                     // how many did you get?
+    let s = R(-20, -20, 1120, 1960, 0, '#101330', 0) + rays(540, 900, 24, 1600, '#ffd84d', .1, t * .3) + scoreDots(t);
+    ROUNDS.forEach(([id], i) => { const x = i < 3 ? 190 + i * 350 : 365 + (i - 3) * 350, y = i < 3 ? 430 : 780;
+      s += G(`translate(${x} ${y}) scale(${pop(lt, i * .08, .25)})`, R(-160, -140, 320, 280, 22, '#171a2b', 6) + nest(-150, -130, 300, 200, GAMES[id][1](t, 300, 200)) + T(0, 118, GAMES[id][0], 32, '#fff', 'middle', 'Chakra')); });
+    s += G(`translate(540 1380) scale(${pop(lt, .5, .3)})`, TS(0, 0, '?/5', 220, LIME, 16));
+    return s;
+  }, 1600],
+  [A(12) - .1, (t, lt) => endCard(t, lt, 'comment your score'), 1560],
+];
+const CUES = { bpm: 112, key: 'bright',
+  music: [[0, A(2) - .1, 'hard'], ...ROUNDS.flatMap(([, cl, al], i) => [[A(cl) - .1, A(al) - .05, 'tense'], [A(al) - .05, i < 4 ? A(ROUNDS[i + 1][1]) - .1 : A(12) - .1, 'hard']]), [A(12) - .1, TIMELINE.end, 'hard']],
+  fx: [...ROUNDS.flatMap(([, cl, al]) => [[lineEnd(cl) + .1, 'ticks', .6, A(al) - lineEnd(cl) - .2, (A(al) - lineEnd(cl) - .15) / 3], [A(al) - .05, 'ding', .7], [A(al), 'thud', .6]]),
+       [A(11) + 1.1, 'cheer', .7], [A(12), 'pop', .5]] };
+startVideo(SC, CUES);
+const r0 = window.render; window.render = t => { window.__t = t; r0(t); };
+</script>
+</body></html>

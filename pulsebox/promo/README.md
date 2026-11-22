@@ -1,0 +1,35 @@
+# Pulsebox promo shorts
+
+Vertical (1080x1920, 30 fps) short videos for TikTok, Reels and Shorts. Every frame is hand-drawn 2D SVG
+(ink outlines, flat colours, a little line "boil" like hand animation). The games on screen are 2D redraws of real
+Pulsebox games, made from their screenshots in `public/media/`. The voice is Kokoro (free, Apache-2.0, runs
+locally): a 50/50 blend of the `af_sky` and `bf_emma` voices. Music and sound effects are synthesized in `lib/mix.py`,
+so there are no samples or licences to track.
+
+| Video | Hook | Output |
+|-------|------|--------|
+| `secret-dev/` | "This kid has a secret." A kid secretly builds the games; mid-video reveal that Pulsebox is real | `secret-dev/out/pulsebox-secret-game-dev.mp4` |
+| `one-more-game/` | "You said one more game. That was 8 hours ago." A night of Pulsebox games, 10 PM to sunrise | `one-more-game/out/pulsebox-one-more-game.mp4` |
+| `tier-list/` | "I ranked the games on a free website. #1 shocked me." S/A/B tier list, comment bait | `tier-list/out/pulsebox-tier-list.mp4` |
+| `guess-the-game/` | "Only real gamers can name all 5." Five clues, 3-2-1, reveal | `guess-the-game/out/pulsebox-guess-the-game.mp4` |
+
+## Make or change a video
+
+Each video folder (except `secret-dev/`, the first one, which has its own scripts) has:
+
+- `video.json`: the voice lines (`say` is spoken, `cap` is the caption text, `gap` is the pause before the line).
+- `scenes.html`: the scenes. `SC` lists `[start time, draw function, caption y]`; `CUES` lists music sections and sound effects.
+
+```bash
+bash lib/make.sh one-more-game voice                 # voice + word timings only
+bash lib/make.sh one-more-game sheet 0.5 3 10 20     # preview stills in one-more-game/preview/
+python3 lib/sheet.py one-more-game 0.5 3 10 20       # ...as one contact sheet
+bash lib/make.sh one-more-game                       # the whole video -> one-more-game/out/
+```
+
+`lib/art.js` has the characters, props, the first six games and the caption engine; `lib/more.js` has nine more games
+(`GAMES` maps a game id to its title and draw function). Scenes are keyed to the voice (`VO[i]`, `wordT(line, /word/)`),
+so changing a line re-times the video by itself.
+
+Needs ffmpeg, node with Playwright (Chromium), and Python 3. `make.sh` sets up a venv with `kokoro-onnx`,
+`faster-whisper`, `soundfile` and `scipy`, and downloads the Kokoro model from Hugging Face on first run.
