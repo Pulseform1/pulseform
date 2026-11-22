@@ -3361,6 +3361,7 @@ loadStats();
   function localData() { const d = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (mine(k)) d[k] = localStorage.getItem(k); } } catch (e) {} return d; }
   // two copies of the same game's save: keep the one that has played more (Pulsebox kit saves), otherwise the newer one
   function pick(k, local, cloud, cloudNewer) {
+    if (k === 'pbx-profile' && window.pbxMergeProfile) { try { return JSON.stringify(window.pbxMergeProfile(JSON.parse(local), JSON.parse(cloud))); } catch (e) {} }
     if (k.startsWith('pbx-')) { try { const a = JSON.parse(local), b = JSON.parse(cloud); const m = (b.plays || 0) > (a.plays || 0) ? b : a, o = m === a ? b : a; m.best = Math.max(a.best || 0, b.best || 0); m.owned = [...new Set([...(a.owned || []), ...(b.owned || [])])];
       if (a.dp && b.dp && a.dp.stats && b.dp.stats && m.dp.stats) { m.dp.stats.owned = [...new Set([...(a.dp.stats.owned || []), ...(b.dp.stats.owned || [])])]; m.dp.stats.skins = [...new Set([...(a.dp.stats.skins || []), ...(b.dp.stats.skins || [])])]; }   // Duelpoint guns and skins bought on either device stay bought
       return JSON.stringify(m); } catch (e) {} }
@@ -3384,14 +3385,16 @@ loadStats();
       const str = JSON.stringify(merged);
       let t = cloud.t;
       if (str !== JSON.stringify(cloud.data || {})) t = (await call('PUT', { data: merged })).t;
-      lastPushed = str; ls.set(SYNC_KEY, JSON.stringify({ t, uid: A.user.uid }));
-      if (Object.keys(merged).some(k => local[k] !== merged[k])) { try { favs = store.get('favs', []); recent = store.get('recent', []); renderHome(); } catch (e) {} }
+      lastPushed = str; ls.set(SYNC_KEY, JSON.stringify({ t, uid: A.user.uid })); A.syncedUid = A.user.uid;
+      if (Object.keys(merged).some(k => local[k] !== merged[k])) { try { window.dispatchEvent(new CustomEvent('pbx-synced')); } catch (e) {} try { favs = store.get('favs', []); recent = store.get('recent', []); renderHome(); } catch (e) {} }
       setState('ok');
     } catch (e) { setState('bad'); }
     A.syncing = false;
+    if (A.user && A.syncedUid === A.user.uid) try { window.dispatchEvent(new CustomEvent('pbx-sync-done')); } catch (e) {}
   }
   async function push() {
     if (!A.user || A.syncing) return true;
+    if (A.syncedUid !== A.user.uid) { sync(); return false; }
     const d = localData(), str = JSON.stringify(d); if (str === lastPushed) return true;
     try { setState('busy'); const r = await call('PUT', { data: d }); lastPushed = str; ls.set(SYNC_KEY, JSON.stringify({ t: r.t, uid: A.user.uid })); setState('ok'); return true; } catch (e) { setState('bad'); return false; }
   }
@@ -3824,8 +3827,28 @@ loadStats();
   const KEY = 'pbx-profile';
   const fresh = () => ({ v: 1, name: '', xp: 0, plays: 0, games: {}, days: {}, daily: {}, streak: 0, bestStreak: 0, lastDaily: '', rated: {}, badges: {}, ranks: {} });
   let P = fresh();
+  // two copies of the profile (this page's and what is stored, or this device's and the account's): keep the most of
+  // everything, so progress is never lost to an older copy. XP and plays take the higher; games, days, dailies and badges
+  // are joined; the streak comes from whichever did the latest daily.
+  const isObj = o => o && typeof o === 'object' && !Array.isArray(o);
+  function mergeProfile(a, b) {
+    if (!isObj(b)) return a; if (!isObj(a)) return b;
+    const o = Object.assign(fresh(), b, a), mx = (x, y) => Math.max(+x || 0, +y || 0);
+    o.xp = mx(a.xp, b.xp); o.plays = mx(a.plays, b.plays); o.bestStreak = mx(a.bestStreak, b.bestStreak);
+    o.games = {}; for (const id of new Set([...Object.keys(a.games || {}), ...Object.keys(b.games || {})])) { const x = (a.games || {})[id] || {}, y = (b.games || {})[id] || {}; o.games[id] = Object.assign({}, y, x, { n: mx(x.n, y.n), best: mx(x.best, y.best), first: [x.first, y.first].filter(Boolean).sort()[0] || today() }); }
+    for (const k of ['days', 'daily']) { o[k] = {}; for (const d of new Set([...Object.keys(a[k] || {}), ...Object.keys(b[k] || {})])) o[k][d] = mx((a[k] || {})[d], (b[k] || {})[d]); }
+    const ks = Object.keys(o.days).sort(); while (ks.length > 60) delete o.days[ks.shift()];
+    const la = a.lastDaily || '', lb = b.lastDaily || ''; o.lastDaily = la > lb ? la : lb; o.streak = la === lb ? mx(a.streak, b.streak) : la > lb ? +a.streak || 0 : +b.streak || 0; o.bestStreak = Math.max(o.bestStreak, o.streak);
+    o.badges = Object.assign({}, b.badges, a.badges); o.rated = Object.assign({}, b.rated, a.rated); o.ranks = Object.assign({}, b.ranks, a.ranks);
+    if (b.owl) o.owl = 1; if (b.bird) o.bird = 1;
+    if (isObj(a.xpDay) && isObj(b.xpDay)) { if (a.xpDay.d === b.xpDay.d) { const g = Object.assign({}, b.xpDay.g, a.xpDay.g); for (const id in g) g[id] = mx((a.xpDay.g || {})[id], (b.xpDay.g || {})[id]); o.xpDay = { d: a.xpDay.d, g }; } else o.xpDay = a.xpDay.d > b.xpDay.d ? a.xpDay : b.xpDay; }
+    if (/^Player\d{4}$/.test(a.name || '') && b.name && !/^Player\d{4}$/.test(b.name)) o.name = b.name;   // a real name beats a placeholder
+    return o;
+  }
+  window.pbxMergeProfile = (a, b) => mergeProfile(a, b);
+  const stored = () => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); return isObj(v) ? v : null; } catch (e) { return null; } };
   const load = () => { try { P = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { P = fresh(); } if (!P.name) { P.name = 'Player' + Math.floor(1000 + Math.random() * 9000); save(); } };
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
+  const save = () => { P = mergeProfile(P, stored()); try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
   // one player name: leaderboards, online rooms and the Arena all use it
   const isDefaultName = () => /^Player\d{4}$/.test(P.name || '');
   function setName(v) { v = String(v || '').replace(/[^A-Za-z0-9!@#$%^&*()_+=.,?~:;'[\]{}| -]/g, '').replace(/\s+/g, ' ').trim().slice(0, 20); if (!v) return false; P.name = v; save(); try { localStorage.setItem('pbx-mp-name', v); } catch (e) {} if (typeof chip === 'function') chip(); return true; }
@@ -4036,6 +4059,9 @@ loadStats();
 
   /* ---------- wiring into the hub ---------- */
   load(); checkBadges();
+  // the account's saves just came down: take in the profile they brought (merged with this page's), then redraw
+  let synced = false; window.addEventListener('pbx-sync-done', () => { synced = true; save(); pushStats(true); });
+  window.addEventListener('pbx-synced', () => { save(); checkBadges(); try { chip(); renderDaily(); if (typeof pushStats === 'function') pushStats(true); } catch (e) {} });
   const head = document.querySelector('header.top'), acct = $('acctBtn');
   const lb = document.createElement('button'); lb.className = 'lvl-btn'; lb.id = 'lvlBtn'; lb.type = 'button'; lb.setAttribute('aria-label', 'Your player name, profile, level and badges');
   lb.innerHTML = '<span class="lv"><b>1</b><span class="pen">✎</span></span><span class="lvb"><span class="nm"></span><span class="bar"><i></i></span></span><span class="bd"></span>';
@@ -4070,7 +4096,7 @@ loadStats();
   }
   let statsT = 0, statsLast = '';
   function pushStats(now) {
-    clearTimeout(statsT); if (!U.name || !signedIn()) return;
+    clearTimeout(statsT); if (!U.name || !signedIn() || !synced) return;
     statsT = setTimeout(async () => { const s = myStats(), k = JSON.stringify(s); if (k === statsLast) return; try { await papi('stats', s); statsLast = k; U.boardAt = 0; } catch (e) { if (e.code === 429) pushStats(); } }, now ? 0 : 15000);
   }
   // every XP change redraws the header chip: that is also when the board hears about it
