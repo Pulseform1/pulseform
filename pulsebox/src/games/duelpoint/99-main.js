@@ -65,6 +65,7 @@
   GAME.update = dt => {
     queueTick();
     if (screen !== 'play' || !M || posed) return;
+    if (M.phase === 'live' && M.planted && !M.defused && M.planted.t <= 10 && M.planted.t > 0 && !M.planted.ten) { M.planted.ten = true; if (typeof playMoment === 'function' && M.mode !== 'range' && M.mode !== 'demo') playMoment('ten'); }   // ten seconds left on the charge
     if (UI.startSnd && !loadingNow()) { UI.startSnd = false; if (M.phase === 'buy' && typeof playMoment === 'function') playMoment('start'); }
     if (UI.pendingArmory && !loadingNow() && !UI.switched) { UI.pendingArmory = false; if (M.phase === 'buy') openArmory(true); }
     acc += Math.min(dt, .1); let n = 0; while (acc >= 1 / 60 && n++ < 5) { for (const f of M.fs) { f.px = f.x; f.py = f.y; f.pz = f.z; } tick(1 / 60); acc -= 1 / 60; }
