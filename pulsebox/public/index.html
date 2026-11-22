@@ -783,7 +783,7 @@
   @media (min-width: 900px) { .el-bar-invite { bottom: 22px; } }
   .am-sent { text-align: center; } .am-sent .big { font-size: 46px; margin: 4px 0 6px; }
 
-  /* ============ LEADERBOARD: the top 50 by Pulse Score ============ */
+  /* ============ LEADERBOARD: the top 100 by Pulse Score ============ */
   .lvt { display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 9px; background: linear-gradient(135deg, var(--lime), #5fe08a); color: #0a0c12; font-family: var(--display); font-weight: 800; font-size: 15px; box-shadow: 0 0 12px rgba(198,255,61,.3); flex: none; }
   .lvt::before { content: 'LV'; font-size: 8px; letter-spacing: .08em; margin-right: 2px; opacity: .7; align-self: center; }
   .lb-band { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: clamp(14px, 3vw, 30px); margin: 0 0 clamp(16px, 2.2vw, 24px); padding: clamp(20px, 3.2vw, 34px) clamp(18px, 3.4vw, 36px);
@@ -1024,7 +1024,7 @@
 
   <!-- PULSEBOX ELITE: progress, invites, and the Elite library -->
   <main id="elite" class="elite-view" hidden><div class="el-wrap" id="elRoot"></div></main>
-  <!-- LEADERBOARD: the top 50 players by Pulse Score -->
+  <!-- LEADERBOARD: the top 100 players by Pulse Score -->
   <main id="leaderboard" class="board-view" hidden aria-labelledby="lbTitle"><div class="lbv" id="lbRoot"></div></main>
 
   <footer><span><b>PULSEBOX</b> · Interactive activities for timing, strategy, and problem-solving.</span><span>Works on phones, tablets, and computers. Found a problem? <button type="button" class="bug-link" id="footBug">Report a bug</button></span></footer>
@@ -4054,7 +4054,7 @@ loadStats();
   const rs0 = renderShelves; renderShelves = function () { rs0.apply(this, arguments); renderDaily(); };
   try { renderDaily(); } catch (e) {}
 
-  /* ---------- the leaderboard: a username picked once per account, and the top 50 by Pulse Score (players.js) ---------- */
+  /* ---------- the leaderboard: a username picked once per account, and the top 100 by Pulse Score (players.js) ---------- */
   const U = { name: null, known: false, board: null, boardAt: 0, asked: false };
   const signedIn = () => !!(window.pbxUser && window.pbxUser());
   async function papi(path, body) {
@@ -4125,9 +4125,9 @@ loadStats();
   async function bandBoard(force) {
     const b = $('lbBand'); if (!b) return;
     const paint = B => { const top = (B && B.top || []).slice(0, 3);
-      b.innerHTML = `<div class="lb-trophy" aria-hidden="true">🏆</div><div class="lb-txt"><span class="k">Pulsebox</span><h2 id="lbbTitle">Leaderboard</h2><p>The top 50 players. Where do you rank?</p></div>
+      b.innerHTML = `<div class="lb-trophy" aria-hidden="true">🏆</div><div class="lb-txt"><span class="k">Pulsebox</span><h2 id="lbbTitle">Leaderboard</h2><p>The top 100 players. Where do you rank?</p></div>
         <div class="lb-mini">${top.length ? top.map(p => `<div class="row"><span class="m">${medal(p.rank)}</span><span class="lvt">${p.level}</span><span class="n">${esc(p.name)}</span><span class="s">${num(p.score)}</span></div>`).join('') : '<div class="row"><span class="m">🥇</span><span class="n">Be the first on the board</span></div>'}
-        <button class="lb-go" type="button" tabindex="-1">See the top 50</button></div>`; };
+        <button class="lb-go" type="button" tabindex="-1">See the top 100</button></div>`; };
     paint(U.board); paint(await loadBoard(force));
   }
   function renderBoardPage() {
@@ -4146,7 +4146,7 @@ loadStats();
     const how = [['streak', 'Each day of your current daily streak', 1], ['firsts', 'Each world board where you\'re #1'], ['top10', 'Each world board in your top 10'], ['beaten', 'Each game you\'ve finished with a score'], ['badges', 'Each badge'], ['level', 'Each level'],
       ['dailies', 'Each daily challenge done'], ['bestStreak', 'Each day of your best streak'], ['tried', 'Each different game played'], ['sessions', 'Each session (up to 1,500)']];
     root.innerHTML = `<button class="lbv-back" type="button" data-b="home">‹ All games</button>
-      <div class="lbv-hero"><div class="t" aria-hidden="true">🏆</div><h1 id="lbTitle">Leaderboard</h1><p>Top 50 players · ranked by Pulse Score${B ? ' · ' + num(B.total) + ' players ranked' : ''}</p></div>
+      <div class="lbv-hero"><div class="t" aria-hidden="true">🏆</div><h1 id="lbTitle">Leaderboard</h1><p>Top 100 players · ranked by Pulse Score${B ? ' · ' + num(B.total) + ' players ranked' : ''}</p></div>
       ${you}
       ${B ? `<div class="lbv-podium">${pod(2)}${pod(1)}${pod(3)}</div>${top.length > 3 ? `<ol class="lbv-list" start="4">${rows}</ol>` : top.length ? '' : '<div class="lbv-empty">Nobody on the board yet. Play a game and grab #1!</div>'}` : '<div class="lbv-empty">Loading the leaderboard…</div>'}
       <section class="lbv-how"><h2>How the Pulse Score works</h2><p>It rewards coming back every day most of all. Played in the last 2 days? Your score gets a <b>×1.25 active bonus</b>. Away for a while and it slowly shrinks, until you play again.</p>

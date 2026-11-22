@@ -1,10 +1,10 @@
-// PULSEBOX LEADERBOARD: one board of the top 50 players across all of Pulsebox, ranked by a Pulse Score.
+// PULSEBOX LEADERBOARD: one board of the top 100 players across all of Pulsebox, ranked by a Pulse Score.
 //
 // Everyone on it has an account and a username they picked once (unique, tied to the account, never changes).
 // The hub sends the player's profile numbers (streak, games beaten, badges, level...); the server checks each is in a
 // believable range and works out the score itself, with the weights below. The board is one Durable Object (Players).
 //
-//   GET  /api/players/top         -> { top: [{ rank, name, level, score, streak, beaten }] x<=50, total, me? }
+//   GET  /api/players/top         -> { top: [{ rank, name, level, score, streak, beaten }] x<=100, total, me? }
 //   GET  /api/players/me          -> { name }                     (your username, or null if you haven't picked one)
 //   POST /api/players/name        <- { name } -> { name } | { error: 'taken' | 'set' | 'short' | 'long' | 'chars' | 'rude' }   (once per account; no two players share a name: 3-20 characters, symbols allowed)
 //   POST /api/players/stats       <- { xp, streak, bestStreak, lastDaily, dailies, beaten, tried, badges, top10, firsts, sessions, lastPlay }
@@ -121,7 +121,7 @@ export class Players {
     const p = new URL(request.url).pathname, b = await request.json(), now = Date.now();
     if (p === '/top') {
       if (!this.cache || now - this.cacheAt > 15000) {
-        const rows = this.sql.exec('SELECT n.name, b.level, b.score, b.streak, b.beaten FROM board b JOIN names n ON n.uid = b.uid ORDER BY b.score DESC, b.at ASC LIMIT 50').toArray();
+        const rows = this.sql.exec('SELECT n.name, b.level, b.score, b.streak, b.beaten FROM board b JOIN names n ON n.uid = b.uid ORDER BY b.score DESC, b.at ASC LIMIT 100').toArray();
         this.cache = { top: rows.map((r, i) => ({ rank: i + 1, ...r })), total: this.one('SELECT COUNT(*) AS n FROM board').n }; this.cacheAt = now;
       }
       const out = { ...this.cache, weights: WEIGHTS };   // the page explains the score from the same numbers
