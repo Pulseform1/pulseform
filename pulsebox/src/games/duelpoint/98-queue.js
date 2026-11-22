@@ -14,6 +14,7 @@
   const QUE = { mode: 0, ws: null, me: 0, host: 0, peers: new Map(), t0: 0, shard: 0, tok: '', found: null, err: '', mT: 0, party: null };   // party: { toks: { id: token } } for the rest of a party its host queues for
   const newTok = () => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
   function queueStart(mode, shard = 0, party = false) {   // (shard: the tests queue apart from real players)
+    if (MP.online() && !party && !QUE.found && typeof partyBlocks === 'function' && partyBlocks(null)) return;
     queueStop(); QUE.found = null; if (MP.online() && !party) MP.leave();
     QUE.mode = mode; QUE.t0 = performance.now(); QUE.shard = shard; QUE.base = shard; QUE.err = ''; QUE.tok = newTok();
     // a party: everyone else in the room gets a token of their own, and the party is told the search is on

@@ -79,7 +79,7 @@
   const MENU_TABS = [['home', 'PLAY'], ['agents', 'AGENTS'], ['store', 'STORE'], ['pass', 'PASS'], ['locker', 'LOCKER'], ['crosshair', 'CROSSHAIR'], ['career', 'CAREER'], ['settings', 'SETTINGS']];
   const NAV_L = [['agents', 'AGENTS'], ['locker', 'LOCKER'], ['career', 'CAREER']], NAV_R = [['pass', 'PASS'], ['store', 'STORE'], ['settings', 'SETTINGS']];
   function drawTopBar(g, V, u) {
-    const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u, mid = 640, go = k => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); };
+    const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u, mid = 640, go = k => { if (k === 'agents') { if (screen === 'party') UI.returnTo = 'party'; openSelect(null); } else { UI.panel = k; SH.show = null; UI.returnTo = null; screen = k === 'home' && MP.online() && !M ? 'party' : 'menu'; } click(); };
     g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
     // what fits: less space round each tab, then no name on the left, then a narrower PLAY and shorter words, then smaller
     let cardX = V.x1 - 352 * u, slim = false, px = 13 * u, pad = 16 * u, logo = true, pw = 176 * u, NL = NAV_L, NR = NAV_R;
@@ -108,6 +108,7 @@
     return h;
   }
   function drawMenu(g) {
+    if (UI.panel === 'home' && MP.online() && !QUE.found && !M) { screen = 'party'; return drawParty(g); }
     const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale();
     if ((UI.panel === 'store' || UI.panel === 'locker') && (SH.show || SH.reveal)) return drawShop(g, V, W, H, u);   // a skin preview takes the whole screen
     g.fillStyle = 'rgba(12,16,22,.5)'; g.fillRect(V.x0, V.y0, W, H);
@@ -225,7 +226,7 @@
     // the right-hand column: friends (most of it), your rank, the season and today's challenges
     { const colH = B - T + 6 * u, y0 = T - 6 * u, rkH = 50 * u, seH = Math.min(112 * u, Math.max(70 * u, colH * .2)), gp = 10 * u, frH = colH - rkH - seH - gp * 2;
       // friends
-      { const on = MP.online(), ps = on ? MP.players() : [], hot = zone(fx, y0, fp, frH, () => openParty());
+      { const on = MP.online(), ps = on ? MP.players() : [], hot = zone(fx, y0, fp, frH, () => openParty(on ? null : 'join'));   // (anywhere on the panel but CREATE: straight to joining)
         g.save(); rr(g, fx, y0, fp, frH, 12, null, null); g.clip(); g.fillStyle = 'rgba(10,22,24,.9)'; g.fillRect(fx, y0, fp, frH);
         { const gr = g.createRadialGradient(fx + fp * .5, y0 + frH, 10, fx + fp * .5, y0 + frH * .7, frH * .9); gr.addColorStop(0, 'rgba(53,224,200,.32)'); gr.addColorStop(1, 'rgba(53,224,200,0)'); g.fillStyle = gr; g.fillRect(fx, y0, fp, frH); }
         g.globalAlpha = .06; g.fillStyle = YOU; for (let i = -2; i < 6; i++) { const bx = fx + i * 60 * u + (t * 8 * u) % (60 * u); g.beginPath(); g.moveTo(bx, y0 + frH); g.lineTo(bx + frH * .5, y0); g.lineTo(bx + frH * .5 + 18 * u, y0); g.lineTo(bx + 18 * u, y0 + frH); g.closePath(); g.fill(); } g.globalAlpha = 1; g.restore();
@@ -243,7 +244,7 @@
         let by2 = y0 + frH - 14 * u - btnH;
         if (on) btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'OPEN YOUR PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: `${ps.length} IN  ·  ${PARTY.set.sites === 1 ? 'ONE SITE' : 'TWO SITES'}  ·  ${vsLabel(PARTY.set.size)}` });
         else { btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'CREATE A PARTY', () => { openParty(); if (MP.name && MP.name !== 'You') MP.create(); }, { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: 'invite with a code or a link' }); by2 += bh1 + 8 * u;
-          btn(g, fx + 14 * u, by2, fp - 28 * u, bh2, 'JOIN WITH A CODE', () => openParty(), { px: Math.min(13 * u, fp * .05), edge: 'rgba(53,224,200,.6)' }); } }
+          btn(g, fx + 14 * u, by2, fp - 28 * u, bh2, 'JOIN WITH A CODE', () => openParty('join'), { px: Math.min(13 * u, fp * .05), edge: 'rgba(53,224,200,.6)' }); } }
       // your rank at this size
       { const ry = y0 + frH + gp, S = rankedOf(CFG.size), pl = placed(S), hr = zone(fx, ry, fp, rkH, () => { UI.rankScale = teamSize(CFG.size); click(); });
         rr(g, fx, ry, fp, rkH, 10, 'rgba(12,16,22,.85)', hr ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.12)', 1.5); tierBadge(g, fx + 26 * u, ry + rkH / 2, 14 * u, S.rv, pl);

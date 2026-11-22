@@ -2,10 +2,12 @@
   let booted = false, acc = 0, lastDraw = 0;
   function toMenu() { if (M && M.ranked && !M.over && M.mode !== 'demo' && M.round > 0) rankedLeft(); if (M && M.fromQueue && MP.online()) MP.leave();   // (strangers from the queue: the room closes behind you, it never becomes a party)
     UI.trying = null; M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
-  function play(o) { resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
+  // in a party you wait together: no range, practice or bot match on your own until you leave it (the party's own match starts online)
+  function partyBlocks(o) { if (!MP.online() || (o && (o.mode === 'online' || o.mode === 'demo'))) return false; screen = 'party'; UI.panel = 'home'; UI.sel = null; PARTY.status = 'You are in a party: leave it to play on your own.'; return true; }
+  function play(o) { if (partyBlocks(o)) return; resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
   // a bot match from the menu: agent select first (the tests can skip it)
   const soloOpts = () => { const size = teamSize(CFG.size), ranked = CFG.queue === 'ranked'; return { mode: 'bot', diff: ranked && CFG.diff === 'auto' ? botLevelFor(rankStrength(size)) : CFG.diff, size, sites: CFG.sites, ranked }; };
-  function menuPlay(size, select = true) { if (size) { CFG.size = size; saveAll(); } const o = soloOpts(); if (select) openSelect(o); else play(o); }
+  function menuPlay(size, select = true) { if (partyBlocks(null)) return; if (size) { CFG.size = size; saveAll(); } const o = soloOpts(); if (select) openSelect(o); else play(o); }
   on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; UI.lastSide = null; UI.switched = null; });   // an online match began (60-net started it)
   // each round opens on the armory, after the loading screen or the switching-sides band if there is one
   on('round', n => {

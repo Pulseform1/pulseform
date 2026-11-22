@@ -6,7 +6,8 @@
      'lteam' (the host's teams and settings), 'lswap' (please move me). */
   const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null, qs: null };   // qs: the host's world search, as the rest of the party sees it   // want: who asked to switch sides; pick: the host's first pick of a trade
   const myId = () => MP.id;
-  function openParty() { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; }
+  // view: 'join' opens straight on the join screen (just a code to type); anything else, the create-or-join choice
+  function openParty(view) { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; PARTY.view = view === 'join' ? 'join' : 'create'; PARTY.focused = false; }
   function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join(''), cd: cardCode(), qt: QUE.found ? QUE.tok : undefined }; }
   function sendProfile(force) { if (!MP.online()) return; const p = partyProfile(), key = JSON.stringify(p); if (!force && key === PARTY.sent) return; PARTY.sent = key; PARTY.prof.set(myId(), p); MP.send(Object.assign({ t: 'lprof' }, p)); }
   // the host keeps everyone on a team: newcomers go to the shorter side, and nobody stays on a team that has no room
@@ -86,14 +87,45 @@
     MP.join(v);
   }
   function textBox(id, x, y, w, h, ph, max, val, onEnter) {
-    if (!domIn) { domIn = {}; const st = document.createElement('style'); st.textContent = '.dp-in{position:fixed;z-index:5;background:rgba(10,13,18,.92);border:1px solid rgba(239,233,220,.3);border-radius:8px;color:#efe9dc;font:800 18px "Chakra Petch",sans-serif;text-align:center;letter-spacing:.06em;outline:none;padding:0 10px}.dp-in:focus{border-color:#35e0c8}'; document.head.appendChild(st); }
+    if (!domIn) { domIn = {}; const st = document.createElement('style'); st.textContent = '.dp-in{position:fixed;z-index:5;background:rgba(10,13,18,.92);border:1px solid rgba(239,233,220,.3);border-radius:8px;color:#efe9dc;font:800 18px "Chakra Petch",sans-serif;text-align:center;letter-spacing:.06em;outline:none;padding:0 10px}.dp-in:focus{border-color:#35e0c8}.dp-in.dp-ghost{background:transparent;border-color:transparent;color:transparent;caret-color:transparent;text-transform:uppercase}'; document.head.appendChild(st); }
     let el = domIn[id]; if (!el) { el = domIn[id] = document.createElement('input'); el.className = 'dp-in'; el.maxLength = max; el.placeholder = ph; el.value = val || ''; el.autocomplete = 'off'; el.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') onEnter(el.value); if (e.key === 'Escape') el.blur(); }; document.body.appendChild(el); }
     const V = K.view, sx = innerWidth / (V.x1 - V.x0), sy = innerHeight / (V.y1 - V.y0); el.style.left = (x - V.x0) * sx + 'px'; el.style.top = (y - V.y0) * sy + 'px'; el.style.width = w * sx + 'px'; el.style.height = h * sy + 'px'; el.style.fontSize = Math.round(h * sy * .45) + 'px'; el.hidden = false; el.dataset.seen = '1'; return el;
   }
   function hideBoxes() { if (domIn) for (const el of Object.values(domIn)) { if (!el.dataset.seen) el.hidden = true; delete el.dataset.seen; } }
+  // JOIN A PARTY: one job, done big. Your name, the code (four boxes, filled as you type), and JOIN
+  function drawJoin(g, V, u, x0) {
+    const t = performance.now() / 1000, cw = Math.min(520 * u, V.x1 - V.x0 - 40 * u), cx = 640 - cw / 2, top = V.y0 + Math.max(70 * u, (V.y1 - V.y0 - 470 * u) / 2), ch = 430 * u;
+    btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'BACK', () => { PARTY.status = ''; screen = 'menu'; UI.panel = 'home'; }, { px: 13 * u });
+    // the card: dark glass, a teal edge, slow light sweeping across it
+    g.save(); rr(g, cx, top, cw, ch, 16, null, null); g.clip(); g.fillStyle = 'rgba(10,22,24,.94)'; g.fillRect(cx, top, cw, ch);
+    { const gr = g.createRadialGradient(640, top + ch, 10, 640, top + ch * .65, ch); gr.addColorStop(0, 'rgba(53,224,200,.28)'); gr.addColorStop(1, 'rgba(53,224,200,0)'); g.fillStyle = gr; g.fillRect(cx, top, cw, ch); }
+    g.globalAlpha = .05; g.fillStyle = YOU; for (let i = -3; i < 8; i++) { const bx = cx + i * 70 * u + (t * 10 * u) % (70 * u); g.beginPath(); g.moveTo(bx, top + ch); g.lineTo(bx + ch * .5, top); g.lineTo(bx + ch * .5 + 22 * u, top); g.lineTo(bx + 22 * u, top + ch); g.closePath(); g.fill(); } g.globalAlpha = 1; g.restore();
+    rr(g, cx, top, cw, ch, 16, null, 'rgba(53,224,200,.55)', 2); g.fillStyle = YOU; g.fillRect(cx + 16, top, cw - 32, 4 * u);
+    tx(g, 'JOIN A PARTY', 640, top + 52 * u, 34 * u, BONE, 'center', 900);
+    tx(g, 'Type the code your friend shared', 640, top + 84 * u, 14 * u, '#9fd8cf', 'center', 700);
+    // the code: four boxes; the real input sits on them, see-through, so typing (and pasting) just works
+    const code = (domIn && domIn.code ? domIn.code.value : '').toUpperCase(), bs = 72 * u, gap = 14 * u, rowW = bs * 4 + gap * 3, bx0 = 640 - rowW / 2, by0 = top + 112 * u;
+    for (let i = 0; i < 4; i++) { const x = bx0 + i * (bs + gap), c = code[i], cur = i === Math.min(code.length, 3) && code.length < 4;
+      rr(g, x, by0, bs, bs * 1.12, 10, c ? 'rgba(53,224,200,.14)' : 'rgba(255,255,255,.04)', c ? YOU : cur ? `rgba(53,224,200,${.45 + .35 * Math.sin(t * 6)})` : 'rgba(159,216,207,.3)', c || cur ? 2.5 : 1.5);
+      if (c) tx(g, c, x + bs / 2, by0 + bs * .58, 40 * u, BONE, 'center', 900); else if (cur) { g.fillStyle = `rgba(53,224,200,${.5 + .5 * Math.sin(t * 6)})`; g.fillRect(x + bs / 2 - 12 * u, by0 + bs * .82, 24 * u, 3 * u); } }
+    const join = () => { MP.setName(domIn.jname.value); joinOrKey(domIn.code.value); };
+    const cd = textBox('code', bx0, by0, rowW, bs * 1.12, '', 4, '', join); cd.classList.add('dp-ghost'); if (!PARTY.focused) { PARTY.focused = true; setTimeout(() => { try { cd.focus(); } catch (e) {} }, 30); }   // ready to type straight away
+    // your name, then JOIN
+    tx(g, 'PLAYING AS', 640, by0 + bs * 1.12 + 34 * u, 11 * u, DIM, 'center', 900);
+    textBox('jname', 640 - 150 * u, by0 + bs * 1.12 + 46 * u, 300 * u, 40 * u, 'Your name', 12, MP.name === 'You' ? '' : MP.name, v => MP.setName(v));
+    const ready = code.length === 4, jy = by0 + bs * 1.12 + 104 * u;
+    btn(g, 640 - 150 * u, jy, 300 * u, tapH(52), ready ? 'JOIN PARTY' : 'ENTER THE CODE', join, { on: ready, fill: YOU, solid: ready, col: ready ? INK : DIM, px: 18 * u });
+    if (PARTY.status) tx(g, PARTY.status, 640, jy + tapH(52) + 26 * u, 14 * u, PARTY.status.startsWith('Connect') ? DIM : PARTY.status.startsWith('Code accepted') ? GOLD : WARN, 'center', 800);
+    // no code? make your own instead
+    const ly = top + ch + 30 * u; g.font = `800 ${fitPx(g, 13 * u)}px ${FONT}`; const lw = g.measureText('No code? Create your own party').width + 24 * u, hot = zone(640 - lw / 2, ly - 16 * u, lw, 32 * u, () => { MP.setName(domIn.jname.value); PARTY.view = 'create'; MP.create(); });
+    tx(g, 'No code? Create your own party', 640, ly, 13 * u, hot ? YOU : '#9fd8cf', 'center', 800); g.fillStyle = hot ? YOU : 'rgba(159,216,207,.4)'; g.fillRect(640 - lw / 2 + 12 * u, ly + 11 * u, lw - 24 * u, 1.5);
+    hideBoxes();
+  }
   function drawParty(g) {
-    const V = K.view, u = uiScale(), W = V.x1 - V.x0, H = V.y1 - V.y0, on = MP.online(), x0 = V.x0 + 60 / pxPer() + 20 * u;
-    g.fillStyle = 'rgba(8,10,14,.8)'; g.fillRect(V.x0, V.y0, W, H);
+    const V0 = K.view, u = uiScale(), W = V0.x1 - V0.x0, H = V0.y1 - V0.y0, on = MP.online(), x0 = V0.x0 + 60 / pxPer() + 20 * u;
+    g.fillStyle = 'rgba(8,10,14,.8)'; g.fillRect(V0.x0, V0.y0, W, H);
+    const nh = on && !QUE.found ? drawTopBar(g, V0, u) : 0, V = Object.assign({}, V0, { y0: V0.y0 + nh });
+    if (!on && PARTY.view === 'join' && !QUE.found) return drawJoin(g, V, u, x0);
     tx(g, 'PLAY WITH FRIENDS', x0, V.y0 + 46 * u, 34 * u, BONE, 'left', 900); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, on ? 'LEAVE' : 'BACK', () => { if (on) MP.leave(); PARTY.status = ''; if (!on) { screen = 'menu'; UI.panel = 'home'; } MP.opts.onRoster(); }, { px: 13 * u });
     if (QUE.found) {   // a match from the queue: say so, and who is in yet
       const F = QUE.found, n = on ? F.toks.filter(tok => MP.players().some(p => (p.id === myId() ? QUE.tok : (PARTY.prof.get(p.id) || {}).qt) === tok)).length : 0, pulse = .75 + .25 * Math.sin(performance.now() / 160);
@@ -107,12 +139,13 @@
       { const x = 640 - cw - 12 * u, hot = zone(x, cy, cw, ch, () => { MP.setName(nm.value); MP.create(); }); rr(g, x, cy, cw, ch, 10, hot ? 'rgba(53,224,200,.16)' : 'rgba(20,26,36,.92)', hot ? YOU : 'rgba(239,233,220,.2)', 2); g.fillStyle = YOU; g.fillRect(x, cy, cw, 5 * u);
         tx(g, 'CREATE A PARTY', x + cw / 2, cy + 70 * u, 24 * u, BONE, 'center', 900); para(g, 'Up to 10 players. Bots fill gaps.', x + 24 * u, cy + 112 * u, cw - 48 * u, 13 * u, '#c9cfd8'); }
       { const x = 640 + 12 * u; rr(g, x, cy, cw, ch, 10, 'rgba(20,26,36,.92)', 'rgba(239,233,220,.2)', 2); g.fillStyle = FOE; g.fillRect(x, cy, cw, 5 * u); tx(g, 'JOIN WITH A CODE', x + cw / 2, cy + 50 * u, 24 * u, BONE, 'center', 900);
-        const cd = textBox('code', x + 40 * u, cy + 80 * u, cw - 80 * u, 46 * u, 'CODE', 4, '', v => { MP.setName(nm.value); joinOrKey(v); });
+        const cd = textBox('code', x + 40 * u, cy + 80 * u, cw - 80 * u, 46 * u, 'CODE', 4, '', v => { MP.setName(nm.value); joinOrKey(v); }); cd.classList.remove('dp-ghost');
         btn(g, x + 40 * u, cy + 136 * u, cw - 80 * u, 40 * u, 'JOIN', () => { MP.setName(nm.value); joinOrKey(cd.value); }, { on: true, fill: FOE, solid: true, col: INK, px: 16 * u }); }
       if (PARTY.status) tx(g, PARTY.status, 640, cy + ch + 40 * u, 15 * u, PARTY.status.startsWith('Connect') ? DIM : PARTY.status.startsWith('Code accepted') ? GOLD : WARN, 'center', 800);
       hideBoxes(); return;
     }
     hideBoxes(); sendProfile(false);
+    if (PARTY.status) tx(g, PARTY.status, x0, V.y0 + 80 * u, 13 * u, GOLD, 'left', 800);
     const ps = MP.players(), host = MP.isHost(), S2 = PARTY.set, me2 = myId();
     // the code and an invite link
     { const cx = x0 + 380 * u, cy = V.y0 + 46 * u; rr(g, cx, cy - 20 * u, 200 * u, 40 * u, 6, 'rgba(255,255,255,.06)', 'rgba(239,233,220,.25)', 1); tx(g, 'CODE', cx + 14 * u, cy, 11 * u, DIM, 'left', 900); tx(g, MP.code, cx + 186 * u, cy, 22 * u, GOLD, 'right', 900);

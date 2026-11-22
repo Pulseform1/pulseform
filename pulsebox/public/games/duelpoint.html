@@ -10008,7 +10008,7 @@ const GAME = {
   const MENU_TABS = [['home', 'PLAY'], ['agents', 'AGENTS'], ['store', 'STORE'], ['pass', 'PASS'], ['locker', 'LOCKER'], ['crosshair', 'CROSSHAIR'], ['career', 'CAREER'], ['settings', 'SETTINGS']];
   const NAV_L = [['agents', 'AGENTS'], ['locker', 'LOCKER'], ['career', 'CAREER']], NAV_R = [['pass', 'PASS'], ['store', 'STORE'], ['settings', 'SETTINGS']];
   function drawTopBar(g, V, u) {
-    const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u, mid = 640, go = k => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); };
+    const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u, mid = 640, go = k => { if (k === 'agents') { if (screen === 'party') UI.returnTo = 'party'; openSelect(null); } else { UI.panel = k; SH.show = null; UI.returnTo = null; screen = k === 'home' && MP.online() && !M ? 'party' : 'menu'; } click(); };
     g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
     // what fits: less space round each tab, then no name on the left, then a narrower PLAY and shorter words, then smaller
     let cardX = V.x1 - 352 * u, slim = false, px = 13 * u, pad = 16 * u, logo = true, pw = 176 * u, NL = NAV_L, NR = NAV_R;
@@ -10037,6 +10037,7 @@ const GAME = {
     return h;
   }
   function drawMenu(g) {
+    if (UI.panel === 'home' && MP.online() && !QUE.found && !M) { screen = 'party'; return drawParty(g); }
     const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale();
     if ((UI.panel === 'store' || UI.panel === 'locker') && (SH.show || SH.reveal)) return drawShop(g, V, W, H, u);   // a skin preview takes the whole screen
     g.fillStyle = 'rgba(12,16,22,.5)'; g.fillRect(V.x0, V.y0, W, H);
@@ -10154,7 +10155,7 @@ const GAME = {
     // the right-hand column: friends (most of it), your rank, the season and today's challenges
     { const colH = B - T + 6 * u, y0 = T - 6 * u, rkH = 50 * u, seH = Math.min(112 * u, Math.max(70 * u, colH * .2)), gp = 10 * u, frH = colH - rkH - seH - gp * 2;
       // friends
-      { const on = MP.online(), ps = on ? MP.players() : [], hot = zone(fx, y0, fp, frH, () => openParty());
+      { const on = MP.online(), ps = on ? MP.players() : [], hot = zone(fx, y0, fp, frH, () => openParty(on ? null : 'join'));   // (anywhere on the panel but CREATE: straight to joining)
         g.save(); rr(g, fx, y0, fp, frH, 12, null, null); g.clip(); g.fillStyle = 'rgba(10,22,24,.9)'; g.fillRect(fx, y0, fp, frH);
         { const gr = g.createRadialGradient(fx + fp * .5, y0 + frH, 10, fx + fp * .5, y0 + frH * .7, frH * .9); gr.addColorStop(0, 'rgba(53,224,200,.32)'); gr.addColorStop(1, 'rgba(53,224,200,0)'); g.fillStyle = gr; g.fillRect(fx, y0, fp, frH); }
         g.globalAlpha = .06; g.fillStyle = YOU; for (let i = -2; i < 6; i++) { const bx = fx + i * 60 * u + (t * 8 * u) % (60 * u); g.beginPath(); g.moveTo(bx, y0 + frH); g.lineTo(bx + frH * .5, y0); g.lineTo(bx + frH * .5 + 18 * u, y0); g.lineTo(bx + 18 * u, y0 + frH); g.closePath(); g.fill(); } g.globalAlpha = 1; g.restore();
@@ -10172,7 +10173,7 @@ const GAME = {
         let by2 = y0 + frH - 14 * u - btnH;
         if (on) btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'OPEN YOUR PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: `${ps.length} IN  ·  ${PARTY.set.sites === 1 ? 'ONE SITE' : 'TWO SITES'}  ·  ${vsLabel(PARTY.set.size)}` });
         else { btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'CREATE A PARTY', () => { openParty(); if (MP.name && MP.name !== 'You') MP.create(); }, { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: 'invite with a code or a link' }); by2 += bh1 + 8 * u;
-          btn(g, fx + 14 * u, by2, fp - 28 * u, bh2, 'JOIN WITH A CODE', () => openParty(), { px: Math.min(13 * u, fp * .05), edge: 'rgba(53,224,200,.6)' }); } }
+          btn(g, fx + 14 * u, by2, fp - 28 * u, bh2, 'JOIN WITH A CODE', () => openParty('join'), { px: Math.min(13 * u, fp * .05), edge: 'rgba(53,224,200,.6)' }); } }
       // your rank at this size
       { const ry = y0 + frH + gp, S = rankedOf(CFG.size), pl = placed(S), hr = zone(fx, ry, fp, rkH, () => { UI.rankScale = teamSize(CFG.size); click(); });
         rr(g, fx, ry, fp, rkH, 10, 'rgba(12,16,22,.85)', hr ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.12)', 1.5); tierBadge(g, fx + 26 * u, ry + rkH / 2, 14 * u, S.rv, pl);
@@ -11087,7 +11088,8 @@ const GAME = {
      'lteam' (the host's teams and settings), 'lswap' (please move me). */
   const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null, qs: null };   // qs: the host's world search, as the rest of the party sees it   // want: who asked to switch sides; pick: the host's first pick of a trade
   const myId = () => MP.id;
-  function openParty() { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; }
+  // view: 'join' opens straight on the join screen (just a code to type); anything else, the create-or-join choice
+  function openParty(view) { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; PARTY.view = view === 'join' ? 'join' : 'create'; PARTY.focused = false; }
   function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join(''), cd: cardCode(), qt: QUE.found ? QUE.tok : undefined }; }
   function sendProfile(force) { if (!MP.online()) return; const p = partyProfile(), key = JSON.stringify(p); if (!force && key === PARTY.sent) return; PARTY.sent = key; PARTY.prof.set(myId(), p); MP.send(Object.assign({ t: 'lprof' }, p)); }
   // the host keeps everyone on a team: newcomers go to the shorter side, and nobody stays on a team that has no room
@@ -11167,14 +11169,45 @@ const GAME = {
     MP.join(v);
   }
   function textBox(id, x, y, w, h, ph, max, val, onEnter) {
-    if (!domIn) { domIn = {}; const st = document.createElement('style'); st.textContent = '.dp-in{position:fixed;z-index:5;background:rgba(10,13,18,.92);border:1px solid rgba(239,233,220,.3);border-radius:8px;color:#efe9dc;font:800 18px "Chakra Petch",sans-serif;text-align:center;letter-spacing:.06em;outline:none;padding:0 10px}.dp-in:focus{border-color:#35e0c8}'; document.head.appendChild(st); }
+    if (!domIn) { domIn = {}; const st = document.createElement('style'); st.textContent = '.dp-in{position:fixed;z-index:5;background:rgba(10,13,18,.92);border:1px solid rgba(239,233,220,.3);border-radius:8px;color:#efe9dc;font:800 18px "Chakra Petch",sans-serif;text-align:center;letter-spacing:.06em;outline:none;padding:0 10px}.dp-in:focus{border-color:#35e0c8}.dp-in.dp-ghost{background:transparent;border-color:transparent;color:transparent;caret-color:transparent;text-transform:uppercase}'; document.head.appendChild(st); }
     let el = domIn[id]; if (!el) { el = domIn[id] = document.createElement('input'); el.className = 'dp-in'; el.maxLength = max; el.placeholder = ph; el.value = val || ''; el.autocomplete = 'off'; el.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') onEnter(el.value); if (e.key === 'Escape') el.blur(); }; document.body.appendChild(el); }
     const V = K.view, sx = innerWidth / (V.x1 - V.x0), sy = innerHeight / (V.y1 - V.y0); el.style.left = (x - V.x0) * sx + 'px'; el.style.top = (y - V.y0) * sy + 'px'; el.style.width = w * sx + 'px'; el.style.height = h * sy + 'px'; el.style.fontSize = Math.round(h * sy * .45) + 'px'; el.hidden = false; el.dataset.seen = '1'; return el;
   }
   function hideBoxes() { if (domIn) for (const el of Object.values(domIn)) { if (!el.dataset.seen) el.hidden = true; delete el.dataset.seen; } }
+  // JOIN A PARTY: one job, done big. Your name, the code (four boxes, filled as you type), and JOIN
+  function drawJoin(g, V, u, x0) {
+    const t = performance.now() / 1000, cw = Math.min(520 * u, V.x1 - V.x0 - 40 * u), cx = 640 - cw / 2, top = V.y0 + Math.max(70 * u, (V.y1 - V.y0 - 470 * u) / 2), ch = 430 * u;
+    btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'BACK', () => { PARTY.status = ''; screen = 'menu'; UI.panel = 'home'; }, { px: 13 * u });
+    // the card: dark glass, a teal edge, slow light sweeping across it
+    g.save(); rr(g, cx, top, cw, ch, 16, null, null); g.clip(); g.fillStyle = 'rgba(10,22,24,.94)'; g.fillRect(cx, top, cw, ch);
+    { const gr = g.createRadialGradient(640, top + ch, 10, 640, top + ch * .65, ch); gr.addColorStop(0, 'rgba(53,224,200,.28)'); gr.addColorStop(1, 'rgba(53,224,200,0)'); g.fillStyle = gr; g.fillRect(cx, top, cw, ch); }
+    g.globalAlpha = .05; g.fillStyle = YOU; for (let i = -3; i < 8; i++) { const bx = cx + i * 70 * u + (t * 10 * u) % (70 * u); g.beginPath(); g.moveTo(bx, top + ch); g.lineTo(bx + ch * .5, top); g.lineTo(bx + ch * .5 + 22 * u, top); g.lineTo(bx + 22 * u, top + ch); g.closePath(); g.fill(); } g.globalAlpha = 1; g.restore();
+    rr(g, cx, top, cw, ch, 16, null, 'rgba(53,224,200,.55)', 2); g.fillStyle = YOU; g.fillRect(cx + 16, top, cw - 32, 4 * u);
+    tx(g, 'JOIN A PARTY', 640, top + 52 * u, 34 * u, BONE, 'center', 900);
+    tx(g, 'Type the code your friend shared', 640, top + 84 * u, 14 * u, '#9fd8cf', 'center', 700);
+    // the code: four boxes; the real input sits on them, see-through, so typing (and pasting) just works
+    const code = (domIn && domIn.code ? domIn.code.value : '').toUpperCase(), bs = 72 * u, gap = 14 * u, rowW = bs * 4 + gap * 3, bx0 = 640 - rowW / 2, by0 = top + 112 * u;
+    for (let i = 0; i < 4; i++) { const x = bx0 + i * (bs + gap), c = code[i], cur = i === Math.min(code.length, 3) && code.length < 4;
+      rr(g, x, by0, bs, bs * 1.12, 10, c ? 'rgba(53,224,200,.14)' : 'rgba(255,255,255,.04)', c ? YOU : cur ? `rgba(53,224,200,${.45 + .35 * Math.sin(t * 6)})` : 'rgba(159,216,207,.3)', c || cur ? 2.5 : 1.5);
+      if (c) tx(g, c, x + bs / 2, by0 + bs * .58, 40 * u, BONE, 'center', 900); else if (cur) { g.fillStyle = `rgba(53,224,200,${.5 + .5 * Math.sin(t * 6)})`; g.fillRect(x + bs / 2 - 12 * u, by0 + bs * .82, 24 * u, 3 * u); } }
+    const join = () => { MP.setName(domIn.jname.value); joinOrKey(domIn.code.value); };
+    const cd = textBox('code', bx0, by0, rowW, bs * 1.12, '', 4, '', join); cd.classList.add('dp-ghost'); if (!PARTY.focused) { PARTY.focused = true; setTimeout(() => { try { cd.focus(); } catch (e) {} }, 30); }   // ready to type straight away
+    // your name, then JOIN
+    tx(g, 'PLAYING AS', 640, by0 + bs * 1.12 + 34 * u, 11 * u, DIM, 'center', 900);
+    textBox('jname', 640 - 150 * u, by0 + bs * 1.12 + 46 * u, 300 * u, 40 * u, 'Your name', 12, MP.name === 'You' ? '' : MP.name, v => MP.setName(v));
+    const ready = code.length === 4, jy = by0 + bs * 1.12 + 104 * u;
+    btn(g, 640 - 150 * u, jy, 300 * u, tapH(52), ready ? 'JOIN PARTY' : 'ENTER THE CODE', join, { on: ready, fill: YOU, solid: ready, col: ready ? INK : DIM, px: 18 * u });
+    if (PARTY.status) tx(g, PARTY.status, 640, jy + tapH(52) + 26 * u, 14 * u, PARTY.status.startsWith('Connect') ? DIM : PARTY.status.startsWith('Code accepted') ? GOLD : WARN, 'center', 800);
+    // no code? make your own instead
+    const ly = top + ch + 30 * u; g.font = `800 ${fitPx(g, 13 * u)}px ${FONT}`; const lw = g.measureText('No code? Create your own party').width + 24 * u, hot = zone(640 - lw / 2, ly - 16 * u, lw, 32 * u, () => { MP.setName(domIn.jname.value); PARTY.view = 'create'; MP.create(); });
+    tx(g, 'No code? Create your own party', 640, ly, 13 * u, hot ? YOU : '#9fd8cf', 'center', 800); g.fillStyle = hot ? YOU : 'rgba(159,216,207,.4)'; g.fillRect(640 - lw / 2 + 12 * u, ly + 11 * u, lw - 24 * u, 1.5);
+    hideBoxes();
+  }
   function drawParty(g) {
-    const V = K.view, u = uiScale(), W = V.x1 - V.x0, H = V.y1 - V.y0, on = MP.online(), x0 = V.x0 + 60 / pxPer() + 20 * u;
-    g.fillStyle = 'rgba(8,10,14,.8)'; g.fillRect(V.x0, V.y0, W, H);
+    const V0 = K.view, u = uiScale(), W = V0.x1 - V0.x0, H = V0.y1 - V0.y0, on = MP.online(), x0 = V0.x0 + 60 / pxPer() + 20 * u;
+    g.fillStyle = 'rgba(8,10,14,.8)'; g.fillRect(V0.x0, V0.y0, W, H);
+    const nh = on && !QUE.found ? drawTopBar(g, V0, u) : 0, V = Object.assign({}, V0, { y0: V0.y0 + nh });
+    if (!on && PARTY.view === 'join' && !QUE.found) return drawJoin(g, V, u, x0);
     tx(g, 'PLAY WITH FRIENDS', x0, V.y0 + 46 * u, 34 * u, BONE, 'left', 900); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, on ? 'LEAVE' : 'BACK', () => { if (on) MP.leave(); PARTY.status = ''; if (!on) { screen = 'menu'; UI.panel = 'home'; } MP.opts.onRoster(); }, { px: 13 * u });
     if (QUE.found) {   // a match from the queue: say so, and who is in yet
       const F = QUE.found, n = on ? F.toks.filter(tok => MP.players().some(p => (p.id === myId() ? QUE.tok : (PARTY.prof.get(p.id) || {}).qt) === tok)).length : 0, pulse = .75 + .25 * Math.sin(performance.now() / 160);
@@ -11188,12 +11221,13 @@ const GAME = {
       { const x = 640 - cw - 12 * u, hot = zone(x, cy, cw, ch, () => { MP.setName(nm.value); MP.create(); }); rr(g, x, cy, cw, ch, 10, hot ? 'rgba(53,224,200,.16)' : 'rgba(20,26,36,.92)', hot ? YOU : 'rgba(239,233,220,.2)', 2); g.fillStyle = YOU; g.fillRect(x, cy, cw, 5 * u);
         tx(g, 'CREATE A PARTY', x + cw / 2, cy + 70 * u, 24 * u, BONE, 'center', 900); para(g, 'Up to 10 players. Bots fill gaps.', x + 24 * u, cy + 112 * u, cw - 48 * u, 13 * u, '#c9cfd8'); }
       { const x = 640 + 12 * u; rr(g, x, cy, cw, ch, 10, 'rgba(20,26,36,.92)', 'rgba(239,233,220,.2)', 2); g.fillStyle = FOE; g.fillRect(x, cy, cw, 5 * u); tx(g, 'JOIN WITH A CODE', x + cw / 2, cy + 50 * u, 24 * u, BONE, 'center', 900);
-        const cd = textBox('code', x + 40 * u, cy + 80 * u, cw - 80 * u, 46 * u, 'CODE', 4, '', v => { MP.setName(nm.value); joinOrKey(v); });
+        const cd = textBox('code', x + 40 * u, cy + 80 * u, cw - 80 * u, 46 * u, 'CODE', 4, '', v => { MP.setName(nm.value); joinOrKey(v); }); cd.classList.remove('dp-ghost');
         btn(g, x + 40 * u, cy + 136 * u, cw - 80 * u, 40 * u, 'JOIN', () => { MP.setName(nm.value); joinOrKey(cd.value); }, { on: true, fill: FOE, solid: true, col: INK, px: 16 * u }); }
       if (PARTY.status) tx(g, PARTY.status, 640, cy + ch + 40 * u, 15 * u, PARTY.status.startsWith('Connect') ? DIM : PARTY.status.startsWith('Code accepted') ? GOLD : WARN, 'center', 800);
       hideBoxes(); return;
     }
     hideBoxes(); sendProfile(false);
+    if (PARTY.status) tx(g, PARTY.status, x0, V.y0 + 80 * u, 13 * u, GOLD, 'left', 800);
     const ps = MP.players(), host = MP.isHost(), S2 = PARTY.set, me2 = myId();
     // the code and an invite link
     { const cx = x0 + 380 * u, cy = V.y0 + 46 * u; rr(g, cx, cy - 20 * u, 200 * u, 40 * u, 6, 'rgba(255,255,255,.06)', 'rgba(239,233,220,.25)', 1); tx(g, 'CODE', cx + 14 * u, cy, 11 * u, DIM, 'left', 900); tx(g, MP.code, cx + 186 * u, cy, 22 * u, GOLD, 'right', 900);
@@ -11327,6 +11361,7 @@ const GAME = {
   const QUE = { mode: 0, ws: null, me: 0, host: 0, peers: new Map(), t0: 0, shard: 0, tok: '', found: null, err: '', mT: 0, party: null };   // party: { toks: { id: token } } for the rest of a party its host queues for
   const newTok = () => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
   function queueStart(mode, shard = 0, party = false) {   // (shard: the tests queue apart from real players)
+    if (MP.online() && !party && !QUE.found && typeof partyBlocks === 'function' && partyBlocks(null)) return;
     queueStop(); QUE.found = null; if (MP.online() && !party) MP.leave();
     QUE.mode = mode; QUE.t0 = performance.now(); QUE.shard = shard; QUE.base = shard; QUE.err = ''; QUE.tok = newTok();
     // a party: everyone else in the room gets a token of their own, and the party is told the search is on
@@ -11448,10 +11483,12 @@ const GAME = {
   let booted = false, acc = 0, lastDraw = 0;
   function toMenu() { if (M && M.ranked && !M.over && M.mode !== 'demo' && M.round > 0) rankedLeft(); if (M && M.fromQueue && MP.online()) MP.leave();   // (strangers from the queue: the room closes behind you, it never becomes a party)
     UI.trying = null; M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
-  function play(o) { resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
+  // in a party you wait together: no range, practice or bot match on your own until you leave it (the party's own match starts online)
+  function partyBlocks(o) { if (!MP.online() || (o && (o.mode === 'online' || o.mode === 'demo'))) return false; screen = 'party'; UI.panel = 'home'; UI.sel = null; PARTY.status = 'You are in a party: leave it to play on your own.'; return true; }
+  function play(o) { if (partyBlocks(o)) return; resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
   // a bot match from the menu: agent select first (the tests can skip it)
   const soloOpts = () => { const size = teamSize(CFG.size), ranked = CFG.queue === 'ranked'; return { mode: 'bot', diff: ranked && CFG.diff === 'auto' ? botLevelFor(rankStrength(size)) : CFG.diff, size, sites: CFG.sites, ranked }; };
-  function menuPlay(size, select = true) { if (size) { CFG.size = size; saveAll(); } const o = soloOpts(); if (select) openSelect(o); else play(o); }
+  function menuPlay(size, select = true) { if (partyBlocks(null)) return; if (size) { CFG.size = size; saveAll(); } const o = soloOpts(); if (select) openSelect(o); else play(o); }
   on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; UI.lastSide = null; UI.switched = null; });   // an online match began (60-net started it)
   // each round opens on the armory, after the loading screen or the switching-sides band if there is one
   on('round', n => {
