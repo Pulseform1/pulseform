@@ -423,7 +423,7 @@ const MAP = `<svg viewBox="0 0 400 180" aria-hidden="true"><defs><linearGradient
 + `<g><circle cx="60" cy="140" r="2.5" fill="#ff5fa2"/><circle cx="176" cy="122" r="2.5" fill="#ffd23f"/><circle cx="290" cy="136" r="2.5" fill="#fff"/><circle cx="226" cy="122" r="2.5" fill="#ff5fa2"/><circle cx="320" cy="170" r="2.5" fill="#ffd23f"/><circle cx="96" cy="166" r="2.5" fill="#a98bff"/></g>`
 + `<path d="${PATH}" stroke="#8a6234" stroke-width="9" fill="none" stroke-linecap="round"/><path d="${PATH}" stroke="#e8c27c" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="1 9" id="vqpath"/></svg>`;
 const CSS = `
-.vq-map{position:relative;width:min(100%,680px);aspect-ratio:400/180;max-height:34vh;flex:none;border-radius:18px;overflow:hidden;border:2px solid rgba(255,255,255,.18);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.vq-map{position:relative;width:min(100%,680px,75vh);aspect-ratio:400/180;flex:none;border-radius:18px;overflow:hidden;border:2px solid rgba(255,255,255,.18);box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .vq-map>svg{width:100%;height:100%;display:block}
 .vq-flow{animation:vqflow 1.6s linear infinite}@keyframes vqflow{to{stroke-dashoffset:-32}}
 .vq-stop{animation:none}.vq-stop.now{animation:vqpulse 1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}

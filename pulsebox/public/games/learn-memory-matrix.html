@@ -377,8 +377,9 @@ document.head.append(h('style', { id: 'mm-css', text: `
 .mm-dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:14px}
 .mm-dots i{width:14px;height:14px;border-radius:50%;background:var(--panel2);border:2px solid var(--edge);transition:background .2s,transform .2s}
 .mm-dots i.f{background:var(--c2);border-color:var(--c2);transform:scale(1.15)}
-.mm-pal{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.mm-pal button{min-width:66px;min-height:50px;padding:4px 10px;border-radius:14px;background:var(--panel2);border:3px solid var(--edge);display:flex;align-items:center;gap:6px;font:700 14px var(--body);transition:transform .12s,border-color .12s}
+.mm-pal{display:flex;gap:6px;justify-content:center;width:min(100%,460px)}
+.mm-pal button{flex:1 1 0;min-width:0;justify-content:center;min-height:50px;padding:4px 6px;border-radius:14px;background:var(--panel2);border:3px solid var(--edge);display:flex;align-items:center;gap:5px;font:700 13px var(--body);transition:transform .12s,border-color .12s}
+.mm-pal button b{flex:none}
 .mm-pal button b{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--k);color:#07090e;font-size:17px}
 .mm-pal button.sel{border-color:#fff;transform:translateY(-3px);box-shadow:0 6px 18px color-mix(in srgb,var(--k) 45%,transparent)}
 @keyframes mmIn{from{opacity:0;transform:scale(.6)}}

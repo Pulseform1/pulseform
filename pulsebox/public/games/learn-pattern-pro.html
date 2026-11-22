@@ -398,7 +398,7 @@ const POOL = [['add', 'add', 'shapes', 'colours', 'arrows', 'dots'], ['double', 
 const LV = [
 { name: 'Easy', desc: 'Add on, repeating shapes and colours, turning arrows.', t: 20 },
 { name: 'Medium', desc: 'Doubling, two-step rules, 45° turns, longer cycles.', t: 16 },
-{ name: 'Hard', desc: 'Squares, Fibonacci, two rules at once.', t: 14 }
+{ name: 'Hard', desc: 'Squares, Fibonacci-style sums, two rules at once.', t: 14 }
 ];
 function dotsSvg(n) {
 const cols = n <= 4 ? 2 : n <= 9 ? 3 : 4, rows = Math.ceil(n / cols), cell = 34 / Math.max(cols, rows), r = cell * .34; let o = '';

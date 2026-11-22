@@ -125,12 +125,13 @@
           stats: { 'Words solved': c.solved + ' / ' + list.length },
           learnt: [rows.map(([w, k]) => w + ' (' + k.toLowerCase() + ')').join(', '), c.missed ? 'Practice spelling: ' + c.missed.join(', ') : 'Look for common letter pairs like th, sh, ch and ck to put a word back together.'] });
       }
-      c.key(e => {
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // letters are caught before the page's own shortcuts (R would restart the level), so every letter can be typed
+      c.on(window, 'keydown', e => {
+        if (e.ctrlKey || e.metaKey || e.altKey || (e.target && e.target.tagName === 'INPUT')) return;
         if (e.key === 'Backspace') { e.preventDefault(); undo(); }
-        else if (e.key === ' ') { e.preventDefault(); mix(); }
-        else if (/^[a-z]$/i.test(e.key)) { const ch = e.key.toLowerCase(), ti = S.tiles.findIndex(t => !t.used && t.ch === ch); if (ti >= 0) place(ti); else if (!S.busy) sfx.bad(); }
-      });
+        else if (e.key === ' ') { e.preventDefault(); if (document.activeElement) document.activeElement.blur(); mix(); }
+        else if (/^[a-z]$/i.test(e.key)) { e.stopPropagation(); const ch = e.key.toLowerCase(), ti = S.tiles.findIndex(t => !t.used && t.ch === ch); if (ti >= 0) place(ti); else if (!S.busy) sfx.bad(); }
+      }, true);
       next();
     },
     bot(c) {

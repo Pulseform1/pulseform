@@ -2,7 +2,7 @@
    same value to burst them. Every value on a board appears exactly twice, so each tile has one partner. Clear boards
    against the clock; combos give time back. */
 (() => {
-  const { h, pick, shuffle, sample, sfx } = Edu, KEYS = 'QWERASDFZXCV';
+  const { h, pick, shuffle, sample, sfx } = Edu, KEYS = 'QWETASDFZXCV';
   const term = d => { while (d % 2 === 0) d /= 2; while (d % 5 === 0) d /= 5; return d === 1; };   // ends as a decimal (only 2s and 5s in d)
   const dec = (n, d) => String(+(n / d).toFixed(4)), pct = (n, d) => +(n * 100 / d).toFixed(3) + '%';
   const F = (n, d) => ({ k: 'frac', n, d }), K = (k, n, d) => ({ k, n, d });

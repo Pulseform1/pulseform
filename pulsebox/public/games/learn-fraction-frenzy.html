@@ -351,7 +351,7 @@ menu();
 return { game, SPEED, h, $, rnd, pick, shuffle, sample, clamp, gcd, near, store, sfx, tone, thumb, confetti };
 })();
 (() => {
-const { h, pick, shuffle, sample, sfx } = Edu, KEYS = 'QWERASDFZXCV';
+const { h, pick, shuffle, sample, sfx } = Edu, KEYS = 'QWETASDFZXCV';
 const term = d => { while (d % 2 === 0) d /= 2; while (d % 5 === 0) d /= 5; return d === 1; };
 const dec = (n, d) => String(+(n / d).toFixed(4)), pct = (n, d) => +(n * 100 / d).toFixed(3) + '%';
 const F = (n, d) => ({ k: 'frac', n, d }), K = (k, n, d) => ({ k, n, d });

@@ -117,6 +117,7 @@
 .sl-wall{position:relative;width:min(100%,340px);height:190px;border-radius:18px;background:#05060a;overflow:hidden;isolation:isolate;border:1px solid var(--edge)}
 .sl-beam{position:absolute;width:118px;height:118px;border-radius:50%;mix-blend-mode:screen;opacity:0;transform:scale(.6);transition:opacity .45s,transform .45s}
 .sl-beam.on{opacity:1;transform:none}
+.sl-beam:not(.on){opacity:1;transform:none;background:transparent!important;border:2px dashed rgba(255,255,255,.13)}
 .sl-lamp{width:64px;height:64px;border-radius:50%;border:3px solid var(--edge);background:var(--panel2);font:800 13px var(--body);transition:box-shadow .2s,background .2s}
 .sl-lamp.on{background:var(--k);color:#000;box-shadow:0 0 22px var(--k)}
 .sl-magnet{position:absolute;top:0;width:64px;height:54px;border:16px solid #e53935;border-top:0;border-radius:0 0 30px 30px;transition:transform .35s ease-in-out;z-index:2}

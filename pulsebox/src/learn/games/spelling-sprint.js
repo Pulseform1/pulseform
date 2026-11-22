@@ -115,10 +115,12 @@
           learnt: c.missed.length ? c.missed.slice(0, 6).map(w => { const e = SPELL[c.level].find(s => s.replace(/[[\]]/g, '').split('|')[0] === w).split('|'); return w + (e[3] ? ' (' + e[3] + ')' : ''); })
             : ['i before e, except after c: believe, achieve, but receive, ceiling.', 'Watch for double letters: embarrass, accommodate, necessary has one c and two s\'s.', 'Some letters are silent: the k in knife, the w in write, the t in castle.'] });
       }
-      c.key(e => {
-        if (S.busy || S.hard || e.ctrlKey || e.metaKey || e.altKey || !/^[a-z]$/i.test(e.key)) return;
+      // letters are caught before the page's own shortcuts (R would restart the level), so every letter can be typed
+      c.on(window, 'keydown', e => {
+        if (S.hard || e.ctrlKey || e.metaKey || e.altKey || !/^[a-z]$/i.test(e.key) || (e.target && e.target.tagName === 'INPUT')) return;
+        e.stopPropagation(); if (S.busy) return;
         const k = e.key.toLowerCase(), i = S.keys.indexOf(k); pick(k, i >= 0 ? S.btns[i] : null);
-      });
+      }, true);
       next();
     },
     bot(c) {

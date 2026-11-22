@@ -107,7 +107,7 @@
 .cb-pal kbd{font:700 10px var(--body);opacity:.6;margin-left:4px}
 @media (max-width:559px){.cb{gap:8px}.cb-msg{font-size:14px;min-height:2.4em}.cb-prog{max-height:min(150px,19vh);min-height:56px}.cb-pal{grid-template-columns:repeat(6,1fr);gap:6px}.cb-pal button{font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;padding:2px}.cb-pal button i{font-style:normal;font-size:20px}.cb-pal kbd{display:none}}
 @media (min-width:560px){.cb-pal button i{font-style:normal}}
-@media (min-width:760px){.cb{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start}.cb-msg{width:100%;max-width:none;min-height:1.6em}.cb-board{width:min(44vw,440px,calc(100dvh - 270px))}.cb-side{width:min(100%,430px)}}
+@media (min-width:760px){.cb{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start}.cb-msg{width:100%;max-width:none;min-height:1.6em}.cb-board{width:min(44vw,440px,calc(100dvh - 270px))}.cb-side{width:min(100%,430px)}.cb-prog{max-height:min(320px,38vh)}}
 @keyframes cbBlink{50%{opacity:0}}
 @keyframes cbGlow{50%{background-color:color-mix(in srgb,var(--c2) 12%,transparent)}}
 @keyframes cbBoom{0%{transform:scale(.3);opacity:0}30%{transform:scale(1.4);opacity:1}100%{transform:scale(1);opacity:.9}}` }));

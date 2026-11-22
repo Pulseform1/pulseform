@@ -46,7 +46,7 @@ for (const id of ids.filter(i => i !== 'learn')) {
     while (Date.now() - t0 < 100000) { st = await p.evaluate(() => EDU.state()); peak = Math.max(peak, st.score); if (st.screen === 'end') break; await p.evaluate(() => EDU.bot()); moves++; await sleep(60); }
     ok(st.screen === 'end', `level ${lv + 1} plays through to its end screen`, `${moves} moves, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
     ok(st.end && st.end.score > 0, `level ${lv + 1} scores`, st.end ? 'score ' + st.end.score + (st.end.won ? ', won' : ', not won') : '');
-    if (lv === 0 && SHOTS) await p.screenshot({ path: path.join(SHOTS, id + '-end.png') });
+    if (lv === 0 && SHOTS) { await sleep(600); await p.screenshot({ path: path.join(SHOTS, id + '-end.png') }); }
     if (lv === 0) { await p.click('.over >> text=Play again'); await sleep(150); const s3 = await p.evaluate(() => EDU.state()); ok(s3.screen === 'play' && s3.score === 0 && s3.level === 0, 'Play again restarts the level');
       await p.click('button[title^="Restart"]'); await sleep(150); ok((await p.evaluate(() => EDU.state())).screen === 'play', 'the Restart button restarts');
       await p.click('button[title^="Menu"]'); await sleep(150); ok((await p.evaluate(() => EDU.state())).screen === 'menu', 'the Menu button goes back to the menu');

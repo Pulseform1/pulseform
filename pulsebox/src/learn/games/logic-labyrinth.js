@@ -87,7 +87,7 @@
   function css() {
     if (document.getElementById('ll-css')) return;
     document.head.append(h('style', { id: 'll-css', text: `
-.ll{display:grid;justify-items:center;align-content:center;gap:8px;width:100%;max-height:100%;overflow-y:auto;overflow-x:hidden;padding:2px}
+.ll{display:grid;justify-items:center;align-content:safe center;gap:8px;width:100%;max-height:100%;overflow-y:auto;overflow-x:hidden;padding:2px}
 .ll-info{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;width:100%}
 .ll-c{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:12px;background:var(--panel2);border:2px solid var(--edge);font:700 14px var(--display);white-space:nowrap;transition:border-color .2s,background .2s}
 .ll-c b{font:800 11px var(--body);letter-spacing:.06em}
@@ -98,14 +98,14 @@
 .ll-c.flip{animation:llFlip .4s}
 .ll-msg{min-height:2.5em;max-width:520px;text-align:center;font:700 clamp(13px,2vw,16px) var(--body);display:flex;align-items:center;justify-content:center}
 .ll-msg.bad{color:var(--no)}.ll-msg.good{color:var(--ok)}
-.ll-mz{position:relative;width:min(100%,520px,calc(100dvh - 410px));min-width:240px;aspect-ratio:1;touch-action:none;border-radius:16px;background:var(--bg2);border:1px solid var(--edge);box-shadow:0 14px 40px rgba(0,0,0,.4)}
+.ll-mz{position:relative;width:min(100%,520px,calc(100dvh - 440px));min-width:240px;aspect-ratio:1;touch-action:none;border-radius:16px;background:var(--bg2);border:1px solid var(--edge);box-shadow:0 14px 40px rgba(0,0,0,.4)}
 .ll-mz svg{width:100%;height:100%;display:block}
 .ll-tok{transition:transform .13s ease-out}.ll-tok .in.bump{animation:llBump .25s}
 .ll-exit{animation:llPulse 1.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 .ll-pad{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .ll-pad button{min-width:54px;min-height:48px;border-radius:14px;background:var(--panel2);border:1px solid var(--edge);font:700 20px var(--display);transition:transform .1s}
 .ll-pad button:active{transform:scale(.92);background:var(--c);color:#07090e}
-.ll-pad button.rs{font:800 14px var(--body);padding:0 12px}
+.ll-pad button.rs{font:800 14px var(--body);padding:0 10px}
 .ll-q{position:absolute;inset:0;display:grid;place-items:center;padding:10px;border-radius:16px;background:rgba(5,7,11,.8);backdrop-filter:blur(3px);animation:fade .2s both;z-index:4}
 .ll-q>div{width:100%;max-width:420px;text-align:center}
 .ll-q .sq{font:700 clamp(22px,5vw,32px) var(--display);margin:6px 0;color:var(--gold)}
@@ -128,7 +128,7 @@
       css();
       const lv = c.level, info = h('div', { class: 'll-info' }), msg = h('div', { class: 'll-msg' }), mz = h('div', { class: 'll-mz' });
       const pad = h('div', { class: 'll-pad' }), dbtn = [0, 1, 2, 3].map(d => h('button', { type: 'button', class: 'd' + d, 'aria-label': ['Up', 'Right', 'Down', 'Left'][d], onclick: () => move(d) }, ARW[d]));
-      const rsb = h('button', { type: 'button', class: 'rs', title: 'Reset this maze (Backspace)', onclick: () => resetMaze(true) }, '↺', h('span', { text: ' Reset maze' }));
+      const rsb = h('button', { type: 'button', class: 'rs', title: 'Reset this maze (Backspace)', onclick: () => resetMaze(true) }, '↺', h('span', { text: ' Reset' }));
       pad.append(dbtn[3], dbtn[0], dbtn[2], dbtn[1], rsb);
       c.el.append(h('div', { class: 'll' }, info, mz, msg, pad));
       const G = c.G = { m: 0, busy: true, q: null, moves: 0, total: 0, parTotal: 0, stars: 0, dbtn, rsb };
@@ -143,7 +143,7 @@
         const W = M.W; let walls = '';
         for (let i = 0; i < W * W; i++) { const x = (i % W) * 10, y = Math.floor(i / W) * 10; if (!(M.op[i] & 1)) walls += `M${x} ${y}h10`; if (!(M.op[i] & 8)) walls += `M${x} ${y}v10`; }
         walls += `M0 ${W * 10}H${W * 10}V0`;
-        mz.innerHTML = `<svg viewBox="-1.5 -1.5 ${W * 10 + 3} ${W * 10 + 3}" aria-label="Maze"><g class="objs"></g><path d="${walls}" stroke="color-mix(in srgb,#29e0ff 70%,#fff)" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".85"/><g class="ll-tok"><g class="in"><circle r="3.6" fill="#29e0ff" opacity=".25"/><circle r="2.7" fill="#eaffff" stroke="#29e0ff" stroke-width="1"/></g></g></svg>`;
+        mz.innerHTML = `<svg viewBox="-1.5 -1.5 ${W * 10 + 3} ${W * 10 + 3}" aria-label="Maze"><g class="objs"></g><path d="${walls}" stroke="color-mix(in srgb,#29e0ff 70%,#fff)" stroke-width="1.05" stroke-linecap="round" fill="none" opacity=".85"/><g class="ll-tok"><g class="in"><circle r="3.6" fill="#29e0ff" opacity=".25"/><circle r="2.7" fill="#eaffff" stroke="#29e0ff" stroke-width="1"/></g></g></svg>`;
         G.objs = mz.querySelector('.objs'); G.tok = mz.querySelector('.ll-tok');
         resetMaze(false); G.moves = 0; G.busy = false; T.set(G.time); T.paused = false;
         c.hud({ maze: (G.m + 1) + ' / ' + MAZES, moves: '0 · par ' + M.par });
