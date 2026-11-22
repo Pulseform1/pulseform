@@ -691,10 +691,10 @@
     }
     // --- Tessel: the dormant device under the crosshair, and whether it can be fired; or a device of yours to pick up or reinforce
     if (P === me() && P.alive && (M.phase === 'live' || M.phase === 'buy') && !demo && !UI.armory) {
-      const hy = V.y1 - (touch ? 250 : 100) * u, st = P.op === 'tessel' ? tesselState(P) : null;   // (near the bottom of the screen, just above the health and ability bar; a phone's buttons and banner sit lower)
+      const hy = V.y1 - (touch ? 256 : 114) * u, st = P.op === 'tessel' ? tesselState(P) : null;   // (near the bottom of the screen, just above the health and ability bar; a phone's buttons and banner sit lower)
       if (st) { const D = tesselLook(P), nm = D.k === 'q' ? 'LULL' : 'LIGHTLINE', live = M.phase === 'live';
-        hint(g, !live ? nm + '  ·  FIRES ONCE THE ROUND IS LIVE' : st === 'ok' ? (touch ? 'TRIGGER' : keyLabel('use')) + ' · TRIGGER ' + nm : st === 'far' ? nm + '  ·  TOO FAR: WITHIN 20 m' : nm + '  ·  NO CLEAR SIGHT', hy, 16 * u, live && st === 'ok' ? OPS.tessel.col : live ? WARN : DIM); }
-      else { const h = kitAltHint(P, k => touch ? k.toUpperCase() : keyLabel('ab' + k)); if (h) hint(g, h, hy, 15 * u, OPS[P.op].col); }
+        hint(g, !live ? nm + '  ·  FIRES ONCE THE ROUND IS LIVE' : st === 'ok' ? (touch ? 'TAP TRIGGER · ' + nm : keyLabel('use') + ' · TRIGGER ' + nm) : st === 'far' ? nm + '  ·  TOO FAR: WITHIN 20 m' : nm + '  ·  NO CLEAR SIGHT', hy, 21 * u, live && st === 'ok' ? OPS.tessel.col : live ? WARN : DIM); }
+      else { const h = kitAltHint(P, k => touch ? k.toUpperCase() : keyLabel('ab' + k)); if (h) hint(g, h, hy, 20 * u, OPS[P.op].col); }
     }
     // --- banners
     if (TOAST) { const t = (performance.now() - TOAST.at) / 1000; if (t > 4) TOAST = null; else { g.globalAlpha = cl(Math.min(t * 4, (4 - t) * 2), 0, 1); rr(g, 640 - 230 * u, V.y0 + 64 * u, 460 * u, 34 * u, 8, 'rgba(12,16,22,.85)', GOLD, 1.5); tx(g, TOAST.s, 640, V.y0 + 81 * u, 15 * u, BONE); g.globalAlpha = 1; } }
