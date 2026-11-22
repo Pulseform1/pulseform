@@ -1,12 +1,12 @@
   /* ---------- 46 kit, second part: every operative's C, and VANTA ----------
      VEX     C Gloom: a lobbed orb that bursts into dark; rivals caught see only 5 m for 3.5 s.
      IRIS    C Watcher: an eye fixed where you aim (up to 22 m); for 20 s it marks rivals who walk into its view.
-     BASTION C Ward Beacon: set at your feet; a moment later you and teammates within 6 m gain 30 shield (up to 50).
+     BASTION C Ward Beacon: set at your feet, it stays and pulses shield into teammates near it (48).
      NOVA    C Updraft: straight up, high enough for a ledge.
      WRAITH  C Tether: an anchor at your feet; the key again steps you back to it (free), any time that round.
      TALON   C Shock Bolt: bounces once, then bursts for up to 45 within 3.5 m.
      EMBER   C Flashpoint: a flash that flies ahead and bends round the corner, left (left click) or right (right click).
-     AXIOM   C Slow Field: a lobbed canister; a 5 m field where rivals move at half speed for 6 s.
+     AXIOM   C Slow Field: a lobbed canister that waits where it lands; a rival near it opens a 5 m slowing field (48).
      VANTA (Duelist)
              C Phase Front: a wall of light rolls 14 m out ahead along the nearest straight line, stopping bullets and sight
                (anyone can walk through it); it holds 5 s where it stops.
@@ -57,10 +57,10 @@
   function kitApply2(f, key, d) {
     const K2 = M.kit;
     if (key.startsWith('tessel')) return tesselApply(f, key, d);   // (47: Tessel)
-    if (key === 'vexc' || key === 'talonc' || key === 'axiomc') { K2.lobs.push({ k: key, x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, bounce: key === 'talonc' ? 1 : 0 }); return true; }
+    if (key === 'vexc' || key === 'talonc' || key === 'axiomc') { if (![d.x, d.y, d.z, d.vx, d.vy, d.vz].every(finite) || Math.hypot(d.vx, d.vy, d.vz) > 40) return false; K2.lobs.push({ k: key, x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, bounce: key === 'talonc' ? 1 : 0, id: typeof d.id === 'string' ? d.id.slice(0, 48) : kitId(f, 'c') }); return true; }
     if (key === 'irisc') { if (d.act) { const W = irisEye(f); if (W) { W.act = EYE_ON; W.tick = .15; emit('eyeWake', W); } return true; }
       K2.eyes = K2.eyes.filter(W => W.by !== f); K2.eyes.push({ id: kitId(f, 'c') + ':' + (K2.eyeN = (K2.eyeN || 0) + 1), x: d.x, y: d.y, z: d.z, yaw: d.yaw, act: 0, cd: 0, tick: 0, by: f, seen: 0 }); return true; }   // (it stays, asleep, until woken or shot)
-    if (key === 'bastionc') { K2.beacons.push({ x: d.x, y: hAt(d.x, d.z), z: d.z, t: .8, by: f }); return true; }
+    if (key === 'bastionc') return placeBeacon(f, d);   // (48)
     // (Updraft: high enough to land on a shipping container, 3 m)
     if (key === 'novac') { if (!f.net) { f.vy = 13; f.ground = false; } emit('updraft', f); return true; }
     if (key === 'wraithc') {
@@ -117,7 +117,8 @@
     for (const f of M.fs) {
       for (const k of ['murk', 'exposed', 'ward', 'over', 'slowF']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
       // signatures that come back with time
-      const E = OPS[f.op] && OPS[f.op].e; if (E && E.rech && (f.ab.e | 0) < 1 && M.phase === 'live' && !f.net) { f.eT = (f.eT || 0) + dt; if (f.eT >= E.rech) { f.ab.e = 1; f.eT = 0; emit('abBack', f, 'e'); } }
+      const E = OPS[f.op] && OPS[f.op].e; if (E && E.rech && (f.ab.e | 0) < 1 && M.phase === 'live' && !f.net && !(f.op === 'tessel' && tesselDorm(f, 'e'))) {   // (a Lightline set and not yet fired is still in use)
+        f.eT = (f.eT || 0) + dt; if (f.eT >= E.rech) { f.ab.e = 1; f.eT = 0; emit('abBack', f, 'e'); } }
     }
     // the lobbed ones: Gloom, Shock Bolt (one bounce), Slow Field
     for (const B of K2.lobs) {
@@ -139,9 +140,7 @@
         if (los(W.x, W.y, W.z, v.x, eyeY(v) - .1, v.z) < Math.hypot(dd, eyeY(v) - .1 - W.y) - .4) continue; v.reveal = Math.max(v.reveal, 1.4); n++; if (v === me()) say('A WATCHER SEES YOU', WARN); }
       W.seen = n; if (n) emit('eyeSpot', W); }
     K2.eyes = K2.eyes.filter(W => !W.down);
-    // Ward Beacon: a beat, then shields for the team round it (each device for its own)
-    for (const B of K2.beacons) if ((B.t -= dt) <= 0) { for (const v of localFs()) if (v.team === B.by.team && Math.hypot(v.x - B.x, v.z - B.z) < 6 && Math.abs(v.y - B.y) < 2.5) { v.sh = Math.min(50, (v.sh | 0) + 30); if (v === me()) say('+30 SHIELD', OPS.bastion.col); } B.done = true; emit('beaconPop', B); }
-    K2.beacons = K2.beacons.filter(B => !B.done);
+    // (Ward Beacon: 48)
     // Phase Front: rolls out 14 m, through walls and all, then holds
     for (const w of M.walls) { const F = w.front; if (!F) continue;
       if (F.s < 14 && !F.stop) { const was = F.s, step = dt * 4.4; F.s = Math.min(14, F.s + step); const cx = F.x + (F.ax ? F.dir * F.s : 0), cz = F.z + (F.ax ? 0 : F.dir * F.s); placeFront(w); }   // (it rolls through walls)
@@ -166,5 +165,5 @@
       for (const v of localFs()) { if (!enemyOf(B.by, v)) continue; const d = Math.hypot(v.x - x, v.z - z); if (d > 6 || los(x, G2.y + .4, z, v.x, eyeY(v), v.z, false) < Math.hypot(d, eyeY(v) - G2.y - .4) - .4) continue; v.murk = 3.5; if (v === me()) say('GLOOM', OPS.vex.col); } }
     if (B.k === 'talonc') { emit('shockPop', { x, y: B.y, z, by: B.by });
       for (const v of localFs()) { if (!enemyOf(B.by, v)) continue; const d = Math.hypot(v.x - x, v.y + .9 - B.y, v.z - z); if (d > 3.5 || los(x, B.y + .2, z, v.x, v.y + .9, v.z, false) < d - .5) continue; applyDamage(v, Math.round(45 * cl(1.25 - d / 3.5, .3, 1)), B.by, false, 'shockbolt'); } }
-    if (B.k === 'axiomc') { const F = { x, y, z, r: 5, t: 6, T: 6, by: B.by }; K2.fields.push(F); emit('fieldStart', F); }
+    if (B.k === 'axiomc') placeCan(B, x, y, z);   // (48: it waits where it lands)
   }

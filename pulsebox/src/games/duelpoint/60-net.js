@@ -72,10 +72,15 @@
       case 'hx': { const F2 = M.byKey[m.f], h = M.kit && M.kit.hexes.find(q => q.id === m.id); if (F2 && h) takeHex(F2, h, true); else if (F2) F2.ward = 20; break; }
       case 'ab': if (!(m.d && m.d.free)) spendAb(F, m.k); applyAbility(F, m.k, m.d || {}); break;
       case 'orb': takeOrb(m.i | 0, F); break;   // someone took an ultimate orb
-      case 'kx': kitTrip(m.id, m.v, true); break;   // a snare or mine went off on the victim's device
+      case 'kx': if (typeof m.id === 'string' && m.v != null) kitTrip(m.id.slice(0, 64), String(m.v), true); break;   // a snare or mine went off on the victim's device
       case 'ed': { const W = M.kit && M.kit.eyes.find(q => q.id === m.id); if (W) breakEye(W, true); break; }   // someone shot out a Watcher
       case 'lz': { const Z = typeof m.id === 'string' && M.kit && M.kit.lenses && M.kit.lenses.find(q => q.id === m.id); if (Z) breakLens(Z, true); break; }   // someone shot out a Lull lens
-      case 'kd': { const s2 = M.kit && M.kit.sentries.find(q => q.id === m.id); if (s2) hurtSentry(s2, m.d, true); break; }   // someone shot a sentry
+      case 'kd': { const s2 = typeof m.id === 'string' && M.kit && (M.kit.sentries.find(q => q.id === m.id) || M.kit.beacons.find(q => q.id === m.id)), d = +m.d; if (s2 && d > 0 && d <= 300) hurtSentry(s2, d, true); break; }   // someone shot a sentry or a Ward Beacon
+      case 'tt': { const D = typeof m.id === 'string' && M.kit && M.kit.devs.find(q => q.id === m.id); if (D && D.by === F && F.alive && M.phase === 'live' && devReach(D, F) < TRIG.r + 6) fireDev(D, true); break; }   // Tessel fired one of her devices (hers, live, and near enough)
+      case 'kb': if (typeof m.id === 'string') kitBreak(m.id.slice(0, 64), true); break;   // someone shot out a dormant device or a trap
+      case 'pk': { const k = m.k === 'q' || m.k === 'e' ? m.k : null, K2 = M.kit, D = k && typeof m.id === 'string' && K2 && [...K2.sentries, ...K2.wires, ...K2.snares].find(q => q.id === m.id); if (D && D.by === F) pickUp(F, k, D, true); break; }   // a device picked back up
+      case 'rf': { const w = typeof m.id === 'string' && M.walls.find(q => q.id === m.id); if (w && w.by === F) reinforce(w, true); break; }   // a Rampart reinforced
+      case 'wd': { const w = typeof m.id === 'string' && M.walls.find(q => q.id === m.id), d = +m.d; if (w && d > 0 && d <= 300) hurtWall(w, d, true); break; }   // someone shot a Rampart
       case 'nd': F.smokes = Math.max(0, (F.smokes || 0) - 1); F.throwT = .6; addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); emit('throw', F); break;
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;
       case 'df': defuseDone(F); break;

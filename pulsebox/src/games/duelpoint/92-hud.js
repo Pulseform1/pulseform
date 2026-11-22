@@ -168,7 +168,7 @@
   /* ---- ability icons: a small line drawing for each, in the bar and the armory */
   const ABICON = { vexc: 'orb', vexq: 'dash', vexe: 'smoke', vexx: 'portal', irisc: 'eye', irisq: 'wave', irise: 'flash', irisx: 'eye', bastionc: 'beacon', bastionq: 'wall', bastione: 'heart', bastionx: 'shield',
     novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'shroud', wraithe: 'twin', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
-    emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'mine', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel',
+    emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'wire', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel',
     tesselc: 'bloom', tesselq: 'lull', tessele: 'lightline', tesselx: 'glasshouse' };
   // what the other click does, for the hint under the bar
   const ABALT = { vexc: 'A SHORT LOB', talonc: 'A SHORT LOB', axiomc: 'A SHORT LOB', emberq: 'A SHORT LOB', emberx: 'A SHORT LOB', emberc: 'BENT RIGHT', bastionq: 'TURNED ALONG YOUR VIEW', tesselc: 'A SHORT LOB', tesselq: 'A SHORT LOB', tessele: 'ACROSS YOUR VIEW' };
@@ -199,6 +199,7 @@
     else if (kind === 'flame') { g.beginPath(); g.moveTo(0, .9 * r); g.bezierCurveTo(-.8 * r, .7 * r, -.6 * r, -.1 * r, -.1 * r, -.9 * r); g.bezierCurveTo(-.05 * r, -.3 * r, .2 * r, -.35 * r, .25 * r, -.5 * r); g.bezierCurveTo(.8 * r, 0, .7 * r, .7 * r, 0, .9 * r); g.fill(); }
     else if (kind === 'rings') { for (const q of [.3, .6, .9]) { C(0, 0, q); g.stroke(); } }
     else if (kind === 'turret') { g.fillRect(-.45 * r, -.35 * r, .9 * r, .5 * r); g.fillRect(0, -.22 * r, .9 * r, .2 * r); P2([[-.3, .15], [-.6, .85]]); g.stroke(); P2([[.3, .15], [.6, .85]]); g.stroke(); }
+    else if (kind === 'wire') { for (const x of [-.75, .75]) g.fillRect((x - .1) * r, -.2 * r, .2 * r, 1 * r); g.strokeStyle = acc; P2([[-.75, .3], [.75, .3]]); g.stroke(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6; P2([[Math.cos(a) * .12, -.45 + Math.sin(a) * .12], [Math.cos(a) * .34, -.45 + Math.sin(a) * .34]]); g.stroke(); } }   // Tripwire: two anchors and the wire across between them
     else if (kind === 'mine') { C(0, .2, .55, Math.PI, 0); g.fill(); g.fillRect(-.7 * r, .2 * r, 1.4 * r, .2 * r); C(0, -.45, .12); g.fill(); }
     else if (kind === 'hex') { P2([0, 1, 2, 3, 4, 5].map(i => [Math.cos(i * Math.PI / 3 + Math.PI / 6) * .85, Math.sin(i * Math.PI / 3 + Math.PI / 6) * .85]), true); g.stroke(); C(0, 0, .3); g.fill(); }
     // Tessel's: a seed of light opening (Bloom), an hourglass over a ripple (Lull), a curtain stood on a line (Lightline), a room of light (Glasshouse)
@@ -686,6 +687,13 @@
       if (M.fs.some(q => q.team !== P.team && q.alive && q.defuse > 0)) tx(g, M.fs.length > 2 ? 'THEY ARE DEFUSING' : 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);   // any of them, not just the nearest
       if (P.nearLoot && GUNS[P.nearLoot.k]) hint(g, `${touch ? 'PICK UP' : 'F'}: ${lootFree(P) ? '' : 'swap for '}${GUNS[P.nearLoot.k].n}`, V.y0 + 172 * u, 15 * u, GOLD);
       if (GATES.length && P.plant <= 0 && P.defuse <= 0) { const gi = gateNear(P); if (gi >= 0) hint(g, (touch ? 'Tap' : 'F') + (GATES[gi].open ? ': shut door' : ': open door'), V.y0 + 140 * u, 16 * u, GOLD); }
+    }
+    // --- Tessel: the dormant device under the crosshair, and whether it can be fired; or a device of yours to pick up or reinforce
+    if (P === me() && P.alive && (M.phase === 'live' || M.phase === 'buy') && !demo && !UI.armory) {
+      const hy = M.phase === 'buy' ? 470 : V.y0 + 206 * u, st = P.op === 'tessel' ? tesselState(P) : null;   // (in the buy phase, under the crosshair: the round's banner is above it)
+      if (st) { const D = tesselLook(P), nm = D.k === 'q' ? 'LULL' : 'LIGHTLINE', live = M.phase === 'live';
+        hint(g, !live ? nm + '  ·  FIRES ONCE THE ROUND IS LIVE' : st === 'ok' ? (touch ? 'TRIGGER' : keyLabel('trig')) + ' · TRIGGER ' + nm : st === 'far' ? nm + '  ·  TOO FAR: WITHIN 20 m' : nm + '  ·  NO CLEAR SIGHT', hy, 16 * u, live && st === 'ok' ? OPS.tessel.col : live ? WARN : DIM); }
+      else { const h = kitAltHint(P, k => touch ? k.toUpperCase() : keyLabel('ab' + k)); if (h) hint(g, h, hy, 15 * u, OPS[P.op].col); }
     }
     // --- banners
     if (TOAST) { const t = (performance.now() - TOAST.at) / 1000; if (t > 4) TOAST = null; else { g.globalAlpha = cl(Math.min(t * 4, (4 - t) * 2), 0, 1); rr(g, 640 - 230 * u, V.y0 + 64 * u, 460 * u, 34 * u, 8, 'rgba(12,16,22,.85)', GOLD, 1.5); tx(g, TOAST.s, 640, V.y0 + 81 * u, 15 * u, BONE); g.globalAlpha = 1; } }

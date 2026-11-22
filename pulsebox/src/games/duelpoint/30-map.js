@@ -157,6 +157,8 @@
           if (dA[nk] >= 0 && dD[nk] > dA[nk] - 5) continue; Z[nk] = 2; q.push(nk); } }
     }
   }
+  // one point on your side of the barrier (for the ends of a line drawn across the floor)
+  const inZoneP = (side, x, z) => { const k = idx(Math.floor(x / CS), Math.floor(z / CS)); return k >= 0 && !!ZONE[side][k]; };
   const inZone = (side, x, z) => { const Z = ZONE[side]; for (const [ox, oz] of [[-RAD, -RAD], [RAD, -RAD], [-RAD, RAD], [RAD, RAD]]) { const k = idx(Math.floor((x + ox) / CS), Math.floor((z + oz) / CS)); if (k < 0 || !Z[k]) return false; } return true; };
   function placeOrbs() {
     ORBS.length = 0;

@@ -16,7 +16,8 @@ const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name:
 const T = new Function('K', 'MP', code + `
   return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, readyAb, castReady, abData, hexShot, lensShot, duelOk, unready, canSee, castShot, viewDir, blocked, ARMOR, xpForLevel, levelOf, seasonNow, passRewards, myPass, passTier, passGrant, buyPremium, giveReward, dailyChallenges, weeklyChallenges, myChallenges, challengeProgress, matchTally, matchXp, payProgress, botCard, cardFrom, matchAwards, csOf, PASS_TIERS, PASS_XP, PASS_PRICE, TITLES, BANNERS, CH_DAILY, CH_WEEKLY, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, sellBack, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
-    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, setWall, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, gunStats, dmgAt, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; }, CH, siteAt };`)(K, MP);
+    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, setWall, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, gunStats, dmgAt, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; }, CH, siteAt,
+    tesselTrigger, tesselState, tesselLook, tesselDorm, devPt, fireDev, trapShot, kitBreak, wireAim, pickDev, kitAltTry, rampOf, hurtWall, lockTrip, inZoneP, inZone, SPAWN, TRIG, SENTRY, WIRE, CAN, RAMP, BEACON, SNARE, PICK, LULL, LINE, losAt: (...a) => los(...a) };`)(K, MP);
 
 let failed = 0;
 const ok = (cond, name, extra = '') => { if (!cond) failed++; console.log((cond ? '  ok   ' : '  FAIL ') + name + (extra !== '' ? '  (' + extra + ')' : '')); };
@@ -371,7 +372,8 @@ function kitChecks() {
   [M, P, F] = setup('talon'); P.yaw = T.yawTo(P.x, P.z, 61, 3); P.pitch = .05; T.ability(P, 'q'); run(1);
   ok(M.kit.darts.length === 1 && M.kit.darts[0].stuck >= 0 && F.reveal > 0, 'Talon Recon Dart: sticks and reveals the rival', `stuck ${M.kit.darts[0] && M.kit.darts[0].stuck.toFixed(2)}, reveal ${F.reveal.toFixed(2)}`);
   [M, P, F] = setup('talon'); T.ability(P, 'e'); const sn = M.kit.snares[0]; run(1); Object.assign(F, { x: sn.x + 3, z: sn.z, bot: null, local: true }); T.setInput(f => f === F ? { ...idle(), mx: 0, mz: 1 } : I); F.yaw = T.yawTo(F.x, F.z, sn.x - 3, sn.z); run(.8);
-  ok(F.snare > 0 && F.reveal > 0 && !M.kit.snares.length && Math.hypot(F.vx, F.vz) < 2.2, 'Talon Snare: the first rival over it is slowed and revealed', `snare ${F.snare.toFixed(2)}, speed ${Math.hypot(F.vx, F.vz).toFixed(1)}`);
+  ok(F.snare > 0 && F.reveal > 0 && M.kit.snares.length === 1 && M.kit.snares[0].sprung === F.key && Math.hypot(F.vx, F.vz) < 2.2, 'Talon Snare: the first rival over it is slowed, revealed and leashed', `snare ${F.snare.toFixed(2)}, speed ${Math.hypot(F.vx, F.vz).toFixed(1)}`);
+  run(1.5); ok(Math.hypot(F.x - sn.x, F.z - sn.z) <= T.SNARE.leash + .05, 'the leash holds them within 2.2 m of it', Math.hypot(F.x - sn.x, F.z - sn.z).toFixed(2) + ' m');
   T.setInput(() => I);
   [M, P, F] = setup('ember'); P.yaw = T.yawTo(P.x, P.z, 50, 3); P.pitch = -.12; T.ability(P, 'q'); let landed = 0; for (let i = 0; i < 120 && !M.kit.fires.length; i++) { T.tick(DT); landed += DT; }
   const fire = M.kit.fires[0]; if (fire) Object.assign(F, { x: fire.x, z: fire.z, bot: null, vx: 0, vz: 0 }); const hp0 = F.hp; run(1.02);
@@ -382,8 +384,7 @@ function kitChecks() {
   ok(F.hp < 100 && M.kit.sentries.length === 1, 'Axiom Sentry: fires on a rival in front of it', `rival on ${F.hp}`);
   { const st = M.kit.sentries[0]; F.guns[1] = 'lancer'; F.slot = 1; T.giveAmmo(F, 'lancer'); F.alive = true; F.hp = 100; F.yaw = T.yawTo(F.x, F.z, st.x, st.z); F.pitch = Math.atan2(st.y + .5 - T.eyeY(F), Math.hypot(st.x - F.x, st.z - F.z)); F.bot = null;
     for (let i = 0; i < 3; i++) { F.fireT = 0; F.spray = 0; T.fire(F); } ok(!M.kit.sentries.length, 'and three rifle shots bring it down', `${M.kit.sentries.length ? M.kit.sentries[0].hp : 0} health left`); }
-  [M, P, F] = setup('axiom'); T.ability(P, 'e'); const mine = M.kit.mines[0]; Object.assign(P, { x: 30, z: 3 }); run(2); Object.assign(F, { x: mine.x + 1.5, z: mine.z, bot: { diff: 0, dummy: true, home: [mine.x + 1.5, mine.z] } }); run(.6);
-  ok(F.hp <= 60 && !M.kit.mines.length, 'Axiom Tripmine: arms, then bursts when a rival comes near', `rival on ${F.hp}`);
+  // (the Tripwire, the rebuilt Sentry and the rest: lockChecks)
   // bot matches where everyone is one of the newer operatives: no errors, and they use their abilities
   const used = {}; T.on('ability', (f, k) => { used[f.op + k] = (used[f.op + k] || 0) + 1; }); let err = 0, done = 0;
   const ops = ['nova', 'wraith', 'talon', 'ember', 'axiom'];
@@ -508,7 +509,9 @@ function kit2Checks() {
   [M, P, F] = setup('nova'); T.readyAb(P, 'q'); ok(!P.rdy && P.ab.q === 1 && P.surge > 0, 'the quick ones (Surge) go the moment the key is pressed');
   [M, P, F] = setup('bastion'); T.readyAb(P, 'q'); T.castReady(P, true); const w0 = M.walls[0]; ok(w0 && (w0.x1 - w0.x0) > 3, 'the other click uses its other way: the Rampart turned along your view', w0 && `${(w0.x1 - w0.x0).toFixed(1)} by ${(w0.z1 - w0.z0).toFixed(1)}`);
   // the C abilities (a lobbed one: the rival is put where it comes down)
-  let landAt = null; for (const ev of ['gloomPop', 'shockPop', 'fieldStart']) T.on(ev, g => { landAt = [g.x, g.z]; });
+  let landAt = null; for (const ev of ['gloomPop', 'shockPop', 'fieldStart', 'canSet']) T.on(ev, g => { landAt = [g.x, g.z]; });
+  const aimAt = (f, p) => { const o = [f.x, T.eyeY(f), f.z], dx = p[0] - o[0], dy = p[1] - o[1], dz = p[2] - o[2], L = Math.hypot(dx, dy, dz); f.yaw = Math.atan2(-dx, -dz); f.pitch = Math.asin(dy / L); };
+  const fireAt = (f, D, i = 0) => { aimAt(f, T.devPt(D, i, [0, 0, 0])); return T.tesselTrigger(f); };
   const runLob = (s, F) => { landAt = null; for (let i = 0; i < Math.round(s * 60); i++) { if (landAt) pin(F, landAt[0] + .8, landAt[1]); else pin(F, 20, 40); T.tick(DT); } };
   [M, P, F] = setup('vex'); P.pitch = .1; T.ability(P, 'c', false); T.on('gloomPop', g => { if (T.M === M) pin(F, g.x + .8, g.z); }); runLob(2, F);
   ok(F.murk > 0, 'Gloom: a rival where it bursts sees only 5 m', 'murk ' + F.murk.toFixed(1));
@@ -518,14 +521,14 @@ function kit2Checks() {
   runPinned(1, F, 50, 3); ok(eye && F.reveal > 0, 'awake, a rival in its view is marked', eye ? 'reveal ' + F.reveal.toFixed(1) : '');
   { P.z += 6; const dx = eye.x - F.x, dy = eye.y - T.eyeY(F), dz = eye.z - F.z, L = Math.hypot(dx, dy, dz), S = T.castShot(F, [dx / L, dy / L, dz / L]); P.z -= 6; ok(S.eye === eye, 'awake, a rival can shoot it', S.eye ? 'hit' : 'missed at ' + S.dist.toFixed(1)); }
   runPinned(20, F, 50, 3); ok(M.kit.eyes.includes(eye), 'it lasts past the old 20 s limit', M.kit.eyes.length + ' eyes');
-  [M, P, F] = setup('bastion'); P.sh = 0; T.ability(P, 'c', false); runPinned(1, null); ok(P.sh === 30, 'Ward Beacon: 30 shield a moment after it is set', 'shield ' + P.sh);
+  [M, P, F] = setup('bastion'); P.sh = 0; T.ability(P, 'c', false); runPinned(1, null); ok(P.sh === 15, 'Ward Beacon: 15 shield a moment after it is set', 'shield ' + P.sh);
   [M, P, F] = setup('nova'); const y0 = P.y; T.ability(P, 'c', false); let top = y0; for (let i = 0; i < 40; i++) { T.tick(DT); top = Math.max(top, P.y); } ok(top - y0 > 2, 'Updraft: up more than 2 m', (top - y0).toFixed(1) + ' m');
   // and onto the tallest boxes: stand beside a 3.2 m box, Updraft, drift onto it, and stay up there
   { const H = T.HIGH_H || 3.2; ok(top - y0 > H + .6, 'Updraft clears the tallest boxes (' + H + ' m) with room to spare', (top - y0).toFixed(1) + ' m'); }
   [M, P, F] = setup('wraith'); T.ability(P, 'c', false); ok(P.tether && P.ab.c === 1, 'Tether: an anchor where you stand'); Object.assign(P, { x: 46, z: 3 }); T.readyAb(P, 'c'); ok(Math.abs(P.x - 40) < .5 && !P.tether && P.ab.c === 1, 'the key again steps you back to it, free', P.x.toFixed(1));
   [M, P, F] = setup('talon'); const hp0 = F.hp; T.on('shockPop', g => { if (T.M === M) pin(F, g.x + .8, g.z); }); T.ability(P, 'c', false); runLob(2.5, F); ok(F.hp < hp0, 'Shock Bolt: bursts and hurts a rival near it', `${hp0} → ${F.hp}`);
   [M, P, F] = setup('ember'); T.ability(P, 'c', false); ok(M.flares.length === 1, 'Flashpoint: a flash bent round a corner'); const dL = T.abData(P, 'c', false), dR = T.abData(P, 'c', true); ok(dL.z < dL.az - .3 && dR.z > dR.az + .3, 'left click bends it left, right click right', `${dL.z.toFixed(1)} / ${dR.z.toFixed(1)}`);
-  [M, P, F] = setup('axiom'); T.ability(P, 'c', false); runLob(2, F); ok(F.slowF > 0, 'Slow Field: a rival inside is slowed', 'slow ' + (F.slowF || 0).toFixed(2));
+  [M, P, F] = setup('axiom'); T.ability(P, 'c', false); runLob(3, F); ok(F.slowF > 0, 'Slow Field: the canister waits, and a rival who comes near opens it: slowed', 'slow ' + (F.slowF || 0).toFixed(2));
   // Vanta
   [M, P, F] = setup('vanta'); pin(F, 48, 3); { const aimAt = (q, hy) => { const o = [P.x, T.eyeY(P), P.z], dx = q.x - o[0], dy = hy - o[1], dz = q.z - o[2], L = Math.hypot(dx, dy, dz); P.yaw = Math.atan2(-dx, -dz); P.pitch = Math.asin(dy / L); };
     aimAt(F, F.y + 1); const hp00 = F.hp; T.ability(P, 'q', false); ok(F.exposed > 0 && F.hp < hp00 && F.alive, 'Sunder: instant; the rival it meets is hit and Exposed at once', `${hp00} → ${F.hp}`);
@@ -549,7 +552,9 @@ function kit2Checks() {
   // Tessel: Lightline, Lull, Bloom, Glasshouse
   { const O = T.OPS.tessel; ok(O && O.c.cost === 150 && O.c.max === 2 && O.q.cost === 200 && O.q.max === 2 && O.e.rech === 40 && O.x.pts === 7 && O.col !== '#ff4655', 'Tessel: Bloom 150 (two), Lull 200 (two), Lightline back 40 s after use, Glasshouse 7 points'); }
   [M, P, F] = setup('tessel'); pin(F, 56, 3);
-  { const seen0 = T.canSee(P, F) && T.canSee(F, P); ok(T.ability(P, 'e', true), 'Lightline: the other click draws it across your view'); const L = M.kit.lines[0]; runPinned(.5, F, 56, 3);
+  { const seen0 = T.canSee(P, F) && T.canSee(F, P); ok(T.ability(P, 'e', true), 'Lightline: the other click sets it across your view'); const D0 = M.kit.devs[0]; runPinned(.5, F, 56, 3);
+    ok(D0 && D0.k === 'e' && !M.kit.lines.length && T.canSee(P, F), 'it waits, dormant: no curtain yet, and nothing blocked');
+    ok(D0 && fireAt(P, D0, 0), 'looking at it, the Trigger key fires it'); const L = M.kit.lines[0]; runPinned(.5, F, 56, 3);
     ok(L && Math.abs((L.ax + L.bx) / 2 - 50) < 1.5 && Math.hypot(L.bx - L.ax, L.bz - L.az) > 3 && !P.ab.e, 'it stands across the way you look, up to 10 m out, wall to wall', L && `at x ${((L.ax + L.bx) / 2).toFixed(1)}, ${Math.hypot(L.bx - L.ax, L.bz - L.az).toFixed(1)} m wide`);
     ok(seen0 && !T.canSee(P, F) && !T.canSee(F, P), 'it blocks sight both ways', `before ${seen0}`);
     { const o = [P.x, T.eyeY(P), P.z], dx = F.x - o[0], dy = F.y + 1.1 - o[1], dz = F.z - o[2], Ln = Math.hypot(dx, dy, dz), S = T.castShot(P, [dx / Ln, dy / Ln, dz / Ln]); ok(S.hit && S.hit.f === F, 'but not bullets', S.hit ? 'the shot hits the rival' : 'stopped at ' + S.dist.toFixed(1)); }
@@ -557,12 +562,13 @@ function kit2Checks() {
     ok(F.reveal > 1.5, 'a rival who walks through it is Lit (shown through walls)', 'reveal ' + F.reveal.toFixed(1));
     runPinned(14, F, 45, 3); ok(!M.kit.lines.length && T.canSee(P, F), 'it fades after 14 s', M.kit.lines.length + ' lines'); }
   for (let i = 0; i < 27 * 60 && !P.ab.e; i++) T.tick(DT); ok(P.ab.e === 1, 'Lightline comes back 40 s after it is used', 'eT ' + P.eT.toFixed(1));
-  [M, P, F] = setup('tessel'); T.ability(P, 'e', false); { const L = M.kit.lines[0]; ok(L && Math.hypot(L.ax - P.x, L.az - P.z) < 1 && Math.hypot(L.bx - L.ax, L.bz - L.az) > 8 && Math.abs(L.bz - L.az) < .2, 'a left click draws it from your feet along your aim', L && Math.hypot(L.bx - L.ax, L.bz - L.az).toFixed(1) + ' m'); }
-  for (const ev of ['lullStart', 'bloomPop']) T.on(ev, g => { landAt = [g.x, g.z]; });
-  [M, P, F] = setup('tessel'); T.ability(P, 'q', false); runLob(2, F); const Z = M.kit.lenses[0];
+  [M, P, F] = setup('tessel'); T.ability(P, 'e', false); { const L = M.kit.devs[0]; ok(L && Math.hypot(L.ax - P.x, L.az - P.z) < 1 && Math.hypot(L.bx - L.ax, L.bz - L.az) > 8 && Math.abs(L.bz - L.az) < .2, 'a left click draws it from your feet along your aim', L && Math.hypot(L.bx - L.ax, L.bz - L.az).toFixed(1) + ' m'); }
+  for (const ev of ['devSet', 'bloomPop']) T.on(ev, g => { landAt = [g.x, g.z]; });
+  [M, P, F] = setup('tessel'); T.ability(P, 'q', false); runLob(2, F); { const D = M.kit.devs[0]; ok(D && D.k === 'q' && !(F.slowF > 0) && !M.kit.lenses.length, 'Lull: the lens waits where it lands, dormant (a rival on it is not slowed)'); if (D) fireAt(P, D); runPinned(.2, F, landAt[0] + .8, landAt[1]); }
+  const Z = M.kit.lenses[0];
   ok(Z && F.slowF > 0, 'Lull: a rival near the lens moves at half speed', 'slow ' + (F.slowF || 0).toFixed(2));
   if (Z) { const o = [F.x, T.eyeY(F), F.z], dx = Z.x - o[0], dy = Z.y + .28 - o[1], dz = Z.z - o[2], L = Math.hypot(dx, dy, dz), S = { o, d: [dx / L, dy / L, dz / L], dist: 99 }; ok(!T.lensShot(P, S) && T.lensShot(F, S) && !M.kit.lenses.length, 'one bullet from a rival breaks the lens (not one of Tessel\'s own)'); }
-  [M, P, F] = setup('tessel'); T.ability(P, 'q', false); runLob(2, F); const nZ = M.kit.lenses.length; runPinned(7.2, null); ok(nZ === 1 && !M.kit.lenses.length, 'a lens left alone lasts 7 s'); ok(T.ability(P, 'q', false) && !T.ability(P, 'q', false) && !P.ab.q, 'two Lulls, and no more');
+  [M, P, F] = setup('tessel'); T.ability(P, 'q', false); runLob(2, F); if (M.kit.devs[0]) fireAt(P, M.kit.devs[0]); const nZ = M.kit.lenses.length; runPinned(7.2, null); ok(nZ === 1 && !M.kit.lenses.length, 'a lens left alone lasts 7 s'); ok(T.ability(P, 'q', false) && !T.ability(P, 'q', false) && !P.ab.q, 'two Lulls, and no more');
   [M, P, F] = setup('tessel'); P.pitch = -.05; T.ability(P, 'c', false); runLob(2, F); runPinned(.8, null);
   { const s = M.smokes.find(q => q.glare); if (s) { const dx = s.x - P.x, dz = s.z - P.z, L = Math.hypot(dx, dz); pin(F, s.x + dx / L * 6, s.z + dz / L * 6); }
     ok(s && s.R === 3.4 && s.T === 9 && !T.canSee(P, F), 'Bloom: a globe of glare where it lands, that blocks sight', s ? `${Math.hypot(s.x - P.x, s.z - P.z).toFixed(1)} m out` : 'none'); }
@@ -572,9 +578,10 @@ function kit2Checks() {
   F.reveal = 0; for (let x = 48; x <= 56; x += .25) { pin(F, x, 3); T.tick(DT); } ok(F.reveal > 1.5, 'walking out through its wall, they are Lit', 'reveal ' + F.reveal.toFixed(1));
   runPinned(10, null); ok(!M.kit.houses.length && !M.kit.lines.length, 'it is gone after 10 s');
   // bots on Tessel use the whole kit
-  { const usedT = {}; T.on('ability', (f, k) => { if (f.op === 'tessel' && f.bot) usedT[k] = (usedT[k] || 0) + 1; }); let errT = 0;
+  { const usedT = {}; T.on('ability', (f, k) => { if (f.op === 'tessel' && f.bot) usedT[k] = (usedT[k] || 0) + 1; }); T.on('devFire', D => { if (D.by.bot) usedT['fire' + D.k] = (usedT['fire' + D.k] || 0) + 1; }); let errT = 0;
     for (let m = 0; m < 6; m++) { try { T.seed(300 + m); T.startMatch({ mode: 'demo', map: m % T.MAPS.length }); const M2 = T.M; M2.fs[0].op = 'tessel'; M2.fs[1].op = m % 2 ? 'vex' : 'tessel'; for (const f of M2.fs) if (f.bot) f.bot.diff = 2; for (let i = 0; i < 60 * 60 * 6 && !M2.over; i++) T.tick(DT); } catch (e2) { errT++; console.log(String(e2 && e2.stack).split('\n').slice(0, 4).join(' | ')); } }
-    ok(!errT && ['c', 'q', 'e', 'x'].every(k => usedT[k] > 0), 'bots on Tessel use Bloom, Lull, Lightline and Glasshouse, without errors', JSON.stringify(usedT)); }
+    ok(!errT && ['c', 'q', 'e', 'x'].every(k => usedT[k] > 0), 'bots on Tessel use Bloom, Lull, Lightline and Glasshouse, without errors', JSON.stringify(usedT));
+    ok(usedT.fireq > 0 && usedT.firee > 0, 'and they fire the Lulls and Lightlines they set', `Lull ${usedT.fireq | 0}, Lightline ${usedT.firee | 0}`); }
   // signatures that come back
   [M, P, F] = setup('iris'); T.ability(P, 'e', false); ok(!P.ab.e, 'Iris has used her Flare'); for (let i = 0; i < 41 * 60 && !P.ab.e; i++) T.tick(DT); ok(P.ab.e === 1, 'and it comes back after 40 s', P.eT.toFixed(1));
   // bots use them
@@ -707,6 +714,106 @@ function everyMapChecks(per = 2) {
 }
 
 // abilities bought by the charge, the free signature, and the ultimate with its points and orbs
+// Tessel's dormant devices and their Trigger key; the rebuilt site-holding tools (Axiom, Bastion, Talon)
+function lockChecks() {
+  section('holding a site: Tessel\'s Trigger; the Sentry, Tripwire, Slow Field, Rampart, Ward Beacon and Snare');
+  let I = idle(); T.setInput(() => I);
+  const pin = (F, x, z, up = 0) => Object.assign(F, { x, z, y: T.hAt(x, z) + up, vx: 0, vy: 0, vz: 0, px: x, pz: z, ground: !up });
+  const runPinned = (s, F, x, z) => { for (let i = 0; i < Math.round(s * 60); i++) { if (F) pin(F, x, z); T.tick(DT); } };
+  const setup = (op, buy) => { T.seed(13); T.startMatch({ mode: 'bot', diff: 0, map: 0, size: 1 }); T.skipLoad(); const M = T.M, P = T.me(); P.op = op; for (const f of M.fs) if (f !== P) f.bot.dummy = true;
+    if (!buy) { M.phase = 'live'; M.t = 80; Object.assign(P, { x: 40, z: 3, y: T.hAt(40, 3), yaw: -Math.PI / 2, pitch: -.03, vx: 0, vz: 0 }); } P.ab = { c: 2, q: 2, e: 1 }; P.ult = 0; P.sh = 0; const F = T.foe(); pin(F, 20, 40); return [M, P, F]; };
+  const aimAt = (f, p) => { const o = [f.x, T.eyeY(f), f.z], dx = p[0] - o[0], dy = p[1] - o[1], dz = p[2] - o[2], L = Math.hypot(dx, dy, dz); f.yaw = Math.atan2(-dx, -dz); f.pitch = Math.asin(dy / L); };
+  const pt = (D, i = 0) => T.devPt(D, i, [0, 0, 0]);
+  const shootAt = (f, p) => { f.guns[1] = 'lancer'; f.slot = 1; T.giveAmmo(f, 'lancer'); f.alive = true; f.fireT = 0; f.spray = 0; f.reloadT = 0; f.bot = null; aimAt(f, p); return T.fire(f); };
+  const lobbed = (M, s) => { for (let i = 0; i < s * 60 && M.kit.lobs.length; i++) T.tick(DT); };
+
+  // ---- Tessel: Lull and Lightline wait, dormant, until she fires them with the Trigger key
+  let [M, P, F] = setup('tessel'); P.pitch = -.3; T.ability(P, 'q', false); lobbed(M, 3); let D = M.kit.devs[0];
+  ok(D && D.k === 'q' && P.ab.q === 1 && !M.kit.lenses.length, 'Tessel Lull: it lands and waits, dormant', D ? `${Math.hypot(D.x - P.x, D.z - P.z).toFixed(1)} m out` : 'none set');
+  if (D) { runPinned(1, F, D.x + .6, D.z); ok(!(F.slowF > 0), 'nothing happens while it is dormant, with a rival standing on it');
+    aimAt(P, pt(D)); P.yaw += .12; ok(!T.tesselLook(P) && !T.tesselTrigger(P) && M.kit.devs.length === 1, 'the crosshair well off it: the key does nothing');
+    P.yaw -= .12 - .03; T.tick(DT); ok(T.tesselLook(P) === D && T.tesselState(P) === 'ok', 'a little off (within the aim tolerance) still counts', 'state ' + T.tesselState(P));
+    ok(T.tesselTrigger(P) && M.kit.lenses.length === 1 && !M.kit.devs.length, 'looked at, in reach and in sight, the Trigger key fires it');
+    runPinned(.3, F, D.x + .6, D.z); ok(F.slowF > 0, 'and the rival by it is slowed', 'slow ' + (F.slowF || 0).toFixed(2)); }
+  // too far, out of sight
+  [M, P, F] = setup('tessel'); P.pitch = -.3; T.ability(P, 'q', false); lobbed(M, 3); D = M.kit.devs[0];
+  if (D) { Object.assign(D, { x: 61.5, z: 3, y: T.hAt(61.5, 3) }); aimAt(P, pt(D)); T.tick(DT);
+    ok(T.tesselState(P) === 'far' && !T.tesselTrigger(P) && M.kit.devs.length === 1, 'more than 20 m away: refused (TOO FAR), and it stays set', Math.hypot(D.x - P.x, D.z - P.z).toFixed(1) + ' m');
+    Object.assign(D, { x: 50, z: 3, y: T.hAt(50, 3) }); M.walls.push({ x0: 44.7, x1: 45.3, z0: 0, z1: 8, t: 99, grow: 1 }); aimAt(P, pt(D)); T.tick(DT);
+    ok(T.tesselState(P) === 'hidden' && !T.tesselTrigger(P) && M.kit.devs.length === 1, 'out of sight behind a wall: refused, and it stays set', 'state ' + T.tesselState(P));
+    M.walls.length = 0; T.tick(DT); T.tick(DT); aimAt(P, pt(D)); T.tick(DT); ok(T.tesselTrigger(P), 'the wall gone, it fires'); }
+  // a rival shoots a dormant one out
+  [M, P, F] = setup('tessel'); P.pitch = -.3; T.ability(P, 'q', false); lobbed(M, 3); D = M.kit.devs[0];
+  if (D) { pin(F, D.x + 6, D.z); const S0 = (() => { const o = [P.x, T.eyeY(P), P.z], p = pt(D), dx = p[0] - o[0], dy = p[1] - o[1], dz = p[2] - o[2], L = Math.hypot(dx, dy, dz); return { o, d: [dx / L, dy / L, dz / L], dist: 99 }; })();
+    ok(!T.trapShot(P, S0, T.GUNS.lancer) && M.kit.devs.length === 1, 'her own shot does not break it');
+    shootAt(F, pt(D)); ok(!M.kit.devs.length && !M.kit.lenses.length, 'one bullet from a rival breaks a dormant Lull'); }
+  [M, P, F] = setup('tessel'); T.ability(P, 'e', true); D = M.kit.devs[0]; if (D) { pin(F, 56, 3); shootAt(F, pt(D, 1)); ok(!M.kit.devs.length, 'one bullet into either post breaks a dormant Lightline'); }
+  // one of a kind: a new one replaces the old; the Lightline's wait starts once it is fired
+  [M, P, F] = setup('tessel'); P.pitch = -.3; T.ability(P, 'q', false); lobbed(M, 3); const id1 = M.kit.devs[0] && M.kit.devs[0].id; for (let i = 0; i < 10; i++) T.tick(DT); P.pitch = -.4; T.ability(P, 'q', false); lobbed(M, 3);
+  ok(M.kit.devs.length === 1 && M.kit.devs[0].id !== id1 && P.ab.q === 0, 'a second Lull replaces the dormant one');
+  [M, P, F] = setup('tessel'); T.ability(P, 'e', true); runPinned(5, null); ok(!P.ab.e && !(P.eT > 0) && M.kit.devs.length === 1, 'a Lightline set and not fired does not count toward its 40 s', 'eT ' + (P.eT || 0).toFixed(1));
+  { const D2 = M.kit.devs[0]; aimAt(P, pt(D2, 0)); T.tick(DT); T.tesselTrigger(P); runPinned(2, null); ok(P.eT > 1.5, 'fired, it does', 'eT ' + (P.eT || 0).toFixed(1)); }
+  // the buy phase: set both behind your barrier; the Trigger waits for the live round
+  [M, P, F] = setup('tessel', true); { const sd = T.sideOf(P); P.pitch = -.05;
+    const okE = T.ability(P, 'e', false), De = T.tesselDorm(P, 'e'); P.pitch = -.8; const okQ = T.ability(P, 'q', false); lobbed(M, 3); const Dq = T.tesselDorm(P, 'q');
+    ok(M.phase === 'buy' && okE && okQ && De && Dq && T.inZoneP(sd, De.ax, De.az) && T.inZoneP(sd, De.bx, De.bz) && T.inZoneP(sd, Dq.x, Dq.z), 'in the buy phase both can be set, on her side of the barrier', `Lightline ${De ? Math.hypot(De.bx - De.ax, De.bz - De.az).toFixed(1) + ' m' : 'none'}, Lull ${Dq ? 'set' : 'none'}`);
+    if (Dq) { aimAt(P, pt(Dq)); T.tick(DT); ok(!T.tesselTrigger(P) && T.tesselDorm(P, 'q') === Dq, 'but the Trigger does nothing until the round is live');
+      M.phase = 'live'; M.t = 80; aimAt(P, pt(Dq)); T.tick(DT); ok(T.tesselTrigger(P) && M.kit.lenses.length === 1, 'live, it fires'); } }
+  // online: a trigger message has to come from her, for her own device
+  [M, P, F] = setup('tessel'); P.pitch = -.3; T.ability(P, 'q', false); lobbed(M, 3); D = M.kit.devs[0];
+  if (D) { M.online = true; F.net = true; T.netMsg({ t: 'tt', id: D.id, f: F.key }); const kept = M.kit.devs.length === 1; T.netMsg({ t: 'tt', id: 7, f: F.key }); T.netMsg({ t: 'kb', id: { x: 1 }, f: F.key }); const kept2 = M.kit.devs.length === 1;
+    T.netMsg({ t: 'kb', id: D.id, f: F.key }); ok(kept && kept2 && !M.kit.devs.length, 'online: a rival cannot fire her device, bad fields are ignored, and a rival\'s break message breaks it'); M.online = false; F.net = false; }
+
+  // ---- Axiom Sentry: a 90 degree arc, a lock before it fires, the rival revealed; picked up and set again
+  [M, P, F] = setup('axiom'); P.ab.q = 1; T.ability(P, 'q'); let st = M.kit.sentries[0]; pin(F, 52, 3); F.reveal = 0; runPinned(.45, F, 52, 3);
+  ok(st && st.target === F && F.reveal > 0 && F.hp === 100, 'Sentry: a rival in its arc is revealed at once, and not yet fired on (it locks first)', `reveal ${(F.reveal || 0).toFixed(1)}, hp ${F.hp}`);
+  runPinned(2, F, 52, 3); ok(F.hp < 100, 'then it fires', 'hp ' + F.hp);
+  [M, P, F] = setup('axiom'); P.ab.q = 1; T.ability(P, 'q'); st = M.kit.sentries[0]; Object.assign(P, { x: 44, z: 3 }); F.reveal = 0; runPinned(3, F, 33, 3);
+  ok(st && !st.target && F.hp === 100 && !(F.reveal > 0), 'behind it (outside its arc) it does nothing');
+  Object.assign(P, { x: st.x - .8, z: st.z }); const picked = T.readyAb(P, 'q');
+  ok(picked && !M.kit.sentries.length && P.ab.q === 1 && !P.rdy, 'the Q key again beside it picks it up (the charge comes back)');
+  ok(!T.ability(P, 'q') && M.kit.sentries.length === 0, 'and it cannot go down again at once'); runPinned(6.1, null); ok(T.ability(P, 'q') && M.kit.sentries.length === 1, '6 s later it can');
+  [M, P, F] = setup('axiom'); P.ab.q = 1; T.ability(P, 'q'); st = M.kit.sentries[0]; st.hp = 50; Object.assign(P, { x: st.x - .8, z: st.z }); T.readyAb(P, 'q'); runPinned(6.1, null); T.ability(P, 'q');
+  ok(M.kit.sentries[0] && M.kit.sentries[0].hp === 50, 'a picked-up sentry keeps its damage', M.kit.sentries[0] && 'hp ' + M.kit.sentries[0].hp);
+  // ---- Axiom Tripwire: across a doorway; crossed, a burst; jumped, nothing; shot or picked up
+  const door = () => { for (let j = 1; j < T.GH - 1; j++) for (let i = 1; i < T.GW - 1; i++) { const x = (i + .5) * T.CS, z = (j + .5) * T.CS; if (!T.NAV[T.idx(i, j)] || T.hAt(x, z) > .1) continue;
+    for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) { const q = T.wireAim({ x, y: 0, z, yaw, crouch: 0 }, T.viewDir(yaw, 0), null); if (q && Math.hypot(q.bx - q.ax, q.bz - q.az) > 2.5) return { x, z, yaw, q }; } } return null; };
+  const dw = door(); ok(!!dw, 'the map has a doorway a Tripwire spans', dw && `at ${dw.x.toFixed(0)}, ${dw.z.toFixed(0)}: ${Math.hypot(dw.q.bx - dw.q.ax, dw.q.bz - dw.q.az).toFixed(1)} m`);
+  if (dw) {
+    const setW = () => { const r = setup('axiom'); Object.assign(r[1], { x: dw.x, z: dw.z, y: T.hAt(dw.x, dw.z), yaw: dw.yaw, pitch: 0 }); T.ability(r[1], 'e'); return r; };
+    [M, P, F] = setW(); let W = M.kit.wires[0]; ok(W && !P.ab.e && Math.hypot(W.bx - W.ax, W.bz - W.az) <= T.WIRE.len, 'Tripwire: set across the doorway, wall to wall', W && Math.hypot(W.bx - W.ax, W.bz - W.az).toFixed(1) + ' m');
+    if (W) { Object.assign(P, { x: 2, z: 41 }); const nx = -W.ez / Math.sqrt(W.len2), nz = W.ex / Math.sqrt(W.len2), cross = (up, dir) => { for (let q = -1.2; q <= 1.2; q += .1) { const s = q * dir; pin(F, W.x + nx * s, W.z + nz * s, up); T.tick(DT); } };
+      runPinned(1.6, F, W.x - nx * 1.2, W.z - nz * 1.2); cross(.9, 1); runPinned(.6, F, W.x + nx * 1.2, W.z + nz * 1.2); ok(W.fuse < 0 && F.hp === 100 && M.kit.wires.length === 1, 'a rival who jumps over it is not seen by it');
+      F.reveal = 0; cross(0, -1); ok(W.fuse >= 0 && F.reveal > 0, 'one who walks across sets it off, and is revealed'); runPinned(.6, F, W.x - nx * 1.2, W.z - nz * 1.2);
+      ok(F.hp < 100 && F.hp >= 100 - T.WIRE.dmg && !M.kit.wires.length, 'a beat later the burst hurts them (up to 60)', 'hp ' + F.hp); }
+    [M, P, F] = setW(); W = M.kit.wires[0]; if (W) { Object.assign(P, { x: W.x, z: W.z }); const ok0 = T.readyAb(P, 'e'); ok(ok0 && !M.kit.wires.length && P.ab.e === 1, 'the E key again beside it picks it up'); }
+    [M, P, F] = setW(); W = M.kit.wires[0]; if (W) { Object.assign(P, { x: 2, z: 41 }); const nx = -W.ez / Math.sqrt(W.len2), nz = W.ex / Math.sqrt(W.len2); pin(F, W.x + nx * 4, W.z + nz * 4); shootAt(F, [W.ax, W.y + T.WIRE.h, W.az]); ok(!M.kit.wires.length, 'one bullet into an anchor breaks it'); }
+  }
+  [M, P, F] = setup('axiom'); P.yaw = 0; P.pitch = 0; ok(!T.ability(P, 'e') && P.ab.e === 1 && !M.kit.wires.length, 'in the open (no doorway) it is not set, and not spent');
+  // ---- Axiom Slow Field canister: a bullet breaks it before it opens
+  [M, P, F] = setup('axiom'); P.pitch = -.3; T.ability(P, 'c'); lobbed(M, 3); { const C = M.kit.cans[0]; ok(C && !M.kit.fields.length, 'Slow Field: the canister waits where it lands');
+    if (C) { pin(F, C.x + 8, C.z); shootAt(F, [C.x, C.y + .2, C.z]); runPinned(1.5, null); ok(!M.kit.cans.length && !M.kit.fields.length, 'one bullet breaks it, and no field opens'); } }
+  // ---- Bastion Rampart: rivals' bullets wear it down; reinforced once
+  [M, P, F] = setup('bastion'); T.ability(P, 'q'); runPinned(.5, null); let w = M.walls[0]; pin(F, 50, 3);
+  if (w) { for (let i = 0; i < 3; i++) shootAt(F, [(w.x0 + w.x1) / 2, 1.4, (w.z0 + w.z1) / 2]); ok(w.hp === T.RAMP.hp - 120 && M.walls.includes(w), 'Rampart: 500 health; three rifle shots take 120', 'hp ' + w.hp);
+    const t0 = w.t; w.hp = 100; ok(T.readyAb(P, 'q') && w.hp === T.RAMP.hp && w.t > t0 + 7 && w.re, 'the Q key again near it reinforces it: full health and 8 s more');
+    w.hp = 100; T.readyAb(P, 'q'); ok(w.hp === 100, 'only once'); P.rdy = null;
+    T.hurtWall(w, 200, false); runPinned(.1, null); ok(!M.walls.includes(w), 'worn to nothing, it falls'); }
+  // ---- Bastion Ward Beacon: waits through the buy phase, then pulses shield; a few shots put it out
+  [M, P, F] = setup('bastion', true); { let okR = false; for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) { P.yaw = yaw; if (T.ability(P, 'q')) { okR = true; break; } } ok(okR && M.walls.length === 1 && M.walls[0].hp === T.RAMP.hp, 'Rampart: can go up in the buy phase, on your side of the barrier'); }
+  [M, P, F] = setup('bastion', true); P.sh = 0; T.ability(P, 'c'); runPinned(2, null); ok(M.kit.beacons.length === 1 && P.sh === 0, 'Ward Beacon: set in the buy phase, it waits');
+  M.phase = 'live'; M.t = 80; runPinned(1, null); const s1 = P.sh; runPinned(4.1, null); ok(s1 === 15 && P.sh === 25, 'live, +15 shield, then +5 every 2 s', `${s1} then ${P.sh}`); runPinned(20, null); ok(P.sh <= 50 && !M.kit.beacons.length, 'up to 50, and it is gone after 20 s', 'shield ' + P.sh);
+  [M, P, F] = setup('bastion'); T.ability(P, 'c'); { const B = M.kit.beacons[0]; pin(F, P.x + 8, P.z); shootAt(F, [B.x, B.y + .5, B.z]); const one = M.kit.beacons.length; F.fireT = 0; shootAt(F, [B.x, B.y + .5, B.z]); ok(one === 1 && !M.kit.beacons.length, 'two rifle shots put it out (60 health)'); }
+  // ---- Talon Snare: shot, it lets go; picked up
+  [M, P, F] = setup('talon'); T.ability(P, 'e'); { const s = M.kit.snares[0]; runPinned(1, null); runPinned(.3, F, s.x, s.z); ok(s.sprung === F.key && F.snare > 0, 'Snare: sprung by a rival');
+    pin(F, s.x + 1.5, s.z); shootAt(F, [s.x, s.y + .1, s.z]); ok(!M.kit.snares.length && F.snare <= .2, 'a bullet into it breaks it and frees them', 'snare ' + F.snare.toFixed(2)); }
+  [M, P, F] = setup('talon'); T.ability(P, 'e'); { const s = M.kit.snares[0]; Object.assign(P, { x: s.x - 1, z: s.z }); ok(T.readyAb(P, 'e') && !M.kit.snares.length && P.ab.e === 1, 'the E key again beside it picks it up'); }
+  // ---- bots on the site-holders: no errors, and the rebuilt tools get used
+  { const used = {}; T.on('ability', (f, k) => { if (f.bot) used[f.op + k] = (used[f.op + k] || 0) + 1; }); let err = 0, done = 0; const ops = ['axiom', 'bastion', 'talon', 'tessel'];
+    for (let n = 0; n < 8; n++) { try { T.seed(700 + n); T.startMatch({ mode: 'demo', map: n % T.MAPS.length, size: 2 }); const M2 = T.M; M2.fs.forEach((f, i) => { f.op = ops[(n + i) % 4]; if (f.bot) f.bot.diff = 2; }); for (let i = 0; i < 60 * 60 * 8 && !M2.over; i++) T.tick(DT); done++; } catch (e2) { err++; console.log(String(e2 && e2.stack).split('\n').slice(0, 4).join(' | ')); } }
+    const keys = ['axiomq', 'axiome', 'axiomc', 'bastionq', 'bastionc', 'talone', 'tesselq', 'tessele'];
+    ok(!err && keys.every(k => used[k] > 0), 'bot matches with Axiom, Bastion, Talon and Tessel run without errors, and use the rebuilt tools', keys.map(k => `${k} ${used[k] || 0}`).join(', ')); }
+}
 function ultChecks() {
   section('abilities and ultimates');
   let I = idle(); T.setInput(() => I);
@@ -798,7 +905,8 @@ else if (arg === 'ults') ultChecks();
 else if (arg === 'skins') skinChecks();
 else if (arg === 'progress') progressChecks();
 else if (arg === 'kit2') kit2Checks();
+else if (arg === 'lock') lockChecks();
 else if (arg === 'copperleaf') copperleafChecks();
-else { mapChecks(); gunplayChecks(); firstShotChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); ultChecks(); skinChecks(); progressChecks(); kit2Checks(); teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); matchChecks(20); twoSiteChecks(12); copperleafChecks(); }
+else { mapChecks(); gunplayChecks(); firstShotChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); ultChecks(); skinChecks(); progressChecks(); kit2Checks(); lockChecks(); teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); matchChecks(20); twoSiteChecks(12); copperleafChecks(); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
