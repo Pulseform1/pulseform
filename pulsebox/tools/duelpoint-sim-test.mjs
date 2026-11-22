@@ -525,6 +525,9 @@ function kit2Checks() {
   [M, P, F] = setup('nova'); const y0 = P.y; T.ability(P, 'c', false); let top = y0; for (let i = 0; i < 40; i++) { T.tick(DT); top = Math.max(top, P.y); } ok(top - y0 > 2, 'Updraft: up more than 2 m', (top - y0).toFixed(1) + ' m');
   // and onto the tallest boxes: stand beside a 3.2 m box, Updraft, drift onto it, and stay up there
   { const H = T.HIGH_H || 3.2; ok(top - y0 > H + .6, 'Updraft clears the tallest boxes (' + H + ' m) with room to spare', (top - y0).toFixed(1) + ' m'); }
+  // two in a row: the second, in the air, lifts her no higher than the first could (so never over a 6 m wall)
+  { [M, P, F] = setup('nova'); P.ab.c = 2; const z0 = P.y; T.ability(P, 'c', false); let hi = z0; for (let i = 0; i < 18; i++) { T.tick(DT); hi = Math.max(hi, P.y); } T.ability(P, 'c', false); for (let i = 0; i < 90; i++) { T.tick(DT); hi = Math.max(hi, P.y); }
+    ok(hi - z0 <= top - y0 + .05 && hi - z0 < 5.5, 'two Updrafts in a row go no higher than one', `${(hi - z0).toFixed(2)} m (one: ${(top - y0).toFixed(2)} m)`); }
   [M, P, F] = setup('wraith'); T.ability(P, 'c', false); ok(P.tether && P.ab.c === 1, 'Tether: an anchor where you stand'); Object.assign(P, { x: 46, z: 3 }); T.readyAb(P, 'c'); ok(Math.abs(P.x - 40) < .5 && !P.tether && P.ab.c === 1, 'the key again steps you back to it, free', P.x.toFixed(1));
   [M, P, F] = setup('talon'); const hp0 = F.hp; T.on('shockPop', g => { if (T.M === M) pin(F, g.x + .8, g.z); }); T.ability(P, 'c', false); runLob(2.5, F); ok(F.hp < hp0, 'Shock Bolt: bursts and hurts a rival near it', `${hp0} → ${F.hp}`);
   [M, P, F] = setup('ember'); T.ability(P, 'c', false); ok(M.flares.length === 1, 'Flashpoint: a flash bent round a corner'); const dL = T.abData(P, 'c', false), dR = T.abData(P, 'c', true); ok(dL.z < dL.az - .3 && dR.z > dR.az + .3, 'left click bends it left, right click right', `${dL.z.toFixed(1)} / ${dR.z.toFixed(1)}`);
