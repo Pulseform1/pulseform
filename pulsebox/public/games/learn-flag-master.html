@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flag Master · Educational Games · Pulsebox</title>
+<meta name="description" content="Flag Master, a free educational game on Pulsebox. Recognise the flags of countries around the world.">
+<meta name="theme-color" content="#0a0c12">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23c6ff3d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle'%3E%F0%9F%8E%93%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow:wght@500;600;700;800&display=swap">
+<style>
+:root { color-scheme: dark; --bg: #0a0c12; --bg2: #11141d; --panel: #161a26; --panel2: #1d2231; --edge: #2a3144; --text: #eef1f8; --muted: #9aa3b8;
+--ok: #3ddc84; --no: #ff4d5e; --gold: #ffd23f; --c: #29e0ff; --c2: #c6ff3d;
+--display: 'Chakra Petch', 'Arial Narrow', system-ui, sans-serif; --body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 600 16px/1.35 var(--body); -webkit-tap-highlight-color: transparent; }
+body { background: radial-gradient(1200px 600px at 80% -10%, color-mix(in srgb, var(--c) 14%, transparent), transparent 60%), radial-gradient(900px 500px at -10% 110%, color-mix(in srgb, var(--c2) 10%, transparent), transparent 60%), var(--bg); background-attachment: fixed; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; }
+a { color: inherit; }
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.1; letter-spacing: .01em; }
+:focus-visible { outline: 3px solid var(--c); outline-offset: 2px; }
+.top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px; padding: 10px clamp(10px, 3vw, 24px); background: rgba(10,12,18,.82); backdrop-filter: blur(10px); border-bottom: 1px solid var(--edge); }
+.top .t { flex: 1; min-width: 0; font: 700 clamp(15px, 2.4vw, 19px) var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.top .t small { color: var(--muted); font: 700 12px var(--body); letter-spacing: .12em; text-transform: uppercase; margin-left: 8px; }
+.nav { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--edge); font: 700 14px var(--body); text-decoration: none; white-space: nowrap; transition: background .15s, transform .15s; }
+.nav:hover { background: var(--panel2); transform: translateY(-1px); }
+.nav.logo b { color: #c6ff3d; }
+@media (max-width: 560px) { .nav .lt { display: none; } .top .t small { display: none; } }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 10px 20px; border-radius: 14px; background: var(--panel2); border: 1px solid var(--edge); font: 800 16px var(--body); transition: transform .12s, background .15s, box-shadow .15s; user-select: none; }
+.btn:hover { transform: translateY(-2px); background: #262c3e; }
+.btn:active { transform: translateY(1px) scale(.98); }
+.btn.go { background: linear-gradient(135deg, var(--c), var(--c2)); color: #07090e; border: 0; box-shadow: 0 6px 24px color-mix(in srgb, var(--c) 35%, transparent); }
+.btn.go:hover { box-shadow: 0 10px 34px color-mix(in srgb, var(--c) 50%, transparent); }
+.btn.sm { min-height: 38px; padding: 6px 12px; font-size: 14px; border-radius: 11px; }
+.btn:disabled { opacity: .45; pointer-events: none; }
+.screen { max-width: 980px; margin: 0 auto; padding: clamp(14px, 3vw, 28px) clamp(12px, 3vw, 24px) 40px; animation: rise .35s ease both; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+.hero { display: grid; grid-template-columns: auto 1fr; gap: clamp(14px, 3vw, 28px); align-items: center; }
+.hero .art { width: clamp(110px, 22vw, 180px); aspect-ratio: 1; border-radius: 26px; overflow: hidden; box-shadow: 0 14px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06) inset; animation: bob 4s ease-in-out infinite; }
+.hero .art svg { width: 100%; height: 100%; display: block; }
+@keyframes bob { 50% { transform: translateY(-6px) rotate(-1deg); } }
+.hero h1 { font-size: clamp(30px, 6vw, 54px); }
+.hero p { color: var(--muted); margin: 8px 0 0; font-size: clamp(15px, 2vw, 18px); }
+.tag { display: inline-block; padding: 4px 10px; border-radius: 999px; font: 800 12px var(--body); letter-spacing: .1em; text-transform: uppercase; background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); margin-bottom: 8px; }
+.learn { margin-top: 18px; padding: 14px 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--edge); }
+.learn b { font-family: var(--display); color: var(--c2); letter-spacing: .04em; }
+.learn ul { margin: 8px 0 0; padding-left: 20px; color: #d5dae6; }
+.learn li { margin: 3px 0; }
+.levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 18px; }
+.lvl { position: relative; text-align: left; padding: 16px 16px 14px; border-radius: 18px; background: var(--panel); border: 2px solid var(--edge); transition: transform .15s, border-color .15s, background .15s; overflow: hidden; }
+.lvl:hover, .lvl:focus-visible { transform: translateY(-3px); border-color: var(--c); background: var(--panel2); }
+.lvl .n { font: 700 22px var(--display); display: flex; align-items: center; gap: 8px; }
+.lvl .d { color: var(--muted); font-size: 14px; margin-top: 4px; }
+.lvl .b { margin-top: 10px; font-size: 13px; color: var(--gold); font-weight: 800; }
+.lvl .k { position: absolute; top: 12px; right: 14px; font: 700 12px var(--display); color: var(--muted); border: 1px solid var(--edge); border-radius: 6px; padding: 1px 6px; }
+.lvl .stars { color: var(--gold); letter-spacing: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.row.c { justify-content: center; }
+.play { display: flex; flex-direction: column; height: calc(100dvh - 61px); max-width: 1100px; margin: 0 auto; padding: 10px clamp(8px, 2vw, 18px) 12px; }
+.hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.hud .sp { flex: 1; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 12px; background: var(--panel); border: 1px solid var(--edge); font: 700 15px var(--display); white-space: nowrap; }
+.chip i { font-style: normal; color: var(--muted); font: 700 11px var(--body); letter-spacing: .1em; text-transform: uppercase; }
+.chip.hot { border-color: var(--gold); color: var(--gold); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 18px rgba(255,210,63,.45); } }
+.tbar { height: 8px; border-radius: 8px; background: var(--panel); overflow: hidden; margin-top: 8px; border: 1px solid var(--edge); }
+.tbar > div { height: 100%; width: 100%; background: linear-gradient(90deg, var(--c2), var(--c)); transform-origin: left; transition: transform .25s linear, background .3s; }
+.tbar.low > div { background: linear-gradient(90deg, var(--no), #ff9f1c); }
+.stage { position: relative; flex: 1; min-height: 0; margin-top: 10px; border-radius: 22px; background: linear-gradient(180deg, var(--panel), var(--bg2)); border: 1px solid var(--edge); overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(10px, 2.5vw, 24px); transition: box-shadow .2s; }
+.stage.flash-ok { box-shadow: 0 0 0 3px var(--ok) inset, 0 0 40px rgba(61,220,132,.25) inset; }
+.stage.flash-no { box-shadow: 0 0 0 3px var(--no) inset, 0 0 40px rgba(255,77,94,.25) inset; animation: shake .3s; }
+@keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.stage.cv { padding: 0; }
+.q { font: 700 clamp(26px, 6vw, 56px) var(--display); text-align: center; margin: 4px 0 6px; animation: pop .3s ease both; }
+.q.sm { font-size: clamp(20px, 4vw, 34px); }
+.sub { color: var(--muted); text-align: center; font-size: clamp(14px, 2vw, 17px); }
+@keyframes pop { from { opacity: 0; transform: scale(.85); } }
+.opts { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: clamp(8px, 1.6vw, 14px); width: min(100%, 720px); margin-top: clamp(12px, 3vh, 26px); }
+.opt { position: relative; min-height: clamp(54px, 9vh, 84px); padding: 10px 14px; border-radius: 18px; background: var(--panel2); border: 2px solid var(--edge); font: 700 clamp(17px, 3vw, 26px) var(--display); display: flex; align-items: center; justify-content: center; text-align: center; gap: 8px; transition: transform .12s, border-color .15s, background .15s; animation: pop .3s ease both; }
+.opt:hover { transform: translateY(-2px); border-color: var(--c); }
+.opt .k { position: absolute; top: 6px; left: 9px; font: 700 11px var(--display); color: var(--muted); }
+.opt.ok { background: color-mix(in srgb, var(--ok) 25%, var(--panel2)); border-color: var(--ok); }
+.opt.no { background: color-mix(in srgb, var(--no) 25%, var(--panel2)); border-color: var(--no); animation: shake .3s; }
+.opt.dim { opacity: .45; }
+.opts.locked .opt { pointer-events: none; }
+@media (max-width: 560px) { .opts.wide { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.inp { width: min(100%, 420px); padding: 14px 16px; border-radius: 16px; border: 2px solid var(--edge); background: var(--bg2); font: 700 clamp(20px, 4vw, 30px) var(--display); text-align: center; outline: none; }
+.inp:focus { border-color: var(--c); }
+.key-pad { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 8px; width: min(100%, 360px); margin-top: 12px; }
+.key-pad button { min-height: 52px; border-radius: 14px; background: var(--panel2); border: 1px solid var(--edge); font: 700 22px var(--display); }
+.key-pad button:active { background: var(--c); color: #07090e; }
+.popt { position: absolute; pointer-events: none; font: 800 22px var(--display); text-shadow: 0 2px 8px rgba(0,0,0,.6); animation: up .9s ease-out forwards; z-index: 5; white-space: nowrap; }
+@keyframes up { to { opacity: 0; transform: translateY(-60px) scale(1.15); } }
+.conf { position: fixed; top: -10px; width: 10px; height: 14px; z-index: 60; pointer-events: none; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+.over { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(5,7,11,.72); backdrop-filter: blur(6px); animation: fade .25s both; }
+@keyframes fade { from { opacity: 0; } }
+.card { width: min(100%, 460px); padding: clamp(18px, 4vw, 30px); border-radius: 26px; background: var(--panel); border: 1px solid var(--edge); box-shadow: 0 30px 80px rgba(0,0,0,.55); text-align: center; animation: rise .35s ease both; max-height: 100%; overflow: auto; }
+.card h2 { font-size: clamp(28px, 6vw, 40px); }
+.card .big { font: 700 clamp(52px, 13vw, 84px) var(--display); background: linear-gradient(135deg, var(--c), var(--c2)); -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1; margin: 10px 0 2px; }
+.card .best { color: var(--gold); font-weight: 800; min-height: 22px; }
+.card .msg { color: var(--muted); margin: 8px 0 0; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 16px 0; }
+.stats div { padding: 10px; border-radius: 14px; background: var(--bg2); border: 1px solid var(--edge); }
+.stats b { display: block; font: 700 22px var(--display); }
+.stats i { font-style: normal; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.card .row { justify-content: center; margin-top: 6px; }
+.badge-new { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--gold); color: #1a1200; font: 800 12px var(--body); letter-spacing: .1em; animation: pulse 1s infinite; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; } }
+</style>
+<body>
+<div id="app"></div>
+<noscript><p style="padding:20px">These educational games need JavaScript turned on.</p></noscript>
+<script>
+const SUBJECTS = { Math: ['🔢', '#ff9f1c'], Language: ['📖', '#ff5fa2'], 'Geography & Science': ['🌍', '#29e0ff'], Logic: ['🧠', '#a98bff'] };
+const CATALOG = [
+{ id: 'math-rush', title: 'Math Rush', subject: 'Math', icon: '➕', c: '#ff9f1c', c2: '#ffd23f', ages: '6+',
+teaches: 'Fast, accurate mental arithmetic.', learn: ['Addition and subtraction facts', 'Times tables and division', 'Working quickly without losing accuracy'] },
+{ id: 'number-ninja', title: 'Number Ninja', subject: 'Math', icon: '🥷', c: '#ff5a3a', c2: '#ffb347', ages: '7+',
+teaches: 'Slice the flying numbers that answer the problem.', learn: ['Recognising answers at a glance', 'Even and odd numbers, multiples and factors', 'Mental maths under pressure'] },
+{ id: 'fraction-frenzy', title: 'Fraction Frenzy', subject: 'Math', icon: '🍕', c: '#ffcc33', c2: '#ff7a59', ages: '8+',
+teaches: 'Fractions, decimals and percentages are the same numbers.', learn: ['Reading fractions from pictures', 'Converting fractions to decimals and percentages', 'Equivalent fractions'] },
+{ id: 'equation-escape', title: 'Equation Escape', subject: 'Math', icon: '🚪', c: '#3ddc84', c2: '#29e0ff', ages: '10+',
+teaches: 'Solve for x to unlock each door.', learn: ['One-step and two-step equations', 'Inverse operations', 'Equations with x on both sides'] },
+{ id: 'geometry-challenge', title: 'Geometry Challenge', subject: 'Math', icon: '📐', c: '#5ab0ff', c2: '#7af0d0', ages: '8+',
+teaches: 'Shapes, angles, area and perimeter.', learn: ['Naming 2D shapes by their sides', 'Acute, right, obtuse and straight angles', 'Area and perimeter of rectangles and triangles'] },
+{ id: 'typing-turbo', title: 'Typing Turbo', subject: 'Language', icon: '🏎️', c: '#ff2e88', c2: '#ff9f1c', ages: '7+',
+teaches: 'Touch typing speed and accuracy.', learn: ['Typing whole words accurately', 'Building words-per-minute speed', 'Keeping your eyes on the words, not the keys'] },
+{ id: 'word-scramble', title: 'Word Scramble', subject: 'Language', icon: '🔤', c: '#c06bff', c2: '#ff7ad9', ages: '7+',
+teaches: 'Spot the word hidden in the jumbled letters.', learn: ['Spelling patterns and letter order', 'Vocabulary from short words to long ones', 'Using clues to work out a word'] },
+{ id: 'spelling-sprint', title: 'Spelling Sprint', subject: 'Language', icon: '✏️', c: '#3ddc84', c2: '#c6ff3d', ages: '7+',
+teaches: 'Fill in the missing letters of commonly misspelled words.', learn: ['Tricky spellings (double letters, silent letters)', 'Common spelling rules like i before e', 'Words people often get wrong'] },
+{ id: 'grammar-guardian', title: 'Grammar Guardian', subject: 'Language', icon: '🏰', c: '#ffb347', c2: '#ff5a3a', ages: '8+',
+teaches: 'Fix grammar mistakes to defend the castle.', learn: ['Their, there and they\'re; your and you\'re', 'Subject and verb agreement', 'Verb tenses, plurals and apostrophes'] },
+{ id: 'vocabulary-quest', title: 'Vocabulary Quest', subject: 'Language', icon: '🗺️', c: '#29e0ff', c2: '#a98bff', ages: '8+',
+teaches: 'Learn word meanings, synonyms and antonyms on an adventure.', learn: ['What words mean', 'Synonyms and antonyms', 'Choosing the right word for a sentence'] },
+{ id: 'flag-master', title: 'Flag Master', subject: 'Geography & Science', icon: '🏁', c: '#ff4d5e', c2: '#5ab0ff', ages: '7+',
+teaches: 'Recognise the flags of countries around the world.', learn: ['Flags of countries on every continent', 'Telling look-alike flags apart', 'Where each country is'] },
+{ id: 'capital-city', title: 'Capital City Challenge', subject: 'Geography & Science', icon: '🏛️', c: '#ffd23f', c2: '#3ddc84', ages: '8+',
+teaches: 'Match countries with their capital cities.', learn: ['Capital cities of the world', 'Which continent each country is on', 'Capitals that are not the biggest city'] },
+{ id: 'science-lab', title: 'Science Lab', subject: 'Geography & Science', icon: '🧪', c: '#7af0d0', c2: '#29e0ff', ages: '8+',
+teaches: 'Science quizzes and hands-on experiments.', learn: ['States of matter and how they change', 'Mixing colours of light and paint', 'Forces, the body, plants and energy'] },
+{ id: 'planet-explorer', title: 'Planet Explorer', subject: 'Geography & Science', icon: '🪐', c: '#a98bff', c2: '#29e0ff', ages: '8+',
+teaches: 'Fly through the solar system and learn about each world.', learn: ['The order of the planets', 'Facts about planets, moons and the Sun', 'Size, distance and what each world is made of'] },
+{ id: 'periodic-puzzle', title: 'Periodic Table Puzzle', subject: 'Geography & Science', icon: '⚛️', c: '#3ddc84', c2: '#5ab0ff', ages: '11+',
+teaches: 'Match elements to their names, symbols and properties.', learn: ['Chemical symbols of common elements', 'Atomic numbers', 'Metals, non-metals and noble gases'] },
+{ id: 'memory-matrix', title: 'Memory Matrix', subject: 'Logic', icon: '🟪', c: '#ff7ad9', c2: '#a98bff', ages: '6+',
+teaches: 'Remember the lit tiles and their order.', learn: ['Short-term (working) memory', 'Visual pattern recall', 'Concentration that grows round by round'] },
+{ id: 'logic-labyrinth', title: 'Logic Labyrinth', subject: 'Logic', icon: '🌀', c: '#29e0ff', c2: '#3ddc84', ages: '8+',
+teaches: 'Find your way through mazes guarded by logic gates.', learn: ['Planning a route', 'AND, OR and NOT logic', 'Spotting the rule in a pattern'] },
+{ id: 'pattern-pro', title: 'Pattern Pro', subject: 'Logic', icon: '🔷', c: '#5ab0ff', c2: '#ff7ad9', ages: '6+',
+teaches: 'Work out what comes next in a sequence.', learn: ['Number sequences (adding, doubling, squares)', 'Shape and colour patterns', 'Finding a rule and testing it'] },
+{ id: 'sudoku-mini', title: 'Sudoku Mini', subject: 'Logic', icon: '🔢', c: '#ffd23f', c2: '#ff9f1c', ages: '7+',
+teaches: 'Fill 4×4 and 6×6 grids so no row, column or box repeats.', learn: ['Logical deduction', 'Process of elimination', 'Checking your work'] },
+{ id: 'code-breaker', title: 'Code Breaker', subject: 'Logic', icon: '🤖', c: '#c6ff3d', c2: '#29e0ff', ages: '7+',
+teaches: 'Program a robot with commands and loops.', learn: ['Sequences of instructions', 'Loops that repeat commands', 'Debugging a program that goes wrong'] }
+];
+const Edu = (() => {
+const $ = (s, r = document) => r.querySelector(s);
+function h(tag, props, ...kids) {
+const e = document.createElement(tag);
+for (const k in props || {}) { const v = props[k]; if (v == null || v === false) continue;
+if (k === 'class') e.className = v; else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+else if (k === 'text') e.textContent = v; else if (k === 'html') e.innerHTML = v;
+else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+else if (k.startsWith('--')) e.style.setProperty(k, v); else e.setAttribute(k, v === true ? '' : v); }
+for (const c of kids.flat(9)) if (c != null && c !== false) e.append(c.nodeType ? c : String(c));
+return e;
+}
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sample = (a, n) => shuffle(a).slice(0, n);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a || 1; };
+function near(ans, n, spread, ok = v => true) {
+const out = new Set(), tries = []; spread = spread || Math.max(3, Math.ceil(Math.abs(ans) * .25));
+for (let i = 0; i < 400 && out.size < n; i++) { const v = ans + rnd(-spread, spread); if (v !== ans && ok(v)) out.add(v); }
+for (let d = 1; out.size < n; d++) { if (ok(ans + d)) out.add(ans + d); if (out.size < n && ok(ans - d)) out.add(ans - d); if (d > 999) break; }
+return [...out].slice(0, n);
+}
+const store = {
+get(k, d) { try { const v = localStorage.getItem('pbx-learn-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+set(k, v) { try { localStorage.setItem('pbx-learn-' + k, JSON.stringify(v)); } catch (e) {} }
+};
+let ac = null, muted = store.get('muted', false);
+function tone(f, d, type = 'sine', v = .12, slide = 0, delay = 0) {
+if (muted) return; try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume();
+const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
+if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d + .02); } catch (e) {}
+}
+const sfx = {
+good: () => { tone(660, .1, 'triangle', .12); tone(990, .14, 'triangle', .1, 0, .07); },
+bad: () => tone(200, .25, 'sawtooth', .07, -80),
+click: () => tone(520, .04, 'square', .04),
+tick: () => tone(880, .05, 'sine', .05),
+pop: () => tone(400, .08, 'sine', .1, 400),
+combo: n => tone(500 + Math.min(n, 12) * 60, .12, 'triangle', .1),
+win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', .11, 0, i * .1)),
+lose: () => [392, 330, 262].forEach((f, i) => tone(f, .3, 'triangle', .1, 0, i * .14))
+};
+function thumb(g, big) {
+const s = SUBJECTS[g.subject] || ['', '#888'], id = 'g' + g.id.replace(/\W/g, ''), deco = {
+Math: '<g opacity=".16" fill="#fff" font-family="Arial" font-weight="700" font-size="26"><text x="14" y="34">+</text><text x="270" y="40">×</text><text x="40" y="170">÷</text><text x="262" y="168">=</text><text x="150" y="24">7</text></g>',
+Language: '<g opacity=".16" fill="#fff" font-family="Georgia" font-weight="700" font-size="28"><text x="14" y="38">A</text><text x="268" y="40">b</text><text x="36" y="172">c</text><text x="258" y="170">Z</text><text x="150" y="26">e</text></g>',
+'Geography & Science': '<g opacity=".18" fill="none" stroke="#fff" stroke-width="2"><circle cx="40" cy="40" r="22"/><path d="M18 40h44M40 18c-10 12-10 32 0 44M40 18c10 12 10 32 0 44"/><ellipse cx="270" cy="150" rx="30" ry="9" transform="rotate(-20 270 150)"/><circle cx="270" cy="150" r="10"/></g>',
+Logic: '<g opacity=".16" fill="none" stroke="#fff" stroke-width="2"><rect x="14" y="14" width="34" height="34" rx="6"/><rect x="54" y="14" width="34" height="34" rx="6"/><path d="M250 150h40v-30h-40zM270 120v-20"/><circle cx="40" cy="160" r="12"/></g>'
+}[g.subject] || '';
+return `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${g.title}"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${g.c}"/><stop offset="1" stop-color="${g.c2}"/></linearGradient>`
++ `<radialGradient id="${id}r" cx=".5" cy=".55" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`
++ `<rect width="320" height="200" fill="#0d1018"/><rect width="320" height="200" fill="url(#${id})" opacity=".92"/>`
++ `<path d="M0 150 Q80 120 160 150 T320 140 V200 H0Z" fill="#000" opacity=".16"/>${deco}<circle cx="160" cy="98" r="62" fill="url(#${id}r)"/>`
++ `<text x="160" y="${big ? 126 : 124}" text-anchor="middle" font-size="76" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">${g.icon}</text>`
++ `<text x="306" y="190" text-anchor="end" font-family="Arial" font-weight="700" font-size="13" fill="#fff" opacity=".7">${s[0]} ${g.subject.toUpperCase()}</text></svg>`;
+}
+function confetti(n = 60) {
+const cols = ['#ffd23f', '#29e0ff', '#ff2e88', '#c6ff3d', '#a98bff', '#ff9f1c'];
+for (let i = 0; i < n; i++) { const d = h('div', { class: 'conf', style: { left: Math.random() * 100 + 'vw', background: pick(cols), animationDuration: (1.6 + Math.random() * 1.6) + 's', animationDelay: Math.random() * .4 + 's', borderRadius: Math.random() < .5 ? '50%' : '2px' } });
+document.body.append(d); setTimeout(() => d.remove(), 3800); }
+}
+let G = null, META = null, ctx = null, app = null, screenName = 'menu', endData = null;
+const SPEED = Math.max(1, Math.min(50, +(new URLSearchParams(location.search).get('speed')) || 1));
+function topBar() {
+const snd = h('button', { class: 'nav', type: 'button', 'aria-label': 'Sound on or off', text: muted ? '🔇' : '🔊', onclick: () => { muted = !muted; store.set('muted', muted); snd.textContent = muted ? '🔇' : '🔊'; } });
+return h('header', { class: 'top' },
+h('a', { class: 'nav', href: 'learn.html', title: 'All educational games' }, '‹ ', h('span', { class: 'lt' }, 'All learning games')),
+h('div', { class: 't' }, META ? META.title : '', h('small', { text: 'Educational Games' })),
+snd,
+h('a', { class: 'nav logo', href: '/', title: 'Back to Pulsebox' }, h('b', { text: 'Pulse' }), 'box'));
+}
+function best(level) { return (store.get(G.id, {}).best || [])[level] || 0; }
+function menu() {
+stop(); screenName = 'menu'; endData = null; app.innerHTML = ''; app.append(topBar());
+const levels = G.levels.map((L, i) => h('button', { class: 'lvl', type: 'button', onclick: () => start(i) },
+h('span', { class: 'k', text: String(i + 1) }),
+h('div', { class: 'n' }, h('span', { class: 'stars', text: '★'.repeat(i + 1) }), L.name),
+h('div', { class: 'd', text: L.desc || '' }),
+h('div', { class: 'b', text: best(i) ? 'Best: ' + best(i) : 'Not played yet' })));
+const howBox = h('div', { class: 'learn', hidden: true }, h('b', { text: 'HOW TO PLAY' }), h('ul', {}, (G.how || []).map(t => h('li', { text: t }))));
+app.append(h('main', { class: 'screen' },
+h('div', { class: 'hero' }, h('div', { class: 'art', html: thumb(META, true) }),
+h('div', {}, h('span', { class: 'tag', text: META.subject + ' · Ages ' + META.ages }), h('h1', { text: META.title }), h('p', { text: META.teaches }))),
+h('div', { class: 'learn' }, h('b', { text: 'WHAT YOU WILL LEARN' }), h('ul', {}, META.learn.map(t => h('li', { text: t })))),
+h('div', { class: 'row', style: { marginTop: '16px' } }, h('button', { class: 'btn', type: 'button', onclick: () => { howBox.hidden = !howBox.hidden; } }, '❓ How to play'),
+h('span', { class: 'sub', style: { textAlign: 'left' }, text: 'Pick a level to start. Keys 1 to ' + G.levels.length + ' work too.' })),
+howBox,
+h('h2', { class: 'sect', text: 'Choose a level' }),
+h('div', { class: 'levels' }, levels)));
+const l0 = app.querySelector('.lvl'); if (l0 && !matchMedia('(hover: none)').matches) l0.focus({ preventScroll: true });
+}
+function stop() {
+if (!ctx) return; ctx.alive = false;
+for (const t of ctx._t) clearTimeout(t); for (const t of ctx._i) clearInterval(t); cancelAnimationFrame(ctx._raf);
+for (const [el, ev, fn, o] of ctx._l) el.removeEventListener(ev, fn, o);
+try { G.stop && G.stop(ctx); } catch (e) { console.error(e); }
+document.querySelectorAll('.over').forEach(o => o.remove());
+ctx = null;
+}
+function chip(label, val, cls) { return h('span', { class: 'chip' + (cls ? ' ' + cls : '') }, h('i', { text: label }), h('b', { text: String(val) })); }
+function start(level) {
+stop(); level = clamp(level | 0, 0, G.levels.length - 1); screenName = 'play'; endData = null; app.innerHTML = ''; app.append(topBar());
+const hud = h('div', { class: 'hud' }), bar = h('div', { class: 'tbar', hidden: true }, h('div')), stage = h('div', { class: 'stage' });
+const btns = h('div', { class: 'row' },
+h('button', { class: 'btn sm', type: 'button', title: 'Restart (R)', onclick: () => start(level) }, '↻ ', h('span', { class: 'lt', text: 'Restart' })),
+h('button', { class: 'btn sm', type: 'button', title: 'Menu (Esc)', onclick: menu }, '☰ ', h('span', { class: 'lt', text: 'Menu' })));
+app.append(h('main', { class: 'play' }, h('div', { class: 'hud' }, hud, h('span', { class: 'sp' }), btns), bar, stage));
+const c = ctx = {
+level, L: G.levels[level], el: stage, alive: true, score: 0, streak: 0, bestStreak: 0, right_: 0, wrong_: 0, lives_: null, _t: [], _i: [], _l: [], _raf: 0, _hud: {},
+after(ms, fn) { const t = setTimeout(() => { if (c.alive) fn(); }, ms); c._t.push(t); return t; },
+every(ms, fn) { const t = setInterval(() => { if (c.alive) fn(); }, ms); c._i.push(t); return t; },
+loop(fn) { let last = performance.now(); const f = now => { if (!c.alive) return; const dt = Math.min(.05, (now - last) / 1000); last = now; fn(dt, now / 1000); c._raf = requestAnimationFrame(f); }; c._raf = requestAnimationFrame(f); },
+on(el, ev, fn, o, always) { const w = always ? fn : e => { if (c.alive) fn(e); }; el.addEventListener(ev, w, o); c._l.push([el, ev, w, o]); },
+key(fn) { c.on(document, 'keydown', e => { if (e.target && e.target.tagName === 'INPUT' && e.target.dataset.own !== '1') return; fn(e); }); },
+hud(o) { Object.assign(c._hud, o); drawHud(); },
+add(n, x, y, col) { n = Math.round(n); c.score = Math.max(0, c.score + n); if (n && x != null) c.pop((n > 0 ? '+' : '') + n, x, y, col || (n > 0 ? '#c6ff3d' : '#ff4d5e')); drawHud(); },
+right(base = 10, x, y) { c.streak++; c.right_++; c.bestStreak = Math.max(c.bestStreak, c.streak); const mult = 1 + Math.floor(c.streak / 3) * .5, pts = Math.round(base * mult);
+c.add(pts, x, y); c.flash(true); c.streak >= 3 && c.streak % 3 === 0 ? sfx.combo(c.streak) : sfx.good(); return pts; },
+wrong(x, y, msg) { c.streak = 0; c.wrong_++; c.flash(false); sfx.bad(); if (msg && x != null) c.pop(msg, x, y, '#ff4d5e'); drawHud(); },
+lives(n) { c.lives_ = n; drawHud(); },
+lose(n = 1) { c.lives_ = Math.max(0, (c.lives_ || 0) - n); drawHud(); return c.lives_; },
+flash(ok) { stage.classList.remove('flash-ok', 'flash-no'); void stage.offsetWidth; stage.classList.add(ok ? 'flash-ok' : 'flash-no'); c.after(350, () => stage.classList.remove('flash-ok', 'flash-no')); },
+pop(text, x, y, col) { const r = stage.getBoundingClientRect(); if (x == null) { x = r.width / 2; y = r.height * .3; } const p = h('div', { class: 'popt', text, style: { left: x + 'px', top: y + 'px', color: col || '#fff', transform: 'translateX(-50%)' } }); stage.append(p); setTimeout(() => p.remove(), 950); },
+timer(sec, onEnd) { let left = sec, total = sec; bar.hidden = false; const fill = bar.firstChild;
+const T = { left: () => left, add(s) { left = Math.min(total, left + s); }, set(s) { left = total = s; }, paused: false };
+const show = () => { fill.style.transform = `scaleX(${clamp(left / total, 0, 1)})`; bar.classList.toggle('low', left / total < .25); c.hud({ time: Math.ceil(left) + 's' }); };
+show(); c.every(100, () => { if (T.paused) return; left -= .1 * SPEED; if (left <= 5 && Math.abs(left - Math.round(left)) < .05 && left > 0) sfx.tick(); if (left <= 0) { left = 0; show(); onEnd && onEnd(); } else show(); });
+return T; },
+canvas() { stage.classList.add('cv'); const cv = h('canvas'); stage.append(cv); const g = cv.getContext('2d'), o = { cv, g, w: 1, h: 1 };
+const fit = () => { const r = stage.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1); o.w = Math.max(1, r.width); o.h = Math.max(1, r.height); cv.width = Math.round(o.w * d); cv.height = Math.round(o.h * d); g.setTransform(d, 0, 0, d, 0, 0); o.onfit && o.onfit(); };
+fit(); c.on(window, 'resize', fit); o.fit = fit;
+o.xy = e => { const r = cv.getBoundingClientRect(), p = e.touches ? e.touches[0] || e.changedTouches[0] : e; return [p.clientX - r.left, p.clientY - r.top]; };
+return o; },
+choices(parent, items, onPick, o = {}) {
+const cols = o.cols || (items.length > 4 ? 3 : 2), el = h('div', { class: 'opts' + (cols >= 4 ? ' wide' : ''), '--cols': cols }); let locked = false;
+const btns = items.map((it, i) => h('button', { class: 'opt', type: 'button', style: { animationDelay: i * 40 + 'ms' }, onclick: () => { if (!locked) onPick(i, btns[i]); } }, h('span', { class: 'k', text: String(i + 1) }), it && it.nodeType ? it : String(it)));
+el.append(...btns); parent.append(el);
+const kf = e => { const n = +e.key; if (!locked && n >= 1 && n <= btns.length && c.alive && el.isConnected) { e.preventDefault(); onPick(n - 1, btns[n - 1]); } };
+c.on(document, 'keydown', kf);
+return { el, btns, lock() { locked = true; el.classList.add('locked'); }, unlock() { locked = false; el.classList.remove('locked'); }, mark(i, ok) { btns[i].classList.add(ok ? 'ok' : 'no'); } };
+},
+end(o = {}) { if (!c.alive) return; finish(c, o); }
+};
+function drawHud() {
+if (!c.alive && c !== ctx) return; const H = c._hud; hud.innerHTML = '';
+hud.append(chip('Score', c.score));
+if (c.streak >= 2) hud.append(chip('Streak', c.streak + (c.streak >= 3 ? ' ×' + (1 + Math.floor(c.streak / 3) * .5) : ''), c.streak >= 3 ? 'hot' : ''));
+if (c.lives_ != null) hud.append(chip('Lives', c.lives_ > 0 ? '❤️'.repeat(Math.min(c.lives_, 6)) : '💔'));
+for (const k in H) if (H[k] != null && H[k] !== '') hud.append(chip(k, H[k]));
+}
+drawHud();
+c.on(document, 'keydown', e => { if (e.key === 'Escape') menu(); else if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey && !(e.target && e.target.tagName === 'INPUT')) start(level); }, undefined, true);
+sfx.click();
+try { G.start(c); } catch (e) { console.error(e); }
+}
+function finish(c, o) {
+c.alive = false; for (const t of c._t) clearTimeout(t); for (const t of c._i) clearInterval(t); cancelAnimationFrame(c._raf);
+const sv = store.get(G.id, {}); sv.best = sv.best || []; sv.plays = (sv.plays || 0) + 1; const prev = sv.best[c.level] || 0, isBest = c.score > prev;
+if (isBest) sv.best[c.level] = c.score; store.set(G.id, sv);
+const won = !!o.won, acc = c.right_ + c.wrong_ ? Math.round(c.right_ / (c.right_ + c.wrong_) * 100) + '%' : null;
+const stats = Object.assign({}, c.right_ + c.wrong_ ? { Correct: c.right_ + ' / ' + (c.right_ + c.wrong_), Accuracy: acc } : {}, c.bestStreak >= 2 ? { 'Best streak': c.bestStreak } : {}, o.stats || {});
+endData = { score: c.score, won, best: isBest, level: c.level, stats };
+screenName = 'end'; (won || isBest) ? sfx.win() : sfx.lose(); if (won) confetti();
+const next = won && c.level < G.levels.length - 1;
+const card = h('div', { class: 'card' },
+h('div', { style: { fontSize: '46px' }, text: o.emoji || (won ? '🏆' : isBest ? '⭐' : '🎯') }),
+h('h2', { text: o.title || (won ? 'Level complete!' : 'Game over') }),
+h('div', { class: 'big', text: String(c.score) }),
+h('div', { class: 'best' }, isBest && c.score > 0 ? h('span', { class: 'badge-new', text: 'NEW BEST' }) : 'Best on ' + G.levels[c.level].name + ': ' + Math.max(prev, c.score)),
+o.msg ? h('p', { class: 'msg', text: o.msg }) : null,
+Object.keys(stats).length ? h('div', { class: 'stats' }, Object.entries(stats).map(([k, v]) => h('div', {}, h('b', { text: String(v) }), h('i', { text: k })))) : null,
+o.learnt ? h('div', { class: 'learn', style: { textAlign: 'left', marginTop: '4px' } }, h('b', { text: 'REMEMBER' }), h('ul', {}, o.learnt.map(t => h('li', { text: t })))) : null,
+h('div', { class: 'row' },
+next ? h('button', { class: 'btn go', type: 'button', onclick: () => start(c.level + 1) }, 'Next level ›') : null,
+h('button', { class: 'btn' + (next ? '' : ' go'), type: 'button', onclick: () => start(c.level) }, '↻ Play again'),
+h('button', { class: 'btn', type: 'button', onclick: menu }, '☰ Menu')));
+const ov = h('div', { class: 'over' }, card); document.body.append(ov);
+const b0 = card.querySelector('.btn.go'); if (b0) setTimeout(() => b0.focus({ preventScroll: true }), 50);
+}
+function game(def) {
+G = def; META = CATALOG.find(x => x.id === def.id) || { id: def.id, title: def.id, subject: 'Logic', icon: '🎮', c: '#29e0ff', c2: '#c6ff3d', teaches: '', learn: [], ages: '' };
+document.documentElement.style.setProperty('--c', META.c); document.documentElement.style.setProperty('--c2', META.c2);
+app = $('#app') || document.body.appendChild(h('div', { id: 'app' }));
+document.addEventListener('keydown', e => { if (screenName === 'menu' && /^[1-9]$/.test(e.key) && +e.key <= G.levels.length && !(e.target && e.target.tagName === 'INPUT')) start(+e.key - 1); });
+window.EDU = { start, menu, restart: () => ctx && start(ctx.level), bot: () => ctx && ctx.alive && G.bot && G.bot(ctx), miss: () => ctx && ctx.alive && G.miss && G.miss(ctx),
+state: () => ({ screen: screenName, score: ctx ? ctx.score : endData ? endData.score : 0, alive: !!(ctx && ctx.alive), level: ctx ? ctx.level : null, end: endData, levels: G.levels.length, hasMiss: !!G.miss }) };
+menu();
+}
+return { game, SPEED, h, $, rnd, pick, shuffle, sample, clamp, gcd, near, store, sfx, tone, thumb, confetti };
+})();
+const CT_NAME = { EU: 'Europe', AS: 'Asia', AF: 'Africa', NA: 'North America', SA: 'South America', OC: 'Oceania' };
+const COUNTRIES = (() => {
+const rows = `France|Paris|EU|1
+Germany|Berlin|EU|1
+Italy|Rome|EU|1
+Spain|Madrid|EU|1
+United Kingdom|London|EU|1
+Ireland|Dublin|EU|1
+Portugal|Lisbon|EU|1
+Greece|Athens|EU|1
+Russia|Moscow|EU|1
+Netherlands|Amsterdam|EU|1
+Sweden|Stockholm|EU|1
+Norway|Oslo|EU|1
+Austria|Vienna|EU|1
+Denmark|Copenhagen|EU|1
+Belgium|Brussels|EU|2
+Luxembourg|Luxembourg City|EU|3
+Switzerland|Bern|EU|2|Zürich
+Poland|Warsaw|EU|2
+Czechia|Prague|EU|2
+Slovakia|Bratislava|EU|3
+Hungary|Budapest|EU|2
+Romania|Bucharest|EU|2
+Bulgaria|Sofia|EU|3
+Serbia|Belgrade|EU|3
+Croatia|Zagreb|EU|3
+Slovenia|Ljubljana|EU|3
+Bosnia and Herzegovina|Sarajevo|EU|3
+North Macedonia|Skopje|EU|3
+Albania|Tirana|EU|3
+Montenegro|Podgorica|EU|3
+Moldova|Chișinău|EU|3
+Ukraine|Kyiv|EU|2
+Belarus|Minsk|EU|3
+Lithuania|Vilnius|EU|3
+Latvia|Riga|EU|3
+Estonia|Tallinn|EU|3
+Finland|Helsinki|EU|2
+Iceland|Reykjavík|EU|2
+Malta|Valletta|EU|3
+Monaco||EU|2
+Turkey|Ankara|AS|2|Istanbul
+China|Beijing|AS|1|Shanghai
+Japan|Tokyo|AS|1
+India|New Delhi|AS|1
+South Korea|Seoul|AS|1
+Thailand|Bangkok|AS|1
+North Korea|Pyongyang|AS|3
+Vietnam|Hanoi|AS|2|Ho Chi Minh City
+Philippines|Manila|AS|2
+Malaysia|Kuala Lumpur|AS|2
+Pakistan|Islamabad|AS|2|Karachi
+Bangladesh|Dhaka|AS|3
+Nepal|Kathmandu|AS|3
+Bhutan|Thimphu|AS|3
+Mongolia|Ulaanbaatar|AS|3
+Kazakhstan|Astana|AS|3|Almaty
+Uzbekistan|Tashkent|AS|3
+Kyrgyzstan|Bishkek|AS|3
+Tajikistan|Dushanbe|AS|3
+Turkmenistan|Ashgabat|AS|3
+Saudi Arabia|Riyadh|AS|2
+United Arab Emirates|Abu Dhabi|AS|2|Dubai
+Qatar|Doha|AS|3
+Bahrain|Manama|AS|3
+Kuwait|Kuwait City|AS|3
+Oman|Muscat|AS|3
+Jordan|Amman|AS|3
+Lebanon|Beirut|AS|3
+Iraq|Baghdad|AS|2
+Myanmar|Naypyidaw|AS|3|Yangon
+Cambodia|Phnom Penh|AS|3
+Laos|Vientiane|AS|3
+Brunei|Bandar Seri Begawan|AS|3
+Maldives|Malé|AS|3
+Singapore||AS|2
+Indonesia||AS|2
+Israel||AS|2
+Kenya|Nairobi|AF|1
+Nigeria|Abuja|AF|2|Lagos
+Ethiopia|Addis Ababa|AF|2
+Ghana|Accra|AF|2
+Morocco|Rabat|AF|2|Casablanca
+Algeria|Algiers|AF|3
+Tunisia|Tunis|AF|3
+Senegal|Dakar|AF|3
+Mali|Bamako|AF|3
+Niger|Niamey|AF|3
+Chad|N'Djamena|AF|3
+Cameroon|Yaoundé|AF|3|Douala
+Gabon|Libreville|AF|3
+Angola|Luanda|AF|3
+Zambia|Lusaka|AF|3
+Zimbabwe|Harare|AF|3
+Botswana|Gaborone|AF|3
+Namibia|Windhoek|AF|3
+Mozambique|Maputo|AF|3
+Madagascar|Antananarivo|AF|3
+Uganda|Kampala|AF|3
+Rwanda|Kigali|AF|3
+Tanzania|Dodoma|AF|3|Dar es Salaam
+Somalia|Mogadishu|AF|3
+Guinea|Conakry|AF|3
+Sierra Leone|Freetown|AF|3
+Liberia|Monrovia|AF|3
+Mauritius|Port Louis|AF|3
+Burkina Faso|Ouagadougou|AF|3
+Mauritania|Nouakchott|AF|3
+Togo|Lomé|AF|3
+Eritrea|Asmara|AF|3
+Malawi|Lilongwe|AF|3
+Côte d'Ivoire||AF|3
+Benin||AF|3
+United States|Washington, D.C.|NA|1|New York City
+Canada|Ottawa|NA|1|Toronto
+Mexico|Mexico City|NA|1
+Cuba|Havana|NA|1
+Jamaica|Kingston|NA|2
+Panama|Panama City|NA|2
+Costa Rica|San José|NA|3
+Honduras|Tegucigalpa|NA|3
+Guatemala|Guatemala City|NA|3
+Nicaragua|Managua|NA|3
+El Salvador|San Salvador|NA|3
+Dominican Republic|Santo Domingo|NA|3
+Haiti|Port-au-Prince|NA|3
+Bahamas|Nassau|NA|3
+Trinidad and Tobago|Port of Spain|NA|3
+Belize|Belmopan|NA|3|Belize City
+Barbados|Bridgetown|NA|3
+Brazil|Brasília|SA|1|São Paulo
+Argentina|Buenos Aires|SA|1
+Chile|Santiago|SA|1
+Peru|Lima|SA|1
+Colombia|Bogotá|SA|2
+Venezuela|Caracas|SA|2
+Ecuador|Quito|SA|3
+Uruguay|Montevideo|SA|3
+Paraguay|Asunción|SA|3
+Guyana|Georgetown|SA|3
+Suriname|Paramaribo|SA|3
+Australia|Canberra|OC|1|Sydney
+New Zealand|Wellington|OC|1|Auckland
+Fiji|Suva|OC|3
+Papua New Guinea|Port Moresby|OC|3
+Samoa|Apia|OC|3
+Palau|Ngerulmud|OC|3
+Vanuatu|Port Vila|OC|3
+Solomon Islands|Honiara|OC|3`;
+const W = '#fff', F = {
+France: [3, 2, 'v', '#002395', W, '#ed2939'], Italy: [3, 2, 'v', '#009246', W, '#ce2b37'], Ireland: [2, 1, 'v', '#169b62', W, '#ff883e'],
+Belgium: [15, 13, 'v', '#000', '#fdda24', '#ef3340'], Germany: [5, 3, 'h', '#000', '#dd0000', '#ffce00'], Netherlands: [3, 2, 'h', '#ae1c28', W, '#21468b'],
+Luxembourg: [5, 3, 'h', '#ed2939', W, '#00a1de'], Russia: [3, 2, 'h', W, '#0039a6', '#d52b1e'], Austria: [3, 2, 'h', '#c8102e', W, '#c8102e'],
+Hungary: [2, 1, 'h', '#cd2a3e', W, '#436f4d'], Bulgaria: [5, 3, 'h', W, '#00966e', '#d62612'], Estonia: [11, 7, 'h', '#0072ce', '#000', W],
+Lithuania: [5, 3, 'h', '#fdb913', '#006a44', '#c1272d'], Latvia: [2, 1, 'h', '#9e3039', '#9e3039', W, '#9e3039', '#9e3039'],
+Poland: [8, 5, 'h', W, '#dc143c'], Ukraine: [3, 2, 'h', '#0057b7', '#ffd700'], Romania: [3, 2, 'v', '#002b7f', '#fcd116', '#ce1126'],
+Monaco: [5, 4, 'h', '#ce1126', W], Czechia: [3, 2, 'h', W, '#d7141a', 'p', '0,0 1.5,1 0,2', '#11457e'],
+Denmark: [37, 28, 'h', '#c8102e', 'n', 12, 12, 4, W], Norway: [22, 16, 'h', '#ba0c2f', 'n', 6, 6, 4, W, 'n', 7, 7, 2, '#00205b'],
+Sweden: [16, 10, 'h', '#006aa7', 'n', 5, 4, 2, '#fecc02'], Finland: [18, 11, 'h', W, 'n', 5, 4, 3, '#002f6c'],
+Iceland: [25, 18, 'h', '#02529c', 'n', 7, 7, 4, W, 'n', 8, 8, 2, '#dc1e35'],
+Switzerland: [32, 32, 'h', '#da291c', 'r', 13, 6, 6, 20, W, 'r', 6, 13, 20, 6, W],
+Greece: [27, 18, 'h', '#0d5eaf', W, '#0d5eaf', W, '#0d5eaf', W, '#0d5eaf', W, '#0d5eaf', 'r', 0, 0, 10, 10, '#0d5eaf', 'r', 4, 0, 2, 10, W, 'r', 0, 4, 10, 2, W],
+'United Kingdom': [60, 30, 'u', 0, 0, 60, 30],
+Turkey: [30, 20, 'h', '#e30a17', 'm', 10, 10, 5, 4, 1.25, 0, W, 's', 16.9, 10, 2.5, 270, W],
+Japan: [3, 2, 'h', W, 'c', 1.5, 1, .6, '#bc002d'], Bangladesh: [10, 6, 'h', '#006a4e', 'c', 4.5, 3, 2, '#f42a41'],
+China: [30, 20, 'h', '#de2910', 's', 5, 5, 3, 0, '#ffde00', 's', 10, 2, 1, 239, '#ffde00', 's', 12, 4, 1, 262, '#ffde00', 's', 12, 7, 1, 286, '#ffde00', 's', 10, 9, 1, 309, '#ffde00'],
+Vietnam: [30, 20, 'h', '#da251d', 's', 15, 10.4, 6, 0, '#ffff00'], Indonesia: [3, 2, 'h', '#ce1126', W],
+Thailand: [3, 2, 'h', '#a51931', W, '#2d2a4a', '#2d2a4a', W, '#a51931'], India: [30, 20, 'h', '#ff9933', W, '#138808', 'w', 15, 10, 2.6, '#000080'],
+Pakistan: [30, 20, 'h', '#01411c', 'r', 0, 0, 7.5, 20, W, 'm', 18.75, 10, 6, 5.5, 1.6, -41.6, W, 's', 21.96, 7.14, 2, 48.4, W],
+Israel: [11, 8, 'h', W, 'r', 0, .75, 11, 1.25, '#0038b8', 'r', 0, 6, 11, 1.25, '#0038b8', '<path d="M5.5 2.5L6.799 4.75H4.201ZM5.5 5.5L4.201 3.25H6.799Z" fill="none" stroke="#0038b8" stroke-width=".27"/>'],
+Laos: [3, 2, 'h', '#ce1126', '#002868', '#002868', '#ce1126', 'c', 1.5, 1, .4, W],
+Qatar: [28, 11, 'h', '#8a1538', 'z', 7.5, 10, 9, W], Bahrain: [25, 15, 'h', '#ce1126', 'z', 6.25, 9.4, 5, W],
+'United Arab Emirates': [24, 12, 'h', '#00732f', W, '#000', 'r', 0, 0, 6, 12, '#ef3340'],
+Kuwait: [24, 12, 'h', '#007a3d', W, '#ce1126', 'p', '0,0 6,4 6,8 0,12', '#000'],
+Myanmar: [30, 20, 'h', '#fecb00', '#34b233', '#ea2839', 's', 15, 10.6, 7.4, 0, W],
+Singapore: [36, 24, 'h', '#ef3340', W, 'm', 8, 6, 4.6, 4.2, 1.5, 0, W, 's', 11, 4, .8, 0, W, 's', 13.09, 5.52, .8, 0, W, 's', 12.29, 7.98, .8, 0, W, 's', 9.71, 7.98, .8, 0, W, 's', 8.91, 5.52, .8, 0, W],
+'South Korea': [36, 24, 'K'], Palau: [16, 10, 'h', '#4aadd6', 'c', 7, 5, 3, '#ffde00'],
+Nigeria: [2, 1, 'v', '#008751', W, '#008751'], Chad: [3, 2, 'v', '#002664', '#fecb00', '#c60c30'], Mali: [3, 2, 'v', '#14b53a', '#fcd116', '#ce1126'],
+Guinea: [3, 2, 'v', '#ce1126', '#fcd116', '#009460'], Senegal: [3, 2, 'v', '#00853f', '#fdef42', '#e31b23', 's', 1.5, 1.04, .36, 0, '#00853f'],
+Cameroon: [3, 2, 'v', '#007a5e', '#ce1126', '#fcd116', 's', 1.5, 1.04, .36, 0, '#fcd116'], "Côte d'Ivoire": [3, 2, 'v', '#f77f00', W, '#009e60'],
+Ghana: [3, 2, 'h', '#ce1126', '#fcd116', '#006b3f', 's', 1.5, 1.04, .34, 0, '#000'], Gabon: [4, 3, 'h', '#009e60', '#fcd116', '#3a75c4'],
+'Sierra Leone': [3, 2, 'h', '#1eb53a', W, '#0072c6'], Botswana: [36, 24, 'h', '#6da9d2', 'r', 0, 9, 36, 6, W, 'r', 0, 10, 36, 4, '#000'],
+Mauritius: [3, 2, 'h', '#ea2839', '#1a206d', '#ffd500', '#00a551'], Benin: [3, 2, 'h', '#fcd116', '#e8112d', 'r', 0, 0, 1.2, 2, '#008751'],
+Madagascar: [3, 2, 'h', '#fc3d32', '#007e3a', 'r', 0, 0, 1, 2, W], Somalia: [3, 2, 'h', '#4189dd', 's', 1.5, 1.04, .44, 0, W],
+Tunisia: [3, 2, 'h', '#e70013', 'c', 1.5, 1, .5, W, 'm', 1.47, 1, .375, .3, .095, 0, '#e70013', 's', 1.6, 1, .225, 270, '#e70013'],
+Algeria: [3, 2, 'v', '#006233', W, 'm', 1.5, 1, .5, .4, .125, 0, '#d21034', 's', 1.69, 1, .25, 270, '#d21034'],
+Morocco: [3, 2, 'h', '#c1272d', 'P', 1.5, 1.05, .5, .07, '#006233'], Niger: [7, 6, 'h', '#e05206', W, '#0db02b', 'c', 3.5, 3, .75, '#e05206'],
+Tanzania: [3, 2, 'h', '#1eb53a', 'p', '3,0 3,2 0,2', '#00a3dd', 'l', -.2, 2.133, 3.2, -.133, .66, '#fcd116', 'l', -.2, 2.133, 3.2, -.133, .46, '#000'],
+'United States': [190, 100, 'U'],
+Canada: [9600, 4800, 'v', '#d52b1e', W, W, '#d52b1e', '<path fill="#d52b1e" d="M4890 4430l-45-863a95 95 0 0 1 111-98l859 151-116-320a65 65 0 0 1 20-73l941-762-212-99a65 65 0 0 1-34-79l186-572-542 115a65 65 0 0 1-73-38l-105-247-423 454a65 65 0 0 1-111-57l204-1052-327 189a65 65 0 0 1-91-27l-332-652-332 652a65 65 0 0 1-91 27l-327-189 204 1052a65 65 0 0 1-111 57l-423-454-105 247a65 65 0 0 1-73 38l-542-115 186 572a65 65 0 0 1-34 79l-212 99 941 762a65 65 0 0 1 20 73l-116 320 859-151a95 95 0 0 1 111 98l-45 863z"/>'],
+Brazil: [20, 14, 'h', '#009c3b', 'p', '1.7,7 10,1.7 18.3,7 10,12.3', '#ffdf00', 'c', 10, 7, 3.5, '#002776',
+'<clipPath id="{id}b"><circle cx="10" cy="7" r="3.5"/></clipPath><circle cx="12" cy="15" r="8.25" fill="none" stroke="#fff" stroke-width=".5" clip-path="url(#{id}b)"/><g fill="#fff"><circle cx="9" cy="9" r=".14"/><circle cx="10.5" cy="8.7" r=".14"/><circle cx="11.6" cy="9.6" r=".12"/><circle cx="8.2" cy="8.9" r=".12"/><circle cx="10" cy="10.2" r=".14"/><circle cx="12.4" cy="8.5" r=".12"/><circle cx="9.3" cy="10.6" r=".1"/><circle cx="11" cy="10.9" r=".12"/><circle cx="7.6" cy="9.9" r=".1"/></g>'],
+Argentina: [28, 18, 'h', '#74acdf', W, '#74acdf', 'o', 14, 9, 1.5, 2.7, '#f6b40e'], Colombia: [3, 2, 'h', '#fcd116', '#fcd116', '#003893', '#ce1126'],
+Peru: [3, 2, 'v', '#d91023', W, '#d91023'], Chile: [3, 2, 'h', W, '#d52b1e', 'r', 0, 0, 1, 1, '#0039a6', 's', .5, .5, .25, 0, W],
+Cuba: [2, 1, 'h', '#002a8f', W, '#002a8f', W, '#002a8f', 'p', '0,0 .866,.5 0,1', '#cf142b', 's', .289, .5, .16, 0, W],
+Panama: [3, 2, 'h', W, 'r', 1.5, 0, 1.5, 1, '#d21034', 'r', 0, 1, 1.5, 1, '#005293', 's', .75, .5, .25, 0, '#005293', 's', 2.25, 1.5, .25, 0, '#d21034'],
+Jamaica: [2, 1, 'h', '#009b3a', 'p', '0,0 1,.5 0,1', '#000', 'p', '2,0 1,.5 2,1', '#000', 'l', -.2, -.1, 2.2, 1.1, .17, '#fed100', 'l', -.2, 1.1, 2.2, -.1, .17, '#fed100'],
+'Trinidad and Tobago': [5, 3, 'h', '#da1a35', 'l', -.3, -.18, 5.3, 3.18, 1, W, 'l', -.3, -.18, 5.3, 3.18, .76, '#000'],
+Bahamas: [2, 1, 'h', '#00778b', '#ffc72c', '#00778b', 'p', '0,0 .866,.5 0,1', '#000'],
+Australia: [120, 60, 'h', '#012169', 'u', 0, 0, 60, 30, 'S', 30, 45, 9, 0, 7, .444, W, 'S', 90, 50, 4.29, 0, 7, .444, W, 'S', 90, 10, 4.29, 0, 7, .444, W,
+'S', 75, 26.25, 4.29, 0, 7, .444, W, 'S', 103.33, 22.25, 4.29, 0, 7, .444, W, 's', 96, 32.5, 2.5, 0, W],
+'New Zealand': [120, 60, 'h', '#012169', 'u', 0, 0, 60, 30, 's', 90, 11.5, 4.4, 0, W, 's', 90, 11.5, 3.4, 0, '#c8102e', 's', 90, 48, 4.6, 0, W, 's', 90, 48, 3.6, 0, '#c8102e',
+'s', 77.5, 27.5, 4.2, 0, W, 's', 77.5, 27.5, 3.25, 0, '#c8102e', 's', 102, 24, 3.6, 0, W, 's', 102, 24, 2.7, 0, '#c8102e']
+};
+return rows.split('\n').map(l => { const [name, cap, ct, f, big] = l.trim().split('|'); return { name, cap, ct, f: +f, big: big || '', flag: F[name] }; });
+})();
+const ctName = c => c.name === 'Russia' ? 'Europe and Asia' : c.name === 'Turkey' ? 'Asia and Europe' : CT_NAME[c.ct];
+let flagN = 0;
+function flagSVG(spec) {
+const [Wd, Ht] = spec, id = 'fl' + (++flagN), f = v => +(+v).toFixed(3), out = [];
+const star = (cx, cy, R, rot, n, k) => { let s = ''; for (let i = 0; i < 2 * n; i++) { const a = (rot + i * 180 / n) * Math.PI / 180, r = i % 2 ? R * k : R; s += f(cx + r * Math.sin(a)) + ',' + f(cy - r * Math.cos(a)) + ' '; } return s; };
+const poly = (pts, col) => `<polygon points="${pts}" fill="${col}"/>`, rect = (x, y, w, hh, col) => `<rect x="${x}" y="${y}" width="${w}" height="${hh}" fill="${col}"/>`;
+const uj = (x, y, w, hh) => `<svg x="${x}" y="${y}" width="${w}" height="${hh}" viewBox="0 0 60 30" preserveAspectRatio="none"><clipPath id="${id}t"><path d="M30,15h30v15zv15h-30zh-30v-15zv-15h30z"/></clipPath><path d="M0,0v30h60v-30z" fill="#012169"/><path d="M0,0L60,30M60,0L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0L60,30M60,0L0,30" clip-path="url(#${id}t)" stroke="#c8102e" stroke-width="4"/><path d="M30,0v30M0,15h60" stroke="#fff" stroke-width="10"/><path d="M30,0v30M0,15h60" stroke="#c8102e" stroke-width="6"/></svg>`;
+for (let i = 2; i < spec.length;) {
+const op = spec[i++], a = j => spec[i + j];
+if (op[0] === '<') out.push(op.replace(/\{id\}/g, id));
+else if (op === 'h' || op === 'v') { const cols = []; while (i < spec.length && String(spec[i])[0] === '#') cols.push(spec[i++]);
+cols.forEach((col, k) => out.push(op === 'h' ? rect(0, f(k * Ht / cols.length), Wd, f(Ht / cols.length + .01), col) : rect(f(k * Wd / cols.length), 0, f(Wd / cols.length + .01), Ht, col))); }
+else if (op === 'r') { out.push(rect(a(0), a(1), a(2), a(3), a(4))); i += 5; }
+else if (op === 'p') { out.push(poly(a(0), a(1))); i += 2; }
+else if (op === 'c') { out.push(`<circle cx="${a(0)}" cy="${a(1)}" r="${a(2)}" fill="${a(3)}"/>`); i += 4; }
+else if (op === 's') { out.push(poly(star(a(0), a(1), a(2), a(3), 5, .382), a(4))); i += 5; }
+else if (op === 'S') { out.push(poly(star(a(0), a(1), a(2), a(3), a(4), a(5)), a(6))); i += 7; }
+else if (op === 'n') { out.push(rect(a(0), 0, a(2), Ht, a(3)), rect(0, a(1), Wd, a(2), a(3))); i += 4; }
+else if (op === 'l') { out.push(`<line x1="${a(0)}" y1="${a(1)}" x2="${a(2)}" y2="${a(3)}" stroke="${a(5)}" stroke-width="${a(4)}"/>`); i += 6; }
+else if (op === 'u') { out.push(uj(a(0), a(1), a(2), a(3))); i += 4; }
+else if (op === 'm') { const [cx, cy, R, r, d, ang, col] = spec.slice(i, i + 7), t = ang * Math.PI / 180, ux = Math.cos(t), uy = Math.sin(t), aa = (R * R - r * r + d * d) / (2 * d), hh = Math.sqrt(R * R - aa * aa),
+px = cx + aa * ux, py = cy + aa * uy, p1 = f(px - hh * uy) + ' ' + f(py + hh * ux), p2 = f(px + hh * uy) + ' ' + f(py - hh * ux);
+out.push(`<path d="M${p1}A${R} ${R} 0 1 1 ${p2}A${r} ${r} 0 ${aa > d ? 1 : 0} 0 ${p1}Z" fill="${col}"/>`); i += 7; }
+else if (op === 'z') { const [x0, x1, n, col] = spec.slice(i, i + 4); let p = '0,0 '; for (let k = 0; k < n; k++) p += `${x0},${f(k * Ht / n)} ${x1},${f((k + .5) * Ht / n)} `; out.push(poly(p + `${x0},${Ht} 0,${Ht}`, col)); i += 4; }
+else if (op === 'w') { const [cx, cy, r, col] = spec.slice(i, i + 4); let d = ''; for (let k = 0; k < 24; k++) { const t = k * Math.PI / 12; d += `M${cx} ${cy}L${f(cx + r * Math.cos(t))} ${f(cy + r * Math.sin(t))}`; }
+out.push(`<g stroke="${col}" fill="none"><circle cx="${cx}" cy="${cy}" r="${r}" stroke-width="${f(r * .12)}"/><path d="${d}" stroke-width="${f(r * .05)}"/></g><circle cx="${cx}" cy="${cy}" r="${f(r * .17)}" fill="${col}"/>`); i += 4; }
+else if (op === 'P') { const [cx, cy, R, w, col] = spec.slice(i, i + 5), v = k => f(cx + R * Math.sin(k * 1.2566)) + ' ' + f(cy - R * Math.cos(k * 1.2566));
+out.push(`<path d="M${v(0)}L${v(2)}L${v(4)}L${v(1)}L${v(3)}Z" fill="none" stroke="${col}" stroke-width="${w}" stroke-linejoin="miter"/>`); i += 5; }
+else if (op === 'o') { const [cx, cy, r, R, col] = spec.slice(i, i + 5); let p = ''; for (let k = 0; k < 64; k++) { const t = k * Math.PI / 32, rr = k % 2 ? r * 1.08 : (k % 4 ? R * .9 : R); p += f(cx + rr * Math.sin(t)) + ',' + f(cy - rr * Math.cos(t)) + ' '; }
+out.push(poly(p, col), `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}" stroke="#85340a" stroke-width="${f(r * .06)}"/>`); i += 5; }
+else if (op === 'U') { out.push(rect(0, 0, 190, 100, '#fff')); for (let k = 0; k < 13; k += 2) out.push(rect(0, f(k * 100 / 13), 190, f(100 / 13), '#b22234'));
+out.push(rect(0, 0, 76, f(700 / 13), '#3c3b6e')); let p = ''; for (let rw = 0; rw < 9; rw++) for (let k = 0; k < (rw % 2 ? 5 : 6); k++) p += `<polygon points="${star(6.3 * (2 * k + 1 + rw % 2), 5.4 * (rw + 1), 3.08, 0, 5, .382)}"/>`;
+out.push(`<g fill="#fff">${p}</g>`); }
+else if (op === 'K') { const R = '#cd2e3a', B = '#0047a0', bar = (d, broken) => broken ? rect(d - .5, -3, 1, 2.75, '#000') + rect(d - .5, .25, 1, 2.75, '#000') : rect(d - .5, -3, 1, 6, '#000'),
+tri = (ang, bits) => `<g transform="translate(18 12) rotate(${ang})">${bar(9.5, bits[0])}${bar(11, bits[1])}${bar(12.5, bits[2])}</g>`;
+out.push(rect(0, 0, 36, 24, '#fff'), `<g transform="rotate(33.69 18 12)"><path d="M12 12A6 6 0 0 1 24 12Z" fill="${R}"/><path d="M12 12A6 6 0 0 0 24 12Z" fill="${B}"/><circle cx="15" cy="12" r="3" fill="${R}"/><circle cx="21" cy="12" r="3" fill="${B}"/></g>`,
+tri(213.69, [0, 0, 0]), tri(33.69, [1, 1, 1]), tri(-33.69, [1, 0, 1]), tri(146.31, [0, 1, 0])); }
+}
+return `<svg viewBox="0 0 ${Wd} ${Ht}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="display:block;width:100%;height:100%">${out.join('')}</svg>`;
+}
+(() => {
+const { h, pick, shuffle, sample } = Edu, FL = COUNTRIES.filter(c => c.flag), get = n => COUNTRIES.find(c => c.name === n);
+const EASY = ['France', 'Italy', 'Germany', 'United Kingdom', 'United States', 'Canada', 'Japan', 'China', 'Brazil', 'India', 'Switzerland', 'Greece', 'Sweden',
+'South Korea', 'Turkey', 'Australia', 'Argentina', 'Jamaica', 'Ukraine', 'Ireland', 'Vietnam', 'Denmark', 'Finland', 'Chile', 'Nigeria', 'Russia', 'Netherlands', 'Pakistan', 'Israel', 'Cuba'];
+const LOOK = [['Romania', 'Chad', 'Belgium', 'Mali', 'Guinea'], ['Indonesia', 'Monaco', 'Poland', 'Singapore'], ['Ireland', "Côte d'Ivoire", 'Italy', 'Nigeria'],
+['India', 'Niger', "Côte d'Ivoire", 'Ireland'], ['Netherlands', 'Luxembourg', 'Russia', 'France'], ['Australia', 'New Zealand', 'United Kingdom', 'Chile'],
+['Norway', 'Iceland', 'Denmark', 'Finland', 'Sweden'], ['Qatar', 'Bahrain', 'Latvia', 'Austria'], ['Japan', 'Bangladesh', 'Palau', 'Laos'],
+['Senegal', 'Mali', 'Cameroon', 'Guinea', 'Ghana'], ['Austria', 'Latvia', 'Peru', 'Canada'], ['Kuwait', 'United Arab Emirates', 'Czechia', 'Bahamas'],
+['Cuba', 'Czechia', 'Bahamas', 'Panama', 'Chile'], ['Tunisia', 'Turkey', 'Singapore', 'Algeria', 'Pakistan'], ['Sierra Leone', 'Gabon', 'Bulgaria', 'Hungary', 'Lithuania'],
+['Thailand', 'Laos', 'Netherlands', 'Russia'], ['Colombia', 'Romania', 'Mauritius', 'Lithuania', 'Gabon'], ['Ukraine', 'Poland', 'Indonesia', 'Monaco', 'Sweden'],
+['Vietnam', 'China', 'Morocco', 'Somalia', 'Myanmar'], ['Ghana', 'Myanmar', 'Senegal', 'Cameroon', 'Lithuania'], ['Israel', 'Greece', 'Finland', 'Argentina', 'Somalia'],
+['Jamaica', 'Trinidad and Tobago', 'Tanzania', 'Bahamas'], ['United States', 'Chile', 'Cuba', 'Panama'], ['South Korea', 'Japan', 'Israel', 'Switzerland'],
+['Canada', 'Peru', 'Switzerland', 'Austria', 'Denmark'], ['Brazil', 'Jamaica', 'Gabon', 'Bahamas'], ['Madagascar', 'Benin', 'Poland', 'Czechia', 'Monaco'],
+['Estonia', 'Botswana', 'Germany', 'Belgium'], ['Argentina', 'Somalia', 'Botswana', 'Greece', 'Israel'], ['Turkey', 'Tunisia', 'Pakistan', 'Algeria']];
+const TIPS = [[['Romania', 'Chad'], "Chad and Romania have almost the same flag; Chad's blue is a darker indigo."],
+[['Indonesia', 'Monaco'], "Indonesia and Monaco are both red over white; Monaco's flag is squarer (4:5), Indonesia's longer (2:3)."],
+[['Poland', 'Indonesia', 'Monaco'], 'Poland is the other way up: white over red.'],
+[['Ireland', "Côte d'Ivoire"], "Ireland has green next to the pole; Côte d'Ivoire has orange next to the pole."],
+[['Italy', 'Ireland', "Côte d'Ivoire"], 'Italy is green, white and red; Ireland and Côte d’Ivoire use orange instead of red.'],
+[['India', 'Niger'], 'India has a navy-blue wheel in the middle; Niger has an orange disc and a squarer flag.'],
+[['Netherlands', 'Luxembourg'], "Luxembourg's blue is a light sky blue; the Netherlands' blue is dark."],
+[['Netherlands', 'Russia'], 'The Netherlands is red, white, blue from the top; Russia is white, blue, red.'],
+[['Norway', 'Iceland'], 'Norway is red with a blue cross; Iceland is blue with a red cross.'],
+[['Finland', 'Sweden'], 'Finland has a blue cross on white; Sweden a yellow cross on blue.'],
+[['Denmark', 'Norway'], 'Denmark has a plain white cross on red; Norway adds a blue cross inside it.'],
+[['Australia', 'New Zealand'], 'Australia has white stars, including a big seven-pointed one; New Zealand has four red stars.'],
+[['Qatar', 'Bahrain'], 'Qatar is maroon with nine white points; Bahrain is red with five.'],
+[['Senegal', 'Mali'], "Senegal has a green star in the middle; Mali's flag has no star."],
+[['Guinea', 'Mali'], 'Guinea is red, yellow, green from the pole; Mali is green, yellow, red.'],
+[['Senegal', 'Cameroon'], 'Senegal is green, yellow, red with a green star; Cameroon is green, red, yellow with a yellow star.'],
+[['Japan', 'Bangladesh'], 'Japan has a red disc on white; Bangladesh a red disc on green.'],
+[['Austria', 'Latvia'], 'Austria is bright red with an equal white stripe; Latvia is dark red with a narrow white stripe.'],
+[['Hungary', 'Bulgaria'], 'Hungary is red, white, green from the top; Bulgaria is white, green, red.'],
+[['Gabon', 'Sierra Leone'], 'Gabon is green, yellow, blue; Sierra Leone is green, white, blue.'],
+[['Tunisia', 'Turkey'], "Turkey's crescent and star sit on the red; Tunisia's sit inside a white disc."],
+[['Vietnam', 'China'], 'Vietnam has one big yellow star; China has one big and four small ones.'],
+[['Cuba', 'Bahamas'], 'Cuba has a red triangle and blue stripes; the Bahamas a black triangle and aquamarine and gold.'],
+[['Kuwait', 'United Arab Emirates'], 'Kuwait has a black shape at the pole; the United Arab Emirates a red stripe.'],
+[['Colombia', 'Romania'], "Colombia's stripes lie flat, with yellow taking up the top half."]];
+const LV = [
+{ name: 'Easy', desc: 'Famous flags, very different choices. 12 seconds a flag.', n: 12, t: 12 },
+{ name: 'Medium', desc: 'All 80 flags, choices from the same continent. 9 seconds.', n: 15, t: 9 },
+{ name: 'Hard', desc: 'Look-alike flags: Chad or Romania? Norway or Iceland? 8 seconds.', n: 15, t: 8 }
+];
+const CSS = `.fm-sky{position:relative;flex:1;width:100%;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.fm-cloud{position:absolute;height:22px;border-radius:20px;background:rgba(255,255,255,.07);animation:fmcl linear infinite}
+@keyframes fmcl{from{transform:translateX(-160px)}to{transform:translateX(1400px)}}
+.fm-mast{position:relative;display:flex;align-items:flex-start;padding-top:10px}
+.fm-pole{width:7px;border-radius:4px;background:linear-gradient(90deg,#9aa3b8,#eef1f8 40%,#6b7388);position:relative;margin-right:-1px}
+.fm-pole:before{content:'';position:absolute;top:-10px;left:-4px;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff7c2,#ffd23f 50%,#b88a00)}
+.fm-flag{position:relative;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45));animation:fmin .55s cubic-bezier(.2,1.3,.4,1) both}
+.fm-flag.out{animation:fmout .45s ease-in forwards}.fm-flag.bad{animation:shake .35s}
+@keyframes fmin{from{transform:translateX(70vw) rotate(10deg);opacity:0}}@keyframes fmout{to{transform:translateY(-140%) rotate(-8deg);opacity:0}}
+.fm-sl{position:absolute;top:0;height:100%;overflow:hidden;animation:fmw 1.5s ease-in-out infinite}
+.fm-sl>div{position:absolute;top:0;height:100%}
+@keyframes fmw{0%,100%{transform:translateY(calc(var(--a)*-1));filter:brightness(1.07)}50%{transform:translateY(var(--a));filter:brightness(.86)}}
+.fm-fuse{width:min(100%,380px);height:8px;border-radius:6px;background:var(--bg2);border:1px solid var(--edge);overflow:hidden;margin-top:8px}
+.fm-fuse i{display:block;height:100%;background:linear-gradient(90deg,var(--c2),var(--c));transform-origin:left}
+.fm-info{min-height:44px;margin-top:6px;text-align:center;font-weight:700;color:var(--muted);max-width:560px;font-size:clamp(13px,2vw,16px)}
+.fm-info b{color:var(--text)}.fm-info .tip{display:block;color:var(--gold);font-size:13px;margin-top:2px}
+.fm-play .opts{margin-top:6px}.fm-play .opt{min-height:clamp(50px,8vh,72px);font-size:clamp(15px,2.6vw,22px)}`;
+Edu.game({
+id: 'flag-master', levels: LV,
+how: ['A flag flies in on the pole. Pick its country from the four choices: click, tap, or press 1 to 4.',
+'Answer before the fuse under the flag burns down. Faster answers score more.',
+'A wrong answer or running out of time costs one of your three lives.',
+'After each flag you see its continent and capital. Get through every flag to clear the level.'],
+start(c) {
+if (!document.getElementById('fm-css')) document.head.append(h('style', { id: 'fm-css', text: CSS }));
+const L = c.L, sky = h('div', { class: 'fm-sky' }), fuse = h('div', { class: 'fm-fuse' }, h('i')), info = h('div', { class: 'fm-info' }), area = h('div', { style: { width: '100%', display: 'flex', justifyContent: 'center' } });
+for (let i = 0; i < 4; i++) sky.append(h('div', { class: 'fm-cloud', style: { top: (8 + i * 22) + '%', width: (60 + i * 25) + 'px', animationDuration: (26 + i * 9) + 's', animationDelay: -(i * 7) + 's' } }));
+c.el.classList.add('fm-play'); c.el.append(sky, fuse, info, area);
+c.lives(3); c.k = 0; c.seen = new Set(); c.missed = []; c.facts = [];
+const pool = c.level === 0 ? EASY.map(get) : FL;
+const groupsOf = n => LOOK.filter(g => g.includes(n));
+function options(t) {
+let others;
+if (c.level === 0) { const near = new Set(groupsOf(t.name).flat()); others = sample(pool.filter(x => !near.has(x.name)), 3); }
+else if (c.level === 1) { others = sample(FL.filter(x => x !== t && x.ct === t.ct), 2); others.push(pick(FL.filter(x => x !== t && !others.includes(x)))); }
+else { const g = pick(groupsOf(t.name)); others = sample(g.filter(n => n !== t.name), 3).map(get);
+while (others.length < 3) { const x = pick(FL); if (x !== t && !others.includes(x)) others.push(x); } }
+return shuffle([t, ...others]);
+}
+function drawFlag(t) {
+const r = sky.getBoundingClientRect(), ratio = t.flag[0] / t.flag[1];
+let fh = Math.min(r.height - 34, 210, (Math.min(r.width, 520) - 40) / ratio), fw = fh * ratio;
+const mast = h('div', { class: 'fm-mast' }), pole = h('div', { class: 'fm-pole', style: { height: (fh + 70) + 'px' } }),
+fl = h('div', { class: 'fm-flag', style: { width: fw + 'px', height: fh + 'px' } }), N = 12;
+for (let i = 0; i < N; i++) fl.append(h('div', { class: 'fm-sl', style: { left: (i * fw / N) + 'px', width: (fw / N + 1) + 'px', animationDelay: -(i * .11) + 's', '--a': (i / N * Math.max(3, fh * .045)).toFixed(1) + 'px' } },
+h('div', { style: { left: -(i * fw / N) + 'px', width: fw + 'px' }, html: flagSVG(t.flag) })));
+mast.append(pole, fl); [...sky.querySelectorAll('.fm-mast')].forEach(m => m.remove()); sky.append(mast); c.flagEl = fl;
+}
+const tipFor = (a, b) => (TIPS.find(([n]) => n.includes(a) && n.includes(b)) || TIPS.find(([n]) => n[0] === a) || [])[1];
+const finish = () => {
+const won = c.lives_ > 0, learnt = [...new Set(c.missed)].slice(0, 3);
+for (const f of shuffle(c.facts)) if (learnt.length < 4 && !learnt.includes(f)) learnt.push(f);
+c.end({ won, title: won ? 'Flags mastered!' : 'Out of lives', msg: won ? `You named ${c.k} flags.` : 'Each wrong flag costs a life. Try again: the tips below help.', stats: { Flags: c.k + ' / ' + L.n }, learnt });
+};
+function next() {
+if (c.k >= L.n || c.lives_ <= 0) return finish();
+let t, tries = 0; do t = pick(c.level === 2 ? FL.filter(x => groupsOf(x.name).length) : pool); while (c.seen.has(t.name) && ++tries < 50); c.seen.add(t.name);
+c.t = t; c.opts = options(t); c.left = L.t; c.busy = false; info.innerHTML = '&nbsp;'; area.innerHTML = '';
+drawFlag(t); c.hud({ flag: (c.k + 1) + ' / ' + L.n });
+c.ch = c.choices(area, c.opts.map(o => o.name), i => answer(i), { cols: 2 });
+}
+function answer(i) {
+if (c.busy) return; c.busy = true; c.ch.lock(); const t = c.t, ok = i >= 0 && c.opts[i] === t, ci = c.opts.indexOf(t);
+const b = c.ch.btns[i >= 0 ? i : ci].getBoundingClientRect(), s = c.el.getBoundingClientRect(), x = b.left - s.left + b.width / 2, y = b.top - s.top;
+const fact = `${t.name}: ${ctName(t)}${t.cap ? ', capital ' + t.cap : ''}.`; c.facts.push(fact); c.k++;
+info.innerHTML = ''; info.append(h('b', { text: (ok ? '✓ ' : '✗ ') + t.name }), ' · ' + ctName(t) + (t.cap ? ' · capital ' + t.cap : ''));
+if (ok) { c.ch.mark(i, true); c.right(10 + Math.round(10 * c.left / L.t), x, y); c.flagEl.classList.add('out'); c.after(750, next); }
+else { if (i >= 0) c.ch.mark(i, false); c.ch.mark(ci, true); c.wrong(x, y, i < 0 ? "Time's up!" : 'Not this one'); c.lose(); c.flagEl.classList.add('bad');
+const tip = tipFor(t.name, i >= 0 ? c.opts[i].name : ''); if (tip) { info.append(h('span', { class: 'tip', text: tip })); c.missed.push(tip); } else c.missed.push(fact);
+c.after(tip ? 1700 : 1200, next); }
+}
+c.loop(dt => { if (c.busy || !c.t) return; c.left -= dt * Edu.SPEED; fuse.firstChild.style.transform = `scaleX(${Math.max(0, c.left / L.t)})`; if (c.left <= 0) answer(-1); });
+c.after(60, next);
+},
+bot(c) { if (c.ch && !c.busy) c.ch.btns[c.opts.indexOf(c.t)].click(); },
+miss(c) { if (c.ch && !c.busy) c.ch.btns[c.opts.findIndex(o => o !== c.t)].click(); }
+});
+})();
+</script>
+</body>
+</html>
