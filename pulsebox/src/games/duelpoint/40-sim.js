@@ -201,6 +201,7 @@
       if (p === 0) { y0 = yw; p0 = pc; }
       if (p === 0 && !f.net && M.kit && M.kit.hexes.length && hexShot(f, S)) continue;   // Overcharge: the shot took the charge
       if (p === 0 && !f.net && M.kit && M.kit.decoys.length && decoyShot(f, S)) continue;   // Mirage: the shot hit the copy
+      if (p === 0 && !f.net && M.kit && M.kit.lenses && M.kit.lenses.length && lensShot(f, S)) continue;   // Lull: the shot broke the lens
       emit('shot', f, S, p === 0);
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k, S.hit.leg); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);
@@ -316,6 +317,7 @@
     const dx = bx - ax, dy = by - ay, dz = bz - az, L = Math.hypot(dx, dy, dz) || 1e-6, d = [dx / L, dy / L, dz / L], o = [ax, ay, az];
     let t = rayGrid(ax, ay, az, d[0], d[1], d[2], L);
     for (const w of M.walls) { const tw = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (tw > 0 && tw < t) t = tw; }
+    if (smoke && M.kit && M.kit.lines && M.kit.lines.length) t = lineT(o, d, t);   // a Lightline: sight stops at it (bullets do not)
     if (smoke) for (const s of M.smokes) { if (s.r < 1.5) continue; if (Math.hypot(ax - s.x, az - s.z) < s.r) return 0; const ts = raySphere(o, d, [s.x, s.y + 1.3, s.z], s.r * .92); if (ts > 0 && ts < t) t = ts; }
     if (smoke && mechOf() === 'grass') for (let q = 1.4; q < t - 1.4; q += .45) { const y = ay + d[1] * q, k = idx(Math.floor((ax + d[0] * q) / CS), Math.floor((az + d[2] * q) / CS)); if (k >= 0 && GRASS[k] && y < GRASS_H) { t = q; break; } }   // tall grass hides; bullets go through
     return t;
@@ -346,7 +348,7 @@
   function ultGain(f, n) { if (!M || M.mode === 'range' || !f || !OPS[f.op]) return; const c = ultCost(f), was = f.ult | 0; f.ult = Math.min(c, was + n); if (was < c && f.ult >= c) emit('ultReady', f); }
   // in the buy phase you can set up: move, wall off, place a trap, a turret, a smoke or an eye (no ultimates, nothing that
   // harms, blinds or scouts); what is placed at a spot must be on your side of the barrier
-  const BUY_AB = new Set(['vexq', 'vexe', 'irisc', 'bastionq', 'bastione', 'bastionc', 'novac', 'novaq', 'wraithc', 'wraithq', 'talone', 'embere', 'axiomq', 'axiome', 'vantac', 'vantae']);
+  const BUY_AB = new Set(['vexq', 'vexe', 'irisc', 'bastionq', 'bastione', 'bastionc', 'novac', 'novaq', 'wraithc', 'wraithq', 'talone', 'embere', 'axiomq', 'axiome', 'vantac', 'vantae', 'tessele']);
   const abBlocked = (f, k) => !f.alive || !M || (M.phase !== 'live' && !(k && M.phase === 'buy' && M.mode !== 'range' && M.mode !== 'demo' && !loadingNow() && BUY_AB.has(f.op + k))) || f.plant > 0 || f.defuse > 0 || f.lock > 0 || !!f.chan;
   // where it goes, worked out on the user's device (the same sum the preview shows)
   function abData(f, k, alt) {
@@ -364,7 +366,7 @@
     if (!tetherBack(f, k) && !hasAb(f, k)) return false;
     const data = abData(f, k, alt); if (!data) return false;
     if (data.fail) { emit('abNo', f, k); return false; }   // (aimed where it can do nothing: not spent)
-    if (M.phase === 'buy' && data.x != null && data.vx == null && f.op + k !== 'vantac' && sideOf(f) && !inZone(sideOf(f), data.x, data.z)) { emit('abNo', f, k); if (f === me()) say('NOT PAST THE BARRIER', WARN); return false; }
+    if (M.phase === 'buy' && data.x != null && data.vx == null && f.op + k !== 'vantac' && f.op + k !== 'tessele' && sideOf(f) && !inZone(sideOf(f), data.x, data.z)) { emit('abNo', f, k); if (f === me()) say('NOT PAST THE BARRIER', WARN); return false; }
     if (!data.free) spendAb(f, k); if (M.mode === 'range') f.abT = 4;
     applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key });
     return true;

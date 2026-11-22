@@ -361,7 +361,7 @@
         A.visible = seen; } }
     // smokes, Rampart walls, the charge, a flare in flight
     while (X.smokes.length < M.smokes.length) addSmoke();
-    X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { const mt = s.heat ? X.smokeHM : s.grey ? X.smokeGM : X.smokeM; if (g.children[0].material !== mt) for (const c of g.children) c.material = mt; g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
+    X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { const mt = s.heat ? X.smokeHM : s.glare ? X.smokeLM || X.smokeM : s.grey ? X.smokeGM : X.smokeM; if (g.children[0].material !== mt) for (const c of g.children) c.material = mt; g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
     const NS = M.nades || []; while (X.nadeObjs.length < NS.length) { const o = X.nadeMk(); X.scene.add(o); X.nadeObjs.push(o); }
     X.nadeObjs.forEach((o, i) => { const n = NS[i]; o.visible = !!n; if (n) { o.position.set(n.x, n.y, n.z); o.rotation.set(n.spin, n.spin * .6, 0); } });
     while (X.walls.length < M.walls.length) addWall();

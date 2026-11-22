@@ -94,7 +94,8 @@
     const S = UI.sel; if (!S || S.locked) return; const taken = selTaken(S), keys = Object.keys(OPS).filter(k => !taken.includes(k)), i = keys.indexOf(S.op);
     if (c === 'ArrowRight' || c === 'ArrowDown') S.op = keys[(i + 1) % keys.length];
     else if (c === 'ArrowLeft' || c === 'ArrowUp') S.op = keys[(i - 1 + keys.length) % keys.length];
-    else if (/^Digit[1-9]$/.test(c)) { const k = Object.keys(OPS)[+c.slice(5) - 1]; if (k && !taken.includes(k)) S.op = k; }
+    else if (/^Digit[0-9]$/.test(c)) { const k = Object.keys(OPS)[(+c.slice(5) + 9) % 10];   // (0 is the tenth)
+      if (k && !taken.includes(k)) S.op = k; }
     else if (c === 'Enter' || c === 'Space') lockIn();
     else if (c === 'Escape' && !S.online) { UI.sel = null; if (UI.returnTo === 'party') { UI.returnTo = null; screen = 'party'; } else { screen = 'menu'; UI.panel = 'home'; } }
   }
@@ -151,7 +152,7 @@
       const lift = on ? 6 * u : hot ? 3 * u : 0;
       if (on) { g.save(); g.shadowColor = o.col; g.shadowBlur = 18 * u; g.fillStyle = o.col; g.fillRect(x + 4, ry - lift + 4, tw - 8, th - 8); g.restore(); }
       portraitTile(g, k, x, ry - lift, tw, th, { on, hot, r: 6, dead: gone }); tx(g, gone ? 'TAKEN' : o.n, x + tw / 2, ry - lift + th + 12 * u, 10 * u, on ? o.col : DIM, 'center', 800);
-      if (!touch && i < 9) tx(g, String(i + 1), x + 9 * u, ry - lift + 11 * u, 9 * u, DIM, 'center', 800);
+      if (!touch && i < 10) tx(g, String((i + 1) % 10), x + 9 * u, ry - lift + 11 * u, 9 * u, DIM, 'center', 800);
     });
     // lock in
     { const bw = 220 * u, bh = 60 * u, bx = V.x1 - bw - 40 * u, by = ry - bh - 24 * u, locked = !!S.locked;   // above the roster, clear of the corner

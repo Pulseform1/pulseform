@@ -14,7 +14,7 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, readyAb, castReady, abData, hexShot, duelOk, unready, canSee, castShot, viewDir, blocked, ARMOR, xpForLevel, levelOf, seasonNow, passRewards, myPass, passTier, passGrant, buyPremium, giveReward, dailyChallenges, weeklyChallenges, myChallenges, challengeProgress, matchTally, matchXp, payProgress, botCard, cardFrom, matchAwards, csOf, PASS_TIERS, PASS_XP, PASS_PRICE, TITLES, BANNERS, CH_DAILY, CH_WEEKLY, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
+  return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, readyAb, castReady, abData, hexShot, lensShot, duelOk, unready, canSee, castShot, viewDir, blocked, ARMOR, xpForLevel, levelOf, seasonNow, passRewards, myPass, passTier, passGrant, buyPremium, giveReward, dailyChallenges, weeklyChallenges, myChallenges, challengeProgress, matchTally, matchXp, payProgress, botCard, cardFrom, matchAwards, csOf, PASS_TIERS, PASS_XP, PASS_PRICE, TITLES, BANNERS, CH_DAILY, CH_WEEKLY, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     hitboxes, headOf, castShot, viewDir, BRKS, BRKX, setWall, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, gunStats, dmgAt, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; }, CH, siteAt };`)(K, MP);
 
@@ -494,7 +494,7 @@ function kit2Checks() {
   section('abilities: C Q E X, readied then used; every C; Vanta');
   let I = idle(); T.setInput(() => I);
   const ops = Object.keys(T.OPS);
-  ok(ops.length === 9 && ops.every(k => T.OPS[k].c && T.OPS[k].c.cost > 0 && T.OPS[k].c.max >= 1 && T.OPS[k].q && T.OPS[k].e && T.OPS[k].x), 'nine operatives, each with C, Q, E and X', ops.join(' '));
+  ok(ops.length === 10 && ops.every(k => T.OPS[k].c && T.OPS[k].c.cost > 0 && T.OPS[k].c.max >= 1 && T.OPS[k].q && T.OPS[k].e && T.OPS[k].x), 'ten agents, each with C, Q, E and X', ops.join(' '));
   const setup = (op, size = 1) => { T.seed(11); T.startMatch({ mode: 'bot', diff: 0, map: 0, size }); T.skipLoad(); const M = T.M, P = T.me(); P.op = op; M.phase = 'live'; M.t = 80; for (const f of M.fs) if (f !== P) { f.bot.dummy = true; } P.ab = { c: 2, q: 2, e: 1 }; P.ult = 9; Object.assign(P, { x: 40, z: 3, y: T.hAt(40, 3), yaw: -Math.PI / 2, pitch: -.03, vx: 0, vz: 0 }); return [M, P, T.foe()]; };
   const pin = (F, x, z) => Object.assign(F, { x, z, y: T.hAt(x, z), vx: 0, vz: 0, px: x, pz: z });
   const runPinned = (s, F, x, z) => { for (let i = 0; i < Math.round(s * 60); i++) { if (F) pin(F, x, z); T.tick(DT); } };
@@ -542,6 +542,35 @@ function kit2Checks() {
     ok(!T.canSee(other, P) && !T.canSee(P, other) && !T.duelOk(mate, tgt), 'nor see them, nor be seen');
     Object.assign(P, { x: P.duel.x + P.duel.r + 5 }); T.tick(DT); ok(Math.hypot(P.x - P.duel.x, P.z - P.duel.z) <= P.duel.r + .01, 'and neither gets out'); T.applyDamage(tgt, 200, P, true, 'pip'); T.tick(DT);
     ok(!P.duel && !tgt.alive, 'one falls: the dome is gone'); }
+  // Tessel: Lightline, Lull, Bloom, Glasshouse
+  { const O = T.OPS.tessel; ok(O && O.c.cost === 150 && O.c.max === 2 && O.q.cost === 200 && O.q.max === 2 && O.e.rech === 40 && O.x.pts === 7 && O.col !== '#ff4655', 'Tessel: Bloom 150 (two), Lull 200 (two), Lightline back 40 s after use, Glasshouse 7 points'); }
+  [M, P, F] = setup('tessel'); pin(F, 56, 3);
+  { const seen0 = T.canSee(P, F) && T.canSee(F, P); ok(T.ability(P, 'e', true), 'Lightline: the other click draws it across your view'); const L = M.kit.lines[0]; runPinned(.5, F, 56, 3);
+    ok(L && Math.abs((L.ax + L.bx) / 2 - 50) < 1.5 && Math.hypot(L.bx - L.ax, L.bz - L.az) > 3 && !P.ab.e, 'it stands across the way you look, up to 10 m out, wall to wall', L && `at x ${((L.ax + L.bx) / 2).toFixed(1)}, ${Math.hypot(L.bx - L.ax, L.bz - L.az).toFixed(1)} m wide`);
+    ok(seen0 && !T.canSee(P, F) && !T.canSee(F, P), 'it blocks sight both ways', `before ${seen0}`);
+    { const o = [P.x, T.eyeY(P), P.z], dx = F.x - o[0], dy = F.y + 1.1 - o[1], dz = F.z - o[2], Ln = Math.hypot(dx, dy, dz), S = T.castShot(P, [dx / Ln, dy / Ln, dz / Ln]); ok(S.hit && S.hit.f === F, 'but not bullets', S.hit ? 'the shot hits the rival' : 'stopped at ' + S.dist.toFixed(1)); }
+    ok(L && !T.blocked((L.ax + L.bx) / 2, 3, P.y), 'and anyone can walk through it'); F.reveal = 0; for (let x = 56; x >= 45; x -= .25) { pin(F, x, 3); T.tick(DT); }
+    ok(F.reveal > 1.5, 'a rival who walks through it is Lit (shown through walls)', 'reveal ' + F.reveal.toFixed(1));
+    runPinned(14, F, 45, 3); ok(!M.kit.lines.length && T.canSee(P, F), 'it fades after 14 s', M.kit.lines.length + ' lines'); }
+  for (let i = 0; i < 27 * 60 && !P.ab.e; i++) T.tick(DT); ok(P.ab.e === 1, 'Lightline comes back 40 s after it is used', 'eT ' + P.eT.toFixed(1));
+  [M, P, F] = setup('tessel'); T.ability(P, 'e', false); { const L = M.kit.lines[0]; ok(L && Math.hypot(L.ax - P.x, L.az - P.z) < 1 && Math.hypot(L.bx - L.ax, L.bz - L.az) > 8 && Math.abs(L.bz - L.az) < .2, 'a left click draws it from your feet along your aim', L && Math.hypot(L.bx - L.ax, L.bz - L.az).toFixed(1) + ' m'); }
+  for (const ev of ['lullStart', 'bloomPop']) T.on(ev, g => { landAt = [g.x, g.z]; });
+  [M, P, F] = setup('tessel'); T.ability(P, 'q', false); runLob(2, F); const Z = M.kit.lenses[0];
+  ok(Z && F.slowF > 0, 'Lull: a rival near the lens moves at half speed', 'slow ' + (F.slowF || 0).toFixed(2));
+  if (Z) { const o = [F.x, T.eyeY(F), F.z], dx = Z.x - o[0], dy = Z.y + .28 - o[1], dz = Z.z - o[2], L = Math.hypot(dx, dy, dz), S = { o, d: [dx / L, dy / L, dz / L], dist: 99 }; ok(!T.lensShot(P, S) && T.lensShot(F, S) && !M.kit.lenses.length, 'one bullet from a rival breaks the lens (not one of Tessel\'s own)'); }
+  [M, P, F] = setup('tessel'); T.ability(P, 'q', false); runLob(2, F); const nZ = M.kit.lenses.length; runPinned(7.2, null); ok(nZ === 1 && !M.kit.lenses.length, 'a lens left alone lasts 7 s'); ok(T.ability(P, 'q', false) && !T.ability(P, 'q', false) && !P.ab.q, 'two Lulls, and no more');
+  [M, P, F] = setup('tessel'); P.pitch = -.05; T.ability(P, 'c', false); runLob(2, F); runPinned(.8, null);
+  { const s = M.smokes.find(q => q.glare); if (s) { const dx = s.x - P.x, dz = s.z - P.z, L = Math.hypot(dx, dz); pin(F, s.x + dx / L * 6, s.z + dz / L * 6); }
+    ok(s && s.R === 3.4 && s.T === 9 && !T.canSee(P, F), 'Bloom: a globe of glare where it lands, that blocks sight', s ? `${Math.hypot(s.x - P.x, s.z - P.z).toFixed(1)} m out` : 'none'); }
+  [M, P, F] = setup('tessel'); pin(F, 48, 3); { const o = [P.x, T.eyeY(P), P.z], dy = F.y + 1 - o[1]; P.pitch = Math.atan2(dy, 8); }
+  ok(T.ability(P, 'x', false) && M.kit.houses.length === 1 && M.kit.lines.length === 4 && P.ult === 0, 'Glasshouse: four Lightlines round the spot you point at', M.kit.houses[0] && `at ${M.kit.houses[0].x.toFixed(1)}, ${M.kit.houses[0].z.toFixed(1)}`);
+  runPinned(.5, F, 48, 3); ok(F.slowF > 0 && !T.canSee(P, F), 'a rival inside is slowed, and cannot see out', 'slow ' + (F.slowF || 0).toFixed(2));
+  F.reveal = 0; for (let x = 48; x <= 56; x += .25) { pin(F, x, 3); T.tick(DT); } ok(F.reveal > 1.5, 'walking out through its wall, they are Lit', 'reveal ' + F.reveal.toFixed(1));
+  runPinned(10, null); ok(!M.kit.houses.length && !M.kit.lines.length, 'it is gone after 10 s');
+  // bots on Tessel use the whole kit
+  { const usedT = {}; T.on('ability', (f, k) => { if (f.op === 'tessel' && f.bot) usedT[k] = (usedT[k] || 0) + 1; }); let errT = 0;
+    for (let m = 0; m < 6; m++) { try { T.seed(300 + m); T.startMatch({ mode: 'demo', map: m % T.MAPS.length }); const M2 = T.M; M2.fs[0].op = 'tessel'; M2.fs[1].op = m % 2 ? 'vex' : 'tessel'; for (const f of M2.fs) if (f.bot) f.bot.diff = 2; for (let i = 0; i < 60 * 60 * 6 && !M2.over; i++) T.tick(DT); } catch (e2) { errT++; console.log(String(e2 && e2.stack).split('\n').slice(0, 4).join(' | ')); } }
+    ok(!errT && ['c', 'q', 'e', 'x'].every(k => usedT[k] > 0), 'bots on Tessel use Bloom, Lull, Lightline and Glasshouse, without errors', JSON.stringify(usedT)); }
   // signatures that come back
   [M, P, F] = setup('iris'); T.ability(P, 'e', false); ok(!P.ab.e, 'Iris has used her Flare'); for (let i = 0; i < 41 * 60 && !P.ab.e; i++) T.tick(DT); ok(P.ab.e === 1, 'and it comes back after 40 s', P.eT.toFixed(1));
   // bots use them

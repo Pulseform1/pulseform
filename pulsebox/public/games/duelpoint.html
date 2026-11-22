@@ -356,6 +356,7 @@ const GAME = {
     ember: { n: 'EMBER', role: 'Pyre', col: '#ff7a2f', bio: 'Foundry-born. Thinks every problem is a fuel problem.', q: { n: 'Ignite', d: 'Lob a firebomb: its pool burns rivals for 30 a second, 5 s.' }, e: { n: 'Heat Haze', d: 'A wall of amber haze across your view that blocks sight for 10 s.' } },
     axiom: { n: 'AXIOM', role: 'Engineer', col: '#5aa0ff', bio: 'Builds the thing that holds the angle, then goes for coffee.', q: { n: 'Sentry', d: 'A turret that fires on rivals in front of it until it is shot down.' }, e: { n: 'Tripmine', d: 'A mine at your feet. Armed, it bursts for up to 75 when a rival comes near.' } },
     vanta: { n: 'VANTA', role: 'Duelist', col: '#e25cff', bio: 'A fixer who settles things one on one. Nobody asks for a second meeting.', q: { n: 'Sunder', d: 'A bolt that strikes instantly down your aim: a headshot kills, any hit Exposes (25% more damage for 4 s). It goes on through walls, Exposing rivals behind them.' }, e: { n: 'Overcharge', d: 'For 12 s, a rival you kill leaves a charge: shoot it for a ward that stops the next hit. Back after 2 kills.' } },
+    tessel: { n: 'TESSEL', role: 'Architect', col: '#ff9ec7', bio: 'She built stage sets until the stages got smaller and the crowds came armed. Now she builds the room first, then lets you walk in.', q: { n: 'Lull', d: 'Lob a glass lens: for 7 s, rivals within 4.5 m of it move at half speed. One bullet from a rival breaks it.' }, e: { n: 'Lightline', d: 'Draw a curtain of light from your feet along your aim (up to 20 m), or across your view with the other click. For 14 s it blocks sight both ways, not bullets; a rival who walks through it is shown through walls for 2.5 s.' } },
   };
   /* C: the second bought ability (cheaper, a smaller trick), one per operative */
   const ABC_KIT = {
@@ -368,15 +369,16 @@ const GAME = {
     ember: [{ n: 'Flashpoint', d: 'A flash that bends round a corner: left click bends it left, right click right.' }, 200, 2],
     axiom: [{ n: 'Slow Field', d: 'Lob a canister: a 5 m field that slows rivals inside for 6 s.' }, 200, 1],
     vanta: [{ n: 'Phase Front', d: 'A wall of light rolls 14 m ahead of you, straight through walls, stopping bullets and sight. Anyone can walk through it.' }, 200, 1],
+    tessel: [{ n: 'Bloom', d: 'Lob a seed of light: where it lands it opens into a globe of glare that blocks sight for 9 s.' }, 150, 2],
   };
   for (const k in ABC_KIT) { const [c, cost, max] = ABC_KIT[k]; OPS[k].c = Object.assign({}, c, { cost, max }); }
   // signatures (E) that come back during a round: after some seconds, or after some kills
-  OPS.iris.e.rech = 40; OPS.wraith.e.rech = 35; OPS.vanta.e.kills = 2;
+  OPS.iris.e.rech = 40; OPS.wraith.e.rech = 35; OPS.vanta.e.kills = 2; OPS.tessel.e.rech = 40;
   /* Abilities the way the genre does them: C and Q are bought in the armory (a price a charge, up to its most), E is the signature that
      comes free every round, X is the ultimate, which charges a point at a time: a kill, a death, planting or defusing the
      charge, and the two orbs that sit on the map each round (hold F over one). Bought charges you don't use carry into the
      next round; they are cleared when sides swap. Ultimate points never are. */
-  const ABQ = { vex: [150, 2], iris: [250, 1], bastion: [300, 1], nova: [150, 2], wraith: [250, 1], talon: [150, 2], ember: [250, 1], axiom: [300, 1], vanta: [200, 2] };
+  const ABQ = { vex: [150, 2], iris: [250, 1], bastion: [300, 1], nova: [150, 2], wraith: [250, 1], talon: [150, 2], ember: [250, 1], axiom: [300, 1], vanta: [200, 2], tessel: [200, 2] };
   const ULTS = {
     vex: { n: 'Nightwalk', d: 'Gather the dark for a second, then step out of it wherever you aim, up to 30 m away.', pts: 6 },
     iris: { n: 'Allsight', d: 'Every rival on the map shows through the walls for 6 s.', pts: 6 },
@@ -387,6 +389,7 @@ const GAME = {
     ember: { n: 'Inferno', d: 'Lob a great firebomb: a 5.5 m blaze that burns rivals for 40 a second, 8 s.', pts: 6 },
     axiom: { n: 'Lockdown', d: 'Plant a device; 2.5 s later every rival within 14 m is held: slowed, and unable to fire or use abilities, for 4 s.', pts: 7 },
     vanta: { n: 'Duel Field', d: 'Point at a spot: the rival nearest it, within 5 m, is pulled into a dome with you for up to 12 s. Nobody else sees in, shoots in or gets in.', pts: 7 },
+    tessel: { n: 'Glasshouse', d: 'Point at a spot up to 30 m away: a 10 m square of Lightlines rises round it for 10 s, and rivals inside it move at half speed.', pts: 7 },
   };
   for (const k in OPS) { OPS[k].q.cost = ABQ[k][0]; OPS[k].q.max = ABQ[k][1]; OPS[k].x = ULTS[k]; }
   const ultCost = f => OPS[f.op] ? OPS[f.op].x.pts : 6;
@@ -1254,6 +1257,7 @@ const GAME = {
       if (p === 0) { y0 = yw; p0 = pc; }
       if (p === 0 && !f.net && M.kit && M.kit.hexes.length && hexShot(f, S)) continue;   // Overcharge: the shot took the charge
       if (p === 0 && !f.net && M.kit && M.kit.decoys.length && decoyShot(f, S)) continue;   // Mirage: the shot hit the copy
+      if (p === 0 && !f.net && M.kit && M.kit.lenses && M.kit.lenses.length && lensShot(f, S)) continue;   // Lull: the shot broke the lens
       emit('shot', f, S, p === 0);
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k, S.hit.leg); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);
@@ -1369,6 +1373,7 @@ const GAME = {
     const dx = bx - ax, dy = by - ay, dz = bz - az, L = Math.hypot(dx, dy, dz) || 1e-6, d = [dx / L, dy / L, dz / L], o = [ax, ay, az];
     let t = rayGrid(ax, ay, az, d[0], d[1], d[2], L);
     for (const w of M.walls) { const tw = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (tw > 0 && tw < t) t = tw; }
+    if (smoke && M.kit && M.kit.lines && M.kit.lines.length) t = lineT(o, d, t);   // a Lightline: sight stops at it (bullets do not)
     if (smoke) for (const s of M.smokes) { if (s.r < 1.5) continue; if (Math.hypot(ax - s.x, az - s.z) < s.r) return 0; const ts = raySphere(o, d, [s.x, s.y + 1.3, s.z], s.r * .92); if (ts > 0 && ts < t) t = ts; }
     if (smoke && mechOf() === 'grass') for (let q = 1.4; q < t - 1.4; q += .45) { const y = ay + d[1] * q, k = idx(Math.floor((ax + d[0] * q) / CS), Math.floor((az + d[2] * q) / CS)); if (k >= 0 && GRASS[k] && y < GRASS_H) { t = q; break; } }   // tall grass hides; bullets go through
     return t;
@@ -1399,7 +1404,7 @@ const GAME = {
   function ultGain(f, n) { if (!M || M.mode === 'range' || !f || !OPS[f.op]) return; const c = ultCost(f), was = f.ult | 0; f.ult = Math.min(c, was + n); if (was < c && f.ult >= c) emit('ultReady', f); }
   // in the buy phase you can set up: move, wall off, place a trap, a turret, a smoke or an eye (no ultimates, nothing that
   // harms, blinds or scouts); what is placed at a spot must be on your side of the barrier
-  const BUY_AB = new Set(['vexq', 'vexe', 'irisc', 'bastionq', 'bastione', 'bastionc', 'novac', 'novaq', 'wraithc', 'wraithq', 'talone', 'embere', 'axiomq', 'axiome', 'vantac', 'vantae']);
+  const BUY_AB = new Set(['vexq', 'vexe', 'irisc', 'bastionq', 'bastione', 'bastionc', 'novac', 'novaq', 'wraithc', 'wraithq', 'talone', 'embere', 'axiomq', 'axiome', 'vantac', 'vantae', 'tessele']);
   const abBlocked = (f, k) => !f.alive || !M || (M.phase !== 'live' && !(k && M.phase === 'buy' && M.mode !== 'range' && M.mode !== 'demo' && !loadingNow() && BUY_AB.has(f.op + k))) || f.plant > 0 || f.defuse > 0 || f.lock > 0 || !!f.chan;
   // where it goes, worked out on the user's device (the same sum the preview shows)
   function abData(f, k, alt) {
@@ -1417,7 +1422,7 @@ const GAME = {
     if (!tetherBack(f, k) && !hasAb(f, k)) return false;
     const data = abData(f, k, alt); if (!data) return false;
     if (data.fail) { emit('abNo', f, k); return false; }   // (aimed where it can do nothing: not spent)
-    if (M.phase === 'buy' && data.x != null && data.vx == null && f.op + k !== 'vantac' && sideOf(f) && !inZone(sideOf(f), data.x, data.z)) { emit('abNo', f, k); if (f === me()) say('NOT PAST THE BARRIER', WARN); return false; }
+    if (M.phase === 'buy' && data.x != null && data.vx == null && f.op + k !== 'vantac' && f.op + k !== 'tessele' && sideOf(f) && !inZone(sideOf(f), data.x, data.z)) { emit('abNo', f, k); if (f === me()) say('NOT PAST THE BARRIER', WARN); return false; }
     if (!data.free) spendAb(f, k); if (M.mode === 'range') f.abT = 4;
     applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key });
     return true;
@@ -1834,7 +1839,7 @@ const GAME = {
                        E Tripmine: a mine at your feet that arms, then bursts for up to 75 when a rival comes near.
      The things they leave in the world live in M.kit and are stepped by stepKits. Like damage, every effect on a fighter
      is worked out on that fighter's own device: a trap or mine that goes off there tells the others, so all screens agree. */
-  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], decoys: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [] };
+  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], decoys: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [], lines: [], lenses: [], houses: [] };
   const freshKit = () => Object.fromEntries(Object.keys(KIT_N).map(k => [k, []]));
   const enemyOf = (a, b) => a.team !== b.team;
   const kitId = (f, k) => f.key + ':' + k + ':' + M.round;
@@ -1876,7 +1881,7 @@ const GAME = {
     if (key === 'wraithx') { f.cloak = 8; f.phase = 8; if (f === me()) say('PHASE', OPS.wraith.col); return true; }
     if (key === 'talonx') { f.volley = { n: 3, t: .35 }; if (f === me()) say('PIERCER', OPS.talon.col); return true; }
     if (key === 'emberx') { K2.bombs.push({ x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, big: true }); return true; }
-    if (key.endsWith('c') || key.startsWith('vanta')) return kitApply2(f, key, d);
+    if (key.endsWith('c') || key.startsWith('vanta') || key.startsWith('tessel')) return kitApply2(f, key, d);
     if (key === 'axiomx') { K2.locks.push({ x: d.x, z: d.z, y: hAt(d.x, d.z), t: 2.5, T: 2.5, R: 14, by: f }); if (me().team !== f.team && Math.hypot(me().x - d.x, me().z - d.z) < 18) say('LOCKDOWN INCOMING', WARN); return true; }
     return false;
   }
@@ -2014,6 +2019,7 @@ const GAME = {
   const LOB_G = 14;
   function kitAim2(f, key, d, S, alt) {
     const e = eyeY(f), lob = (sp, up) => ({ x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + up, vz: d[2] * sp + f.vz * .4 });
+    if (key.startsWith('tessel')) return tesselAim(f, key, d, S, alt);   // (47: Tessel)
     if (key === 'vexc') return lob(alt ? 8 : 15, alt ? 2 : 3);
     if (key === 'talonc') return lob(alt ? 11 : 19, 2);
     if (key === 'axiomc') return lob(alt ? 8 : 14, 3);
@@ -2050,6 +2056,7 @@ const GAME = {
   const duelOk = (a, b) => !a || !b || a === b || (a.duel ? a.duel.id : 0) === (b.duel ? b.duel.id : 0);
   function kitApply2(f, key, d) {
     const K2 = M.kit;
+    if (key.startsWith('tessel')) return tesselApply(f, key, d);   // (47: Tessel)
     if (key === 'vexc' || key === 'talonc' || key === 'axiomc') { K2.lobs.push({ k: key, x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, bounce: key === 'talonc' ? 1 : 0 }); return true; }
     if (key === 'irisc') { if (d.act) { const W = irisEye(f); if (W) { W.act = EYE_ON; W.tick = .15; emit('eyeWake', W); } return true; }
       K2.eyes = K2.eyes.filter(W => W.by !== f); K2.eyes.push({ id: kitId(f, 'c') + ':' + (K2.eyeN = (K2.eyeN || 0) + 1), x: d.x, y: d.y, z: d.z, yaw: d.yaw, act: 0, cd: 0, tick: 0, by: f, seen: 0 }); return true; }   // (it stays, asleep, until woken or shot)
@@ -2149,15 +2156,150 @@ const GAME = {
     for (const f of M.fs) { const D = f.duel; if (!D) continue; const o = D.a === f ? D.b : D.a;
       if (!f.alive || !o || !o.alive || o.gone || f.gone || M.time > D.until || o.duel !== D || M.phase !== 'live') { f.duel = null; if (o && o.duel === D) o.duel = null; emit('duelEnd', D, f.alive ? f : o && o.alive ? o : null); continue; }
       if (!f.net) { const dx = f.x - D.x, dz = f.z - D.z, L = Math.hypot(dx, dz), R2 = D.r - RAD; if (L > R2) { const k = R2 / L, nx = D.x + dx * k, nz = D.z + dz * k; if (!blocked(nx, nz, f.y)) { f.x = nx; f.z = nz; } f.vx *= .3; f.vz *= .3; } } }
+    stepTessel(dt);   // (47: Lightlines, Lull, Glasshouse)
   }
   // where a lobbed thing lands
   function lobLand(B) {
     const K2 = M.kit, x = B.x, z = B.z, y = hAt(x, z);
+    if (B.k.startsWith('tessel')) { tesselLand(B, x, z); return; }   // (47: Bloom and Lull)
     if (B.k === 'vexc') { const G2 = { x, y: Math.max(y, B.y), z, t: 3.5, by: B.by }; K2.glooms.push(G2); emit('gloomPop', G2);
       for (const v of localFs()) { if (!enemyOf(B.by, v)) continue; const d = Math.hypot(v.x - x, v.z - z); if (d > 6 || los(x, G2.y + .4, z, v.x, eyeY(v), v.z, false) < Math.hypot(d, eyeY(v) - G2.y - .4) - .4) continue; v.murk = 3.5; if (v === me()) say('GLOOM', OPS.vex.col); } }
     if (B.k === 'talonc') { emit('shockPop', { x, y: B.y, z, by: B.by });
       for (const v of localFs()) { if (!enemyOf(B.by, v)) continue; const d = Math.hypot(v.x - x, v.y + .9 - B.y, v.z - z); if (d > 3.5 || los(x, B.y + .2, z, v.x, v.y + .9, v.z, false) < d - .5) continue; applyDamage(v, Math.round(45 * cl(1.25 - d / 3.5, .3, 1)), B.by, false, 'shockbolt'); } }
     if (B.k === 'axiomc') { const F = { x, y, z, r: 5, t: 6, T: 6, by: B.by }; K2.fields.push(F); emit('fieldStart', F); }
+  }
+  /* ---------- 47 kit, third part: TESSEL (Architect) ----------
+     Tessel builds the room a fight happens in, out of light.
+       C Bloom: a lobbed seed of light that opens into a 3.4 m globe of glare for 9 s. It blocks sight as a smoke does.
+       Q Lull: a lobbed lens that settles where it lands; for 7 s rivals within 4.5 m of it move at half speed. One bullet
+         from a rival breaks the lens and ends it.
+       E Lightline: a curtain of light drawn from your feet along your aim (up to 20 m, stopping at the first wall), or with
+         the other click across your view (up to 16 m wide). For 14 s it blocks sight both ways, but not bullets and not
+         feet; a rival who walks through it is Lit (shown through walls to Tessel's side) for 2.5 s. It comes back 40 s
+         after it is used.
+       X Glasshouse: a 10 m square of Lightlines rises round the spot you point at (up to 30 m away) for 10 s, and rivals
+         inside it move at half speed.
+     A Lightline is a sheet standing on a line across the floor: sight (los) stops where a ray crosses it, shots go on. Who
+     walks through one is worked out on every device for every fighter, from the line and where they stand, so all agree. */
+  const LINE = { len: 20, wide: 8, h: 3.3, T: 14, lit: 2.5 }, LULL = { r: 4.5, T: 7 }, BLOOM = { R: 3.4, T: 9 }, HOUSE = { half: 5, T: 10, reach: 30 };
+  const finite = v => typeof v === 'number' && isFinite(v);
+  // in-place removal of what has run out (no new array each frame)
+  const keepLive = o => o.t > 0;
+  function prune(a, keep) { let n = 0; for (let i = 0; i < a.length; i++) if (keep(a[i])) a[n++] = a[i]; a.length = n; }
+  // where the ability goes, on the caster's device (the preview draws the same)
+  function tesselAim(f, key, d, S, alt) {
+    const e = eyeY(f), lob = (sp, up) => ({ x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + up, vz: d[2] * sp + f.vz * .4 });
+    if (key === 'tesselc') return lob(alt ? 8 : 15, alt ? 2 : 3);
+    if (key === 'tesselq') return Object.assign(lob(alt ? 8 : 14, 3), { id: f.key + ':' + M.round + ':' + Math.round(M.time * 100) });
+    let hx = d[0], hz = d[2]; const hl = Math.hypot(hx, hz);
+    if (hl < .2) { hx = -Math.sin(f.yaw); hz = -Math.cos(f.yaw); } else { hx /= hl; hz /= hl; }
+    if (key === 'tessele') {
+      if (!alt) {   // along your aim, from your feet to the first wall
+        const ax = f.x + hx * .7, az = f.z + hz * .7, n = Math.max(1.5, Math.min(LINE.len, rayGrid(ax, f.y + 1.7, az, hx, 0, hz, LINE.len) - .15));
+        return { ax: r2(ax), az: r2(az), bx: r2(ax + hx * n), bz: r2(az + hz * n), y: r2(f.y) };
+      }
+      // across your view, where you look (2 to 10 m out), each side running on until a wall
+      const out = Math.max(2, Math.min(10, (S.dist || 10) * Math.max(hl, .2) - .6, rayGrid(f.x, f.y + 1.7, f.z, hx, 0, hz, 10) - .5)), cx = f.x + hx * out, cz = f.z + hz * out, y = hAt(cx, cz), px = -hz, pz = hx;
+      const l1 = Math.max(.5, Math.min(LINE.wide, rayGrid(cx, y + 1.7, cz, px, 0, pz, LINE.wide) - .15)), l2 = Math.max(.5, Math.min(LINE.wide, rayGrid(cx, y + 1.7, cz, -px, 0, -pz, LINE.wide) - .15));
+      return { ax: r2(cx + px * l1), az: r2(cz + pz * l1), bx: r2(cx - px * l2), bz: r2(cz - pz * l2), y: r2(y) };
+    }
+    if (key === 'tesselx') {   // where your aim meets the world (up to 30 m), brought to the floor
+      const L = Math.max(2, Math.min(HOUSE.reach, S.dist || HOUSE.reach) - .3); let x = f.x + d[0] * L, z = f.z + d[2] * L;
+      const [ci, cj] = nearestNav(x, z); if (Math.floor(x / CS) !== ci || Math.floor(z / CS) !== cj) { x = (ci + .5) * CS; z = (cj + .5) * CS; }
+      return { x: r2(x), z: r2(z) };
+    }
+    return undefined;
+  }
+  // a Lightline into the world
+  function addLine(f, ax, az, bx, bz, y, T, low) {
+    const ex = bx - ax, ez = bz - az, L = { ax, az, bx, bz, ex, ez, len2: Math.max(1e-4, ex * ex + ez * ez), y0: y - (low || .25), y1: y + LINE.h, y, t: T, T, by: f, sd: {}, rise: 0 };
+    M.kit.lines.push(L); return L;
+  }
+  // the ability itself, the same on every device (what comes over the network is checked first)
+  function tesselApply(f, key, d) {
+    const K2 = M.kit;
+    if (key === 'tesselc' || key === 'tesselq') {
+      if (![d.x, d.y, d.z, d.vx, d.vy, d.vz].every(finite) || Math.hypot(d.vx, d.vy, d.vz) > 40) return false;
+      K2.lobs.push({ k: key, x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, bounce: 0, id: typeof d.id === 'string' ? d.id.slice(0, 48) : f.key + ':lz' }); return true;
+    }
+    if (key === 'tessele') {
+      if (![d.ax, d.az, d.bx, d.bz, d.y].every(finite) || Math.hypot(d.bx - d.ax, d.bz - d.az) > LINE.len + 1) return false;
+      const L = addLine(f, d.ax, d.az, d.bx, d.bz, d.y, LINE.T); emit('lightline', L, f); return true;
+    }
+    if (key === 'tesselx') {
+      if (![d.x, d.z].every(finite) || d.x < 0 || d.z < 0 || d.x > GW * CS || d.z > GH * CS) return false;
+      const h = HOUSE.half, y = hAt(d.x, d.z), H = { x: d.x, z: d.z, y, half: h, t: HOUSE.T, T: HOUSE.T, by: f, lines: [] };
+      for (const [a, b] of [[[-h, -h], [h, -h]], [[h, -h], [h, h]], [[h, h], [-h, h]], [[-h, h], [-h, -h]]]) H.lines.push(addLine(f, d.x + a[0], d.z + a[1], d.x + b[0], d.z + b[1], y, HOUSE.T, 1.6));
+      for (const L of H.lines) L.house = H;
+      K2.houses.push(H); emit('glasshouse', H, f);
+      if (f === me()) say('GLASSHOUSE', OPS.tessel.col); else if (me().team !== f.team && Math.abs(me().x - d.x) < h + 2 && Math.abs(me().z - d.z) < h + 2) say('GLASSHOUSE: GET OUT', WARN);
+      return true;
+    }
+    return false;
+  }
+  // where a lobbed Bloom or Lull comes down
+  function tesselLand(B, x, z) {
+    const K2 = M.kit, y = hAt(x, z);
+    if (B.k === 'tesselc') { const s = { x, z, y, r: 0, R: BLOOM.R, t: BLOOM.T, T: BLOOM.T, glare: 1 }; M.smokes.push(s); emit('smoke', s); emit('bloomPop', s); }
+    if (B.k === 'tesselq') { const Z = { id: B.id, x, y, z, r: LULL.r, t: LULL.T, T: LULL.T, by: B.by }; K2.lenses.push(Z); emit('lullStart', Z); }
+  }
+  /* sight against Lightlines: how far along the ray (o, d, both 3D, d of length 1) it first crosses one, or tmax. Each line
+     is a sheet over the segment a-b on the floor plan, from y0 to y1 */
+  function lineT(o, d, tmax) {
+    const Ls = M && M.kit && M.kit.lines; if (!Ls || !Ls.length) return tmax; let best = tmax;
+    for (let i = 0; i < Ls.length; i++) { const L = Ls[i], den = d[0] * L.ez - d[2] * L.ex; if (den > -1e-6 && den < 1e-6) continue;
+      const wx = L.ax - o[0], wz = L.az - o[2], t = (wx * L.ez - wz * L.ex) / den; if (t <= 0 || t >= best) continue;
+      const s = (wx * d[2] - wz * d[0]) / den; if (s < 0 || s > 1) continue; const y = o[1] + d[1] * t; if (y < L.y0 || y > L.y + (L.y1 - L.y) * L.rise) continue; best = t; }
+    return best;
+  }
+  // a rival's bullet against a Lull lens: one hit breaks it. Decided on the shooter's device, and told to the others
+  const LZC = [0, 0, 0];
+  function lensShot(f, S) {
+    const Zs = M.kit && M.kit.lenses; if (!Zs || !Zs.length) return false;
+    for (const Z of Zs) { if (!enemyOf(Z.by, f)) continue; LZC[0] = Z.x; LZC[1] = Z.y + .28; LZC[2] = Z.z; const t = raySphere(S.o, S.d, LZC, .3); if (t > 0 && t < S.dist + .25) { breakLens(Z, false); return true; } }
+    return false;
+  }
+  function breakLens(Z, fromNet) { const K2 = M.kit; if (!K2 || Z.down) return; Z.down = true; Z.t = 0; prune(K2.lenses, q => !q.down); emit('lensBreak', Z); if (!fromNet) net({ t: 'lz', id: Z.id }); }
+  function stepTessel(dt) {
+    const K2 = M.kit;
+    // Lightlines: rise, last, and light up a rival who walks through
+    for (const L of K2.lines) {
+      L.t -= dt; L.rise = Math.min(1, L.rise + dt * 4);
+      for (const v of M.fs) {
+        if (!v.alive || !enemyOf(L.by, v)) continue; const px = v.x - L.ax, pz = v.z - L.az, s = (px * L.ex + pz * L.ez) / L.len2;
+        if (s < -.02 || s > 1.02 || v.y + 1.2 < L.y0 || v.y > L.y1) { L.sd[v.key] = 0; continue; }
+        const side = L.ex * pz - L.ez * px > 0 ? 1 : -1, was = L.sd[v.key]; L.sd[v.key] = side;
+        if (was && was !== side) { v.reveal = Math.max(v.reveal, LINE.lit); emit('lit', L, v); if (v === me()) say('LIT: YOU ARE SEEN', WARN); else if (L.by === me()) say('A RIVAL CROSSED YOUR LIGHTLINE', OPS.tessel.col); }
+      }
+    }
+    prune(K2.lines, keepLive);
+    // Lull: rivals near the lens move at half speed (each device for its own fighters)
+    for (const Z of K2.lenses) { Z.t -= dt; for (const v of M.fs) if (!v.net && v.alive && enemyOf(Z.by, v) && Math.hypot(v.x - Z.x, v.z - Z.z) < Z.r && Math.abs(v.y - Z.y) < 2) { if (!(v.slowF > 0) && v === me()) say('LULLED', WARN); v.slowF = .2; } }
+    prune(K2.lenses, keepLive);
+    // Glasshouse: inside the square, rivals move at half speed
+    for (const H of K2.houses) { H.t -= dt; for (const v of M.fs) if (!v.net && v.alive && enemyOf(H.by, v) && Math.abs(v.x - H.x) < H.half && Math.abs(v.z - H.z) < H.half && Math.abs(v.y - H.y) < 3) { if (!(v.slowF > 0) && v === me()) say('SLOWED', WARN); v.slowF = .2; } }
+    prune(K2.houses, keepLive);
+  }
+  // bots: each ability with a reason
+  function tesselBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt, last, roll) {
+    const lobAt = (k, tx, tz) => { const dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 13, .45, 1.1), y0 = eyeY(f) - .1, ty = hAt(tx, tz) + .1;
+      botCast(f, k, { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + LOB_G / 2 * T * T) / T, vz: dz / T, id: f.key + ':' + M.round + ':' + Math.round(M.time * 100) }); };
+    // C Bloom: glare on a spot ahead of a push, or where a rival was last seen
+    if (f.ab.c && !sees && side === 'att' && P.k === 'push' && near < 24 && near > 7 && roll) { const hs = HOLDS.filter(q => q.lane === P.lane || q.lane === 'any'), h = hs.length ? pick(hs) : null; if (h && Math.hypot(h.p[0] - f.x, h.p[1] - f.z) < 22) lobAt('c', h.p[0], h.p[1]); }
+    else if (f.ab.c && last && !sees && dE > 6 && dE < 20 && side === 'def' && roll) lobAt('c', last.x, last.z);
+    // Q Lull: where a rival was heard or seen, or on the charge while it is being defused
+    if (f.ab.q && !sees && ((last && dE > 5 && dE < 18 && roll) || (side === 'att' && M.planted && e && e.defuse > 0))) { const tg = side === 'att' && M.planted && e && e.defuse > 0 ? [M.planted.x, M.planted.z] : [last.x, last.z]; lobAt('q', tg[0], tg[1]); }
+    // E Lightline: cut the sight line to a rival when losing a fight; or draw one along a push to cover a crossing
+    if (f.ab.e) {
+      if (engaged && e && e.alive && f.hp < 60 && dE > 4 && R() < dt * 2) { const mx = (f.x + e.x) / 2, mz = (f.z + e.z) / 2, dx = e.x - f.x, dz = e.z - f.z, L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L, w = 5; botCast(f, 'e', { ax: r2(mx + px * w), az: r2(mz + pz * w), bx: r2(mx - px * w), bz: r2(mz - pz * w), y: r2(hAt(mx, mz)) }); }
+      else if (!sees && side === 'att' && P.k === 'push' && near < 22 && near > 8 && R() < dt * .5) { const tg = siteOfPlan(P, f), dx = tg[0] - f.x, dz = tg[1] - f.z, L = Math.hypot(dx, dz) || 1, hx = dx / L, hz = dz / L, n = Math.max(1.5, Math.min(LINE.len, rayGrid(f.x, f.y + 1.7, f.z, hx, 0, hz, LINE.len) - .15)); botCast(f, 'e', { ax: r2(f.x), az: r2(f.z), bx: r2(f.x + hx * n), bz: r2(f.z + hz * n), y: r2(f.y) }); }
+    }
+  }
+  // the ultimate: on a rival in sight, or over the charge in a retake or after a plant
+  function tesselUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt) {
+    const at = (x, z) => botCast(f, 'x', { x: r2(x), z: r2(z) });
+    if (sees && e && e.alive && dE > 4 && dE < 25 && R() < dt * 1.5) at(e.x, e.z);
+    else if (M.planted && !sees && fresh && R() < dt * .8 && ((P.k === 'retake' && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 26) || (side === 'att' && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 20))) at(M.planted.x, M.planted.z);
   }
   /* ---------- 50 bot: a player with the same body, guns and accuracy rules, and no knowledge it has not earned ----------
      Each tick botThink returns the same intent a person's input would. What a bot knows about its rival is only what it
@@ -2296,6 +2438,7 @@ const GAME = {
       if (f.ab.q && last && !sees && dE < 30 && roll) { const dx = last.x - f.x, dz = last.z - f.z, dy = hAt(last.x, last.z) + 1.1 - ey, L = Math.hypot(dx, dy, dz) || 1; botCast(f, 'q', { x: f.x, y: ey, z: f.z, dx: dx / L, dy: dy / L, dz: dz / L }); }
       if (f.ab.e && (engaged || (sees && dE < 25))) ability(f, 'e');
     }
+    if (f.op === 'tessel') tesselBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt, last, roll);   // (47)
   }
   // use an ability at a chosen place, without having to look there first
   function botCast(f, k, data) { if (!hasAb(f, k) || M.phase !== 'live' || f.lock > 0 || f.chan) return; spendAb(f, k); applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
@@ -2309,6 +2452,7 @@ const GAME = {
     else if (op === 'talon' && fresh && !sees && dE < 40 && Math.abs(angDiff(yawTo(f.x, f.z, B.last.x, B.last.z), f.yaw)) < .1) botCast(f, 'x', {});
     else if (op === 'ember' && fresh && !sees && dE > 6 && dE < 24 && chance) { const tx = B.last.x, tz = B.last.z, dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 14, .5, 1.2), y0 = eyeY(f) - .1, ty = hAt(tx, tz) + .1; botCast(f, 'x', { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + 7 * T * T) / T, vz: dz / T }); }
     else if (op === 'vanta' && sees && e && e.alive && !e.duel && dE < 30 && R() < dt * 2) botCast(f, 'x', { t: e.key, px: e.x, py: e.y, pz: e.z });
+    else if (op === 'tessel') tesselUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);   // (47)
     else if (op === 'axiom' && ((side === 'def' && fresh && dE < 13) || (retake && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 12))) botCast(f, 'x', { x: f.x, z: f.z });
   }
   const magOf = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return A ? A.mag : 0; };
@@ -2596,6 +2740,7 @@ const GAME = {
       case 'orb': takeOrb(m.i | 0, F); break;   // someone took an ultimate orb
       case 'kx': kitTrip(m.id, m.v, true); break;   // a snare or mine went off on the victim's device
       case 'ed': { const W = M.kit && M.kit.eyes.find(q => q.id === m.id); if (W) breakEye(W, true); break; }   // someone shot out a Watcher
+      case 'lz': { const Z = typeof m.id === 'string' && M.kit && M.kit.lenses && M.kit.lenses.find(q => q.id === m.id); if (Z) breakLens(Z, true); break; }   // someone shot out a Lull lens
       case 'kd': { const s2 = M.kit && M.kit.sentries.find(q => q.id === m.id); if (s2) hurtSentry(s2, m.d, true); break; }   // someone shot a sentry
       case 'nd': F.smokes = Math.max(0, (F.smokes || 0) - 1); F.throwT = .6; addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); emit('throw', F); break;
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;
@@ -4127,6 +4272,7 @@ const GAME = {
     ember: { suit: '#3a2620', plate: '#7a3e22', cloth: '#ff7a2f', skin: '#d8a07a', wide: 1.02 },
     axiom: { suit: '#25303e', plate: '#d9dde3', cloth: '#5aa0ff', skin: '#8a5a3c', wide: 1.05 },
     vanta: { suit: '#1a1522', plate: '#3a2f4a', cloth: '#e25cff', skin: '#c89478', wide: .97 },
+    tessel: { suit: '#2b2430', plate: '#ebe2e8', cloth: '#ff9ec7', skin: '#a8705a', wide: .97 },
   };
   // the agents' materials: fabric with a woven grain, armour plates with panel lines and worn edges, skin, rubber and
   // trim, all lit by the map's reflections. Made once per operative and shared by every copy.
@@ -4221,6 +4367,8 @@ const GAME = {
       else if (f.op === 'ember') { for (const sx of [-1, 1]) { add(cyl(.065, .065, .34, 12), M.plate, sx * .075, .37, .2); add(sph(.065, 12, 8), M.plate, sx * .075, .54, .2); } add(new THREE.TorusGeometry(.12, .015, 6, 16, Math.PI), M.dark, 0, .55, .25, 0, 0, 0); add(rb(.05, .04, .02, .01), M.glow, 0, .3, .27); }
       else if (f.op === 'vanta') { add(cyl(.12, .12, .045, 6), M.plate, 0, .4, .19, Math.PI / 2); add(cyl(.062, .062, .05, 6), M.glow, 0, .4, .2, Math.PI / 2); add(rb(.05, .62, .014, .02), M.cloth, .06, .25, .17, 0, 0, .38);   // a hex emitter on the back, a sash across it
         add(cyl(.13, .11, .06, 6), M.plate, -.29 * w, .6, 0, 0, 0, .55); add(cyl(.135, .135, .012, 6, 1, true), M.glow, -.29 * w, .6, 0, 0, 0, .55); }   // one heavy hex plate on the left shoulder
+      else if (f.op === 'tessel') { add(rb(.2, .32, .1, .03), M.plate, 0, .37, .2); add(rb(.022, .26, .012, .006), M.glow, 0, .37, .256); add(rb(.16, .02, .012, .006), M.glow, 0, .5, .256);   // a slim projector on the back, a line of light down it
+        for (const sx of [-1, 1]) { add(cyl(.014, .014, .1, 8), M.dark, sx * .07, .565, .2); add(new THREE.OctahedronGeometry(.026), M.glow, sx * .07, .635, .2); } }   // and two short pylons tipped with diamonds of light
       else if (f.op === 'axiom') { add(rb(.26, .3, .14, .035), M.suit, 0, .37, .2); add(rb(.2, .06, .02, .01), M.glow, 0, .44, .275); add(cyl(.008, .008, .36, 6), M.dark, -.09, .66, .22); add(sph(.018, 8, 6), M.glow, -.09, .845, .22); }
     }
     // coat tails that swing as they run (Vex only)
@@ -4230,8 +4378,9 @@ const GAME = {
     // a head with a face: a skull a little taller than it is wide, ears, brows over dark eyes, a nose, and a gaiter pulled up
     // over the jaw and neck (each operative's own mask, visor or helmet goes on top)
     add(sph(.124, 16, 12), M.skin).scale.set(.95, 1.06, 1); add(new THREE.SphereGeometry(.131, 16, 8, 0, TAU, Math.PI * .57, Math.PI * .43), M.suit).scale.set(.96, 1.06, 1.01);
-    add(rb(.075, .05, .03, .016), M.dark, 0, -.068, -.116); const faceless = ['vex', 'bastion', 'wraith', 'vanta'].includes(f.op); if (!faceless) add(sph(.02, 8, 6), M.skin, 0, -.014, -.121).scale.set(.75, 1.1, 1);   // (not under a hood, a helm or a mask)
-    for (const sx of [-1, 1]) { if (f.op !== 'vanta') { add(rb(.036, .014, .012, .005), M.dark, sx * .043, .012, -.112, 0, sx * -.3); add(rb(.044, .01, .014, .004), M.suit, sx * .043, .03, -.113, 0, sx * -.3, sx * -.1); } add(sph(.022, 8, 6), M.skin, sx * .116, -.002, .004).scale.set(.45, 1, .75); }   // (Vanta's sealed helm: no eyes or brows under it)
+    if (f.op !== 'tessel') add(rb(.075, .05, .03, .016), M.dark, 0, -.068, -.116);   // (a mouth, unless the helm is sealed)
+    const faceless = ['vex', 'bastion', 'wraith', 'vanta', 'tessel'].includes(f.op); if (!faceless) add(sph(.02, 8, 6), M.skin, 0, -.014, -.121).scale.set(.75, 1.1, 1);   // (not under a hood, a helm or a mask)
+    for (const sx of [-1, 1]) { if (f.op !== 'vanta' && f.op !== 'tessel') { add(rb(.036, .014, .012, .005), M.dark, sx * .043, .012, -.112, 0, sx * -.3); add(rb(.044, .01, .014, .004), M.suit, sx * .043, .03, -.113, 0, sx * -.3, sx * -.1); } add(sph(.022, 8, 6), M.skin, sx * .116, -.002, .004).scale.set(.45, 1, .75); }   // (Vanta's sealed helm: no eyes or brows under it)
     if (f.op === 'vex') {
       add(new THREE.SphereGeometry(.16, 18, 12, 0, TAU, 0, Math.PI * .64), M.cloth, 0, .012, .018); add(new THREE.TorusGeometry(.128, .024, 8, 20), M.cloth, 0, .0, -.05, .12); add(new THREE.ConeGeometry(.09, .16, 10), M.cloth, 0, .06, .16, 1.9);
       add(rb(.19, .034, .03, .012), M.glow, 0, .012, -.118); add(new THREE.TorusGeometry(.105, .042, 8, 18), M.cloth, 0, -.125, .0, Math.PI / 2);
@@ -4252,6 +4401,12 @@ const GAME = {
     } else if (f.op === 'ember') {   // a respirator with two filters and a crest of flame
       add(rb(.17, .09, .085, .03), M.dark, 0, -.06, -.1); for (const sx of [-1, 1]) add(cyl(.032, .036, .045, 10), M.plate, sx * .072, -.07, -.138, Math.PI / 2);
       for (let i = 0; i < 5; i++) add(new THREE.ConeGeometry(.034, .15, 6), M.glow, 0, .13 + (2 - Math.abs(i - 2)) * .022, -.09 + i * .045, -.25 + i * .12);
+    } else if (f.op === 'tessel') {   // a smooth porcelain helm sealed all round, a dark band at the eyes, a line of light down its face, a diamond frame of light behind
+      add(sph(.158, 22, 16), M.plate, 0, .012, .004).scale.set(.98, 1.06, 1.05);
+      add(new THREE.CylinderGeometry(.163, .163, .036, 22, 1, true, Math.PI - .8, 1.6), M.dark, 0, .012, .004).scale.set(.98, 1, 1.05);
+      { const vg = new THREE.TorusGeometry(.163, .009, 6, 20, 1.25); vg.rotateZ(-.7); vg.rotateY(Math.PI / 2); add(vg, M.glow, 0, .012, .004).scale.set(.98, 1.06, 1.05); }   // (bent to the helm: from the chin up over the brow)
+      const dR = .12; for (const [mx, my, rz] of [[1, 1, -1], [-1, 1, 1], [1, -1, 1], [-1, -1, -1]]) add(new THREE.BoxGeometry(dR * Math.SQRT2, .012, .012), M.glow, mx * dR / 2, .07 + my * dR / 2, .215, 0, 0, rz * Math.PI / 4);
+      add(new THREE.OctahedronGeometry(.022), M.glow, 0, .07, .215);
     } else if (f.op === 'axiom') {   // an engineer's hard hat with a lamp and a glowing visor
       add(turn([[0, .175], [.11, .165], [.155, .1], [.165, .03], [.2, .005], [.2, -.008], [0, -.008]], 18), M.plate, 0, .018, 0); add(rb(.23, .045, .03, .012), M.glow, 0, -.008, -.128);
       add(cyl(.028, .028, .03, 10), M.dark, 0, .16, -.12, Math.PI / 2); add(sph(.02, 8, 6), M.glow, 0, .16, -.137);
@@ -7089,7 +7244,7 @@ const GAME = {
         A.visible = seen; } }
     // smokes, Rampart walls, the charge, a flare in flight
     while (X.smokes.length < M.smokes.length) addSmoke();
-    X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { const mt = s.heat ? X.smokeHM : s.grey ? X.smokeGM : X.smokeM; if (g.children[0].material !== mt) for (const c of g.children) c.material = mt; g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
+    X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { const mt = s.heat ? X.smokeHM : s.glare ? X.smokeLM || X.smokeM : s.grey ? X.smokeGM : X.smokeM; if (g.children[0].material !== mt) for (const c of g.children) c.material = mt; g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
     const NS = M.nades || []; while (X.nadeObjs.length < NS.length) { const o = X.nadeMk(); X.scene.add(o); X.nadeObjs.push(o); }
     X.nadeObjs.forEach((o, i) => { const n = NS[i]; o.visible = !!n; if (n) { o.position.set(n.x, n.y, n.z); o.rotation.set(n.spin, n.spin * .6, 0); } });
     while (X.walls.length < M.walls.length) addWall();
@@ -7836,15 +7991,17 @@ const GAME = {
     K.bursts = [];
     // other players' readied abilities: a glow in the hand
     K.rdy = []; for (let i = 0; i < 6; i++) K.rdy.push(add(sprite('#ffffff', .4)));
+    buildKitFx3();   // (79-kitfx3: Tessel)
   }
   // a burst: kind 'ring' | 'shell' | 'pillar', where, colour, size, how long
   function burst(kind, x, y, z, col, r, T, h) { const K = X && X.kf2; if (!K) return; K.bursts.push({ kind, x, y, z, col, r, T, t: 0, h: h || 3 }); }
   // the preview for a readied ability: what kind, and where (from the same sums the ability uses)
   const PV = { vexe: 'spot', irise: 'mark', vexx: 'spot', axiomx: 'self', bastionq: 'wall', embere: 'haze', talone: 'floor', axiomq: 'floor', axiome: 'floor', bastionc: 'floor', wraithc: 'floor',
-    emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'zone', wraithe: 'run' };
-  const PV_R = { vexe: 3.8, vexx: 1, axiomx: 14, emberq: 3.2, emberx: 5.5, vexc: 6, talonc: 3.5, axiomc: 5, wraithe: 1.2, talone: 1.3, axiomq: .6, axiome: 2.2, bastionc: 6, wraithc: .5, novae: 4.5 };
+    emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'zone', wraithe: 'run',
+    tesselc: 'lob', tesselq: 'lob', tessele: 'line', tesselx: 'house' };
+  const PV_R = { vexe: 3.8, vexx: 1, axiomx: 14, emberq: 3.2, emberx: 5.5, vexc: 6, talonc: 3.5, axiomc: 5, wraithe: 1.2, talone: 1.3, axiomq: .6, axiome: 2.2, bastionc: 6, wraithc: .5, novae: 4.5, tesselc: 3.4, tesselq: 4.5 };
   function previewFrame(P) {
-    const K = X.kf2; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false;
+    const K = X.kf2; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false; hidePreviewTessel();
     if (!P || !P.alive || !P.rdy || P.net) return; const key = P.op + P.rdy, kind = PV[key]; if (!kind) return;
     const d = abData(P, P.rdy, false), col = (OPS[P.op] || OPS.vex).col, pulse = .75 + .25 * Math.sin(X.t * 6), R = PV_R[key] || 1;
     const ring = (x, y, z, r, bad) => { K.pvRing.visible = K.pvDisc.visible = true; K.pvRing.position.set(x, y + .04, z); K.pvDisc.position.set(x, y + .035, z); K.pvRing.scale.setScalar(r); K.pvDisc.scale.setScalar(r); K.pvRing.material.color.set(bad ? WARN : col); K.pvDisc.material.color.set(bad ? WARN : col); K.pvRing.material.opacity = .95 * pulse; K.pvRing.rotation.z = X.t * .5; };
@@ -7865,6 +8022,7 @@ const GAME = {
       let cx, cz, w, h = 3, ax; if (kind === 'wall') { cx = d.x; cz = d.z; ax = d.ax; w = 5.2; } else if (kind === 'haze') { cx = d.x; cz = d.z; ax = Math.abs(d.pz) > Math.abs(d.px) ? 1 : 0; w = 9.4; h = 2.6; } else { cx = d.x + (d.ax ? d.dir * 1.2 : 0); cz = d.z + (d.ax ? 0 : d.dir * 1.2); ax = d.ax; w = 6; }
       K.pvWall.visible = true; K.pvWall.position.set(cx, hAt(cx, cz) + h / 2, cz); K.pvWall.scale.set(ax ? .12 : w, h, ax ? w : .12); K.pvWall.material.uniforms.col.value.set(col); K.pvWall.material.uniforms.op.value = .45 + .15 * pulse;
       if (kind === 'front') { const L = 14, ex = cx + (d.ax ? d.dir * L : 0), ez = cz + (d.ax ? 0 : d.dir * L); K.pvBeam.visible = true; K.pvBeam.position.set(cx, hAt(cx, cz) + .05, cz); K.pvBeam.lookAt(ex, hAt(cx, cz) + .05, ez); K.pvBeam.scale.set(3, 3, L); K.pvBeam.material.color.set(col); K.pvBeam.material.opacity = .45; } }
+    else if (kind === 'line' || kind === 'house') previewTessel(P, d, kind, col, pulse);
     else if (kind === 'curve') { const pos = K.pvArc.geometry.attributes.position, e = eyeY(P); for (let i = 0; i < 40; i++) { const q = i / 39, a = Math.min(1, q * 2), b = Math.max(0, q * 2 - 1); pos.setXYZ(i, lp(P.x, d.ax, a) + (d.x - d.ax) * b, e + .3 * q, lp(P.z, d.az, a) + (d.z - d.az) * b); } pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); K.pvMark.visible = true; K.pvMark.position.set(d.x, d.y, d.z); K.pvMark.material.color.set('#fff6d6'); }
     else if (kind === 'run') { const pos = K.pvArc.geometry.attributes.position, e = P.y + .08; let x = d.x, z = d.z, n = 0; for (let s = 0; s < 40; s++) { const nx = x + d.dx * .55, nz = z + d.dz * .55; if (blocked(nx, nz, P.y)) break; x = nx; z = nz; pos.setXYZ(n++, x, hAt(x, z) + .08, z); } for (let i = n; i < 40; i++) pos.setXYZ(i, x, hAt(x, z) + .08, z); pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); ring(x, hAt(x, z), z, .6); }   // Mirage: where the copy will run
     else if (kind === 'zone') { ring(d.px, d.py, d.pz, 5, !d.t); if (d.t && M.byKey[d.t]) { const v = M.byKey[d.t]; K.pvMark.visible = true; K.pvMark.position.set(ipos(v, 'x'), ipos(v, 'y') + 2.3, ipos(v, 'z')); K.pvMark.material.color.set(col); K.pvMark.scale.setScalar(.45 * pulse + .25); } }   // (Duel Field: the circle it opens, and whoever it would take)
@@ -7922,8 +8080,9 @@ const GAME = {
       if (k > 0) { if (!X.murkBase) X.murkBase = { near: fog.near, far: fog.far, col: fog.color.clone(), bg: X.scene.background && X.scene.background.isColor ? X.scene.background.clone() : null };
         const B = X.murkBase, dark = new THREE.Color('#0c0714'); fog.near = lp(B.near, 1.2, k); fog.far = lp(B.far, 7, k); fog.color.copy(B.col).lerp(dark, k); if (B.bg) X.scene.background.copy(B.bg).lerp(dark, k); }
       else if (X.murkBase) { const B = X.murkBase; fog.near = B.near; fog.far = B.far; fog.color.copy(B.col); if (B.bg) X.scene.background.copy(B.bg); X.murkBase = null; } }
+    kitFx3(dt);   // (79-kitfx3: Tessel)
   }
-  function hideKitFx2() { const K = X && X.kf2; if (!K) return; for (const k of ['fronts', 'domes', 'fields', 'hexes', 'wards', 'lobs', 'glooms', 'eyes', 'anchors', 'sunders', 'beams', 'flights', 'bRings', 'bShells', 'bPillars', 'rdy']) for (const m of K[k]) m.visible = false; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false; K.bursts = []; }
+  function hideKitFx2() { const K = X && X.kf2; if (!K) return; for (const k of ['fronts', 'domes', 'fields', 'hexes', 'wards', 'lobs', 'glooms', 'eyes', 'anchors', 'sunders', 'beams', 'flights', 'bRings', 'bShells', 'bPillars', 'rdy']) for (const m of K[k]) m.visible = false; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false; K.bursts = []; hideKitFx3(); }
   // the moments
   const fxOk = () => X && ready && X.kf2 && M;
   const OPC = op => (OPS[op] || OPS.vex).col;
@@ -7959,6 +8118,83 @@ const GAME = {
   on('flarePop', fl => { if (fxOk()) burst('shell', fl.x, fl.y, fl.z, '#fff6d6', 2.2, .3); });
   // a bullet into Phase Front: the wall ripples
   on('shot', (f, S) => { if (!fxOk() || !S || S.hit) return; for (const g of X.kf2.fronts) if (g.visible && Math.abs(g.position.x - S.end[0]) < 3.2 && Math.abs(g.position.z - S.end[2]) < 3.2 && S.end[1] - g.position.y < 3.1) { g.userData.m.material.uniforms.pulse.value = .5; for (let i = 0; i < 4; i++) spark(S.end, [rnd(-1, 1), rnd(-1, 1), rnd(-1, 1)], OPS.vanta.col, .25); } });
+  /* ---------- 79 kit effects, third part: TESSEL ----------
+     LIGHTLINE: a curtain of rose light standing on a line across the floor: a bright body (so you cannot see through it),
+     the energy lattice climbing it, a hot edge along its foot and its top. It rises in a quarter second and thins out over
+     its last half second. LULL: a glass lens on the floor in a field whose ripples run inward to it. GLASSHOUSE: its four
+     walls are Lightlines; the floor inside glows. BLOOM: a cloud of glare (78-fx draws the cloud; here, its glow).
+     Everything is made once (buildKitFx3) and pooled; nothing is made in a frame. */
+  function buildKitFx3() {
+    const K = X.kf2, col = OPS.tessel.col, add = o => { X.scene.add(o); o.visible = false; return o; };
+    const basic = (c, o) => new THREE.MeshBasicMaterial(Object.assign({ color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }, o || {}));
+    const flat = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.rotation.x = -Math.PI / 2; return m; };
+    const K3 = X.kf3 = {};
+    // the body of a curtain: rose light, brightest at the foot, nearly opaque all the way up
+    const bodyT = canvasTex(8, 128, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,206,230,.95)'); gr.addColorStop(.75, 'rgba(255,160,204,.97)'); gr.addColorStop(1, 'rgba(255,232,244,.99)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+    const sheet = new THREE.PlaneGeometry(1, 1); sheet.translate(.5, .5, 0);
+    const edgeG = new THREE.BoxGeometry(1, .04, .04); edgeG.translate(.5, 0, 0);
+    K3.lines = []; for (let i = 0; i < 10; i++) { const g = new THREE.Group(), s = new THREE.Group(), body = new THREE.Mesh(sheet, new THREE.MeshBasicMaterial({ map: bodyT, color: '#ffffff', transparent: true, opacity: 1, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })),
+      lat = new THREE.Mesh(sheet, energyMat(col, { hex: 4, scan: 1, rim: 0, base: .05, rx: 4, ry: 1 })), top = new THREE.Mesh(edgeG, basic('#ffffff')), foot = new THREE.Mesh(edgeG, basic(col, { opacity: .95 }));
+      lat.position.z = .01; s.add(body, lat); g.add(s, top, foot); foot.position.y = .03; g.userData = { s, body, lat, top, foot }; K3.lines.push(add(g)); }
+    // Lull: the lens, a ring round it, a field disc and two ripples running in
+    K3.lenses = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), lens = new THREE.Mesh(new THREE.SphereGeometry(.24, 18, 10), new THREE.MeshBasicMaterial({ color: '#ffc4de', toneMapped: false })), beam = new THREE.Mesh(new THREE.CylinderGeometry(.03, .06, 2.2, 8, 1, true), basic(col, { opacity: .55 })), ring = new THREE.Mesh(new THREE.TorusGeometry(.25, .025, 6, 28), basic(col)),
+      disc = flat(new THREE.CircleGeometry(1, 48), energyMat('#ffc2dd', { hex: 6, rim: 0, base: .1 })), rim = flat(new THREE.RingGeometry(.965, 1, 56), basic('#ffd6ea', { opacity: .85 })), rip = [0, 1].map(() => flat(new THREE.RingGeometry(.94, 1, 48), basic(col, { opacity: .6 }))), halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: K.glowT, color: col, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+      lens.scale.set(1, .45, 1); lens.position.y = .28; beam.position.y = 1.4; ring.rotation.x = Math.PI / 2; ring.position.y = .28; disc.position.y = .04; rim.position.y = .05; halo.position.y = .3; halo.scale.setScalar(1.6); for (const r of rip) r.position.y = .045;
+      g.add(lens, beam, ring, disc, rim, halo, ...rip); g.userData = { lens, beam, ring, disc, rim, rip, halo }; K3.lenses.push(add(g)); }   // (a thin beam over the lens, so it can be found and shot)
+    // Glasshouse: the glowing floor inside
+    K3.floors = []; for (let i = 0; i < 2; i++) { const m = flat(new THREE.PlaneGeometry(1, 1), energyMat(col, { hex: 8, rim: 0, base: .08, rx: 3, ry: 3 })); K3.floors.push(add(m)); }
+    // Bloom: a soft glow inside the glare cloud
+    K3.glares = []; for (let i = 0; i < 4; i++) K3.glares.push(add(new THREE.Sprite(new THREE.SpriteMaterial({ map: K.glowT, color: '#ffd0e6', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, opacity: .55 }))));
+    X.smokeLM = new THREE.MeshLambertMaterial({ color: '#ffd8ea', emissive: '#e07aa8', emissiveIntensity: .7, transparent: true, opacity: .95, depthWrite: false });   // (78-fx dresses a glare cloud in this)
+    // previews: a ghost of the curtain, and the Glasshouse's square
+    K3.pvLine = add(new THREE.Group()); { const s = new THREE.Mesh(sheet, energyMat('#ffffff', { hex: 4, op: .5, scan: 1, rim: 0, base: .14, rx: 4 })), f = new THREE.Mesh(edgeG, basic('#ffffff', { opacity: .9 })); f.position.y = .04; K3.pvLine.add(s, f); K3.pvLine.userData = { s, f }; }
+    K3.pvSquare = add(flat(new THREE.RingGeometry(.97, 1, 4, 1), basic('#ffffff', { opacity: .9, blending: THREE.NormalBlending }))); K3.pvSquare.rotation.z = Math.PI / 4;
+  }
+  // place a curtain (a group whose +x runs from a to b) on a line
+  function setLine(g, ax, az, bx, bz, y, h) { const len = Math.hypot(bx - ax, bz - az); g.position.set(ax, y, az); g.rotation.y = Math.atan2(-(bz - az), bx - ax); return len; }
+  // the preview while Lightline or Glasshouse is ready (from the same sums as the ability)
+  function previewTessel(P, d, kind, col, pulse) {
+    const K3 = X.kf3; if (!K3) return;
+    if (kind === 'line') { const g = K3.pvLine, len = setLine(g, d.ax, d.az, d.bx, d.bz, d.y, LINE.h), u = g.userData; g.visible = true; u.s.scale.set(len, LINE.h * (.92 + .08 * pulse), 1); u.f.scale.x = len;
+      u.s.material.uniforms.col.value.set(col); u.s.material.uniforms.op.value = .38 + .12 * pulse; u.s.material.uniforms.rep.value.set(len / 2.5, LINE.h / 2.5); u.f.material.color.set(col); }
+    else if (kind === 'house') { const m = K3.pvSquare, y = hAt(d.x, d.z); m.visible = true; m.position.set(d.x, y + .05, d.z); m.scale.setScalar(HOUSE.half * Math.SQRT2); m.material.color.set(col); m.material.opacity = .9 * pulse;
+      const K = X.kf2; K.pvDisc.visible = true; K.pvDisc.position.set(d.x, y + .04, d.z); K.pvDisc.scale.setScalar(.6); K.pvDisc.material.color.set(col); }
+  }
+  function hidePreviewTessel() { const K3 = X.kf3; if (K3) K3.pvLine.visible = K3.pvSquare.visible = false; }
+  function kitFx3(dt) {
+    const K3 = X.kf3, K2 = M.kit; if (!K3 || !K2) return;
+    // Lightlines (a Glasshouse's walls among them)
+    const Ls = K2.lines || [];
+    for (let i = 0; i < K3.lines.length; i++) { const g = K3.lines[i], L = Ls[i]; g.visible = !!L; if (!L) continue; const u = g.userData, len = setLine(g, L.ax, L.az, L.bx, L.bz, L.y0, 0), H = L.y - L.y0 + (L.y1 - L.y) * L.rise, fade = Math.min(1, L.t / .5), hot = (L.pulseT || 0) > X.t ? (L.pulseT - X.t) / .5 : 0;
+      u.s.scale.set(len, Math.max(.01, H), 1); u.top.position.y = H; u.top.scale.x = u.foot.scale.x = len; u.foot.position.y = L.y - L.y0 + .03;
+      u.body.material.opacity = fade; u.lat.material.uniforms.op.value = fade; u.lat.material.uniforms.pulse.value = hot * .6; u.lat.material.uniforms.rep.value.set(len / 2.5, H / 2.5); u.top.material.opacity = u.foot.material.opacity = fade; }
+    // Lull lenses
+    const Zs = K2.lenses || [];
+    for (let i = 0; i < K3.lenses.length; i++) { const g = K3.lenses[i], Z = Zs[i]; g.visible = !!Z; if (!Z) continue; const u = g.userData, k = Math.min(1, (Z.T - Z.t) / .3) * Math.min(1, Z.t / .5);
+      g.position.set(Z.x, Z.y, Z.z); u.disc.scale.setScalar(Z.r * k); u.rim.scale.setScalar(Z.r * k); u.disc.material.uniforms.op.value = .8 * k; u.rim.material.opacity = .8 * k; u.ring.rotation.z = X.t * 1.5; u.lens.rotation.y = X.t * .8; u.halo.material.opacity = .6 + .25 * Math.sin(X.t * 3); u.beam.material.opacity = (.4 + .15 * Math.sin(X.t * 4)) * k;
+      for (let j = 0; j < 2; j++) { const q = ((X.t * .55 + j * .5) % 1), r = u.rip[j]; r.scale.setScalar(Math.max(.05, Z.r * k * (1 - q))); r.material.opacity = .55 * k * Math.sin(q * Math.PI); } }   // (the ripples run in: everything here slows to the lens)
+    // the Glasshouse's floor
+    const Hs = K2.houses || [];
+    for (let i = 0; i < K3.floors.length; i++) { const m = K3.floors[i], H = Hs[i]; m.visible = !!H; if (!H) continue; const k = Math.min(1, (H.T - H.t) / .4) * Math.min(1, H.t / .5); m.position.set(H.x, H.y + .04, H.z); m.scale.set(H.half * 2, H.half * 2, 1); m.material.uniforms.op.value = .55 * k; }
+    // Bloom's glow, inside each glare cloud
+    let n = 0; for (const s of M.smokes) { if (!s.glare || n >= K3.glares.length) continue; const sp = K3.glares[n++]; sp.visible = true; sp.position.set(s.x, s.y + 1.4, s.z); sp.scale.setScalar(s.r * 2.6); sp.material.opacity = .5 + .1 * Math.sin(X.t * 2 + n); }
+    for (; n < K3.glares.length; n++) K3.glares[n].visible = false;
+  }
+  function hideKitFx3() { const K3 = X && X.kf3; if (!K3) return; for (const k of ['lines', 'lenses', 'floors', 'glares']) for (const m of K3[k]) m.visible = false; hidePreviewTessel(); }
+  // the moments
+  const fx3 = () => X && ready && X.kf3 && M;
+  on('lightline', L => { if (!fx3()) return; const c = OPS.tessel.col; burst('ring', L.ax, L.y, L.az, c, 1.6, .45); burst('ring', L.bx, L.y, L.bz, c, 1.6, .45);
+    for (let i = 0; i < 16; i++) { const q = i / 15; spark([lp(L.ax, L.bx, q), L.y + .1, lp(L.az, L.bz, q)], [rnd(-.4, .4), rnd(2, 5), rnd(-.4, .4)], i % 2 ? '#ffffff' : c, .6); } });
+  on('glasshouse', H => { if (!fx3()) return; const c = OPS.tessel.col; burst('shell', H.x, H.y + 1, H.z, c, H.half * 1.3, .6); burst('ring', H.x, H.y, H.z, '#ffffff', H.half * 1.5, .7); X.shake = Math.max(X.shake || 0, .2); });
+  on('bloomPop', s => { if (!fx3()) return; burst('shell', s.x, s.y + 1.3, s.z, '#ffe0ee', 3.6, .4); burst('ring', s.x, s.y, s.z, OPS.tessel.col, 4, .5); X.flashL.position.set(s.x, s.y + 1.4, s.z); X.flashL.intensity = 10;
+    for (let i = 0; i < 18; i++) spark([s.x, s.y + 1.3, s.z], [rnd(-5, 5), rnd(-1, 5), rnd(-5, 5)], i % 3 ? '#fff4fa' : OPS.tessel.col, .5); });
+  on('lullStart', Z => { if (!fx3()) return; burst('ring', Z.x, Z.y, Z.z, OPS.tessel.col, Z.r, .5); burst('shell', Z.x, Z.y + .3, Z.z, '#ffd6ea', 1.2, .35); });
+  on('lensBreak', Z => { if (!fx3()) return; burst('shell', Z.x, Z.y + .3, Z.z, '#ffffff', 1.4, .3); for (let i = 0; i < 22; i++) spark([Z.x, Z.y + .3, Z.z], [rnd(-4, 4), rnd(1, 5), rnd(-4, 4)], i % 2 ? '#ffffff' : OPS.tessel.col, .5); });
+  on('lit', (L, v) => { L.pulseT = X ? X.t + .5 : 0; if (!fx3()) return; burst('shell', v.x, v.y + 1.1, v.z, OPS.tessel.col, 1.3, .45); burst('ring', v.x, v.y, v.z, '#ffffff', 1.4, .4); });
+  // a bullet through a Lightline: a spray of light where it passed
+  const SH3 = [0, 0, 0];
+  on('shot', (f, S) => { if (!fx3() || !S || !M.kit || !M.kit.lines || !M.kit.lines.length) return; const t = lineT(S.o, S.d, S.dist); if (t >= S.dist) return;
+    SH3[0] = S.o[0] + S.d[0] * t; SH3[1] = S.o[1] + S.d[1] * t; SH3[2] = S.o[2] + S.d[2] * t; for (let i = 0; i < 3; i++) spark(SH3, [rnd(-1, 1), rnd(-.5, 1.5), rnd(-1, 1)], i ? OPS.tessel.col : '#ffffff', .3); });
   /* ---------- 80 audio: every sound is synthesised, and placed ----------
      A sound made by the rival is quieter with distance, panned left or right by where it is relative to your facing, and
      muffled when a wall is in the way, so footsteps and gunfire tell you where they are. Your own sounds play dead centre.
@@ -8216,6 +8452,11 @@ const GAME = {
     if (key === 'vantaq') { tone(o, 1800, .25, 'sawtooth', .07, -1500); hiss(o, .2, .14, 'highpass', 2500); return; }
     if (key === 'vantae') { tone(o, 440, .4, 'triangle', .09, 440); tone(o, 880, .3, 'sine', .06, 0, .15); return; }
     if (key === 'vantax') { tone(o, 90, 1.2, 'sawtooth', .16, -40); tone(o, 1200, .5, 'sine', .1, -900); hiss(o, 1, .14, 'bandpass', 500); return; }
+    // Tessel: glass and light. A soft toss for Bloom and Lull, a rising shimmer for Lightline, a chord for Glasshouse
+    if (key === 'tesselc') { hiss(o, .16, .1, 'bandpass', 2200); tone(o, 1320, .18, 'sine', .05, 400, .02); return; }
+    if (key === 'tesselq') { hiss(o, .14, .1, 'bandpass', 1600); tone(o, 2100, .12, 'triangle', .04, -300); tone(o, 2800, .1, 'sine', .03, 0, .06); return; }
+    if (key === 'tessele') { tone(o, 392, .7, 'sine', .08, 392); tone(o, 587, .6, 'sine', .05, 587, .08); hiss(o, .6, .05, 'highpass', 5000, .05); return; }
+    if (key === 'tesselx') { for (const [q, dl] of [[262, 0], [330, .06], [392, .12], [523, .2]]) tone(o, q, 1.3, 'sine', .07, 0, dl); tone(o, 65, 1.2, 'triangle', .14, -10); hiss(o, 1, .06, 'highpass', 6000, .1); return; }
     if (key === 'vexq') tone(o, 500, .16, 'sine', .14, 1100); else if (key === 'vexe') hiss(o, .5, .2, 'lowpass', 500);
     else if (key === 'irisq') { tone(o, 1300, .25, 'sine', .12, -700); tone(o, 1300, .25, 'sine', .08, -700, .18); } else if (key === 'irise') hiss(o, .08, .12, 'highpass', 1800);
     else if (key === 'bastionq') { tone(o, 80, .35, 'sawtooth', .16, 90); hiss(o, .3, .14, 'lowpass', 600); }
@@ -8246,6 +8487,11 @@ const GAME = {
   cue('wardOn', f => { if (f === me()) { const o = outFor(null); tone(o, 700, .2, 'triangle', .1, 500); tone(o, 1400, .25, 'sine', .06, 0, .08); } });
   cue('wardBreak', () => { const o = outFor(null); hiss(o, .2, .2, 'highpass', 3000); tone(o, 900, .2, 'square', .06, -500); });
   cue('duelStart', D => { const o = outFor(null); tone(o, 70, 1.4, 'sawtooth', .18, -30); tone(o, 300, .8, 'sine', .08, -150, .1); hiss(o, 1, .12, 'bandpass', 400); });
+  cue('bloomPop', s => { const o = outFor(at(s.x, s.y + 1.4, s.z), 1.2); tone(o, 1568, .6, 'sine', .07, -200); tone(o, 2093, .5, 'sine', .04, 0, .04); hiss(o, .6, .12, 'highpass', 4000); });
+  cue('lullStart', Z => { const o = outFor(at(Z.x, Z.y + 1, Z.z)); tone(o, 880, 1.1, 'sine', .07, -560); tone(o, 1320, .9, 'sine', .03, -840, .1); });   // (a note that sags: everything near it slows)
+  cue('lensBreak', Z => { const o = outFor(at(Z.x, Z.y + 1, Z.z)); hiss(o, .25, .25, 'highpass', 5000); tone(o, 3200, .08, 'square', .04, -1200); tone(o, 2400, .12, 'triangle', .05, -900, .05); });
+  cue('lit', (L, v) => { if (!M || (v !== me() && L.by.team !== me().team)) return; const o = outFor(null); tone(o, 1175, .12, 'triangle', .07); tone(o, 1568, .16, 'triangle', .06, 0, .09); });
+  cue('glasshouse', H => { const o = outFor(at(H.x, H.y + 1, H.z), 1.4); tone(o, 110, 1.6, 'sine', .2, -20); hiss(o, 1.2, .08, 'bandpass', 3200, .1, 2); });
   cue('duelEnd', () => { const o = outFor(null); tone(o, 200, .6, 'sine', .1, 300); hiss(o, .5, .1, 'highpass', 2000); });
   cue('unlock', sk => { const o = outFor(null), t = sk.R.tier, notes = [523, 659, 784, 1046, 1318, 1568].slice(0, 3 + t);
     notes.forEach((f, i) => { tone(o, f, .5 + t * .1, 'triangle', .1, 0, i * .09); tone(o, f * 2, .35, 'sine', .04, 0, i * .09 + .02); });
@@ -8811,9 +9057,10 @@ const GAME = {
   /* ---- ability icons: a small line drawing for each, in the bar and the armory */
   const ABICON = { vexc: 'orb', vexq: 'dash', vexe: 'smoke', vexx: 'portal', irisc: 'eye', irisq: 'wave', irise: 'flash', irisx: 'eye', bastionc: 'beacon', bastionq: 'wall', bastione: 'heart', bastionx: 'shield',
     novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'shroud', wraithe: 'twin', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
-    emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'mine', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel' };
+    emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'mine', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel',
+    tesselc: 'bloom', tesselq: 'lull', tessele: 'lightline', tesselx: 'glasshouse' };
   // what the other click does, for the hint under the bar
-  const ABALT = { vexc: 'A SHORT LOB', talonc: 'A SHORT LOB', axiomc: 'A SHORT LOB', emberq: 'A SHORT LOB', emberx: 'A SHORT LOB', emberc: 'BENT RIGHT', bastionq: 'TURNED ALONG YOUR VIEW' };
+  const ABALT = { vexc: 'A SHORT LOB', talonc: 'A SHORT LOB', axiomc: 'A SHORT LOB', emberq: 'A SHORT LOB', emberx: 'A SHORT LOB', emberc: 'BENT RIGHT', bastionq: 'TURNED ALONG YOUR VIEW', tesselc: 'A SHORT LOB', tesselq: 'A SHORT LOB', tessele: 'ACROSS YOUR VIEW' };
   function abIcon(g, kind, cx, cy, r, col, acc) {
     g.save(); g.translate(cx, cy); g.strokeStyle = col; g.fillStyle = col; g.lineWidth = r * .16; g.lineCap = 'round'; g.lineJoin = 'round'; const P2 = (pts, close) => { g.beginPath(); pts.forEach(([a, b], i) => i ? g.lineTo(a * r, b * r) : g.moveTo(a * r, b * r)); if (close) g.closePath(); };
     const C = (x, y, rad, a0 = 0, a1 = TAU) => { g.beginPath(); g.arc(x * r, y * r, rad * r, a0, a1); };
@@ -8843,6 +9090,11 @@ const GAME = {
     else if (kind === 'turret') { g.fillRect(-.45 * r, -.35 * r, .9 * r, .5 * r); g.fillRect(0, -.22 * r, .9 * r, .2 * r); P2([[-.3, .15], [-.6, .85]]); g.stroke(); P2([[.3, .15], [.6, .85]]); g.stroke(); }
     else if (kind === 'mine') { C(0, .2, .55, Math.PI, 0); g.fill(); g.fillRect(-.7 * r, .2 * r, 1.4 * r, .2 * r); C(0, -.45, .12); g.fill(); }
     else if (kind === 'hex') { P2([0, 1, 2, 3, 4, 5].map(i => [Math.cos(i * Math.PI / 3 + Math.PI / 6) * .85, Math.sin(i * Math.PI / 3 + Math.PI / 6) * .85]), true); g.stroke(); C(0, 0, .3); g.fill(); }
+    // Tessel's: a seed of light opening (Bloom), an hourglass over a ripple (Lull), a curtain stood on a line (Lightline), a room of light (Glasshouse)
+    else if (kind === 'bloom') { for (let i = 0; i < 6; i++) { const a = i * TAU / 6; g.save(); g.rotate(a); g.beginPath(); g.ellipse(0, -.55 * r, .17 * r, .3 * r, 0, 0, TAU); g.stroke(); g.restore(); } C(0, 0, .24); g.fill(); }
+    else if (kind === 'lull') { P2([[-.5, -.85], [.5, -.85], [-.5, .45], [.5, .45]], true); g.stroke(); g.save(); g.globalAlpha *= .7; P2([[-.22, .1], [.22, .1], [0, -.18]], true); g.fill(); g.restore(); g.strokeStyle = acc; g.beginPath(); g.ellipse(0, .72 * r, .85 * r, .18 * r, 0, 0, TAU); g.stroke(); }
+    else if (kind === 'lightline') { P2([[-.85, .75], [.85, .35]]); g.stroke(); g.save(); g.globalAlpha *= .45; P2([[-.85, .75], [.85, .35], [.85, -.65], [-.85, -.85]], true); g.fill(); g.restore(); for (const q of [-.42, .02, .45]) { const yb = .75 - (q + .85) / 1.7 * .4, yt = -.85 + (q + .85) / 1.7 * .2; P2([[q, yb], [q, yt]]); g.stroke(); } }
+    else if (kind === 'glasshouse') { const T2 = [[0, -.15], [.85, .2], [0, .55], [-.85, .2]]; P2(T2, true); g.stroke(); P2(T2.map(([a, b]) => [a, b - .7]), true); g.stroke(); for (const [a, b] of T2) { P2([[a, b], [a, b - .7]]); g.stroke(); } g.save(); g.globalAlpha *= .4; P2([[0, -.15], [.85, .2], [.85, -.5], [0, -.85], [-.85, -.5], [-.85, .2]], true); g.fill(); g.restore(); }
     else if (kind === 'duel') { C(0, 0, .85); g.stroke(); P2([[-.55, .55], [.55, -.55]]); g.stroke(); P2([[-.55, -.55], [.55, .55]]); g.stroke(); }
     g.restore();
   }
@@ -8863,6 +9115,8 @@ const GAME = {
     else if (op === 'talon') { g.fillStyle = grey(kt.cloth); g.beginPath(); g.arc(0, -8, 10, Math.PI, TAU); g.fill(); g.fillRect(-14, -9, 28, 2.6); g.fillStyle = grey('#15171c'); g.fillRect(-7, -13, 14, 4); g.fillStyle = glow; g.beginPath(); g.arc(-3.5, -11, 1.6, 0, TAU); g.arc(3.5, -11, 1.6, 0, TAU); g.fill(); }
     else if (op === 'ember') { g.fillStyle = grey('#15171c'); g.fillRect(-6, -2, 12, 7); g.fillStyle = grey(kt.plate); g.beginPath(); g.arc(-5.5, 2, 2.4, 0, TAU); g.arc(5.5, 2, 2.4, 0, TAU); g.fill(); g.fillStyle = glow; for (let i = 0; i < 4; i++) { g.beginPath(); g.moveTo(-6 + i * 4, -13); g.lineTo(-4 + i * 4, -23 + Math.abs(i - 1.5) * 3); g.lineTo(-2 + i * 4, -13); g.closePath(); g.fill(); } }
     else if (op === 'vanta') { g.fillStyle = grey(kt.plate); g.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; g.lineTo(Math.cos(a) * 11, -6 + Math.sin(a) * 11); } g.closePath(); g.fill(); g.fillStyle = glow; g.fillRect(-10, -7, 20, 3.4); g.beginPath(); g.moveTo(5, -14); g.lineTo(14, -24); g.lineTo(9, -13); g.closePath(); g.fill(); }
+    else if (op === 'tessel') { g.strokeStyle = glow; g.lineWidth = 1.6; g.beginPath(); g.moveTo(0, -24); g.lineTo(13, -9); g.lineTo(0, 6); g.lineTo(-13, -9); g.closePath(); g.stroke();   // the diamond of light behind the helm
+      g.fillStyle = grey(kt.plate); g.beginPath(); g.ellipse(0, -6, 10.5, 12, 0, 0, TAU); g.fill(); g.fillStyle = grey('#15171c'); g.fillRect(-9.5, -8, 19, 3); g.fillStyle = glow; g.fillRect(-1.2, -16, 2.4, 18); }
     else if (op === 'axiom') { g.fillStyle = grey(kt.plate); g.beginPath(); g.arc(0, -8, 10, Math.PI, TAU); g.fill(); g.fillRect(-13, -9, 26, 2.4); g.fillStyle = glow; g.fillRect(-8, -6, 16, 2.6); g.beginPath(); g.arc(0, -16, 1.8, 0, TAU); g.fill(); }
     else { g.fillStyle = glow; tx(g, (O.n || '?')[0], 0, -4, 12, glow, 'center', 900); }
     g.restore();
@@ -10411,7 +10665,8 @@ const GAME = {
     const S = UI.sel; if (!S || S.locked) return; const taken = selTaken(S), keys = Object.keys(OPS).filter(k => !taken.includes(k)), i = keys.indexOf(S.op);
     if (c === 'ArrowRight' || c === 'ArrowDown') S.op = keys[(i + 1) % keys.length];
     else if (c === 'ArrowLeft' || c === 'ArrowUp') S.op = keys[(i - 1 + keys.length) % keys.length];
-    else if (/^Digit[1-9]$/.test(c)) { const k = Object.keys(OPS)[+c.slice(5) - 1]; if (k && !taken.includes(k)) S.op = k; }
+    else if (/^Digit[0-9]$/.test(c)) { const k = Object.keys(OPS)[(+c.slice(5) + 9) % 10];   // (0 is the tenth)
+      if (k && !taken.includes(k)) S.op = k; }
     else if (c === 'Enter' || c === 'Space') lockIn();
     else if (c === 'Escape' && !S.online) { UI.sel = null; if (UI.returnTo === 'party') { UI.returnTo = null; screen = 'party'; } else { screen = 'menu'; UI.panel = 'home'; } }
   }
@@ -10468,7 +10723,7 @@ const GAME = {
       const lift = on ? 6 * u : hot ? 3 * u : 0;
       if (on) { g.save(); g.shadowColor = o.col; g.shadowBlur = 18 * u; g.fillStyle = o.col; g.fillRect(x + 4, ry - lift + 4, tw - 8, th - 8); g.restore(); }
       portraitTile(g, k, x, ry - lift, tw, th, { on, hot, r: 6, dead: gone }); tx(g, gone ? 'TAKEN' : o.n, x + tw / 2, ry - lift + th + 12 * u, 10 * u, on ? o.col : DIM, 'center', 800);
-      if (!touch && i < 9) tx(g, String(i + 1), x + 9 * u, ry - lift + 11 * u, 9 * u, DIM, 'center', 800);
+      if (!touch && i < 10) tx(g, String((i + 1) % 10), x + 9 * u, ry - lift + 11 * u, 9 * u, DIM, 'center', 800);
     });
     // lock in
     { const bw = 220 * u, bh = 60 * u, bx = V.x1 - bw - 40 * u, by = ry - bh - 24 * u, locked = !!S.locked;   // above the roster, clear of the corner

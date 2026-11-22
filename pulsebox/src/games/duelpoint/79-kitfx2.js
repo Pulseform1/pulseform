@@ -61,15 +61,17 @@
     K.bursts = [];
     // other players' readied abilities: a glow in the hand
     K.rdy = []; for (let i = 0; i < 6; i++) K.rdy.push(add(sprite('#ffffff', .4)));
+    buildKitFx3();   // (79-kitfx3: Tessel)
   }
   // a burst: kind 'ring' | 'shell' | 'pillar', where, colour, size, how long
   function burst(kind, x, y, z, col, r, T, h) { const K = X && X.kf2; if (!K) return; K.bursts.push({ kind, x, y, z, col, r, T, t: 0, h: h || 3 }); }
   // the preview for a readied ability: what kind, and where (from the same sums the ability uses)
   const PV = { vexe: 'spot', irise: 'mark', vexx: 'spot', axiomx: 'self', bastionq: 'wall', embere: 'haze', talone: 'floor', axiomq: 'floor', axiome: 'floor', bastionc: 'floor', wraithc: 'floor',
-    emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'zone', wraithe: 'run' };
-  const PV_R = { vexe: 3.8, vexx: 1, axiomx: 14, emberq: 3.2, emberx: 5.5, vexc: 6, talonc: 3.5, axiomc: 5, wraithe: 1.2, talone: 1.3, axiomq: .6, axiome: 2.2, bastionc: 6, wraithc: .5, novae: 4.5 };
+    emberq: 'lob', emberx: 'lob', vexc: 'lob', talonc: 'lob', axiomc: 'lob', novae: 'mark', talonq: 'dart', irisc: 'eye', emberc: 'curve', vantac: 'front', vantaq: 'beam', vantax: 'zone', wraithe: 'run',
+    tesselc: 'lob', tesselq: 'lob', tessele: 'line', tesselx: 'house' };
+  const PV_R = { vexe: 3.8, vexx: 1, axiomx: 14, emberq: 3.2, emberx: 5.5, vexc: 6, talonc: 3.5, axiomc: 5, wraithe: 1.2, talone: 1.3, axiomq: .6, axiome: 2.2, bastionc: 6, wraithc: .5, novae: 4.5, tesselc: 3.4, tesselq: 4.5 };
   function previewFrame(P) {
-    const K = X.kf2; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false;
+    const K = X.kf2; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false; hidePreviewTessel();
     if (!P || !P.alive || !P.rdy || P.net) return; const key = P.op + P.rdy, kind = PV[key]; if (!kind) return;
     const d = abData(P, P.rdy, false), col = (OPS[P.op] || OPS.vex).col, pulse = .75 + .25 * Math.sin(X.t * 6), R = PV_R[key] || 1;
     const ring = (x, y, z, r, bad) => { K.pvRing.visible = K.pvDisc.visible = true; K.pvRing.position.set(x, y + .04, z); K.pvDisc.position.set(x, y + .035, z); K.pvRing.scale.setScalar(r); K.pvDisc.scale.setScalar(r); K.pvRing.material.color.set(bad ? WARN : col); K.pvDisc.material.color.set(bad ? WARN : col); K.pvRing.material.opacity = .95 * pulse; K.pvRing.rotation.z = X.t * .5; };
@@ -90,6 +92,7 @@
       let cx, cz, w, h = 3, ax; if (kind === 'wall') { cx = d.x; cz = d.z; ax = d.ax; w = 5.2; } else if (kind === 'haze') { cx = d.x; cz = d.z; ax = Math.abs(d.pz) > Math.abs(d.px) ? 1 : 0; w = 9.4; h = 2.6; } else { cx = d.x + (d.ax ? d.dir * 1.2 : 0); cz = d.z + (d.ax ? 0 : d.dir * 1.2); ax = d.ax; w = 6; }
       K.pvWall.visible = true; K.pvWall.position.set(cx, hAt(cx, cz) + h / 2, cz); K.pvWall.scale.set(ax ? .12 : w, h, ax ? w : .12); K.pvWall.material.uniforms.col.value.set(col); K.pvWall.material.uniforms.op.value = .45 + .15 * pulse;
       if (kind === 'front') { const L = 14, ex = cx + (d.ax ? d.dir * L : 0), ez = cz + (d.ax ? 0 : d.dir * L); K.pvBeam.visible = true; K.pvBeam.position.set(cx, hAt(cx, cz) + .05, cz); K.pvBeam.lookAt(ex, hAt(cx, cz) + .05, ez); K.pvBeam.scale.set(3, 3, L); K.pvBeam.material.color.set(col); K.pvBeam.material.opacity = .45; } }
+    else if (kind === 'line' || kind === 'house') previewTessel(P, d, kind, col, pulse);
     else if (kind === 'curve') { const pos = K.pvArc.geometry.attributes.position, e = eyeY(P); for (let i = 0; i < 40; i++) { const q = i / 39, a = Math.min(1, q * 2), b = Math.max(0, q * 2 - 1); pos.setXYZ(i, lp(P.x, d.ax, a) + (d.x - d.ax) * b, e + .3 * q, lp(P.z, d.az, a) + (d.z - d.az) * b); } pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); K.pvMark.visible = true; K.pvMark.position.set(d.x, d.y, d.z); K.pvMark.material.color.set('#fff6d6'); }
     else if (kind === 'run') { const pos = K.pvArc.geometry.attributes.position, e = P.y + .08; let x = d.x, z = d.z, n = 0; for (let s = 0; s < 40; s++) { const nx = x + d.dx * .55, nz = z + d.dz * .55; if (blocked(nx, nz, P.y)) break; x = nx; z = nz; pos.setXYZ(n++, x, hAt(x, z) + .08, z); } for (let i = n; i < 40; i++) pos.setXYZ(i, x, hAt(x, z) + .08, z); pos.needsUpdate = true; K.pvArc.visible = true; K.pvArc.material.color.set(col); ring(x, hAt(x, z), z, .6); }   // Mirage: where the copy will run
     else if (kind === 'zone') { ring(d.px, d.py, d.pz, 5, !d.t); if (d.t && M.byKey[d.t]) { const v = M.byKey[d.t]; K.pvMark.visible = true; K.pvMark.position.set(ipos(v, 'x'), ipos(v, 'y') + 2.3, ipos(v, 'z')); K.pvMark.material.color.set(col); K.pvMark.scale.setScalar(.45 * pulse + .25); } }   // (Duel Field: the circle it opens, and whoever it would take)
@@ -147,8 +150,9 @@
       if (k > 0) { if (!X.murkBase) X.murkBase = { near: fog.near, far: fog.far, col: fog.color.clone(), bg: X.scene.background && X.scene.background.isColor ? X.scene.background.clone() : null };
         const B = X.murkBase, dark = new THREE.Color('#0c0714'); fog.near = lp(B.near, 1.2, k); fog.far = lp(B.far, 7, k); fog.color.copy(B.col).lerp(dark, k); if (B.bg) X.scene.background.copy(B.bg).lerp(dark, k); }
       else if (X.murkBase) { const B = X.murkBase; fog.near = B.near; fog.far = B.far; fog.color.copy(B.col); if (B.bg) X.scene.background.copy(B.bg); X.murkBase = null; } }
+    kitFx3(dt);   // (79-kitfx3: Tessel)
   }
-  function hideKitFx2() { const K = X && X.kf2; if (!K) return; for (const k of ['fronts', 'domes', 'fields', 'hexes', 'wards', 'lobs', 'glooms', 'eyes', 'anchors', 'sunders', 'beams', 'flights', 'bRings', 'bShells', 'bPillars', 'rdy']) for (const m of K[k]) m.visible = false; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false; K.bursts = []; }
+  function hideKitFx2() { const K = X && X.kf2; if (!K) return; for (const k of ['fronts', 'domes', 'fields', 'hexes', 'wards', 'lobs', 'glooms', 'eyes', 'anchors', 'sunders', 'beams', 'flights', 'bRings', 'bShells', 'bPillars', 'rdy']) for (const m of K[k]) m.visible = false; for (const k of ['pvRing', 'pvDisc', 'pvArc', 'pvWall', 'pvBeam', 'pvMark']) K[k].visible = false; K.bursts = []; hideKitFx3(); }
   // the moments
   const fxOk = () => X && ready && X.kf2 && M;
   const OPC = op => (OPS[op] || OPS.vex).col;

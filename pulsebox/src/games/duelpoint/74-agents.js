@@ -14,6 +14,7 @@
     ember: { suit: '#3a2620', plate: '#7a3e22', cloth: '#ff7a2f', skin: '#d8a07a', wide: 1.02 },
     axiom: { suit: '#25303e', plate: '#d9dde3', cloth: '#5aa0ff', skin: '#8a5a3c', wide: 1.05 },
     vanta: { suit: '#1a1522', plate: '#3a2f4a', cloth: '#e25cff', skin: '#c89478', wide: .97 },
+    tessel: { suit: '#2b2430', plate: '#ebe2e8', cloth: '#ff9ec7', skin: '#a8705a', wide: .97 },
   };
   // the agents' materials: fabric with a woven grain, armour plates with panel lines and worn edges, skin, rubber and
   // trim, all lit by the map's reflections. Made once per operative and shared by every copy.
@@ -108,6 +109,8 @@
       else if (f.op === 'ember') { for (const sx of [-1, 1]) { add(cyl(.065, .065, .34, 12), M.plate, sx * .075, .37, .2); add(sph(.065, 12, 8), M.plate, sx * .075, .54, .2); } add(new THREE.TorusGeometry(.12, .015, 6, 16, Math.PI), M.dark, 0, .55, .25, 0, 0, 0); add(rb(.05, .04, .02, .01), M.glow, 0, .3, .27); }
       else if (f.op === 'vanta') { add(cyl(.12, .12, .045, 6), M.plate, 0, .4, .19, Math.PI / 2); add(cyl(.062, .062, .05, 6), M.glow, 0, .4, .2, Math.PI / 2); add(rb(.05, .62, .014, .02), M.cloth, .06, .25, .17, 0, 0, .38);   // a hex emitter on the back, a sash across it
         add(cyl(.13, .11, .06, 6), M.plate, -.29 * w, .6, 0, 0, 0, .55); add(cyl(.135, .135, .012, 6, 1, true), M.glow, -.29 * w, .6, 0, 0, 0, .55); }   // one heavy hex plate on the left shoulder
+      else if (f.op === 'tessel') { add(rb(.2, .32, .1, .03), M.plate, 0, .37, .2); add(rb(.022, .26, .012, .006), M.glow, 0, .37, .256); add(rb(.16, .02, .012, .006), M.glow, 0, .5, .256);   // a slim projector on the back, a line of light down it
+        for (const sx of [-1, 1]) { add(cyl(.014, .014, .1, 8), M.dark, sx * .07, .565, .2); add(new THREE.OctahedronGeometry(.026), M.glow, sx * .07, .635, .2); } }   // and two short pylons tipped with diamonds of light
       else if (f.op === 'axiom') { add(rb(.26, .3, .14, .035), M.suit, 0, .37, .2); add(rb(.2, .06, .02, .01), M.glow, 0, .44, .275); add(cyl(.008, .008, .36, 6), M.dark, -.09, .66, .22); add(sph(.018, 8, 6), M.glow, -.09, .845, .22); }
     }
     // coat tails that swing as they run (Vex only)
@@ -117,8 +120,9 @@
     // a head with a face: a skull a little taller than it is wide, ears, brows over dark eyes, a nose, and a gaiter pulled up
     // over the jaw and neck (each operative's own mask, visor or helmet goes on top)
     add(sph(.124, 16, 12), M.skin).scale.set(.95, 1.06, 1); add(new THREE.SphereGeometry(.131, 16, 8, 0, TAU, Math.PI * .57, Math.PI * .43), M.suit).scale.set(.96, 1.06, 1.01);
-    add(rb(.075, .05, .03, .016), M.dark, 0, -.068, -.116); const faceless = ['vex', 'bastion', 'wraith', 'vanta'].includes(f.op); if (!faceless) add(sph(.02, 8, 6), M.skin, 0, -.014, -.121).scale.set(.75, 1.1, 1);   // (not under a hood, a helm or a mask)
-    for (const sx of [-1, 1]) { if (f.op !== 'vanta') { add(rb(.036, .014, .012, .005), M.dark, sx * .043, .012, -.112, 0, sx * -.3); add(rb(.044, .01, .014, .004), M.suit, sx * .043, .03, -.113, 0, sx * -.3, sx * -.1); } add(sph(.022, 8, 6), M.skin, sx * .116, -.002, .004).scale.set(.45, 1, .75); }   // (Vanta's sealed helm: no eyes or brows under it)
+    if (f.op !== 'tessel') add(rb(.075, .05, .03, .016), M.dark, 0, -.068, -.116);   // (a mouth, unless the helm is sealed)
+    const faceless = ['vex', 'bastion', 'wraith', 'vanta', 'tessel'].includes(f.op); if (!faceless) add(sph(.02, 8, 6), M.skin, 0, -.014, -.121).scale.set(.75, 1.1, 1);   // (not under a hood, a helm or a mask)
+    for (const sx of [-1, 1]) { if (f.op !== 'vanta' && f.op !== 'tessel') { add(rb(.036, .014, .012, .005), M.dark, sx * .043, .012, -.112, 0, sx * -.3); add(rb(.044, .01, .014, .004), M.suit, sx * .043, .03, -.113, 0, sx * -.3, sx * -.1); } add(sph(.022, 8, 6), M.skin, sx * .116, -.002, .004).scale.set(.45, 1, .75); }   // (Vanta's sealed helm: no eyes or brows under it)
     if (f.op === 'vex') {
       add(new THREE.SphereGeometry(.16, 18, 12, 0, TAU, 0, Math.PI * .64), M.cloth, 0, .012, .018); add(new THREE.TorusGeometry(.128, .024, 8, 20), M.cloth, 0, .0, -.05, .12); add(new THREE.ConeGeometry(.09, .16, 10), M.cloth, 0, .06, .16, 1.9);
       add(rb(.19, .034, .03, .012), M.glow, 0, .012, -.118); add(new THREE.TorusGeometry(.105, .042, 8, 18), M.cloth, 0, -.125, .0, Math.PI / 2);
@@ -139,6 +143,12 @@
     } else if (f.op === 'ember') {   // a respirator with two filters and a crest of flame
       add(rb(.17, .09, .085, .03), M.dark, 0, -.06, -.1); for (const sx of [-1, 1]) add(cyl(.032, .036, .045, 10), M.plate, sx * .072, -.07, -.138, Math.PI / 2);
       for (let i = 0; i < 5; i++) add(new THREE.ConeGeometry(.034, .15, 6), M.glow, 0, .13 + (2 - Math.abs(i - 2)) * .022, -.09 + i * .045, -.25 + i * .12);
+    } else if (f.op === 'tessel') {   // a smooth porcelain helm sealed all round, a dark band at the eyes, a line of light down its face, a diamond frame of light behind
+      add(sph(.158, 22, 16), M.plate, 0, .012, .004).scale.set(.98, 1.06, 1.05);
+      add(new THREE.CylinderGeometry(.163, .163, .036, 22, 1, true, Math.PI - .8, 1.6), M.dark, 0, .012, .004).scale.set(.98, 1, 1.05);
+      { const vg = new THREE.TorusGeometry(.163, .009, 6, 20, 1.25); vg.rotateZ(-.7); vg.rotateY(Math.PI / 2); add(vg, M.glow, 0, .012, .004).scale.set(.98, 1.06, 1.05); }   // (bent to the helm: from the chin up over the brow)
+      const dR = .12; for (const [mx, my, rz] of [[1, 1, -1], [-1, 1, 1], [1, -1, 1], [-1, -1, -1]]) add(new THREE.BoxGeometry(dR * Math.SQRT2, .012, .012), M.glow, mx * dR / 2, .07 + my * dR / 2, .215, 0, 0, rz * Math.PI / 4);
+      add(new THREE.OctahedronGeometry(.022), M.glow, 0, .07, .215);
     } else if (f.op === 'axiom') {   // an engineer's hard hat with a lamp and a glowing visor
       add(turn([[0, .175], [.11, .165], [.155, .1], [.165, .03], [.2, .005], [.2, -.008], [0, -.008]], 18), M.plate, 0, .018, 0); add(rb(.23, .045, .03, .012), M.glow, 0, -.008, -.128);
       add(cyl(.028, .028, .03, 10), M.dark, 0, .16, -.12, Math.PI / 2); add(sph(.02, 8, 6), M.glow, 0, .16, -.137);

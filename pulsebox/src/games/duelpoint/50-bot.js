@@ -135,6 +135,7 @@
       if (f.ab.q && last && !sees && dE < 30 && roll) { const dx = last.x - f.x, dz = last.z - f.z, dy = hAt(last.x, last.z) + 1.1 - ey, L = Math.hypot(dx, dy, dz) || 1; botCast(f, 'q', { x: f.x, y: ey, z: f.z, dx: dx / L, dy: dy / L, dz: dz / L }); }
       if (f.ab.e && (engaged || (sees && dE < 25))) ability(f, 'e');
     }
+    if (f.op === 'tessel') tesselBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt, last, roll);   // (47)
   }
   // use an ability at a chosen place, without having to look there first
   function botCast(f, k, data) { if (!hasAb(f, k) || M.phase !== 'live' || f.lock > 0 || f.chan) return; spendAb(f, k); applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
@@ -148,6 +149,7 @@
     else if (op === 'talon' && fresh && !sees && dE < 40 && Math.abs(angDiff(yawTo(f.x, f.z, B.last.x, B.last.z), f.yaw)) < .1) botCast(f, 'x', {});
     else if (op === 'ember' && fresh && !sees && dE > 6 && dE < 24 && chance) { const tx = B.last.x, tz = B.last.z, dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 14, .5, 1.2), y0 = eyeY(f) - .1, ty = hAt(tx, tz) + .1; botCast(f, 'x', { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + 7 * T * T) / T, vz: dz / T }); }
     else if (op === 'vanta' && sees && e && e.alive && !e.duel && dE < 30 && R() < dt * 2) botCast(f, 'x', { t: e.key, px: e.x, py: e.y, pz: e.z });
+    else if (op === 'tessel') tesselUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);   // (47)
     else if (op === 'axiom' && ((side === 'def' && fresh && dE < 13) || (retake && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 12))) botCast(f, 'x', { x: f.x, z: f.z });
   }
   const magOf = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return A ? A.mag : 0; };
