@@ -4379,8 +4379,8 @@ const GAME = {
     // over the jaw and neck (each operative's own mask, visor or helmet goes on top)
     add(sph(.124, 16, 12), M.skin).scale.set(.95, 1.06, 1); add(new THREE.SphereGeometry(.131, 16, 8, 0, TAU, Math.PI * .57, Math.PI * .43), M.suit).scale.set(.96, 1.06, 1.01);
     if (f.op !== 'tessel') add(rb(.075, .05, .03, .016), M.dark, 0, -.068, -.116);   // (a mouth, unless the helm is sealed)
-    const faceless = ['vex', 'bastion', 'wraith', 'vanta', 'tessel'].includes(f.op); if (!faceless) add(sph(.02, 8, 6), M.skin, 0, -.014, -.121).scale.set(.75, 1.1, 1);   // (not under a hood, a helm or a mask)
-    for (const sx of [-1, 1]) { if (f.op !== 'vanta' && f.op !== 'tessel') { add(rb(.036, .014, .012, .005), M.dark, sx * .043, .012, -.112, 0, sx * -.3); add(rb(.044, .01, .014, .004), M.suit, sx * .043, .03, -.113, 0, sx * -.3, sx * -.1); } add(sph(.022, 8, 6), M.skin, sx * .116, -.002, .004).scale.set(.45, 1, .75); }   // (Vanta's sealed helm: no eyes or brows under it)
+    const faceless = ['vex', 'bastion', 'wraith', 'vanta', 'tessel', 'nova'].includes(f.op); if (!faceless) add(sph(.02, 8, 6), M.skin, 0, -.014, -.121).scale.set(.75, 1.1, 1);   // (not under a hood, a helm or a mask)
+    for (const sx of [-1, 1]) { if (f.op !== 'vanta' && f.op !== 'tessel' && f.op !== 'nova') { add(rb(.036, .014, .012, .005), M.dark, sx * .043, .012, -.112, 0, sx * -.3); add(rb(.044, .01, .014, .004), M.suit, sx * .043, .03, -.113, 0, sx * -.3, sx * -.1); } add(sph(.022, 8, 6), M.skin, sx * .116, -.002, .004).scale.set(.45, 1, .75); }   // (Vanta's sealed helm: no eyes or brows under it)
     if (f.op === 'vex') {
       add(new THREE.SphereGeometry(.16, 18, 12, 0, TAU, 0, Math.PI * .64), M.cloth, 0, .012, .018); add(new THREE.TorusGeometry(.128, .024, 8, 20), M.cloth, 0, .0, -.05, .12); add(new THREE.ConeGeometry(.09, .16, 10), M.cloth, 0, .06, .16, 1.9);
       add(rb(.19, .034, .03, .012), M.glow, 0, .012, -.118); add(new THREE.TorusGeometry(.105, .042, 8, 18), M.cloth, 0, -.125, .0, Math.PI / 2);
@@ -4390,7 +4390,8 @@ const GAME = {
       for (const sx of [-1, 1]) add(cyl(.042, .042, .03, 14), M.plate, sx * .148, -.005, .01, 0, 0, Math.PI / 2); add(cyl(.005, .005, .2, 6), M.dark, -.15, .11, .03); add(sph(.01, 8, 6), M.glow, -.15, .215, .03); add(rb(.05, .05, .05, .01), M.dark, 0, -.085, -.11);
     } else if (f.op === 'nova') {   // a sleek half helmet, a crest fin and a gold visor
       add(new THREE.SphereGeometry(.147, 18, 12, 0, TAU, 0, Math.PI * .5), M.plate, 0, .012, .012); { const fs = new THREE.Shape(); [[.15, 0], [-.15, 0], [-.19, .11], [-.06, .05]].forEach((q, i) => i ? fs.lineTo(q[0], q[1]) : fs.moveTo(q[0], q[1])); add(new THREE.ExtrudeGeometry(fs, { depth: .022, bevelEnabled: true, bevelThickness: .004, bevelSize: .004, bevelSegments: 1 }), M.acc, -.011, .135, .03, 0, Math.PI / 2, 0); }
-      add(rb(.27, .034, .03, .012), M.glow, 0, .005, -.124); for (const sx of [-1, 1]) add(rb(.022, .085, .08, .008), M.plate, sx * .142, -.015, -.035);
+      add(new THREE.SphereGeometry(.137, 18, 10, 0, TAU, Math.PI * .4, Math.PI * .5), M.dark, 0, 0, 0).scale.set(.97, 1.04, 1.02);   // a sealed under-helm: no skin shows round the visor
+      add(rb(.27, .036, .03, .012), M.glow, 0, .005, -.134); for (const sx of [-1, 1]) add(rb(.022, .085, .08, .008), M.plate, sx * .142, -.015, -.035);
     } else if (f.op === 'wraith') {   // a close cowl, a high collar and a blank mask with two slits
       add(new THREE.SphereGeometry(.158, 18, 12, 0, TAU, 0, Math.PI * .62), M.suit, 0, .014, .022); add(rb(.19, .2, .05, .05), M.plate, 0, -.025, -.118);
       for (const sx of [-1, 1]) add(rb(.05, .013, .02, .006), M.glow, sx * .045, .008, -.146); add(new THREE.CylinderGeometry(.152, .128, .15, 16, 1, true), M.cloth, 0, -.12, 0);
@@ -4443,8 +4444,10 @@ const GAME = {
       if (!knife && !gd.pistolHold && !gd.dead) { const g0 = gunHold.position, rx = g0.x + gd.grip[0] * s - SR[0], ry = g0.y + gd.grip[1] * s; while (g0.z < -.2 && Math.hypot(rx, ry, g0.z + gd.grip[2] * s - SR[2]) > a + b - .03) g0.z += .01; }
       const hold = gunHold.position, Rt = gd.dead ? gd.dead[0] : [hold.x + gd.grip[0] * s, hold.y + gd.grip[1] * s, hold.z + gd.grip[2] * s];   // (dead: the hands wherever the body left them)
       let Lt = gd.dead ? gd.dead[1] : knife ? [-.2, -.34, -.2] : gd.pistolHold ? [Rt[0] - .05, Rt[1] - .015, Rt[2] + .005] : [hold.x + gd.sup[0] * s - .01, hold.y + gd.sup[1] * s, hold.z + gd.sup[2] * s];
-      // a long handguard: the support arm stretches a little (up to 18%) to keep the hand out on it, then the hand slides back if it must
-      const kL = knife || gd.pistolHold || gd.dead ? 1 : Math.min(1.18, Math.max(1, Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) / (a + b - .02)));
+      // the hand cups the handguard from below (not inside it); on a vertical foregrip it closes round the post itself
+      if (!knife && !gd.pistolHold && !gd.dead && !gd.vgrip) Lt[1] -= .035;
+      // a long handguard: the support arm stretches a little (up to 28%) to keep the hand out on it, then the hand slides back if it must
+      const kL = knife || gd.pistolHold || gd.dead ? 1 : Math.min(1.28, Math.max(1, Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) / (a + b - .02)));
       const lt0 = Lt[2]; while (Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) > (a + b) * kL - .02 && Lt[2] < -.2) Lt[2] += .02; gunHold.userData.slide = Lt[2] - lt0;   // a long handguard: slide the hand back to where the arm reaches
       T = armMesh;
       for (const [S, Tg, px] of [[SR, Rt, 1], [SL, Lt, -1]]) {
