@@ -15,6 +15,8 @@
     const side = sideOf(me()), decider = otRound(n) > 0; UI.switched = n > 1 && UI.lastSide && side !== UI.lastSide ? { t0: performance.now(), side, decider, sd: suddenDeath(n), first: otRound(n) === 1 } : null; UI.lastSide = side;
     // the moment's sound: the first overtime round, a side swap, or (once the loading screen is gone) the match's first buy phase
     if (typeof playMoment === 'function') { if (otRound(n) === 1) playMoment('overtime'); else if (UI.switched) playMoment('switch'); else if (n === 1) UI.startSnd = true; }
+    // match point: one more round would take the match for either side (overtime's win by two included); after a swap's sound, not over it
+    if (typeof playMoment === 'function' && otRound(n) !== 1 && [0, 1].some(t => { const w = [M.wins[0], M.wins[1]]; w[t]++; const a = w[0], b = w[1], ot = otRound(a + b); return !ot ? Math.max(a, b) >= WIN_ROUNDS : Math.abs(a - b) >= 2 || (ot > OT_MAX && a !== b); })) { if (UI.switched) setTimeout(() => playMoment('matchpoint'), 1600); else playMoment('matchpoint'); }
     if (loadingNow() || UI.switched) UI.pendingArmory = true; else openArmory(true);
   });
   on('live', () => { if (UI.armory) { UI.armory = false; if (!locked()) grabMouse(); } });
