@@ -8260,6 +8260,18 @@ const GAME = {
   /* ---------- 79 kit effects: what the newer operatives' abilities look like ----------
      Everything here is unlit and made up front in small pools (buildKitFx), so nothing new has to compile in the middle of
      a round. Traps and mines are shown to their own team, and to rivals only once they are close. */
+  // the parts the devices are built from, and a way to fold a device's plain parts into one mesh per material (each kind of
+  // part costs one draw, however many pieces it has); whatever is named in keep (it moves, blinks or changes colour) stays apart
+  function kbx(w, h, d, m, x, y, z) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); return o; }
+  function kcyl(r0, r1, h, n, m, x, y, z) { const o = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, h, n), m); o.position.set(x, y, z); return o; }
+  function kstrut(a, b, r, m) { const A = new THREE.Vector3(...a), d = new THREE.Vector3(...b).sub(A), o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 6), m); o.position.copy(A).addScaledVector(d, .5); o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); return o; }
+  function bakeKit(g, keep = []) {
+    g.updateMatrixWorld(true); const inv = g.matrixWorld.clone().invert(), by = new Map(), drop = [];
+    const walk = o => { for (const c of o.children) { if (keep.includes(c)) continue;
+      if (c.isMesh && !c.children.length) { const geo = c.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, c.matrixWorld)); if (!by.has(c.material)) by.set(c.material, []); by.get(c.material).push(geo); drop.push(c); }
+      else if (c.isGroup && c.children.length) { walk(c); if (c.children.every(k => drop.includes(k))) drop.push(c); } } };
+    walk(g); for (const c of drop) c.parent.remove(c); for (const [mat, list] of by) g.add(new THREE.Mesh(mergeGeos(list), mat)); return g;
+  }
   function buildKitFx() {
     X.kf2mats = [];   // (every energy material, its clock moved each frame by kitFx2)
     const add = o => { X.scene.add(o); return o; }, glow = (c, o) => new THREE.MeshBasicMaterial(Object.assign({ color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }, o || {}));
@@ -8276,9 +8288,21 @@ const GAME = {
     }
     const lit = c => new THREE.MeshLambertMaterial({ color: LC(c) });
     const dartM = lit('#2b3a2a'), tipM = glow('#9dff6b', { opacity: 1 });
-    for (let i = 0; i < 2; i++) { const g = new THREE.Group(), b = new THREE.Mesh(new THREE.CylinderGeometry(.018, .018, .34, 6), dartM); b.rotation.x = Math.PI / 2; g.add(b); const t = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), tipM); t.position.z = -.18; g.add(t); g.visible = false; X.kf.darts.push(add(g)); }
+    const steelM = lit('#9aa3ad'), finM = lit('#5c8a3e');
+    for (let i = 0; i < 2; i++) {   // Recon Darts: a shaft with three tail fins, a steel head, and a green sensor ring that blinks once it sticks
+      const g = new THREE.Group(), sh = kcyl(.013, .017, .3, 6, dartM, 0, 0, .01); sh.rotation.x = Math.PI / 2; g.add(sh);
+      const hd = kcyl(0, .03, .1, 6, steelM, 0, 0, -.2); hd.rotation.x = -Math.PI / 2; g.add(hd); const cl = kcyl(.026, .03, .05, 8, steelM, 0, 0, -.13); cl.rotation.x = Math.PI / 2; g.add(cl);
+      const rg = new THREE.Mesh(new THREE.TorusGeometry(.03, .008, 6, 14), tipM); rg.position.z = -.12; g.add(rg); const sn = new THREE.Mesh(new THREE.SphereGeometry(.02, 8, 6), tipM); sn.position.z = -.155; g.add(sn);
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU, f = kbx(.05, .004, .08, finM, Math.cos(a) * .035, Math.sin(a) * .035, .13); f.rotation.z = a; g.add(f); }
+      bakeKit(g); g.userData = { tipM }; g.visible = false; X.kf.darts.push(add(g)); }
     for (let i = 0; i < 3; i++) { const m = add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 14), glow('#7bd65a', { opacity: .3, wireframe: true }))); m.visible = false; m.userData = { t: 9 }; X.kf.pulses.push(m); }
-    for (let i = 0; i < 2; i++) { const m = add(new THREE.Mesh(new THREE.SphereGeometry(.1, 10, 8), glow('#ffb060', { opacity: 1 }))); m.visible = false; X.kf.bombs.push(m); }
+    const shellM = lit('#3a2a22');
+    for (let i = 0; i < 2; i++) {   // Ember's firebombs in flight: a dark shell bound in molten seams, a burning fuse, a haze of heat; they tumble
+      const g = new THREE.Group(), seamM = glow('#ffb060', { opacity: 1 }); g.add(new THREE.Mesh(new THREE.SphereGeometry(.075, 12, 8), shellM));
+      for (const r of [[0, 0, 0], [Math.PI / 2, 0, 0], [0, Math.PI / 2, 0]]) { const t = new THREE.Mesh(new THREE.TorusGeometry(.077, .011, 6, 20), seamM); t.rotation.set(...r); g.add(t); }
+      g.add(kcyl(.024, .03, .04, 8, shellM, 0, .085, 0)); const fz = new THREE.Mesh(new THREE.SphereGeometry(.022, 8, 6), glow('#fff0c0', { opacity: 1 })); fz.position.y = .112; g.add(fz);
+      g.add(new THREE.Mesh(new THREE.SphereGeometry(.13, 12, 8), glow('#ff7a2f', { opacity: .12 })));
+      bakeKit(g); g.visible = false; X.kf.bombs.push(add(g)); }
     for (let i = 0; i < 2; i++) { const m = add(new THREE.Mesh(new THREE.SphereGeometry(.22, 14, 10), glow('#fff07a', { opacity: .95 }))); m.visible = false; X.kf.waves.push(m); }
     for (let i = 0; i < 3; i++) { const m = add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 14), glow('#ffe14d', { opacity: .45 }))); m.visible = false; m.userData = { t: 9 }; X.kf.shells.push(m); }
     const devM = lit('#2a2e36'), edgeM = lit('#59616e');
@@ -8286,16 +8310,22 @@ const GAME = {
       const g = new THREE.Group(), b = new THREE.Mesh(new THREE.CylinderGeometry(.16, .19, .07, 12), devM); b.position.y = .035; g.add(b); const e = new THREE.Mesh(new THREE.TorusGeometry(.17, .012, 6, 16), edgeM); e.rotation.x = Math.PI / 2; e.position.y = .07; g.add(e);
       const lamp = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), glow('#ff3b3b', { opacity: 1 })); lamp.position.y = .09; g.add(lamp); g.userData = { lamp }; g.visible = false; X.kf.mines.push(add(g));
     }
-    for (let i = 0; i < 2; i++) {   // snares: two pegs and a tripwire glow ring
-      const g = new THREE.Group(); for (const sx of [-1, 1]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(.03, .04, .22, 6), devM); p.position.set(sx * .55, .11, 0); g.add(p); }
-      const ring = disc(.9, glow('#ffffff', { map: ringT, color: '#7bd65a', opacity: .55 })); ring.position.y = .03; g.add(ring); g.userData = { ring }; g.visible = false; X.kf.snares.push(add(g));
+    const stakeM = lit('#3b4a33'), jawM = lit('#4f5760');
+    for (let i = 0; i < 2; i++) {   // Talon's Snares: two barbed stakes and, between them, toothed jaws held open round a trigger plate (they snap shut when sprung)
+      const g = new THREE.Group(), lightM = glow('#7bd65a', { opacity: .9 }), jaws = [];
+      for (const sx of [-1, 1]) { g.add(kcyl(.034, .01, .3, 6, stakeM, sx * .55, .12, 0), kbx(.06, .045, .06, stakeM, sx * .55, .29, 0), kbx(.064, .012, .064, lightM, sx * .55, .26, 0));
+        for (const bz of [-1, 1]) { const br = kbx(.012, .055, .012, jawM, sx * .55, .17, bz * .03); br.rotation.x = bz * .6; g.add(br); }
+        const sp = new THREE.Mesh(new THREE.TorusGeometry(.035, .009, 6, 12), jawM); sp.rotation.y = Math.PI / 2; sp.position.set(sx * .25, .03, 0); g.add(sp); }
+      g.add(kcyl(.075, .085, .02, 12, jawM, 0, .012, 0), kcyl(.04, .04, .024, 10, lightM, 0, .016, 0));
+      for (const sz of [-1, 1]) { const j = new THREE.Group(); j.position.y = .03; j.add(new THREE.Mesh(new THREE.TorusGeometry(.25, .02, 6, 18, Math.PI), jawM));
+        for (let k = 1; k < 8; k++) { const a = k / 8 * Math.PI, t = kcyl(0, .014, .05, 4, jawM, Math.cos(a) * .23, Math.sin(a) * .23, 0); t.rotation.z = a + Math.PI / 2; j.add(t); }
+        bakeKit(j); j.userData.sz = sz; jaws.push(j); g.add(j); }
+      const ring = disc(.9, glow('#ffffff', { map: ringT, color: '#7bd65a', opacity: .55 })); ring.position.y = .03; g.add(ring); bakeKit(g, [ring, ...jaws]); g.userData = { ring, jaws }; g.visible = false; X.kf.snares.push(add(g));
     }
     // sentries: a braced tripod on a footplate, a column with a glowing collar, and a turret that turns on a yoke:
     // an armoured gun pod (it tilts between the yoke arms) with twin barrels, a sensor eye, side plates, an ammo box and fins
     const bodyM = lit('#2c333e'), plateM = lit('#8a95a6'), midM = lit('#4c5664'), stripeM = glow('#5aa0ff', { opacity: .9 });
-    const Y = new THREE.Vector3(0, 1, 0), bx = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); return o; };
-    const cyl = (r0, r1, h, n, m, x, y, z) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, h, n), m); o.position.set(x, y, z); return o; };
-    const strut = (a, b, r, m) => { const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 6), m); o.position.copy(A).addScaledVector(d, .5); o.quaternion.setFromUnitVectors(Y, d.normalize()); return o; };
+    const bx = kbx, cyl = kcyl, strut = kstrut;
     for (let i = 0; i < 4; i++) {
       const g = new THREE.Group();
       g.add(cyl(.2, .24, .05, 8, bodyM, 0, .025, 0)); g.add(cyl(.17, .2, .02, 8, midM, 0, .06, 0));   // footplate
@@ -8321,14 +8351,21 @@ const GAME = {
       const eye = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 8), glow('#5aa0ff', { opacity: 1 })); eye.position.set(0, .12, -.112); eye.scale.z = .5; pod.add(eye);
       pod.add(bx(.14, .1, .07, midM, 0, -.01, .185)); for (let k = 0; k < 4; k++) pod.add(bx(.006, .05, .06, plateM, -.045 + k * .03, .09, .12));   // ammo box at the back, cooling fins on top
       const fl = new THREE.Mesh(new THREE.PlaneGeometry(.24, .24), glow('#ffe0a0', { map: X.starT, opacity: 1 })); fl.position.set(0, -.005, -.52); pod.add(fl);
+      bakeKit(bars); bakeKit(pod, [eye, fl, bars]); bakeKit(head, [tip, pod]); bakeKit(g, [head]);   // (about a dozen draws in all, not fifty)
       g.userData = { head, pod, bars, eye, tip, fl }; g.visible = false; X.kf.sentries.push(add(g));
     }
     for (let i = 0; i < 6; i++) { const m = add(disc(1, glow('#ffffff', { map: ringT, opacity: .6 }))); m.visible = false; X.kf.rings.push(m); }   // status rings under fighters (Surge, a daze, a snare)
     for (let i = 0; i < 2; i++) { const m = add(new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), glow('#ffb060', { opacity: .8 }))); m.visible = false; m.userData = { t: 9 }; X.kf.booms.push(m); }
     X.smokeHM = new THREE.MeshLambertMaterial({ color: '#e2a46a', emissive: '#5a2a08', transparent: true, opacity: .9, depthWrite: false });   // Heat Haze
     // the ultimates and their orbs
-    X.kf.orbs = []; for (let i = 0; i < 3; i++) { const g = add(new THREE.Group()), gem = new THREE.Mesh(new THREE.OctahedronGeometry(.32, 0), glow('#b8f0ff', { opacity: .95 })); gem.position.y = 1.1; g.add(gem);
-      const halo = new THREE.Mesh(new THREE.OctahedronGeometry(.5, 0), glow('#5ad1ff', { opacity: .25, wireframe: true })); halo.position.y = 1.1; g.add(halo); const base = disc(.9, glow('#5ad1ff', { map: ringT, opacity: .5 })); base.position.y = .03; g.add(base); g.userData = { gem, halo }; g.visible = false; X.kf.orbs.push(g); }
+    const plinthM = lit('#2a3340');
+    X.kf.orbs = []; for (let i = 0; i < 3; i++) {   // an ultimate orb: a long crystal turning inside two spinning rings and four shards, over a plinth with a glowing rim
+      const g = add(new THREE.Group()), cy = '#5ad1ff', gem = new THREE.Mesh(new THREE.OctahedronGeometry(.26, 0), glow('#b8f0ff', { opacity: .95 })); gem.scale.y = 1.4; gem.position.y = 1.1; g.add(gem);
+      const rimM = glow(cy, { opacity: .8 }); g.add(kcyl(.26, .32, .1, 6, plinthM, 0, .05, 0), kcyl(.17, .23, .07, 6, plinthM, 0, .135, 0)); const rim = new THREE.Mesh(new THREE.TorusGeometry(.255, .012, 6, 6), rimM); rim.rotation.set(Math.PI / 2, 0, Math.PI / 6); rim.position.y = .1; g.add(rim);
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(.03, .09, .8, 10, 1, true), glow(cy, { opacity: .22 })); col.position.y = .58; g.add(col);
+      const halo = new THREE.Group(); halo.position.y = 1.1; g.add(halo); for (const [rx, rz] of [[Math.PI / 2 + .35, 0], [Math.PI / 2 - .35, Math.PI / 2]]) { const r = new THREE.Mesh(new THREE.TorusGeometry(.42, .01, 6, 32), rimM); r.rotation.set(rx, 0, rz); halo.add(r); }
+      const shM = glow('#b8f0ff', { opacity: .9 }); for (let k = 0; k < 4; k++) { const a = k / 4 * TAU, sd = new THREE.Mesh(new THREE.TetrahedronGeometry(.06, 0), shM); sd.position.set(Math.cos(a) * .55, (k % 2 ? .1 : -.1), Math.sin(a) * .55); sd.rotation.set(k, k * 2, 0); halo.add(sd); }
+      bakeKit(halo); const base = disc(.9, glow(cy, { map: ringT, opacity: .5 })); base.position.y = .03; g.add(base); bakeKit(g, [gem, halo, base]); g.userData = { gem, halo }; g.visible = false; X.kf.orbs.push(g); }
     X.kf.beams = []; for (let i = 0; i < 3; i++) { const m = add(new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 1, 8, 1, true), glow('#b6ff8a', { opacity: .9 }))); m.visible = false; X.kf.beams.push(m); }
     X.kf.domes = []; for (let i = 0; i < 2; i++) { const g = add(new THREE.Group()), dome = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 20, 0, TAU, 0, Math.PI / 2), energyMat('#5aa0ff', { hex: 9, rim: 1.3, scan: .8, rx: 4, base: .05 }));   // (79-kitfx2: the energy look)
       g.add(dome);
@@ -8359,14 +8396,14 @@ const GAME = {
     list(kf.fires, K2 && K2.fires, (g, F) => { const U = g.userData, k = Math.min(1, (F.T - F.t) / .25) * Math.min(1, F.t / .6); g.position.set(F.x, F.y, F.z); U.pool.scale.setScalar(F.r * (1 + Math.sin(X.t * 9 + F.x) * .03) * k); U.pool.material.opacity = .85 * k;
       U.flames.forEach((f, i) => { const a = i / U.flames.length * TAU + i * .7, r = (i % 3) / 3 * F.r * .75 + .3; f.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); f.scale.set(k * (1 + Math.sin(X.t * 11 + i) * .15), k * (1 + Math.sin(X.t * 13 + i * 2) * .3), 1); f.quaternion.copy(X.camera.quaternion); f.material.opacity = .8 * k; });
       if (Math.random() < dt * 14) spark([F.x + rnd(-F.r, F.r) * .7, F.y + .2, F.z + rnd(-F.r, F.r) * .7], [rnd(-.5, .5), rnd(2, 4), rnd(-.5, .5)], '#ffb060', .5); });
-    list(kf.darts, K2 && K2.darts, (g, D) => { g.position.set(D.x, D.y, D.z); if (D.stuck < 0) g.lookAt(D.x - D.vx, D.y - D.vy, D.z - D.vz); g.children[1].material.opacity = D.stuck < 0 ? 1 : .55 + Math.sin(X.t * 14) * .45; });
+    list(kf.darts, K2 && K2.darts, (g, D) => { g.position.set(D.x, D.y, D.z); if (D.stuck < 0) g.lookAt(D.x - D.vx, D.y - D.vy, D.z - D.vz); g.userData.tipM.opacity = D.stuck < 0 ? 1 : .55 + Math.sin(X.t * 14) * .45; });
     for (const m of kf.pulses) { const u = m.userData; u.t += dt; m.visible = u.t < .7; if (m.visible) { m.scale.setScalar(.5 + u.t / .7 * 16); m.material.opacity = .35 * (1 - u.t / .7); } }
-    list(kf.bombs, K2 && K2.bombs, (m, B) => { m.position.set(B.x, B.y, B.z); if (Math.random() < .6) spark([B.x, B.y, B.z], [rnd(-.4, .4), rnd(-.2, .6), rnd(-.4, .4)], '#ff7a2f', .3); });
+    list(kf.bombs, K2 && K2.bombs, (m, B, i) => { m.position.set(B.x, B.y, B.z); m.rotation.set(X.t * 9 + i, 0, X.t * 5); m.scale.setScalar(B.big ? 1.6 : 1); if (Math.random() < .6) spark([B.x, B.y, B.z], [rnd(-.4, .4), rnd(-.2, .6), rnd(-.4, .4)], '#ff7a2f', .3); });
     list(kf.waves, K2 && K2.waves, (m, w) => { m.position.set(w.x, w.y, w.z); m.scale.setScalar(1 + Math.sin(X.t * 40) * .25 + (.45 - w.t) * 2); });
     for (const m of kf.shells) { const u = m.userData; u.t += dt; m.visible = u.t < .4; if (m.visible) { m.scale.setScalar(.3 + u.t / .4 * 4.5); m.material.opacity = .5 * (1 - u.t / .4); } }
     for (const m of kf.booms) { const u = m.userData; u.t += dt; m.visible = u.t < .45; if (m.visible) { m.scale.setScalar(.4 + u.t / .45 * 3.4); m.material.opacity = .8 * (1 - u.t / .45); } }
     list(kf.mines, K2 && K2.mines && K2.mines.filter(m => mine(m) || near(m, 5)), (g, m) => { g.position.set(m.x, m.y, m.z); const rate = m.fuse >= 0 ? 30 : m.arm > 0 ? 3 : 6; g.userData.lamp.visible = Math.sin(X.t * rate) > 0 || m.fuse >= 0; g.userData.lamp.material.color.set(m.arm > 0 ? '#ffb347' : '#ff3b3b'); });
-    list(kf.snares, K2 && K2.snares && K2.snares.filter(s => mine(s) || s.sprung || near(s, SNARE.see)), (g, s) => { g.position.set(s.x, s.y, s.z); g.userData.ring.material.opacity = (s.sprung ? .8 : mine(s) ? .55 : .26) * (s.arm > 0 ? .4 : 1) * (.75 + Math.sin(X.t * (s.sprung ? 14 : 4)) * .25); });
+    list(kf.snares, K2 && K2.snares && K2.snares.filter(s => mine(s) || s.sprung || near(s, SNARE.see)), (g, s) => { g.position.set(s.x, s.y, s.z); for (const j of g.userData.jaws) j.rotation.x = j.userData.sz * (s.sprung ? .12 : .87); g.userData.ring.material.opacity = (s.sprung ? .8 : mine(s) ? .55 : .26) * (s.arm > 0 ? .4 : 1) * (.75 + Math.sin(X.t * (s.sprung ? 14 : 4)) * .25); });
     list(kf.sentries, K2 && K2.sentries, (g, s, i) => { const U = g.userData; g.position.set(s.x, s.y, s.z); U.head.rotation.y = s.aim; U.pod.rotation.x = s.pitch || 0; const ec = s.flash > 0 ? '#ffffff' : s.target ? (s.lockT > 0 ? '#ffb347' : '#ff5a4d') : '#5aa0ff'; U.tip.visible = !!s.target || Math.sin(X.t * 4 + i) > -.3; U.eye.material.color.set(ec); U.eye.scale.setScalar(s.target ? 1.25 : 1); U.eye.scale.z = .5;   // (blue sweeping, amber locking on, red firing)
       s.muzzle = Math.max(0, (s.muzzle || 0) - dt); U.fl.visible = s.muzzle > 0; U.fl.rotation.z = Math.random() * 6; U.bars.position.z = s.muzzle * 1.2; });   // (the barrels kick back on a shot)
     // the ultimates: orbs waiting to be taken, Piercer's bolts, Lockdown's dome, Nightwalk gathering and where it comes out
@@ -8426,7 +8463,10 @@ const GAME = {
     K.hexes = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), hx = new THREE.Mesh(new THREE.CylinderGeometry(.24, .24, .07, 6), energyMat(OPS.vanta.col, { hex: 0, rim: 1, base: .5 })); hx.rotation.x = Math.PI / 2; const core = sprite('#ffffff', .45), halo = sprite(OPS.vanta.col, 1.2); g.add(hx, core, halo); g.userData = { hx, core, halo }; K.hexes.push(add(g)); }
     K.wards = []; for (let i = 0; i < 5; i++) K.wards.push(add(new THREE.Mesh(new THREE.SphereGeometry(.62, 24, 16), energyMat(OPS.vanta.col, { hex: 6, rim: 1.2, base: .02, op: .8 }))));
     // the lobbed ones in flight, Gloom's dark, the Watcher, a Tether's anchor, Sunder's bolt, the Duel Field's beam, Flashpoint's flight
-    K.lobs = []; for (let i = 0; i < 6; i++) { const g = new THREE.Group(), core = new THREE.Mesh(new THREE.SphereGeometry(.07, 10, 8), basic('#ffffff', { blending: THREE.NormalBlending, transparent: false })), halo = sprite('#ffffff', .6); g.add(core, halo); g.userData = { core, halo }; K.lobs.push(add(g)); }
+    const lobM = new THREE.MeshLambertMaterial({ color: LC('#2a2e36') }), lobM2 = new THREE.MeshLambertMaterial({ color: LC('#8a95a6') });
+    K.lobs = []; for (let i = 0; i < 6; i++) {   // a thrown canister: a dark body with metal end caps and a glowing band in its thrower's colour; it tumbles
+      const g = new THREE.Group(), core = new THREE.Mesh(new THREE.TorusGeometry(.05, .014, 6, 16), basic('#ffffff', { blending: THREE.NormalBlending, transparent: false })), halo = sprite('#ffffff', .6); core.rotation.x = Math.PI / 2;
+      g.add(kcyl(.042, .042, .12, 10, lobM, 0, 0, 0), kcyl(.03, .046, .025, 10, lobM2, 0, .07, 0), kcyl(.046, .03, .025, 10, lobM2, 0, -.07, 0), kcyl(.012, .012, .03, 6, lobM2, 0, .095, 0), core, halo); bakeKit(g, [core]); g.userData = { core, halo }; K.lobs.push(add(g)); }
     K.glooms = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), puffs = []; for (let k = 0; k < 10; k++) { const s = sprite('#1a0f2a', 2, THREE.NormalBlending, smokeT); s.material.opacity = .9; g.add(s); puffs.push(s); } const glow = sprite(OPS.vex.col, 3); g.add(glow); g.userData = { puffs, glow }; K.glooms.push(add(g)); }
     K.eyes = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), ball = new THREE.Mesh(new THREE.SphereGeometry(.09, 14, 10), new THREE.MeshBasicMaterial({ color: '#e8fffb' })), iris = new THREE.Mesh(new THREE.TorusGeometry(.055, .014, 6, 18), basic(OPS.iris.col, { blending: THREE.NormalBlending, transparent: false })), pupil = new THREE.Mesh(new THREE.CircleGeometry(.03, 12), new THREE.MeshBasicMaterial({ color: '#06201c' }));
       iris.position.z = -.075; pupil.position.z = -.088; pupil.rotation.y = Math.PI; const cone = new THREE.Mesh(new THREE.ConeGeometry(Math.tan(.9) * 6, 6, 24, 1, true), energyMat(OPS.iris.col, { hex: 0, rim: 0, base: .08, scan: 1 })); cone.rotation.x = Math.PI / 2; cone.position.z = -3;
@@ -8497,7 +8537,7 @@ const GAME = {
       if (Math.random() < dt * 10) spark([F.x + rnd(-F.r, F.r) * .7, F.y + .1, F.z + rnd(-F.r, F.r) * .7], [0, rnd(.4, 1.2), 0], '#c8f4ff', .8); });
     list(K.hexes, K2.hexes.filter(h => h.by === P || h.by.team === P.team), (g, h) => { g.position.set(h.x, h.y + Math.sin(X.t * 3) * .06, h.z); g.userData.hx.rotation.z = X.t * 2.5; g.rotation.y = X.t; const k = Math.min(1, h.t / .4); g.scale.setScalar(k * (1 + .08 * Math.sin(X.t * 12))); g.userData.halo.material.opacity = .6 + .3 * Math.sin(X.t * 8); });
     list(K.wards, M.fs.filter(f => f.alive && f !== Vw && (f.ward > 0 || f.wardV) && duelOk(Vw, f)), (m, f) => { m.position.set(ipos(f, 'x'), ipos(f, 'y') + 1.05, ipos(f, 'z')); m.scale.set(1, 1.55, 1); m.material.uniforms.op.value = .55 + .15 * Math.sin(X.t * 5); });
-    list(K.lobs, K2.lobs, (g, B) => { const col = (OPS[B.by.op] || OPS.vex).col; g.position.set(B.x, B.y, B.z); g.userData.halo.material.color.set(B.k === 'vexc' ? '#5a2a9a' : col); g.userData.core.material.color.set(B.k === 'vexc' ? '#120a1c' : '#ffffff'); g.userData.halo.scale.setScalar(.55 + .15 * Math.sin(X.t * 20));
+    list(K.lobs, K2.lobs, (g, B, i) => { const col = (OPS[B.by.op] || OPS.vex).col; g.position.set(B.x, B.y, B.z); g.rotation.set(X.t * 11 + i, 0, X.t * 7); g.userData.halo.material.color.set(B.k === 'vexc' ? '#5a2a9a' : col); g.userData.core.material.color.set(B.k === 'vexc' ? '#8f6bff' : col); g.userData.halo.scale.setScalar(.55 + .15 * Math.sin(X.t * 20));
       if (Math.random() < .7) spark([B.x, B.y, B.z], [rnd(-.3, .3), rnd(-.2, .4), rnd(-.3, .3)], B.k === 'talonc' ? '#d8ffb0' : col, .35); });
     list(K.glooms, K2.glooms, (g, G2) => { const k = Math.min(1, (3.5 - G2.t) / .25) * Math.min(1, G2.t / .8); g.position.set(G2.x, G2.y + 1, G2.z); g.userData.puffs.forEach((s, i) => { const a = i * 2.4 + X.t * (.3 + i * .03), r = 1.2 + (i % 3) * 1.3; s.position.set(Math.cos(a) * r, Math.sin(i * 1.7 + X.t) * .6, Math.sin(a) * r); s.scale.setScalar((2.6 + (i % 4)) * k); s.material.opacity = .85 * k; s.material.rotation = X.t * .2 + i; });
       g.userData.glow.material.opacity = .5 * k; g.userData.glow.scale.setScalar(4 * k); });
@@ -8696,22 +8736,35 @@ const GAME = {
     const basic = (c, o) => new THREE.MeshBasicMaterial(Object.assign({ color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }, o || {}));
     const lit = c => new THREE.MeshLambertMaterial({ color: LC(c) }), flat = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.rotation.x = -Math.PI / 2; return m; };
     const sprite = (c, s) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: K.glowT, color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false })); sp.scale.setScalar(s); return sp; };
-    const ax = OPS.axiom.col, bs = OPS.bastion.col, devM = lit('#2a2e36');
+    const ax = OPS.axiom.col, bs = OPS.bastion.col, devM = lit('#2a2e36'), midM = lit('#4c5664'), plateM = lit('#8a95a6'), stripe = basic(ax, { opacity: .9 });
     const K4 = X.kf4 = { up: new THREE.Vector3(0, 1, 0), v: new THREE.Vector3(), c: { idle: new THREE.Color(ax), lock: new THREE.Color('#ffb347'), fire: new THREE.Color('#ff5a4d'), bar: new THREE.Color(bs), mended: new THREE.Color('#fff0c8'), low: new THREE.Color('#ff7a4a') } };
     // the Sentry's arc: a faint fan with a brighter rim, 3.5 m out (it guards 22 m; this only shows which way)
     K4.arcs = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), th0 = Math.PI / 2 - SENTRY.arc, th = SENTRY.arc * 2, fan = flat(new THREE.CircleGeometry(3.5, 20, th0, th), basic(ax, { opacity: .1 })), rim = flat(new THREE.RingGeometry(3.36, 3.5, 20, 1, th0, th), basic(ax, { opacity: .45 }));
       fan.position.y = .03; rim.position.y = .035; g.add(fan, rim); g.userData = { fan, rim }; K4.arcs.push(add(g)); }
     // the Tripwire: a group whose +x runs from one anchor to the other
     K4.wires = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), wire = new THREE.Mesh(new THREE.BoxGeometry(1, .022, .022), basic('#ff5a2a', { opacity: .9, blending: THREE.NormalBlending })); wire.geometry.translate(.5, 0, 0); wire.position.y = WIRE.h;   // (normal blending: it stays red on a pale floor)
-      const anc = [0, 1].map(() => { const a = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(.1, .18, .1), devM), lamp = sprite('#ff7a4a', .28); b.position.y = WIRE.h; lamp.position.y = WIRE.h + .12; a.add(b, lamp); g.add(a); a.userData = { lamp }; return a; });
+      const anc = [0, 1].map(j => { const a = new THREE.Group(), h = WIRE.h, lamp = sprite('#ff7a4a', .22);   // a post: foot plate, stem, an armoured emitter head with Axiom's blue, its nozzle facing along the wire
+        a.add(kbx(.15, .025, .15, devM, -.02, .0125, 0), kbx(.035, h, .035, midM, -.05, h / 2, 0), kbx(.1, .13, .11, devM, 0, h, 0), kbx(.102, .014, .112, stripe, 0, h + .045, 0));
+        for (const sz of [-1, 1]) a.add(kbx(.07, .09, .012, midM, -.01, h, sz * .062)); const nz = kcyl(.03, .036, .06, 8, midM, .07, h, 0); nz.rotation.z = Math.PI / 2; a.add(nz);
+        lamp.position.set(.105, h, 0); a.add(lamp); bakeKit(a, [lamp]); if (j) a.rotation.y = Math.PI; g.add(a); a.userData = { lamp }; return a; });
       g.add(wire); g.userData = { wire, anc }; K4.wires.push(add(g)); }
     // the Slow Field canister
-    K4.cans = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), body = new THREE.Mesh(new THREE.CylinderGeometry(.1, .12, .3, 10), lit('#3a4250')), band = new THREE.Mesh(new THREE.TorusGeometry(.112, .016, 6, 16), basic(ax)), lamp = sprite(ax, .4), ring = flat(new THREE.RingGeometry(.95, 1, 40), basic(ax, { opacity: .35 }));
-      body.position.y = .15; band.rotation.x = Math.PI / 2; band.position.y = .22; lamp.position.y = .36; ring.position.y = .03; ring.scale.setScalar(CAN.trip); g.add(body, band, lamp, ring); g.userData = { lamp, ring }; K4.cans.push(add(g)); }
+    K4.cans = []; for (let i = 0; i < 3; i++) {   // a squat canister: foot ring, a glowing core showing between armour ribs, a capped top with a valve and its lamp
+      const g = new THREE.Group(), lamp = sprite(ax, .36), ring = flat(new THREE.RingGeometry(.95, 1, 40), basic(ax, { opacity: .35 }));
+      g.add(kcyl(.13, .145, .04, 10, devM, 0, .02, 0), kcyl(.1, .11, .07, 10, midM, 0, .075, 0), kcyl(.072, .072, .13, 12, basic(ax, { opacity: .85 }), 0, .175, 0), kcyl(.105, .1, .05, 10, midM, 0, .265, 0), kcyl(.06, .085, .04, 10, devM, 0, .31, 0), kcyl(.022, .022, .05, 6, plateM, 0, .35, 0));
+      for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + .4, r = kbx(.03, .16, .028, devM, Math.cos(a) * .082, .175, Math.sin(a) * .082); r.rotation.y = -a; g.add(r); }
+      const vl = kcyl(.016, .016, .06, 6, plateM, .115, .085, 0); vl.rotation.z = Math.PI / 2; g.add(vl, kbx(.03, .03, .03, devM, .15, .085, 0));
+      lamp.position.y = .38; ring.position.y = .03; ring.scale.setScalar(CAN.trip); g.add(lamp, ring); bakeKit(g, [ring]); g.userData = { lamp, ring }; K4.cans.push(add(g)); }
     // the Ward Beacon
-    K4.beacons = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), base = new THREE.Mesh(new THREE.CylinderGeometry(.16, .2, .18, 10), lit('#3c3428')), core = new THREE.Mesh(new THREE.SphereGeometry(.11, 10, 8), basic('#ffe2b0', { blending: THREE.NormalBlending, transparent: false })),
-      beam = new THREE.Mesh(new THREE.CylinderGeometry(.05, .12, 2.6, 10, 1, true), basic(bs, { opacity: .45 })), halo = sprite(bs, 1.1), reach = flat(new THREE.RingGeometry(.97, 1, 48), basic(bs, { opacity: .3 }));
-      base.position.y = .09; core.position.y = .3; beam.position.y = 1.6; halo.position.y = .35; reach.position.y = .03; reach.scale.setScalar(BEACON.r); g.add(base, core, beam, halo, reach); g.userData = { beam, halo, reach, core }; K4.beacons.push(add(g)); }
+    const bronze = lit('#3c3428'), brass = lit('#9a8058');
+    K4.beacons = []; for (let i = 0; i < 3; i++) {   // a lantern on a pylon: a clawed hex base, a stem, a caged amber core under a cap and spire, and its beam above
+      const g = new THREE.Group(), core = new THREE.Mesh(new THREE.SphereGeometry(.075, 12, 10), basic('#ffe2b0', { blending: THREE.NormalBlending, transparent: false })),
+        beam = new THREE.Mesh(new THREE.CylinderGeometry(.05, .12, 2.6, 10, 1, true), basic(bs, { opacity: .45 })), halo = sprite(bs, .9), reach = flat(new THREE.RingGeometry(.97, 1, 48), basic(bs, { opacity: .3 }));
+      g.add(kcyl(.2, .24, .07, 6, bronze, 0, .035, 0), kcyl(.15, .19, .05, 6, brass, 0, .095, 0), kcyl(.055, .075, .16, 6, bronze, 0, .2, 0), kcyl(.12, .1, .04, 6, brass, 0, .3, 0), kcyl(.05, .125, .06, 6, brass, 0, .55, 0), kcyl(0, .04, .09, 6, bronze, 0, .625, 0));
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; g.add(kbx(.016, .2, .016, bronze, Math.cos(a) * .1, .42, Math.sin(a) * .1)); }
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + .5; g.add(kstrut([Math.cos(a) * .15, .1, Math.sin(a) * .15], [Math.cos(a) * .27, .01, Math.sin(a) * .27], .022, bronze)); }
+      const shell = new THREE.Mesh(new THREE.SphereGeometry(.1, 12, 8), basic(bs, { opacity: .35 })); shell.position.y = .42; g.add(shell);
+      core.position.y = .42; beam.position.y = 1.95; halo.position.y = .42; reach.position.y = .03; reach.scale.setScalar(BEACON.r); g.add(core, beam, halo, reach); bakeKit(g, [core, beam, reach]); g.userData = { beam, halo, reach, core }; K4.beacons.push(add(g)); }
     // a Rampart's damage, drawn on the wall itself (both faces): three stages of cracks, dead panels and holes, made once
     { let sd = 7; const rr = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
       const crack = (g, x, y, len, a, wd, depth) => { g.lineWidth = wd; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < len; k++) { a += (rr() - .5) * .9; x += Math.cos(a) * 14; y += Math.sin(a) * 14; g.lineTo(x, y); if (depth > 0 && rr() < .12) { g.stroke(); crack(g, x, y, len * .5 | 0, a + (rr() < .5 ? 1 : -1) * (.6 + rr() * .6), wd * .6, depth - 1); g.beginPath(); g.moveTo(x, y); } } g.stroke(); };

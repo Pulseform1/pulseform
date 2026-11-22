@@ -11,22 +11,35 @@
     const basic = (c, o) => new THREE.MeshBasicMaterial(Object.assign({ color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }, o || {}));
     const lit = c => new THREE.MeshLambertMaterial({ color: LC(c) }), flat = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.rotation.x = -Math.PI / 2; return m; };
     const sprite = (c, s) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: K.glowT, color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false })); sp.scale.setScalar(s); return sp; };
-    const ax = OPS.axiom.col, bs = OPS.bastion.col, devM = lit('#2a2e36');
+    const ax = OPS.axiom.col, bs = OPS.bastion.col, devM = lit('#2a2e36'), midM = lit('#4c5664'), plateM = lit('#8a95a6'), stripe = basic(ax, { opacity: .9 });
     const K4 = X.kf4 = { up: new THREE.Vector3(0, 1, 0), v: new THREE.Vector3(), c: { idle: new THREE.Color(ax), lock: new THREE.Color('#ffb347'), fire: new THREE.Color('#ff5a4d'), bar: new THREE.Color(bs), mended: new THREE.Color('#fff0c8'), low: new THREE.Color('#ff7a4a') } };
     // the Sentry's arc: a faint fan with a brighter rim, 3.5 m out (it guards 22 m; this only shows which way)
     K4.arcs = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), th0 = Math.PI / 2 - SENTRY.arc, th = SENTRY.arc * 2, fan = flat(new THREE.CircleGeometry(3.5, 20, th0, th), basic(ax, { opacity: .1 })), rim = flat(new THREE.RingGeometry(3.36, 3.5, 20, 1, th0, th), basic(ax, { opacity: .45 }));
       fan.position.y = .03; rim.position.y = .035; g.add(fan, rim); g.userData = { fan, rim }; K4.arcs.push(add(g)); }
     // the Tripwire: a group whose +x runs from one anchor to the other
     K4.wires = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), wire = new THREE.Mesh(new THREE.BoxGeometry(1, .022, .022), basic('#ff5a2a', { opacity: .9, blending: THREE.NormalBlending })); wire.geometry.translate(.5, 0, 0); wire.position.y = WIRE.h;   // (normal blending: it stays red on a pale floor)
-      const anc = [0, 1].map(() => { const a = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(.1, .18, .1), devM), lamp = sprite('#ff7a4a', .28); b.position.y = WIRE.h; lamp.position.y = WIRE.h + .12; a.add(b, lamp); g.add(a); a.userData = { lamp }; return a; });
+      const anc = [0, 1].map(j => { const a = new THREE.Group(), h = WIRE.h, lamp = sprite('#ff7a4a', .22);   // a post: foot plate, stem, an armoured emitter head with Axiom's blue, its nozzle facing along the wire
+        a.add(kbx(.15, .025, .15, devM, -.02, .0125, 0), kbx(.035, h, .035, midM, -.05, h / 2, 0), kbx(.1, .13, .11, devM, 0, h, 0), kbx(.102, .014, .112, stripe, 0, h + .045, 0));
+        for (const sz of [-1, 1]) a.add(kbx(.07, .09, .012, midM, -.01, h, sz * .062)); const nz = kcyl(.03, .036, .06, 8, midM, .07, h, 0); nz.rotation.z = Math.PI / 2; a.add(nz);
+        lamp.position.set(.105, h, 0); a.add(lamp); bakeKit(a, [lamp]); if (j) a.rotation.y = Math.PI; g.add(a); a.userData = { lamp }; return a; });
       g.add(wire); g.userData = { wire, anc }; K4.wires.push(add(g)); }
     // the Slow Field canister
-    K4.cans = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), body = new THREE.Mesh(new THREE.CylinderGeometry(.1, .12, .3, 10), lit('#3a4250')), band = new THREE.Mesh(new THREE.TorusGeometry(.112, .016, 6, 16), basic(ax)), lamp = sprite(ax, .4), ring = flat(new THREE.RingGeometry(.95, 1, 40), basic(ax, { opacity: .35 }));
-      body.position.y = .15; band.rotation.x = Math.PI / 2; band.position.y = .22; lamp.position.y = .36; ring.position.y = .03; ring.scale.setScalar(CAN.trip); g.add(body, band, lamp, ring); g.userData = { lamp, ring }; K4.cans.push(add(g)); }
+    K4.cans = []; for (let i = 0; i < 3; i++) {   // a squat canister: foot ring, a glowing core showing between armour ribs, a capped top with a valve and its lamp
+      const g = new THREE.Group(), lamp = sprite(ax, .36), ring = flat(new THREE.RingGeometry(.95, 1, 40), basic(ax, { opacity: .35 }));
+      g.add(kcyl(.13, .145, .04, 10, devM, 0, .02, 0), kcyl(.1, .11, .07, 10, midM, 0, .075, 0), kcyl(.072, .072, .13, 12, basic(ax, { opacity: .85 }), 0, .175, 0), kcyl(.105, .1, .05, 10, midM, 0, .265, 0), kcyl(.06, .085, .04, 10, devM, 0, .31, 0), kcyl(.022, .022, .05, 6, plateM, 0, .35, 0));
+      for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + .4, r = kbx(.03, .16, .028, devM, Math.cos(a) * .082, .175, Math.sin(a) * .082); r.rotation.y = -a; g.add(r); }
+      const vl = kcyl(.016, .016, .06, 6, plateM, .115, .085, 0); vl.rotation.z = Math.PI / 2; g.add(vl, kbx(.03, .03, .03, devM, .15, .085, 0));
+      lamp.position.y = .38; ring.position.y = .03; ring.scale.setScalar(CAN.trip); g.add(lamp, ring); bakeKit(g, [ring]); g.userData = { lamp, ring }; K4.cans.push(add(g)); }
     // the Ward Beacon
-    K4.beacons = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), base = new THREE.Mesh(new THREE.CylinderGeometry(.16, .2, .18, 10), lit('#3c3428')), core = new THREE.Mesh(new THREE.SphereGeometry(.11, 10, 8), basic('#ffe2b0', { blending: THREE.NormalBlending, transparent: false })),
-      beam = new THREE.Mesh(new THREE.CylinderGeometry(.05, .12, 2.6, 10, 1, true), basic(bs, { opacity: .45 })), halo = sprite(bs, 1.1), reach = flat(new THREE.RingGeometry(.97, 1, 48), basic(bs, { opacity: .3 }));
-      base.position.y = .09; core.position.y = .3; beam.position.y = 1.6; halo.position.y = .35; reach.position.y = .03; reach.scale.setScalar(BEACON.r); g.add(base, core, beam, halo, reach); g.userData = { beam, halo, reach, core }; K4.beacons.push(add(g)); }
+    const bronze = lit('#3c3428'), brass = lit('#9a8058');
+    K4.beacons = []; for (let i = 0; i < 3; i++) {   // a lantern on a pylon: a clawed hex base, a stem, a caged amber core under a cap and spire, and its beam above
+      const g = new THREE.Group(), core = new THREE.Mesh(new THREE.SphereGeometry(.075, 12, 10), basic('#ffe2b0', { blending: THREE.NormalBlending, transparent: false })),
+        beam = new THREE.Mesh(new THREE.CylinderGeometry(.05, .12, 2.6, 10, 1, true), basic(bs, { opacity: .45 })), halo = sprite(bs, .9), reach = flat(new THREE.RingGeometry(.97, 1, 48), basic(bs, { opacity: .3 }));
+      g.add(kcyl(.2, .24, .07, 6, bronze, 0, .035, 0), kcyl(.15, .19, .05, 6, brass, 0, .095, 0), kcyl(.055, .075, .16, 6, bronze, 0, .2, 0), kcyl(.12, .1, .04, 6, brass, 0, .3, 0), kcyl(.05, .125, .06, 6, brass, 0, .55, 0), kcyl(0, .04, .09, 6, bronze, 0, .625, 0));
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; g.add(kbx(.016, .2, .016, bronze, Math.cos(a) * .1, .42, Math.sin(a) * .1)); }
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + .5; g.add(kstrut([Math.cos(a) * .15, .1, Math.sin(a) * .15], [Math.cos(a) * .27, .01, Math.sin(a) * .27], .022, bronze)); }
+      const shell = new THREE.Mesh(new THREE.SphereGeometry(.1, 12, 8), basic(bs, { opacity: .35 })); shell.position.y = .42; g.add(shell);
+      core.position.y = .42; beam.position.y = 1.95; halo.position.y = .42; reach.position.y = .03; reach.scale.setScalar(BEACON.r); g.add(core, beam, halo, reach); bakeKit(g, [core, beam, reach]); g.userData = { beam, halo, reach, core }; K4.beacons.push(add(g)); }
     // a Rampart's damage, drawn on the wall itself (both faces): three stages of cracks, dead panels and holes, made once
     { let sd = 7; const rr = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
       const crack = (g, x, y, len, a, wd, depth) => { g.lineWidth = wd; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < len; k++) { a += (rr() - .5) * .9; x += Math.cos(a) * 14; y += Math.sin(a) * 14; g.lineTo(x, y); if (depth > 0 && rr() < .12) { g.stroke(); crack(g, x, y, len * .5 | 0, a + (rr() < .5 ? 1 : -1) * (.6 + rr() * .6), wd * .6, depth - 1); g.beginPath(); g.moveTo(x, y); } } g.stroke(); };
