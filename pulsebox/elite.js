@@ -44,7 +44,8 @@ function normEmail(e) {
 export async function caller(request, env, verifyClaims) {
   const tok = (request.headers.get('authorization') || '').replace(/^Bearer /, '');
   // ELITE_DEV is only ever passed on the command line for local runs (wrangler dev --var ELITE_DEV:1); it is not in wrangler.toml
-  if (env.ELITE_DEV === '1' && tok.startsWith('dev.')) {
+  const host = new URL(request.url).hostname;   // (and never on the real site, even if the variable were set by mistake)
+  if (env.ELITE_DEV === '1' && tok.startsWith('dev.') && (host === 'localhost' || host === '127.0.0.1')) {
     const [, uid, email, verified, created] = tok.split('.');
     return { uid, email: atob(email), verified: verified === '1', created: +created, dev: true };
   }

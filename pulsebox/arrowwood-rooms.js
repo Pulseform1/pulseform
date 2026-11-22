@@ -11,6 +11,7 @@ import * as Bank from './arrowwood/server/bank.js';
 
 const json = (b, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
 const MAX_MSG = 2048;
+const bucket = (rate, burst) => { let tok = burst, at = Date.now(); return () => { const now = Date.now(); tok = Math.min(burst, tok + (now - at) / 1000 * rate); at = now; if (tok < 1) return false; tok -= 1; return true; }; };   // a flood limit per player
 const bankStub = env => env.ARROWWOOD_BANK.get(env.ARROWWOOD_BANK.idFromName('bank'));
 const bankCall = (env, path, body) => bankStub(env).fetch('https://bank/' + path, { method: 'POST', body: JSON.stringify(body) }).then(r => r.json());
 
@@ -57,10 +58,11 @@ export class ArrowwoodRoom {
     if (request.headers.get('upgrade') !== 'websocket') { const n = this.room ? [...this.room.players.values()].filter(p => !p.dummy && p.connected).length : 0; return json({ game: 'arrowwood', players: n, mode: this.room && this.room.mode, phase: this.room && this.room.phase }); }
     const pair = new WebSocketPair(), [client, ws] = Object.values(pair);
     ws.accept();
-    let id = null, joining = false;
+    let id = null, joining = false, dropped = 0; const msgs = bucket(90, 180);
     const out = m => { try { ws.send(JSON.stringify(m)); } catch (e) {} };
     ws.addEventListener('message', async e => {
       if (typeof e.data !== 'string' || e.data.length > MAX_MSG) return;
+      if (!msgs()) { if (++dropped > 2000) try { ws.close(1008, 'too many messages'); } catch (err) {} return; }
       let m; try { m = JSON.parse(e.data); } catch (err) { return; }
       if (!m || typeof m !== 'object') return;
       if (!id) {

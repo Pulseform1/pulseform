@@ -90,8 +90,9 @@ open(os.path.join(DIST, '_headers'), 'w').write('''/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=31536000
-  Content-Security-Policy: frame-ancestors 'self' https://pulseform.org https://*.pulseform.org
+  Content-Security-Policy: frame-ancestors 'self' https://pulseform.org https://*.pulseform.org; object-src 'none'; base-uri 'self'
   X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=()
 /*.html
   Cache-Control: no-cache
 /
@@ -193,7 +194,7 @@ export default {
     // security headers: no MIME sniffing, HTTPS only, no embedding on other sites (clickjacking), no full URLs leaked
     return new Response(request.method === 'HEAD' ? null : body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': path === '/bugs.html' || path === '/picks.html' ? 'no-store' : 'no-cache',
       'x-content-type-options': 'nosniff', 'referrer-policy': 'strict-origin-when-cross-origin', 'strict-transport-security': 'max-age=31536000',
-      'content-security-policy': "frame-ancestors 'self' https://pulseform.org https://*.pulseform.org", 'x-frame-options': 'SAMEORIGIN' } });
+      'content-security-policy': "frame-ancestors 'self' https://pulseform.org https://*.pulseform.org; object-src 'none'; base-uri 'self'", 'x-frame-options': 'SAMEORIGIN', 'permissions-policy': 'geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=()' } });
   }
 };
 ''' % (json.dumps(game_ids), json.dumps(elite_cfg), json.dumps(elite_ids), json.dumps(files, ensure_ascii=False), json.dumps(media), REPO, sha)

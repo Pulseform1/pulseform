@@ -172,6 +172,7 @@ export class Bugs {
     if (url.pathname === '/add') {
       const r = JSON.parse(await request.text());
       this.sql.exec('DELETE FROM sent WHERE t < ?', now - 3600000);
+      if (this.sql.exec('SELECT COUNT(*) AS n FROM sent').one().n >= 300) return json({ error: 'Lots of reports are coming in right now. Please try again in a little while.' }, 429);
       if (this.sql.exec('SELECT COUNT(*) AS n FROM sent WHERE k = ?', r.who).one().n >= 6) return json({ error: 'Thanks! You have sent a lot of reports in the last hour. Please try again later.' }, 429);
       this.sql.exec('INSERT INTO sent (k, t) VALUES (?, ?)', r.who, now);
       const token = hex(crypto.getRandomValues(new Uint8Array(16)));
@@ -514,6 +515,10 @@ export class Stats {
 // One instance per room code. Players stay connected only while the game is open; nothing is stored.
 // A message { to: id } goes to that player only; anything else goes to everyone else in the room.
 // The first player in is the host (they run the monsters); if the host leaves, the next player takes over.
+// a token bucket: up to `burst` at once, refilling at `rate` a second (used to cap how much one player can send)
+export const bucket = (rate, burst) => { let tok = burst, at = Date.now(); return (cost = 1) => { const now = Date.now(); tok = Math.min(burst, tok + (now - at) / 1000 * rate); at = now; if (tok < cost) return false; tok -= cost; return true; }; };
+// only the server sends these; a player's message claiming to be one is dropped (so nobody can fake a host change or a leave)
+const SERVER_ONLY = new Set(['hello', 'join', 'leave', 'host', 'full']);
 const MAX_PLAYERS = 8, MAX_MSG = 16000, BIG_ROOMS = { 'odd-crowd': 14, duelpoint: 12 };   // party games seat more people (Odd Crowd: 10 players + a host screen + reconnects)
 export class Rooms {
   constructor(state) { this.state = state; this.socks = new Map(); this.next = 1; this.host = 0; this.game = ''; }
@@ -529,10 +534,13 @@ export class Rooms {
     this.socks.set(id, { sock, name });
     sock.send(JSON.stringify({ t: 'hello', id, host: this.host, players: [...this.socks].map(([i, p]) => ({ id: i, name: p.name })) }));
     this.send({ t: 'join', id, name }, id);
+    // far more than any game sends (they send 10 to 60 a second); a flood is dropped, and a sender that keeps flooding is cut off
+    const msgs = bucket(150, 300), bytes = bucket(600000, 1200000); let dropped = 0;
     sock.addEventListener('message', e => {
       if (typeof e.data !== 'string' || e.data.length > MAX_MSG) return;
+      if (!msgs() || !bytes(e.data.length)) { if (++dropped > 3000) try { sock.close(1008, 'too many messages'); } catch (err) {} return; }
       let m; try { m = JSON.parse(e.data); } catch (err) { return; }
-      if (!m || typeof m !== 'object') return;
+      if (!m || typeof m !== 'object' || SERVER_ONLY.has(m.t)) return;
       m.from = id;
       if (m.to) { const p = this.socks.get(m.to); if (p) try { p.sock.send(JSON.stringify(m)); } catch (err) {} }
       else this.send(m, id);

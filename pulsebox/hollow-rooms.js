@@ -5,7 +5,8 @@
 import { MAP } from './the-hollow/world.js';
 import { createSession, addPlayer, applyMessage, tick, snapshot } from './the-hollow/engine.js';
 
-const MAX_PAYLOAD = 4096;
+const MAX_PAYLOAD = 4096, MAX_ROOMS = 250, MAX_PER_IP = 6;   // all rooms share one server: cap how many there are, and how many one address holds open
+const bucket = (rate, burst) => { let tok = burst, at = Date.now(); return () => { const now = Date.now(); tok = Math.min(burst, tok + (now - at) / 1000 * rate); at = now; if (tok < 1) return false; tok -= 1; return true; }; };   // a flood limit per player
 const hex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2, '0')).join('');
 
 export class HollowRooms {
@@ -14,15 +15,22 @@ export class HollowRooms {
     if (request.headers.get('upgrade') !== 'websocket') return new Response('expected a websocket', { status: 426 });
     const pair = new WebSocketPair(), [client, ws] = Object.values(pair);
     ws.accept();
-    let room = null, id = null;
+    const ip = request.headers.get('cf-connecting-ip') || '?'; this.ips = this.ips || new Map();
+    if ((this.ips.get(ip) || 0) >= MAX_PER_IP) { try { ws.send(JSON.stringify({ type: 'error', message: 'Too many games open from here.' })); ws.close(1008, 'too many'); } catch (e) {} return new Response(null, { status: 101, webSocket: client }); }
+    this.ips.set(ip, (this.ips.get(ip) || 0) + 1); let counted = true;
+    const uncount = () => { if (!counted) return; counted = false; const n = (this.ips.get(ip) || 1) - 1; if (n > 0) this.ips.set(ip, n); else this.ips.delete(ip); };
+    ws.addEventListener('close', uncount); ws.addEventListener('error', uncount);
+    let room = null, id = null, dropped = 0; const msgs = bucket(90, 180);   // (inputs come 10 to 30 times a second)
     ws.addEventListener('message', e => {
       if (typeof e.data !== 'string' || e.data.length > MAX_PAYLOAD) return;
+      if (!msgs()) { if (++dropped > 2000) try { ws.close(1008, 'too many messages'); } catch (err) {} return; }
       let m; try { m = JSON.parse(e.data); } catch (err) { return; }
       if (!m || typeof m !== 'object') return;
       if (m.type === 'join') {
         if (room) return;
         let code = String(m.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
         if (code && !this.rooms.has(code)) return send(ws, { type: 'error', message: 'Room not found. Ask your partner for their current code.' });
+        if (!code && this.rooms.size >= MAX_ROOMS) return send(ws, { type: 'error', message: 'Servers are busy right now. Please try again in a minute.' });
         if (!code) { do code = hex(3).toUpperCase(); while (this.rooms.has(code)); this.rooms.set(code, { ...createSession(), sockets: new Map() }); }
         const r = this.rooms.get(code);
         if (r.ended) return send(ws, { type: 'error', message: 'This expedition has ended. Create a new room.' });
