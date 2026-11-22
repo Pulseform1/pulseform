@@ -13,6 +13,8 @@
   on('round', n => {
     UI.armory = false; UI.pick = null; UI.pendingArmory = false; if (M.mode === 'demo' || M.mode === 'range') return;
     const side = sideOf(me()), decider = otRound(n) > 0; UI.switched = n > 1 && UI.lastSide && side !== UI.lastSide ? { t0: performance.now(), side, decider, sd: suddenDeath(n), first: otRound(n) === 1 } : null; UI.lastSide = side;
+    // the moment's sound: the first overtime round, a side swap, or (once the loading screen is gone) the match's first buy phase
+    if (typeof playMoment === 'function') { if (otRound(n) === 1) playMoment('overtime'); else if (UI.switched) playMoment('switch'); else if (n === 1) UI.startSnd = true; }
     if (loadingNow() || UI.switched) UI.pendingArmory = true; else openArmory(true);
   });
   on('live', () => { if (UI.armory) { UI.armory = false; if (!locked()) grabMouse(); } });
@@ -61,6 +63,7 @@
   GAME.update = dt => {
     queueTick();
     if (screen !== 'play' || !M || posed) return;
+    if (UI.startSnd && !loadingNow()) { UI.startSnd = false; if (M.phase === 'buy' && typeof playMoment === 'function') playMoment('start'); }
     if (UI.pendingArmory && !loadingNow() && !UI.switched) { UI.pendingArmory = false; if (M.phase === 'buy') openArmory(true); }
     acc += Math.min(dt, .1); let n = 0; while (acc >= 1 / 60 && n++ < 5) { for (const f of M.fs) { f.px = f.x; f.py = f.y; f.pz = f.z; } tick(1 / 60); acc -= 1 / 60; }
     tickA = cl(acc * 60, 0, 1);
