@@ -4,10 +4,10 @@
    Countries whose capital is split, disputed or about to move are left out of the capitals (or out entirely).
    Russia and Turkey span Europe and Asia: ct is the group they are played in, CT_NAME says both.
    A flag is [width, height, ...ops], drawn by flagSVG() with simple shapes only (no emblems, no emoji):
-     'h', colours...   equal horizontal stripes, top to bottom     'v', colours...   equal vertical stripes, hoist to fly
+     'h', colors...   equal horizontal stripes, top to bottom     'v', colors...   equal vertical stripes, hoist to fly
      'r', x, y, w, h, col  rectangle      'p', 'x,y x,y ...', col  polygon      'c', cx, cy, r, col  disc
      's', cx, cy, R, turn, col  five-pointed star (turn: degrees clockwise from pointing up)
-     'S', cx, cy, R, turn, points, inner ratio, col   'm', cx, cy, R, r, offset, angle, col  crescent opening towards angle
+     'S', cx, cy, R, turn, points, inner ratio, col   'm', cx, cy, R, r, offset, angle, col  crescent opening toward angle
      'n', x, y, w, col  Nordic cross bars   'l', x1, y1, x2, y2, width, col  band   'u', x, y, w, h  Union Jack
      'z', base x, tip x, points, col  serrated hoist band   'w', cx, cy, r, col  24-spoke wheel   'P', cx, cy, R, w, col  pentagram outline
      'o', cx, cy, r, R, col  sun with 32 rays   'U'  the US flag (190 x 100)   'K'  the South Korean flag (36 x 24)   '<...>' raw SVG */

@@ -1,11 +1,11 @@
 /* Science Lab: a lab bench that alternates quick quiz questions with small hands-on experiments: heat water and see its
-   state, predict float or sink, test conductors, find the circuit that works, mix coloured light, pick up things with a
+   state, predict float or sink, test conductors, find the circuit that works, mix colored light, pick up things with a
    magnet, build a food chain. Three lives; every station cleared moves you along the bench. */
 (() => {
   const { h, pick, shuffle, sample } = Edu;
   const LV = [
     { name: 'Easy', desc: 'Water, floating, conductors, light and food chains. 8 stations, 15 s questions.', n: 4, qt: 15, exps: ['water', 'float', 'conduct', 'light', 'chain'] },
-    { name: 'Medium', desc: 'Adds magnets and building colours of light. 10 stations, 12 s questions.', n: 5, qt: 12, exps: ['water', 'float', 'magnet', 'light', 'chain', 'conduct'] },
+    { name: 'Medium', desc: 'Adds magnets and building colors of light. 10 stations, 12 s questions.', n: 5, qt: 12, exps: ['water', 'float', 'magnet', 'light', 'chain', 'conduct'] },
     { name: 'Hard', desc: 'Fahrenheit, which circuit works, harder questions. 10 stations, 10 s questions.', n: 5, qt: 10, exps: ['water', 'circuit', 'magnet', 'light', 'chain', 'float'] }];
   // [level, question, right answer, wrong answers...]
   const Q = [

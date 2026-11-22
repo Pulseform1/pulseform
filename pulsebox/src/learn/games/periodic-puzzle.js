@@ -1,6 +1,6 @@
 /* Periodic Table Puzzle: element cards drop down a chute toward the bench. Answer before a card lands: name it, give its
    symbol, place it in the table by atomic number, or pick the element with a property. Right answers fly into a mini
-   periodic table and lock in with a glow coloured by the element's family. */
+   periodic table and lock in with a glow colored by the element's family. */
 // @data elements
 (() => {
   const { h, pick, shuffle, sample, clamp } = Edu, E = ELEMENTS, bySym = s => E.find(e => e.sym === s);
@@ -35,7 +35,7 @@
     how: ['An element card drops down the chute. Answer before it lands on the red line, or you lose a life.',
       'Easy and Hard: pick the right answer (click, tap or keys 1 to 4). Medium: tap the box in the table where the element belongs (arrow keys and Enter work too).',
       'The table is ordered by atomic number: read each row left to right, then go on to the next row.',
-      'Right answers lock into the table, glowing in the colour of their family. Three lives.'],
+      'Right answers lock into the table, glowing in the color of their family. Three lives.'],
     start(c) {
       if (!document.getElementById('pp-css')) document.head.append(h('style', { id: 'pp-css', text: CSS }));
       const L = c.L, MED = c.level === 1, r0 = c.el.getBoundingClientRect(), note = h('div', { class: 'pp-note', 'aria-live': 'polite' });

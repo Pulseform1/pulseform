@@ -3,7 +3,7 @@
    answers refuel, wrong ones cost fuel. Fuel burns all the time, and asteroids knock some off. Run dry and the trip is over. */
 (() => {
   const { h, pick, shuffle, sample, clamp } = Edu;
-  // name, orbit (fraction of the system's radius), drawn size, colour; then the Moon orbits Earth
+  // name, orbit (fraction of the system's radius), drawn size, color; then the Moon orbits Earth
   const BODIES = [['Sun', 0, 18, '#ffd23f'], ['Mercury', .24, 3.6, '#b9b4aa'], ['Venus', .33, 5.6, '#e8c27a'], ['Earth', .42, 5.9, '#3d8bff'], ['Mars', .51, 4.6, '#e0603a'],
     ['Jupiter', .64, 11.5, '#d9a066'], ['Saturn', .76, 9.4, '#e6cf8f'], ['Uranus', .875, 7.2, '#8fe3e8'], ['Neptune', .97, 7, '#4a6cff'], ['Moon', 0, 2.2, '#d8d8d8']];
   const LV = [
