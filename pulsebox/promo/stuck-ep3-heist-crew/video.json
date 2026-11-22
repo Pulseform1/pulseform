@@ -1,0 +1,184 @@
+{
+ "voice": "af_sky+bf_emma",
+ "voices": {
+  "N": "af_sky+bf_emma",
+  "M": "am_puck",
+  "J": "am_echo"
+ },
+ "start": 0.15,
+ "tail": 3.0,
+ "hot": [
+  "mansion.",
+  "masks.",
+  "van.",
+  "golden",
+  "idol.",
+  "switches,",
+  "exact",
+  "guard",
+  "noisemaker.",
+  "cameras.",
+  "lasers",
+  "vault",
+  "theirs.",
+  "alarm",
+  "back",
+  "instead.",
+  "sirens",
+  "bedroom.",
+  "PULSEBOX.",
+  "heists,",
+  "van.",
+  "77",
+  "next?",
+  "comments.",
+  "NOW!"
+ ],
+ "lines": [
+  {
+   "who": "N",
+   "say": "This time, the game dropped Milo and Jay outside a mansion. In masks. Next to a getaway van.",
+   "speed": 1.05
+  },
+  {
+   "who": "J",
+   "say": "Milo. Why are we dressed like robbers?",
+   "gap": 0.7,
+   "speed": 1.05
+  },
+  {
+   "who": "M",
+   "say": "Heist Crew. The only way out is to steal the golden idol.",
+   "gap": 0.4,
+   "speed": 1.08
+  },
+  {
+   "who": "M",
+   "say": "I'm the hacker. I jam the cameras. You're the ghost. Silent, with a noisemaker.",
+   "gap": 0.5,
+   "speed": 1.1
+  },
+  {
+   "who": "N",
+   "say": "And the vault only opens when two switches, in two different rooms, are held at the exact same time.",
+   "cap": "And the vault only opens when 2 switches, in 2 different rooms, are held at the exact same time.",
+   "gap": 0.5,
+   "speed": 1.1
+  },
+  {
+   "who": "N",
+   "say": "A guard turned the corner.",
+   "gap": 0.7,
+   "speed": 1.0
+  },
+  {
+   "who": "N",
+   "say": "Jay tossed the noisemaker. The guard wandered off to check it.",
+   "gap": 0.5,
+   "speed": 1.08
+  },
+  {
+   "who": "N",
+   "say": "Milo jammed the cameras. The lasers blinked out.",
+   "gap": 0.5,
+   "speed": 1.08
+  },
+  {
+   "who": "M",
+   "say": "I'm on switch one. You get switch two.",
+   "cap": "I'm on switch 1. You get switch 2.",
+   "gap": 0.5,
+   "speed": 1.1
+  },
+  {
+   "who": "M",
+   "say": "Three.",
+   "cap": "3...",
+   "gap": 0.5,
+   "speed": 0.95
+  },
+  {
+   "who": "M",
+   "say": "Two.",
+   "cap": "2...",
+   "gap": 0.45,
+   "speed": 0.95
+  },
+  {
+   "who": "M",
+   "say": "One.",
+   "cap": "1...",
+   "gap": 0.45,
+   "speed": 0.95
+  },
+  {
+   "who": "M",
+   "say": "Now!",
+   "cap": "NOW!",
+   "gap": 0.45,
+   "speed": 1.1
+  },
+  {
+   "who": "N",
+   "say": "Click. The vault swung open. The golden idol was theirs.",
+   "gap": 0.4,
+   "speed": 1.05
+  },
+  {
+   "who": "N",
+   "say": "Then the alarm went off.",
+   "gap": 0.6,
+   "speed": 1.0
+  },
+  {
+   "who": "J",
+   "say": "Milo! They cuffed me!",
+   "gap": 0.4,
+   "speed": 1.15
+  },
+  {
+   "who": "N",
+   "say": "The van was right there. Milo could have left. He ran back instead.",
+   "gap": 0.6,
+   "speed": 1.0
+  },
+  {
+   "who": "N",
+   "say": "He freed Jay, grabbed the idol, and they dove into the van as the sirens hit the street.",
+   "gap": 0.4,
+   "speed": 1.12
+  },
+  {
+   "who": "N",
+   "say": "The van floored it, straight off the edge of the screen, and back into Milo's bedroom.",
+   "gap": 0.5,
+   "speed": 1.08
+  },
+  {
+   "who": "J",
+   "say": "Wait. Is that the golden idol?",
+   "gap": 0.8,
+   "speed": 1.05
+  },
+  {
+   "who": "M",
+   "say": "Huh. I guess we kept it.",
+   "gap": 0.4,
+   "speed": 1.0
+  },
+  {
+   "who": "N",
+   "say": "Heist Crew is real, and it's on Pulsebox. Four friends, five heists, one getaway van.",
+   "cap": "Heist Crew is real, and it's on PULSEBOX. 4 friends, 5 heists, 1 getaway van.",
+   "gap": 0.8,
+   "speed": 1.08
+  },
+  {
+   "who": "N",
+   "say": "Seventy-seven games. Which one should they fall into next? Tell them in the comments.",
+   "cap": "77 games. Which one should they fall into next? Tell them in the comments.",
+   "gap": 0.6,
+   "speed": 1.05
+  }
+ ]
+}

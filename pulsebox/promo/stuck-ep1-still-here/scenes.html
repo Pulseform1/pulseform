@@ -1,0 +1,169 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../lib/stage.css"></head>
+<body>
+<script src="timeline.js"></script>
+<script src="../lib/art.js"></script>
+<script src="../lib/more.js"></script>
+<script src="../lib/games3.js"></script>
+<script src="../lib/story.js"></script>
+<script>
+/* STUCK IN PULSEBOX · EP 1: STILL HERE */
+const A = i => VO[i - 1], E_ = i => TIMELINE.lines[i - 1].at + TIMELINE.lines[i - 1].dur;
+const RED = '#ff2d55';
+function staticArm(x0, y0, x1, y1, t, w = 70) {
+  const d = `M${x0} ${y0} Q${(x0 + x1) / 2 + 60} ${(y0 + y1) / 2 - 80} ${x1} ${y1}`;
+  return P(d, 'none', 0, `stroke="${INK}" stroke-width="${w + 14}" stroke-linecap="round"`) + P(d, 'none', 0, `stroke="#8d929c" stroke-width="${w}" stroke-linecap="round"`) +
+    P(d, 'none', 0, `stroke="#fff" stroke-width="${w * .6}" stroke-dasharray="6 ${10 + (Math.floor(t * 20) % 4) * 6}" opacity=".5"`) +
+    G(`translate(${x1} ${y1}) rotate(${Math.atan2(y1 - y0, x1 - x0) * 180 / Math.PI})`, E(10, 0, w * .7, w * .6, '#8d929c', 7) + [-1, 0, 1].map(i => P(`M${w * .5} ${i * w * .3} l${w * .6} ${i * w * .2}`, 'none', 0, `stroke="${INK}" stroke-width="${w * .32}" stroke-linecap="round"`) + P(`M${w * .5} ${i * w * .3} l${w * .6} ${i * w * .2}`, 'none', 0, `stroke="#8d929c" stroke-width="${w * .2}" stroke-linecap="round"`)).join(''));
+}
+function bedroomFloor(t, o = {}) {        // Milo and Jay on the floor with the laptop, seen from the laptop
+  let s = R(-20, -20, 1120, 1960, 0, o.dawn ? '#3b3f7a' : '#161a40', 0);
+  s += R(620, 180, 380, 420, 16, o.dawn ? '#ffb38a' : 'url(#night)') + (o.dawn ? C(800, 600, 110, '#fff1a8', 6) : stars(380, 420, 0, 1) + C(900, 260, 40, '#f4f1d6', 6)) + L(810, 180, 810, 600, 8) + L(620, 390, 1000, 390, 8) + R(620, 180, 380, 420, 16, 'none');
+  s += G('translate(120 300) rotate(-4)', R(0, 0, 230, 300, 6, '#2a3170') + TS(115, 170, 'GAME DEV', 34, LIME, 6));
+  s += R(80, 560, 150, 80, 14, '#0c0f24') + T(155, 616, o.clock || '2:00', 46, RED, 'middle', 'DejaVu Sans Mono', 'font-weight="bold"');
+  s += R(-20, 1240, 1120, 720, 0, o.dawn ? '#4a3f8a' : '#232a5c', 0) + L(-20, 1240, 1100, 1240, 8);
+  return s;
+}
+function pair(t, y, k, o = {}) {           // Milo left, Jay right, front view
+  return kidFront(330, y, k, who(MILO, Object.assign({ t }, o.milo || {}))) + kidFront(760, y, k, who(JAY, Object.assign({ t: t + 1 }, o.jay || {})));
+}
+const SC = [
+  [0, (t, lt) => {                          // HOOK A: a hand bursts out of the laptop screen
+    let scr = R(0, 0, 880, 560, 0, '#120208', 0) + staticFill(880, 560, 3, t) + TS(440, 300, 'STILL HERE', 120, RED, 10, 'Chakra');
+    let s = R(-20, -20, 1120, 1960, 0, '#0a0610', 0) + `<ellipse cx="540" cy="800" rx="700" ry="600" fill="${RED}" opacity=".25" filter="url(#blur30)"/>` + laptopFront(100, 520, 880, 560, scr);
+    const k = eOut(prog(lt, .1, 1.1));
+    s += staticArm(540, 820, 540 + k * 60, lerp(820, 1500, k), t, lerp(40, 150, k));
+    return G(`translate(540 900) scale(${lerp(1.25, 1.05, eOut(prog(lt, 0, .3)))}) translate(-540 -900)`, s) + seriesBadge(1);
+  }, 260],
+  [1.3, (t, lt) => {                         // HOOK B: the arms grab Milo and Jay
+    let s = bedroomFloor(t) + pair(t, 1150, 1.05, { milo: { mouth: 'o', brow: 'up', talk: 1 }, jay: { mouth: 'o', brow: 'up', talk: 1, armsUp: true } });
+    s += `<ellipse cx="540" cy="1750" rx="500" ry="260" fill="${RED}" opacity=".45" filter="url(#blur30)"/>` + R(330, 1560, 420, 420, 40, '#191c2c', 9) + logoMark(505, 1700, 3);
+    const k = eOut(prog(lt, 0, .5)); s += staticArm(480, 1600, lerp(480, 360, k), lerp(1600, 1270, k), t) + staticArm(600, 1600, lerp(600, 730, k), lerp(1600, 1260, k), t);
+    return G(`translate(0 ${Math.sin(t * 60) * 6})`, s);
+  }, 260],
+  [3.2, (t, lt) => {                         // pulled through: the vortex
+    let s = vortex(540, 960, t * 2);
+    const k = eIn(prog(lt, 0, 1.2));
+    s += G(`translate(${lerp(300, 540, k)} ${lerp(800, 960, k)}) rotate(${lt * 400}) scale(${lerp(.9, .05, k)})`, kidFront(0, 0, 1, who(MILO, { t, mouth: 'o', armsUp: true })));
+    s += G(`translate(${lerp(780, 540, k)} ${lerp(1150, 960, k)}) rotate(${-lt * 380}) scale(${lerp(.9, .05, k)})`, kidFront(0, 0, 1, who(JAY, { t, mouth: 'o', armsUp: true })));
+    return s;
+  }, 260],
+  [4.4, (t, lt) => loadingCard(t, lt, 'STILL HERE') + seriesBadge(1), 1500],
+  [A(2) - .15, (t, lt) => {                  // where are we?
+    let s = corridor(t) + flashlight(540, 860, 430);
+    s += pair(t, 1500, 1.05, { milo: { mouth: 'flat', lookX: .4 }, jay: { mouth: 'o', brow: 'up', lookX: -.6, talk: Math.abs(Math.sin(t * 14)) } });
+    return G(`translate(540 1100) scale(${lerp(1.15, 1, eOut(prog(lt, 0, .5)))}) translate(-540 -1100)`, s);
+  }, 300],
+  [A(3) - .1, (t, lt) => corridor(t, { sign: true }) + flashlight(lerp(540, 320, eIO(prog(lt, 0, .6))), lerp(860, 620, eIO(prog(lt, 0, .6))), 360) + kidFront(760, 1550, 1.1, who(MILO, { t, mouth: 'smile', lookX: -.8, brow: 'up' })), 300],
+  [A(4) - .1, (t, lt) => {                   // the rules
+    let s = corridor(t) + flashlight(540, 900, 420) + kidFront(330, 1560, 1.05, who(MILO, { t, mouth: 'o', talk: Math.abs(Math.sin(t * 12)), lookX: .6 }));
+    const items = [['FUSES 0/3', /fuses/], ['ELEVATOR: OFF', /elevator/], ['RIDE IT DOWN', /ride/]];
+    items.forEach(([txt, re], i) => { const k = pop(t, wordT(4, re) || A(4) + i, .25); s += G(`translate(${780} ${560 + i * 150}) rotate(3) scale(${k})`, R(-230, -55, 460, 100, 20, i ? '#1b1f3a' : '#ffd84d', 7) + T(0, 18, txt, 48, i ? '#fff' : INK, 'middle', 'Luckiest')); });
+    return s;
+  }, 260],
+  [A(5) - .1, (t, lt) => {                   // never stop looking at the dolls
+    const z = 1 + lt * .08;
+    return G(`translate(540 950) scale(${z}) translate(-540 -950)`, corridor(t) + doll(540, 1000, .45) + flashlight(540, 930, 300, .95)) + hud(['FUSES 0/3']);
+  }, 300],
+  [A(6) - .1, (t, lt) => {                   // the dolls only move when nobody is watching
+    const sw = (lt % 1.9) / 1.9, away = sw > .3 && sw < .7, lx = away ? 160 : lerp(540, 160, eIO(clamp((sw - .1) / .2))) * (sw < .3 ? 1 : 0) + (sw >= .7 ? lerp(160, 540, eIO(clamp((sw - .7) / .2))) : 0);
+    const cyc = Math.floor(lt / 1.9), pos = [[1000, .45], [1120, .7], [1260, 1.0]][Math.min(2, cyc + (sw >= .7 ? 1 : 0))];
+    return corridor(t) + doll(540, pos[0], pos[1]) + flashlight(sw < .3 ? lerp(540, 160, eIO(clamp((sw - .1) / .2))) : lx || 540, 950, 320, .95) + hud(['FUSES 0/3']);
+  }, 300],
+  [A(7) - .1, (t, lt) => {                   // fuse one, fuse two: each pushed into the fuse box
+    const t1 = wordT(7, /^1/) - .3, t2 = wordT(7, /^2/) - .3, n = t >= t2 ? 2 : 1, tn = n === 2 ? t2 : t1, k = eOut(prog(t, tn, tn + .4)), done = k >= 1;
+    let s = R(-20, -20, 1120, 1960, 0, '#2a201b', 0) + R(240, 520, 600, 800, 20, '#8a8f9c', 9) + R(290, 580, 500, 680, 10, '#2a2d35', 6);
+    for (let i = 0; i < 3; i++) s += R(340 + i * 160, 700, 80, 400, 12, '#14161c', 5) + (i < n - 1 || (i === n - 1 && done) ? R(352 + i * 160, 760, 56, 280, 10, '#ffd84d', 5) : '');
+    if (!done) s += G(`translate(${380 + (n - 1) * 160} ${lerp(1600, 900, k)})`, R(-28, -140, 56, 280, 10, '#ffd84d', 6) + E(0, 160, 80, 60, SKIN));
+    else s += burst(380 + (n - 1) * 160, 760, 30, 80, 10, '#fff6a0', t * 9, 5) + E(380 + (n - 1) * 160, 1160, 80, 60, SKIN);
+    return s + flashlight(540, 900, 520, .8) + hud(['FUSES ' + (n - 1 + (done ? 1 : 0)) + '/3']);
+  }, 1450],
+  [A(8) - .1, (t, lt) => {                   // that doll was further away
+    const rev = t > E_(8) - .5;
+    let s = corridor(t) + flashlight(540, 1100, 520, .9);
+    s += kidFront(300, 1550, 1.05, who(JAY, { t, mouth: 'o', talk: Math.abs(Math.sin(t * 14)), brow: 'up', lookX: .9 }));
+    s += doll(rev ? 760 : 760, rev ? 1800 : 1350, rev ? 2.2 : 1.1, { glow: rev, tilt: rev ? -8 : 0 });
+    return G(`translate(${rev ? Math.sin(t * 90) * 10 : 0} 0)`, s) + hud(['FUSES 2/3']);
+  }, 300],
+  [A(9) - .1, (t, lt) => {                   // lights die; something tall
+    const on = lt > 1.4 && (Math.sin(lt * 23) > .2 || lt > 2.6);
+    if (!on) return R(-20, -20, 1120, 1960, 0, '#000', 0) + hud(['FUSES 2/3']);
+    return corridor(t, { dark: true }) + hollow(540, 1060, lerp(.55, .7, prog(lt, 1.4, 3.4)), { t }) + flashlight(540, 860, 380, .9) + hud(['FUSES 2/3']);
+  }, 1500],
+  [A(10) - .1, (t, lt) => {                  // the Hollow. hide!
+    let s = corridor(t, { dark: true }) + hollow(540, 1080, .75, { t, pose: 'reach' });
+    s += locker(820, 1050, 200, 600, lt > 1.6 ? 0 : 1) + locker(600, 1050, 200, 600, lt > 1.4 ? 0 : 1);
+    const k = prog(lt, 0, 1.5);
+    if (lt < 1.6) s += kidRun(lerp(120, 700, k), 1700, 1.3, who(MILO, { t, mouth: 'o' })) + kidRun(lerp(-60, 900, k), 1720, 1.3, who(JAY, { t: t + .3, mouth: 'o' }));
+    return s + flashlight(540, 1100, 560, .85);
+  }, 260],
+  [A(11) - .1, (t, lt) => {                  // inside Jay's locker
+    const pass = eIO(prog(lt, 0, 2.2)), lean = eOut(prog(lt, 2.2, 3.2));
+    let view = corridor(t, { dark: true }) + hollow(lerp(1300, 560, pass), 1500 + lean * 200, 1.4 + lean * .4, { t, tilt: lean * 25 });
+    let s = R(-20, -20, 1120, 1960, 0, '#050405', 0) + `<clipPath id="slats">${[0, 1, 2, 3, 4].map(i => `<rect x="160" y="${620 + i * 120}" width="760" height="54" rx="10"/>`).join('')}</clipPath>` + `<g clip-path="url(#slats)">${view}</g>`;
+    s += E(380, 1500, 40, 24, '#fff', 0, 'opacity=".9"') + E(700, 1500, 40, 24, '#fff', 0, 'opacity=".9"') + C(390, 1500, 12, INK, 0) + C(710, 1500, 12, INK, 0);
+    return s;
+  }, 330],
+  [A(12) - .1, (t, lt) => {                  // Jay. Close your eyes.
+    let s = R(-20, -20, 1120, 1960, 0, '#050405', 0) + `<clipPath id="sl2">${[0, 1, 2].map(i => `<rect x="80" y="${700 + i * 180}" width="920" height="110" rx="12"/>`).join('')}</clipPath>`;
+    s += `<g clip-path="url(#sl2)">` + G('translate(540 1150) scale(2.6) translate(-540 -1150)', kidFront(540, 1250, 1, who(MILO, { t, mouth: 'flat', brow: 'mad' }))) + R(0, 0, 1080, 1920, 0, '#000', 0, 'opacity=".35"') + '</g>';
+    s += G('translate(820 1500) rotate(-8)', R(-150, -90, 300, 180, 24, '#2b2f45', 8) + C(0, 0, 60, '#9fd3ff', 7) + C(0, 0, 30, INK, 0) + R(70, -80, 50, 30, 6, '#fff', 4));
+    return s;
+  }, 330],
+  [A(13) - .1, (t, lt) => {                  // locker kicked open, camera flash
+    const tf = wordT(13, /flash/) - .1, fl = t >= tf ? 1 - prog(t, tf + .15, tf + 1.1) : 0;
+    let s = corridor(t, { dark: true }) + hollow(560, 1500, 1.25, { t, pose: t >= tf ? 'recoil' : 'reach' }) + locker(-40, 900, 260, 760, eOut(prog(lt, .1, .4)));
+    s += flashlight(t >= tf ? 560 : 120, 1100, t >= tf ? 900 : 300, .85);
+    if (t >= tf) s += G(`translate(560 680) scale(${pop(t, tf + .2, .25)})`, TS(0, 0, 'STUNNED', 120, '#ffd84d', 12)) + [0, 1, 2].map(i => G(`translate(${560 + Math.cos(t * 5 + i * 2) * 120} ${780 + Math.sin(t * 5 + i * 2) * 30})`, P('M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7Z', '#ffd84d', 4))).join('');
+    return s + R(-20, -20, 1120, 1960, 0, '#fff', 0, `opacity="${fl}"`);
+  }, 300],
+  [A(14) - .1, (t, lt) => {                  // NOW! RUN!
+    const k = prog(lt, 0, 1.4);
+    let s = corridor(t) + hollow(540, 1000, .55, { t, pose: 'recoil' });
+    s += G(`translate(540 1300) scale(${lerp(.8, 1.4, k)}) translate(-540 -1300)`, kidFront(380, 1300 + Math.abs(Math.sin(t * 16)) * -30, 1, who(MILO, { t, mouth: 'o', brow: 'mad' })) + kidFront(700, 1320 + Math.abs(Math.sin(t * 16 + 1)) * -30, 1, who(JAY, { t, mouth: 'o', brow: 'up' })));
+    for (let i = 0; i < 8; i++) s += L(100 + i * 120, 400 + (i * 97) % 800, 100 + i * 120, 600 + (i * 97) % 800, 6, '#fff', 'opacity=".25"');
+    return s + flashlight(540, 1250, 650, .8);
+  }, 300],
+  [A(15) - .1, (t, lt) => {                  // fuse three, the elevator, the claws
+    if (lt < 1.0) return R(-20, -20, 1120, 1960, 0, '#2a201b', 0) + R(240, 520, 600, 800, 20, '#8a8f9c', 9) + R(290, 580, 500, 680, 10, '#2a2d35', 6) + [0, 1, 2].map(i => R(340 + i * 160, 700, 80, 400, 12, '#14161c', 5)).join('') +
+      G(`translate(${700} ${lerp(1500, 900, eOut(prog(lt, 0, .5)))})`, R(-28, -140, 56, 280, 10, '#ffd84d', 6) + E(0, 160, 80, 60, SKIN)) + burst(700, 760, 40, 110, 12, LIME, t * 9, 6) + hud(['FUSES 3/3', 'ELEVATOR: ON']);
+    const close = eIO(prog(t, wordT(15, /slammed/) - .6, wordT(15, /inch/))), shut = t > wordT(15, /claws/) + .2;
+    const inside = G('translate(0 0)', kidFront(420, 1280, .8, who(MILO, { t, mouth: 'o' })) + kidFront(660, 1280, .8, who(JAY, { t, mouth: 'o', armsUp: true })));
+    let s = R(-20, -20, 1120, 1960, 0, '#2a201b', 0) + elevator(t, shut ? 1 : close * .97, inside);
+    if (!shut) s += hollow(lerp(1400, 930, prog(lt, 1, 2.4)), 1760, 1.45, { t, pose: 'reach', dir: -1 });
+    return s + hud(['FUSES 3/3', 'ELEVATOR: ON']);
+  }, 330],
+  [A(16) - .1, (t, lt) => {                  // the floor drops... back into the bedroom
+    const tb = wordT(16, /bedroom/) - .4;
+    if (t < tb) { let s = R(-20, -20, 1120, 1960, 0, '#1a1c22', 0); for (let i = 0; i < 14; i++) s += L(60 + i * 75, ((i * 173 + lt * 3000) % 2400) - 300, 60 + i * 75, ((i * 173 + lt * 3000) % 2400), 8, '#fff', 'opacity=".35"');
+      return s + G(`translate(0 ${Math.sin(t * 70) * 14})`, kidFront(380, 1100, 1.1, who(MILO, { t, mouth: 'o', armsUp: true })) + kidFront(700, 1060, 1.1, who(JAY, { t, mouth: 'o', armsUp: true }))) + R(-20, -20, 1120, 1960, 0, '#fff', 0, `opacity="${prog(t, tb - .4, tb)}"`); }
+    const k = eOut(prog(t, tb, tb + .5));
+    let s = bedroomFloor(t, { dawn: true, clock: '6:00' }) + R(400, 1640, 320, 220, 24, '#191c2c', 8) + `<ellipse cx="560" cy="1640" rx="200" ry="60" fill="#fff" opacity=".6" filter="url(#blur30)"/>`;
+    s += G(`translate(0 ${lerp(-300, 0, k)}) rotate(${lerp(-30, -8, k)} 330 1300)`, kidFront(330, 1300, 1, who(MILO, { t, mouth: 'o' }))) + G(`translate(0 ${lerp(-400, 0, k)}) rotate(${lerp(30, 10, k)} 760 1300)`, kidFront(760, 1300, 1, who(JAY, { t, mouth: 'o' })));
+    return s + R(-20, -20, 1120, 1960, 0, '#fff', 0, `opacity="${1 - prog(t, tb, tb + .4)}"`);
+  }, 300],
+  [A(17) - .1, (t, lt) => bedroomFloor(t, { dawn: true, clock: '6:00' }) + pair(t, 1250, 1.1, { milo: { mouth: 'grin', brow: 'up' }, jay: { mouth: 'grin', armsUp: true } }) + R(400, 1660, 320, 220, 24, '#191c2c', 8), 300],
+  [A(18) - .1, (t, lt) => {                  // it's real: Still Here on Pulsebox
+    let s = R(-20, -20, 1120, 1960, 0, '#0b0d14', 0) + rays(540, 1000, 24, 1600, RED, .08, t * .2);
+    const chip = t > wordT(18, /code/) - .2 ? G(`translate(340 900) scale(${pop(t, wordT(18, /code/) - .2, .3)})`, R(-150, -45, 300, 90, 20, '#fff', 5) + T(0, 18, 'ROOM K7QX', 44, INK, 'middle', 'Luckiest')) : '';
+    s += phone(540, 1080, 680, 1240, realGameCard(t, 'still-here', 'Still Here', 'Horror · 1 to 4 players · online co-op', chip), lerp(8, -2, eOut(prog(lt, 0, .4))));
+    s += pulseboxLogo(540, 250, pop(lt, .1, .3) * .85);
+    return s;
+  }, 1720],
+  [A(19) - .1, (t, lt) => {                  // the tease, then the end card
+    if (lt < 2.6) { let s = bedroomFloor(t, { dawn: true, clock: '6:01' }) + pair(t, 1150, 1, { milo: { mouth: 'o', lookY: 1 }, jay: { mouth: 'o', lookY: 1, brow: 'up' } });
+      const scr = blackwater(t, 640, 400) + (Math.sin(t * 30) > .6 ? staticFill(640, 400, 9, t) : '');
+      return s + laptopFront(220, 1440, 640, 400, scr); }
+    return endCard(t, lt - 2.6, 'NEXT: EP 2 · BLACKWATER DRIFT') + seriesBadge(1, 330, 1700);
+  }, 300],
+];
+const CUES = { bpm: 92, key: 'minor',
+  music: [[0, A(14) - .1, 'tense'], [A(14) - .1, A(16) - .1, 'hard'], [A(16) - .1, A(18) - .1, 'calm'], [A(18) - .1, TIMELINE.end, 'hard']],
+  fx: [[0.05, 'buzz', .7], [0.3, 'scratch', .6], [1.3, 'thud', .8], [3.2, 'riser', .6, 1.2], [4.4, 'thud', .7], [A(6) + 1.5, 'sting', .5], [A(6) + 3.4, 'sting', .5],
+       [wordT(7, /^1/), 'thud', .5], [wordT(7, /^2/), 'thud', .5], [E_(8) - .5, 'sting', .9], [E_(8) - .5, 'thud', .9], [A(9) + .1, 'thud', 1], [A(9) + 1.4, 'buzz', .5],
+       ...[0, 1, 2, 3].map(i => [A(11) + i * .65, 'thud', .45]), [wordT(13, /flash/) - .1, 'pop', .9], [wordT(13, /flash/) - .1, 'thud', .8],
+       [A(15) + .5, 'ding', .5], [wordT(15, /claws/) + .2, 'thud', .9], [wordT(15, /claws/) + .35, 'ding', .7], [wordT(16, /bedroom/) - .4, 'splash', .6], [A(17) + 1.6, 'cheer', .5],
+       [wordT(18, /code/) - .2, 'pop', .6], [A(19) + 2.6, 'pop', .5]] };
+startVideo(SC, CUES);
+</script>
+</body></html>

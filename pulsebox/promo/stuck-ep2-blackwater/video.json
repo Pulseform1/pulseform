@@ -1,0 +1,23 @@
+{"voice": "af_sky+bf_emma", "voices": {"N": "af_sky+bf_emma", "M": "am_puck", "J": "am_echo"}, "start": 0.15, "tail": 3.0,
+ "hot": ["planks.", "land.", "boat.", "fin.", "hook", "raft", "shark", "Hungry.", "spear.", "wave.", "house.", "held.", "huge", "whirlpool.", "straight", "fish.", "PULSEBOX.", "raft.", "breaking"],
+ "lines": [
+  {"who": "N", "say": "Milo and Jay woke up on four wooden planks. No land. No boat. Just a rope hook, and a fin.", "cap": "Milo and Jay woke up on 4 wooden planks. No land. No boat. Just a rope hook... and a fin.", "speed": 1.05},
+  {"who": "J", "say": "Please tell me this isn't another one of your games.", "gap": 0.7, "speed": 1.05},
+  {"who": "M", "say": "Blackwater Drift. Okay. It's definitely one of my games.", "gap": 0.4, "speed": 1.05},
+  {"who": "M", "say": "Throw the hook at anything floating. Reel it in. We build the raft ourselves.", "gap": 0.5, "speed": 1.1},
+  {"who": "N", "say": "Barrels. Planks. Rope. Piece by piece, the raft grew. Walls. A sail. A fire to cook the fish.", "gap": 0.6, "speed": 1.0},
+  {"who": "N", "say": "Then the shark came back. Hungry.", "gap": 0.7, "speed": 1.0},
+  {"who": "J", "say": "It's eating the raft!", "gap": 0.3, "speed": 1.15},
+  {"who": "N", "say": "Jay grabbed the iron spear. The shark swam off.", "gap": 0.4, "speed": 1.1},
+  {"who": "N", "say": "But Milo was watching the horizon. A wave. Taller than a house.", "gap": 0.7, "speed": 1.0},
+  {"who": "M", "say": "Brace! Hold on to something!", "gap": 0.3, "speed": 1.15},
+  {"who": "N", "say": "The raft climbed the wave, and held.", "cap": "The raft climbed the wave... and held.", "gap": 0.5, "speed": 1.0},
+  {"who": "N", "say": "That night, the sea went quiet. Something huge rose beside the raft. Looked at them. And sank back down.", "gap": 0.9, "speed": 0.98},
+  {"who": "J", "say": "Milo. Did you code that?", "cap": "Milo. Did you code THAT?", "gap": 0.8, "speed": 1.0},
+  {"who": "M", "say": "I don't remember coding that.", "cap": "I... don't remember coding that.", "gap": 0.6, "speed": 0.95},
+  {"who": "N", "say": "At dawn, they found a whirlpool. Players paddle away from it. Milo paddled straight in.", "gap": 0.9, "speed": 1.05},
+  {"who": "N", "say": "Splash. Back on the bedroom floor. Soaked. Holding a fish.", "gap": 0.6, "speed": 1.0},
+  {"who": "J", "say": "I'm keeping the fish.", "gap": 0.6, "speed": 1.0},
+  {"who": "N", "say": "Blackwater Drift is real, and it's on Pulsebox. Up to four friends on one raft.", "cap": "Blackwater Drift is real, and it's on PULSEBOX. Up to 4 friends on one raft.", "gap": 0.8, "speed": 1.08},
+  {"who": "N", "say": "Next time, they're not escaping. They're breaking in.", "gap": 0.6, "speed": 1.0}
+ ]}

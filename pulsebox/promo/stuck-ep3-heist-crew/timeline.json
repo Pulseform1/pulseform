@@ -1,0 +1,2018 @@
+{
+ "end": 79.42,
+ "fps": 30,
+ "lines": [
+  {
+   "n": 1,
+   "at": 0.15,
+   "dur": 5.333,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/01-4e3f934116.wav",
+   "say": "This time, the game dropped Milo and Jay outside a mansion. In masks. Next to a getaway van.",
+   "who": "N"
+  },
+  {
+   "n": 2,
+   "at": 6.183,
+   "dur": 2.475,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/02-a35fe7d138.wav",
+   "say": "Milo. Why are we dressed like robbers?",
+   "who": "J"
+  },
+  {
+   "n": 3,
+   "at": 9.058,
+   "dur": 3.349,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/03-c372ee9ced.wav",
+   "say": "Heist Crew. The only way out is to steal the golden idol.",
+   "who": "M"
+  },
+  {
+   "n": 4,
+   "at": 12.907,
+   "dur": 4.139,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/04-df8166360d.wav",
+   "say": "I'm the hacker. I jam the cameras. You're the ghost. Silent, with a noisemaker.",
+   "who": "M"
+  },
+  {
+   "n": 5,
+   "at": 17.546,
+   "dur": 5.44,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/05-aa4d3dff63.wav",
+   "say": "And the vault only opens when two switches, in two different rooms, are held at the exact same time.",
+   "who": "N"
+  },
+  {
+   "n": 6,
+   "at": 23.686,
+   "dur": 1.6,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/06-f29bcd6cc9.wav",
+   "say": "A guard turned the corner.",
+   "who": "N"
+  },
+  {
+   "n": 7,
+   "at": 25.786,
+   "dur": 3.221,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/07-f0978a626c.wav",
+   "say": "Jay tossed the noisemaker. The guard wandered off to check it.",
+   "who": "N"
+  },
+  {
+   "n": 8,
+   "at": 29.507,
+   "dur": 2.837,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/08-8a6fe85f17.wav",
+   "say": "Milo jammed the cameras. The lasers blinked out.",
+   "who": "N"
+  },
+  {
+   "n": 9,
+   "at": 32.845,
+   "dur": 2.048,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/09-aa6b0fd991.wav",
+   "say": "I'm on switch one. You get switch two.",
+   "who": "M"
+  },
+  {
+   "n": 10,
+   "at": 35.393,
+   "dur": 0.661,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/10-2bdf188e29.wav",
+   "say": "Three.",
+   "who": "M"
+  },
+  {
+   "n": 11,
+   "at": 36.504,
+   "dur": 0.64,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/11-003d2de074.wav",
+   "say": "Two.",
+   "who": "M"
+  },
+  {
+   "n": 12,
+   "at": 37.594,
+   "dur": 0.555,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/12-24feeb427e.wav",
+   "say": "One.",
+   "who": "M"
+  },
+  {
+   "n": 13,
+   "at": 38.599,
+   "dur": 0.555,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/13-7c19b6491d.wav",
+   "say": "Now!",
+   "who": "M"
+  },
+  {
+   "n": 14,
+   "at": 39.553,
+   "dur": 3.157,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/14-6a2cc292bc.wav",
+   "say": "Click. The vault swung open. The golden idol was theirs.",
+   "who": "N"
+  },
+  {
+   "n": 15,
+   "at": 43.311,
+   "dur": 1.536,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/15-9ad1e77dd1.wav",
+   "say": "Then the alarm went off.",
+   "who": "N"
+  },
+  {
+   "n": 16,
+   "at": 45.247,
+   "dur": 1.621,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/16-bbae78ed8b.wav",
+   "say": "Milo! They cuffed me!",
+   "who": "J"
+  },
+  {
+   "n": 17,
+   "at": 47.468,
+   "dur": 3.797,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/17-0141685524.wav",
+   "say": "The van was right there. Milo could have left. He ran back instead.",
+   "who": "N"
+  },
+  {
+   "n": 18,
+   "at": 51.665,
+   "dur": 4.651,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/18-fe1a1d55fd.wav",
+   "say": "He freed Jay, grabbed the idol, and they dove into the van as the sirens hit the street.",
+   "who": "N"
+  },
+  {
+   "n": 19,
+   "at": 56.816,
+   "dur": 4.181,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/19-c8d373575d.wav",
+   "say": "The van floored it, straight off the edge of the screen, and back into Milo's bedroom.",
+   "who": "N"
+  },
+  {
+   "n": 20,
+   "at": 61.797,
+   "dur": 2.176,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/20-c011c9e903.wav",
+   "say": "Wait. Is that the golden idol?",
+   "who": "J"
+  },
+  {
+   "n": 21,
+   "at": 64.373,
+   "dur": 1.301,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/21-23e96cd32f.wav",
+   "say": "Huh. I guess we kept it.",
+   "who": "M"
+  },
+  {
+   "n": 22,
+   "at": 66.475,
+   "dur": 4.971,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/22-62ddaac9af.wav",
+   "say": "Heist Crew is real, and it's on Pulsebox. Four friends, five heists, one getaway van.",
+   "who": "N"
+  },
+  {
+   "n": 23,
+   "at": 72.045,
+   "dur": 4.373,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep3-heist-crew/vo/23-6aa0478bdf.wav",
+   "say": "Seventy-seven games. Which one should they fall into next? Tell them in the comments.",
+   "who": "N"
+  }
+ ],
+ "caps": [
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "This",
+     "t": 0.15,
+     "hot": false
+    },
+    {
+     "w": "time,",
+     "t": 0.27,
+     "hot": false
+    }
+   ],
+   "start": 0.15,
+   "end": 0.47
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "the",
+     "t": 0.47,
+     "hot": false
+    },
+    {
+     "w": "game",
+     "t": 0.69,
+     "hot": false
+    },
+    {
+     "w": "dropped",
+     "t": 0.89,
+     "hot": false
+    }
+   ],
+   "start": 0.47,
+   "end": 1.15
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "Milo",
+     "t": 1.15,
+     "hot": false
+    },
+    {
+     "w": "and",
+     "t": 1.45,
+     "hot": false
+    },
+    {
+     "w": "Jay",
+     "t": 1.81,
+     "hot": false
+    }
+   ],
+   "start": 1.15,
+   "end": 1.99
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "outside",
+     "t": 1.99,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 2.27,
+     "hot": false
+    },
+    {
+     "w": "mansion.",
+     "t": 2.27,
+     "hot": false
+    }
+   ],
+   "start": 1.99,
+   "end": 3.35
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "In",
+     "t": 3.35,
+     "hot": false
+    },
+    {
+     "w": "masks.",
+     "t": 3.41,
+     "hot": false
+    }
+   ],
+   "start": 3.35,
+   "end": 4.19
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "Next",
+     "t": 4.19,
+     "hot": false
+    },
+    {
+     "w": "to",
+     "t": 4.39,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 4.61,
+     "hot": false
+    }
+   ],
+   "start": 4.19,
+   "end": 4.65
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "getaway",
+     "t": 4.65,
+     "hot": false
+    },
+    {
+     "w": "van.",
+     "t": 4.97,
+     "hot": false
+    }
+   ],
+   "start": 4.65,
+   "end": 5.29
+  },
+  {
+   "line": 2,
+   "who": "J",
+   "words": [
+    {
+     "w": "Milo.",
+     "t": 6.183,
+     "hot": false
+    }
+   ],
+   "start": 6.183,
+   "end": 6.743
+  },
+  {
+   "line": 2,
+   "who": "J",
+   "words": [
+    {
+     "w": "Why",
+     "t": 6.743,
+     "hot": false
+    },
+    {
+     "w": "are",
+     "t": 6.903,
+     "hot": false
+    },
+    {
+     "w": "we",
+     "t": 7.063,
+     "hot": false
+    }
+   ],
+   "start": 6.743,
+   "end": 7.163
+  },
+  {
+   "line": 2,
+   "who": "J",
+   "words": [
+    {
+     "w": "dressed",
+     "t": 7.163,
+     "hot": false
+    },
+    {
+     "w": "like",
+     "t": 7.343,
+     "hot": false
+    },
+    {
+     "w": "robbers?",
+     "t": 7.703,
+     "hot": false
+    }
+   ],
+   "start": 7.163,
+   "end": 8.123
+  },
+  {
+   "line": 3,
+   "who": "M",
+   "words": [
+    {
+     "w": "Heist",
+     "t": 9.058,
+     "hot": false
+    },
+    {
+     "w": "Crew.",
+     "t": 9.238,
+     "hot": false
+    }
+   ],
+   "start": 9.058,
+   "end": 9.698
+  },
+  {
+   "line": 3,
+   "who": "M",
+   "words": [
+    {
+     "w": "The",
+     "t": 9.698,
+     "hot": false
+    },
+    {
+     "w": "only",
+     "t": 9.798,
+     "hot": false
+    },
+    {
+     "w": "way",
+     "t": 9.998,
+     "hot": false
+    }
+   ],
+   "start": 9.698,
+   "end": 10.318
+  },
+  {
+   "line": 3,
+   "who": "M",
+   "words": [
+    {
+     "w": "out",
+     "t": 10.318,
+     "hot": false
+    },
+    {
+     "w": "is",
+     "t": 10.558,
+     "hot": false
+    },
+    {
+     "w": "to",
+     "t": 10.738,
+     "hot": false
+    }
+   ],
+   "start": 10.318,
+   "end": 10.878
+  },
+  {
+   "line": 3,
+   "who": "M",
+   "words": [
+    {
+     "w": "steal",
+     "t": 10.878,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 11.098,
+     "hot": false
+    },
+    {
+     "w": "golden",
+     "t": 11.298,
+     "hot": true
+    }
+   ],
+   "start": 10.878,
+   "end": 11.558
+  },
+  {
+   "line": 3,
+   "who": "M",
+   "words": [
+    {
+     "w": "idol.",
+     "t": 11.558,
+     "hot": false
+    }
+   ],
+   "start": 11.558,
+   "end": 11.958
+  },
+  {
+   "line": 4,
+   "who": "M",
+   "words": [
+    {
+     "w": "I'm",
+     "t": 12.907,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 13.092,
+     "hot": false
+    },
+    {
+     "w": "hacker.",
+     "t": 13.278,
+     "hot": false
+    }
+   ],
+   "start": 12.907,
+   "end": 13.611
+  },
+  {
+   "line": 4,
+   "who": "M",
+   "words": [
+    {
+     "w": "I",
+     "t": 13.611,
+     "hot": false
+    },
+    {
+     "w": "jam",
+     "t": 13.722,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 13.907,
+     "hot": false
+    }
+   ],
+   "start": 13.611,
+   "end": 14.092
+  },
+  {
+   "line": 4,
+   "who": "M",
+   "words": [
+    {
+     "w": "cameras.",
+     "t": 14.092,
+     "hot": false
+    }
+   ],
+   "start": 14.092,
+   "end": 14.462
+  },
+  {
+   "line": 4,
+   "who": "M",
+   "words": [
+    {
+     "w": "You're",
+     "t": 14.462,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 14.758,
+     "hot": false
+    },
+    {
+     "w": "ghost.",
+     "t": 14.944,
+     "hot": false
+    }
+   ],
+   "start": 14.462,
+   "end": 15.24
+  },
+  {
+   "line": 4,
+   "who": "M",
+   "words": [
+    {
+     "w": "Silent,",
+     "t": 15.24,
+     "hot": false
+    }
+   ],
+   "start": 15.24,
+   "end": 15.573
+  },
+  {
+   "line": 4,
+   "who": "M",
+   "words": [
+    {
+     "w": "with",
+     "t": 15.573,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 15.795,
+     "hot": false
+    },
+    {
+     "w": "noisemaker.",
+     "t": 15.906,
+     "hot": false
+    }
+   ],
+   "start": 15.573,
+   "end": 16.507
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "And",
+     "t": 17.546,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 17.626,
+     "hot": false
+    },
+    {
+     "w": "vault",
+     "t": 17.706,
+     "hot": true
+    }
+   ],
+   "start": 17.546,
+   "end": 17.806
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "only",
+     "t": 17.806,
+     "hot": false
+    },
+    {
+     "w": "opens",
+     "t": 18.206,
+     "hot": false
+    },
+    {
+     "w": "when",
+     "t": 18.526,
+     "hot": false
+    }
+   ],
+   "start": 17.806,
+   "end": 18.806
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "2",
+     "t": 18.806,
+     "hot": false
+    },
+    {
+     "w": "switches,",
+     "t": 19.026,
+     "hot": false
+    }
+   ],
+   "start": 18.806,
+   "end": 19.346
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "in",
+     "t": 19.346,
+     "hot": false
+    },
+    {
+     "w": "2",
+     "t": 19.986,
+     "hot": false
+    },
+    {
+     "w": "different",
+     "t": 20.186,
+     "hot": false
+    }
+   ],
+   "start": 19.346,
+   "end": 20.506
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "rooms,",
+     "t": 20.506,
+     "hot": false
+    }
+   ],
+   "start": 20.506,
+   "end": 20.846
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "are",
+     "t": 20.846,
+     "hot": false
+    },
+    {
+     "w": "held",
+     "t": 21.306,
+     "hot": false
+    },
+    {
+     "w": "at",
+     "t": 21.506,
+     "hot": false
+    }
+   ],
+   "start": 20.846,
+   "end": 21.666
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "the",
+     "t": 21.666,
+     "hot": false
+    },
+    {
+     "w": "exact",
+     "t": 21.766,
+     "hot": true
+    },
+    {
+     "w": "same",
+     "t": 21.946,
+     "hot": false
+    }
+   ],
+   "start": 21.666,
+   "end": 22.366
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "time.",
+     "t": 22.366,
+     "hot": false
+    }
+   ],
+   "start": 22.366,
+   "end": 22.886
+  },
+  {
+   "line": 6,
+   "who": "N",
+   "words": [
+    {
+     "w": "A",
+     "t": 23.686,
+     "hot": false
+    },
+    {
+     "w": "guard",
+     "t": 23.806,
+     "hot": true
+    },
+    {
+     "w": "turned",
+     "t": 24.106,
+     "hot": false
+    }
+   ],
+   "start": 23.686,
+   "end": 24.426
+  },
+  {
+   "line": 6,
+   "who": "N",
+   "words": [
+    {
+     "w": "the",
+     "t": 24.426,
+     "hot": false
+    },
+    {
+     "w": "corner.",
+     "t": 24.626,
+     "hot": false
+    }
+   ],
+   "start": 24.426,
+   "end": 24.986
+  },
+  {
+   "line": 7,
+   "who": "N",
+   "words": [
+    {
+     "w": "Jay",
+     "t": 25.786,
+     "hot": false
+    },
+    {
+     "w": "tossed",
+     "t": 25.946,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 26.186,
+     "hot": false
+    }
+   ],
+   "start": 25.786,
+   "end": 26.466
+  },
+  {
+   "line": 7,
+   "who": "N",
+   "words": [
+    {
+     "w": "noisemaker.",
+     "t": 26.466,
+     "hot": false
+    }
+   ],
+   "start": 26.466,
+   "end": 27.366
+  },
+  {
+   "line": 7,
+   "who": "N",
+   "words": [
+    {
+     "w": "The",
+     "t": 27.366,
+     "hot": false
+    },
+    {
+     "w": "guard",
+     "t": 27.486,
+     "hot": true
+    },
+    {
+     "w": "wandered",
+     "t": 27.666,
+     "hot": false
+    }
+   ],
+   "start": 27.366,
+   "end": 27.986
+  },
+  {
+   "line": 7,
+   "who": "N",
+   "words": [
+    {
+     "w": "off",
+     "t": 27.986,
+     "hot": false
+    },
+    {
+     "w": "to",
+     "t": 28.246,
+     "hot": false
+    },
+    {
+     "w": "check",
+     "t": 28.426,
+     "hot": false
+    }
+   ],
+   "start": 27.986,
+   "end": 28.586
+  },
+  {
+   "line": 7,
+   "who": "N",
+   "words": [
+    {
+     "w": "it.",
+     "t": 28.586,
+     "hot": false
+    }
+   ],
+   "start": 28.586,
+   "end": 28.926
+  },
+  {
+   "line": 8,
+   "who": "N",
+   "words": [
+    {
+     "w": "Milo",
+     "t": 29.507,
+     "hot": false
+    },
+    {
+     "w": "jammed",
+     "t": 29.747,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 30.047,
+     "hot": false
+    }
+   ],
+   "start": 29.507,
+   "end": 30.307
+  },
+  {
+   "line": 8,
+   "who": "N",
+   "words": [
+    {
+     "w": "cameras.",
+     "t": 30.307,
+     "hot": false
+    }
+   ],
+   "start": 30.307,
+   "end": 31.067
+  },
+  {
+   "line": 8,
+   "who": "N",
+   "words": [
+    {
+     "w": "The",
+     "t": 31.067,
+     "hot": false
+    },
+    {
+     "w": "lasers",
+     "t": 31.147,
+     "hot": true
+    },
+    {
+     "w": "blinked",
+     "t": 31.387,
+     "hot": false
+    }
+   ],
+   "start": 31.067,
+   "end": 31.727
+  },
+  {
+   "line": 8,
+   "who": "N",
+   "words": [
+    {
+     "w": "out.",
+     "t": 31.727,
+     "hot": false
+    }
+   ],
+   "start": 31.727,
+   "end": 32.167
+  },
+  {
+   "line": 9,
+   "who": "M",
+   "words": [
+    {
+     "w": "I'm",
+     "t": 32.845,
+     "hot": false
+    },
+    {
+     "w": "on",
+     "t": 32.945,
+     "hot": false
+    },
+    {
+     "w": "switch",
+     "t": 33.045,
+     "hot": false
+    }
+   ],
+   "start": 32.845,
+   "end": 33.245
+  },
+  {
+   "line": 9,
+   "who": "M",
+   "words": [
+    {
+     "w": "1.",
+     "t": 33.245,
+     "hot": false
+    }
+   ],
+   "start": 33.245,
+   "end": 33.725
+  },
+  {
+   "line": 9,
+   "who": "M",
+   "words": [
+    {
+     "w": "You",
+     "t": 33.725,
+     "hot": false
+    },
+    {
+     "w": "get",
+     "t": 33.785,
+     "hot": false
+    },
+    {
+     "w": "switch",
+     "t": 33.905,
+     "hot": false
+    }
+   ],
+   "start": 33.725,
+   "end": 34.105
+  },
+  {
+   "line": 9,
+   "who": "M",
+   "words": [
+    {
+     "w": "2.",
+     "t": 34.105,
+     "hot": false
+    }
+   ],
+   "start": 34.105,
+   "end": 34.565
+  },
+  {
+   "line": 10,
+   "who": "M",
+   "words": [
+    {
+     "w": "3...",
+     "t": 35.393,
+     "hot": false
+    }
+   ],
+   "start": 35.393,
+   "end": 35.773
+  },
+  {
+   "line": 11,
+   "who": "M",
+   "words": [
+    {
+     "w": "2...",
+     "t": 36.504,
+     "hot": false
+    }
+   ],
+   "start": 36.504,
+   "end": 36.764
+  },
+  {
+   "line": 12,
+   "who": "M",
+   "words": [
+    {
+     "w": "1...",
+     "t": 37.594,
+     "hot": false
+    }
+   ],
+   "start": 37.594,
+   "end": 37.974
+  },
+  {
+   "line": 13,
+   "who": "M",
+   "words": [
+    {
+     "w": "NOW!",
+     "t": 38.599,
+     "hot": false
+    }
+   ],
+   "start": 38.599,
+   "end": 39.553
+  },
+  {
+   "line": 14,
+   "who": "N",
+   "words": [
+    {
+     "w": "Click.",
+     "t": 39.553,
+     "hot": false
+    }
+   ],
+   "start": 39.553,
+   "end": 39.713
+  },
+  {
+   "line": 14,
+   "who": "N",
+   "words": [
+    {
+     "w": "The",
+     "t": 39.713,
+     "hot": false
+    },
+    {
+     "w": "vault",
+     "t": 39.933,
+     "hot": true
+    },
+    {
+     "w": "swung",
+     "t": 40.093,
+     "hot": false
+    }
+   ],
+   "start": 39.713,
+   "end": 40.373
+  },
+  {
+   "line": 14,
+   "who": "N",
+   "words": [
+    {
+     "w": "open.",
+     "t": 40.373,
+     "hot": false
+    }
+   ],
+   "start": 40.373,
+   "end": 41.113
+  },
+  {
+   "line": 14,
+   "who": "N",
+   "words": [
+    {
+     "w": "The",
+     "t": 41.113,
+     "hot": false
+    },
+    {
+     "w": "golden",
+     "t": 41.233,
+     "hot": true
+    },
+    {
+     "w": "idol",
+     "t": 41.453,
+     "hot": false
+    }
+   ],
+   "start": 41.113,
+   "end": 41.773
+  },
+  {
+   "line": 14,
+   "who": "N",
+   "words": [
+    {
+     "w": "was",
+     "t": 41.773,
+     "hot": false
+    },
+    {
+     "w": "theirs.",
+     "t": 42.073,
+     "hot": false
+    }
+   ],
+   "start": 41.773,
+   "end": 42.453
+  },
+  {
+   "line": 15,
+   "who": "N",
+   "words": [
+    {
+     "w": "Then",
+     "t": 43.311,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 43.551,
+     "hot": false
+    },
+    {
+     "w": "alarm",
+     "t": 43.691,
+     "hot": true
+    }
+   ],
+   "start": 43.311,
+   "end": 43.931
+  },
+  {
+   "line": 15,
+   "who": "N",
+   "words": [
+    {
+     "w": "went",
+     "t": 43.931,
+     "hot": false
+    },
+    {
+     "w": "off.",
+     "t": 44.291,
+     "hot": false
+    }
+   ],
+   "start": 43.931,
+   "end": 44.631
+  },
+  {
+   "line": 16,
+   "who": "J",
+   "words": [
+    {
+     "w": "Milo!",
+     "t": 45.247,
+     "hot": false
+    }
+   ],
+   "start": 45.247,
+   "end": 45.807
+  },
+  {
+   "line": 16,
+   "who": "J",
+   "words": [
+    {
+     "w": "They",
+     "t": 45.807,
+     "hot": false
+    },
+    {
+     "w": "cuffed",
+     "t": 45.867,
+     "hot": false
+    },
+    {
+     "w": "me!",
+     "t": 46.187,
+     "hot": false
+    }
+   ],
+   "start": 45.807,
+   "end": 46.547
+  },
+  {
+   "line": 17,
+   "who": "N",
+   "words": [
+    {
+     "w": "The",
+     "t": 47.468,
+     "hot": false
+    },
+    {
+     "w": "van",
+     "t": 47.548,
+     "hot": false
+    },
+    {
+     "w": "was",
+     "t": 47.688,
+     "hot": false
+    }
+   ],
+   "start": 47.468,
+   "end": 47.908
+  },
+  {
+   "line": 17,
+   "who": "N",
+   "words": [
+    {
+     "w": "right",
+     "t": 47.908,
+     "hot": false
+    },
+    {
+     "w": "there.",
+     "t": 48.128,
+     "hot": false
+    }
+   ],
+   "start": 47.908,
+   "end": 48.628
+  },
+  {
+   "line": 17,
+   "who": "N",
+   "words": [
+    {
+     "w": "Milo",
+     "t": 49.088,
+     "hot": false
+    },
+    {
+     "w": "could",
+     "t": 49.088,
+     "hot": false
+    },
+    {
+     "w": "have",
+     "t": 49.408,
+     "hot": false
+    }
+   ],
+   "start": 49.088,
+   "end": 49.488
+  },
+  {
+   "line": 17,
+   "who": "N",
+   "words": [
+    {
+     "w": "left.",
+     "t": 49.488,
+     "hot": false
+    }
+   ],
+   "start": 49.488,
+   "end": 50.048
+  },
+  {
+   "line": 17,
+   "who": "N",
+   "words": [
+    {
+     "w": "He",
+     "t": 50.048,
+     "hot": false
+    },
+    {
+     "w": "ran",
+     "t": 50.068,
+     "hot": false
+    },
+    {
+     "w": "back",
+     "t": 50.248,
+     "hot": true
+    }
+   ],
+   "start": 50.048,
+   "end": 50.508
+  },
+  {
+   "line": 17,
+   "who": "N",
+   "words": [
+    {
+     "w": "instead.",
+     "t": 50.508,
+     "hot": false
+    }
+   ],
+   "start": 50.508,
+   "end": 51.048
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "He",
+     "t": 51.665,
+     "hot": false
+    },
+    {
+     "w": "freed",
+     "t": 51.765,
+     "hot": false
+    },
+    {
+     "w": "Jay,",
+     "t": 51.945,
+     "hot": false
+    }
+   ],
+   "start": 51.665,
+   "end": 52.605
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "grabbed",
+     "t": 52.605,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 52.805,
+     "hot": false
+    },
+    {
+     "w": "idol,",
+     "t": 53.025,
+     "hot": false
+    }
+   ],
+   "start": 52.605,
+   "end": 53.685
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "and",
+     "t": 53.685,
+     "hot": false
+    },
+    {
+     "w": "they",
+     "t": 53.845,
+     "hot": false
+    },
+    {
+     "w": "dove",
+     "t": 53.945,
+     "hot": false
+    }
+   ],
+   "start": 53.685,
+   "end": 54.125
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "into",
+     "t": 54.125,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 54.385,
+     "hot": false
+    },
+    {
+     "w": "van",
+     "t": 54.505,
+     "hot": false
+    }
+   ],
+   "start": 54.125,
+   "end": 54.705
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "as",
+     "t": 54.705,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 54.965,
+     "hot": false
+    },
+    {
+     "w": "sirens",
+     "t": 55.085,
+     "hot": true
+    }
+   ],
+   "start": 54.705,
+   "end": 55.405
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "hit",
+     "t": 55.405,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 55.685,
+     "hot": false
+    },
+    {
+     "w": "street.",
+     "t": 55.805,
+     "hot": false
+    }
+   ],
+   "start": 55.405,
+   "end": 56.145
+  },
+  {
+   "line": 19,
+   "who": "N",
+   "words": [
+    {
+     "w": "The",
+     "t": 56.816,
+     "hot": false
+    },
+    {
+     "w": "van",
+     "t": 56.896,
+     "hot": false
+    },
+    {
+     "w": "floored",
+     "t": 57.056,
+     "hot": false
+    }
+   ],
+   "start": 56.816,
+   "end": 57.496
+  },
+  {
+   "line": 19,
+   "who": "N",
+   "words": [
+    {
+     "w": "it,",
+     "t": 57.496,
+     "hot": false
+    }
+   ],
+   "start": 57.496,
+   "end": 57.876
+  },
+  {
+   "line": 19,
+   "who": "N",
+   "words": [
+    {
+     "w": "straight",
+     "t": 57.876,
+     "hot": false
+    },
+    {
+     "w": "off",
+     "t": 58.056,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 58.296,
+     "hot": false
+    }
+   ],
+   "start": 57.876,
+   "end": 58.416
+  },
+  {
+   "line": 19,
+   "who": "N",
+   "words": [
+    {
+     "w": "edge",
+     "t": 58.416,
+     "hot": false
+    },
+    {
+     "w": "of",
+     "t": 58.596,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 58.716,
+     "hot": false
+    }
+   ],
+   "start": 58.416,
+   "end": 58.796
+  },
+  {
+   "line": 19,
+   "who": "N",
+   "words": [
+    {
+     "w": "screen,",
+     "t": 58.796,
+     "hot": false
+    }
+   ],
+   "start": 58.796,
+   "end": 59.376
+  },
+  {
+   "line": 19,
+   "who": "N",
+   "words": [
+    {
+     "w": "and",
+     "t": 59.376,
+     "hot": false
+    },
+    {
+     "w": "back",
+     "t": 59.556,
+     "hot": true
+    },
+    {
+     "w": "into",
+     "t": 59.756,
+     "hot": false
+    }
+   ],
+   "start": 59.376,
+   "end": 59.976
+  },
+  {
+   "line": 19,
+   "who": "N",
+   "words": [
+    {
+     "w": "Milo's",
+     "t": 59.976,
+     "hot": false
+    },
+    {
+     "w": "bedroom.",
+     "t": 60.436,
+     "hot": false
+    }
+   ],
+   "start": 59.976,
+   "end": 60.796
+  },
+  {
+   "line": 20,
+   "who": "J",
+   "words": [
+    {
+     "w": "Wait.",
+     "t": 61.797,
+     "hot": false
+    }
+   ],
+   "start": 61.797,
+   "end": 61.997
+  },
+  {
+   "line": 20,
+   "who": "J",
+   "words": [
+    {
+     "w": "Is",
+     "t": 61.997,
+     "hot": false
+    },
+    {
+     "w": "that",
+     "t": 62.297,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 62.477,
+     "hot": false
+    }
+   ],
+   "start": 61.997,
+   "end": 62.677
+  },
+  {
+   "line": 20,
+   "who": "J",
+   "words": [
+    {
+     "w": "golden",
+     "t": 62.677,
+     "hot": true
+    },
+    {
+     "w": "idol?",
+     "t": 62.977,
+     "hot": false
+    }
+   ],
+   "start": 62.677,
+   "end": 63.497
+  },
+  {
+   "line": 21,
+   "who": "M",
+   "words": [
+    {
+     "w": "Huh.",
+     "t": 64.373,
+     "hot": false
+    }
+   ],
+   "start": 64.373,
+   "end": 64.559
+  },
+  {
+   "line": 21,
+   "who": "M",
+   "words": [
+    {
+     "w": "I",
+     "t": 64.559,
+     "hot": false
+    },
+    {
+     "w": "guess",
+     "t": 64.652,
+     "hot": false
+    },
+    {
+     "w": "we",
+     "t": 64.869,
+     "hot": false
+    }
+   ],
+   "start": 64.559,
+   "end": 64.993
+  },
+  {
+   "line": 21,
+   "who": "M",
+   "words": [
+    {
+     "w": "kept",
+     "t": 64.993,
+     "hot": false
+    },
+    {
+     "w": "it.",
+     "t": 65.178,
+     "hot": false
+    }
+   ],
+   "start": 64.993,
+   "end": 65.453
+  },
+  {
+   "line": 22,
+   "who": "N",
+   "words": [
+    {
+     "w": "Heist",
+     "t": 66.475,
+     "hot": false
+    },
+    {
+     "w": "Crew",
+     "t": 66.824,
+     "hot": false
+    },
+    {
+     "w": "is",
+     "t": 67.123,
+     "hot": false
+    }
+   ],
+   "start": 66.475,
+   "end": 67.323
+  },
+  {
+   "line": 22,
+   "who": "N",
+   "words": [
+    {
+     "w": "real,",
+     "t": 67.323,
+     "hot": false
+    }
+   ],
+   "start": 67.323,
+   "end": 67.672
+  },
+  {
+   "line": 22,
+   "who": "N",
+   "words": [
+    {
+     "w": "and",
+     "t": 67.672,
+     "hot": false
+    },
+    {
+     "w": "it's",
+     "t": 67.922,
+     "hot": false
+    },
+    {
+     "w": "on",
+     "t": 68.221,
+     "hot": false
+    }
+   ],
+   "start": 67.672,
+   "end": 68.42
+  },
+  {
+   "line": 22,
+   "who": "N",
+   "words": [
+    {
+     "w": "PULSEBOX.",
+     "t": 68.42,
+     "hot": false
+    }
+   ],
+   "start": 68.42,
+   "end": 68.969
+  },
+  {
+   "line": 22,
+   "who": "N",
+   "words": [
+    {
+     "w": "4",
+     "t": 68.969,
+     "hot": false
+    },
+    {
+     "w": "friends,",
+     "t": 69.119,
+     "hot": false
+    }
+   ],
+   "start": 68.969,
+   "end": 69.618
+  },
+  {
+   "line": 22,
+   "who": "N",
+   "words": [
+    {
+     "w": "5",
+     "t": 69.618,
+     "hot": false
+    },
+    {
+     "w": "heists,",
+     "t": 69.768,
+     "hot": false
+    }
+   ],
+   "start": 69.618,
+   "end": 70.217
+  },
+  {
+   "line": 22,
+   "who": "N",
+   "words": [
+    {
+     "w": "1",
+     "t": 70.217,
+     "hot": false
+    },
+    {
+     "w": "getaway",
+     "t": 70.366,
+     "hot": false
+    },
+    {
+     "w": "van.",
+     "t": 70.815,
+     "hot": false
+    }
+   ],
+   "start": 70.217,
+   "end": 71.235
+  },
+  {
+   "line": 23,
+   "who": "N",
+   "words": [
+    {
+     "w": "77",
+     "t": 72.045,
+     "hot": true
+    },
+    {
+     "w": "games.",
+     "t": 72.385,
+     "hot": false
+    }
+   ],
+   "start": 72.045,
+   "end": 73.425
+  },
+  {
+   "line": 23,
+   "who": "N",
+   "words": [
+    {
+     "w": "Which",
+     "t": 73.425,
+     "hot": false
+    },
+    {
+     "w": "one",
+     "t": 73.645,
+     "hot": false
+    },
+    {
+     "w": "should",
+     "t": 73.785,
+     "hot": false
+    }
+   ],
+   "start": 73.425,
+   "end": 73.945
+  },
+  {
+   "line": 23,
+   "who": "N",
+   "words": [
+    {
+     "w": "they",
+     "t": 73.945,
+     "hot": false
+    },
+    {
+     "w": "fall",
+     "t": 74.085,
+     "hot": false
+    },
+    {
+     "w": "into",
+     "t": 74.285,
+     "hot": false
+    }
+   ],
+   "start": 73.945,
+   "end": 74.505
+  },
+  {
+   "line": 23,
+   "who": "N",
+   "words": [
+    {
+     "w": "next?",
+     "t": 74.505,
+     "hot": false
+    }
+   ],
+   "start": 74.505,
+   "end": 75.225
+  },
+  {
+   "line": 23,
+   "who": "N",
+   "words": [
+    {
+     "w": "Tell",
+     "t": 75.225,
+     "hot": false
+    },
+    {
+     "w": "them",
+     "t": 75.405,
+     "hot": false
+    },
+    {
+     "w": "in",
+     "t": 75.565,
+     "hot": false
+    }
+   ],
+   "start": 75.225,
+   "end": 75.645
+  },
+  {
+   "line": 23,
+   "who": "N",
+   "words": [
+    {
+     "w": "the",
+     "t": 75.645,
+     "hot": false
+    },
+    {
+     "w": "comments.",
+     "t": 75.725,
+     "hot": false
+    }
+   ],
+   "start": 75.645,
+   "end": 76.145
+  }
+ ],
+ "code": []
+}

@@ -7,6 +7,7 @@
 <script src="../lib/art.js"></script>
 <script src="../lib/more.js"></script>
 <script src="../lib/games3.js"></script>
+<script src="../lib/story.js"></script>
 <script>
 const t = 1.7;   // the moment every animated piece is frozen at
 // ---------- art pieces, each drawn in a 1000 x 1000 box ----------
@@ -73,6 +74,12 @@ const ART = {
     s += G('translate(520 860) rotate(-8)', R(-300, -70, 600, 120, 14, 'none', 0, 'stroke="#e5484d" stroke-width="14"') + T(0, 32, 'TOP SECRET', 90, '#e5484d', 'middle', 'Luckiest'));
     return s;
   },
+  'stuck-ep1-still-here': () => `<svg viewBox="40 560 1000 1000" width="1000" height="1000">` + corridor(t) + hollow(540, 1180, .95, { t, pose: 'reach' }) + flashlight(540, 900, 520, .8) + doll(880, 1520, .95, { glow: true }) +
+    kidFront(300, 1400, .95, who(MILO, { t, mouth: 'o', brow: 'up', lookX: .6 })) + kidFront(620, 1410, .95, who(JAY, { t, mouth: 'o', brow: 'up', lookX: -.4 })) + '</svg>',
+  'stuck-ep2-blackwater': () => `<svg viewBox="40 640 1000 1000" width="1000" height="1000">` + sideSea(t, { night: true }) + giantEye(720, 1180, 1, .95, t) + R(-20, 1240, 1120, 700, 0, '#071226', 0, 'opacity=".5"') +
+    raftSide(330, 1420, 1.25, -3, { sail: true, lantern: true, kids: { milo: { t, mouth: 'o', lookX: 1, brow: 'up' }, jay: { t, mouth: 'o', lookX: 1, brow: 'up' } } }) + fin(880, 1560, 1.4, -1, t) + '</svg>',
+  'stuck-ep3-heist-crew': () => `<svg viewBox="40 700 1000 1000" width="1000" height="1000">` + mansionNight(t, 1080, 1920) + policeLights(.1, .7) + idol(540, 1330, 1.5) +
+    kidFront(290, 1500, 1.05, who(MILO_H, { t, mouth: 'grin', brow: 'up' })) + kidFront(790, 1500, 1.05, who(JAY_H, { t, mouth: 'grin', brow: 'mad' })) + '</svg>',
 };
 // ---------- each thumbnail: background, art, the big words ----------
 const THUMBS = {
@@ -85,6 +92,9 @@ const THUMBS = {
   'rage-games': { bg: '#3a0812', ray: '#ff2d55', lines: [["DON'T PLAY IF", '#fff'], ['YOU RAGE', '#ff2d55']], sticker: ['RAGE 100%', '#ffd84d'] },
   'pick-a-door': { bg: '#1c1240', ray: '#ffd84d', lines: [['PICK A', '#fff'], ['DOOR', '#ffd84d']], sticker: ['NO SWITCHING', '#ff4f6e'] },
   'pulsebox-secrets': { bg: '#2b2238', ray: '#e5484d', lines: [['5 SECRETS', '#ffd84d'], ['NOBODY TELLS YOU', '#fff']], sticker: ['#5 ISN\'T OUT YET', LIME] },
+  'stuck-ep1-still-here': { bg: '#140808', ray: '#ff2d55', lines: [['PULLED INTO A', '#fff'], ['HORROR GAME', '#ff2d55']], sticker: ['EP 1 · STILL HERE', '#ffd84d'] },
+  'stuck-ep2-blackwater': { bg: '#071226', ray: '#4fa3ff', lines: [['STRANDED IN', '#fff'], ['HIS OWN GAME', '#4fe3ff']], sticker: ['EP 2 · BLACKWATER DRIFT', '#ffd84d'] },
+  'stuck-ep3-heist-crew': { bg: '#0c1230', ray: '#ffd84d', lines: [['A HEIST', '#fff'], ['INSIDE A GAME', '#ffd84d']], sticker: ['EP 3 · HEIST CREW', '#ff8a3d'] },
 };
 function words(lines, x, y, maxW, size, anchor = 'middle') {   // big stroked title, each line shrunk to fit maxW; y is the top
   let s = '', base = y;

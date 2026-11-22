@@ -1,0 +1,147 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../lib/stage.css"></head>
+<body>
+<script src="timeline.js"></script>
+<script src="../lib/art.js"></script>
+<script src="../lib/more.js"></script>
+<script src="../lib/games3.js"></script>
+<script src="../lib/story.js"></script>
+<script>
+/* STUCK IN PULSEBOX · EP 3: HEIST CREW (series finale) */
+const A = i => VO[i - 1], E_ = i => TIMELINE.lines[i - 1].at + TIMELINE.lines[i - 1].dur, W_ = (l, re) => wordT(l, re);
+const M = o => who(MILO_H, o), J = o => who(JAY_H, o);
+function roleCard(x, y, k, title, col, kid, icon) { return G(`translate(${x} ${y}) scale(${k})`, R(-200, -300, 400, 600, 30, col, 10) + R(-170, -270, 340, 360, 20, '#141838', 0) + `<svg x="-170" y="-270" width="340" height="360" viewBox="-170 -270 340 360" overflow="hidden">${kid}</svg>` + R(-170, -270, 340, 360, 20, 'none', 6) + T(0, 170, title, 74, INK, 'middle', 'Luckiest') + icon); }
+function noisemaker(x, y, k, t) { return G(`translate(${x} ${y}) scale(${k})`, R(-24, -34, 48, 68, 10, '#ffd84d', 6) + C(0, -10, 12, INK, 0) + [1, 2, 3].map(i => P(`M${30 + i * 18} ${-30 - i * 6} Q${46 + i * 22} 0 ${30 + i * 18} ${30 + i * 6}`, 'none', 0, `stroke="#fff" stroke-width="6" opacity="${.5 + .5 * Math.sin(t * 10 - i)}"`)).join('')); }
+const SC = [
+  [0, (t, lt) => {                          // HOOK: the mansion, masks, the van
+    const z = lerp(1.3, 1, eOut(prog(lt, 0, 1.2)));
+    let s = mansionNight(t, 1080, 1920) + vanSide(250, 1560, .9, t);
+    const km = pop(t, W_(1, /masks/) - .1, .3);
+    s += kidFront(540, 1500, 1.05, M({ t, mouth: 'o', brow: 'up', mask: km > .5 })) + kidFront(850, 1520, 1.05, J({ t, mouth: 'o', brow: 'up', mask: km > .5 }));
+    return G(`translate(540 960) scale(${z}) translate(-540 -960)`, s) + seriesBadge(3);
+  }, 1760],
+  [A(2) - .1, (t, lt) => mansionNight(t, 1080, 1920) + G('translate(540 1250) scale(1.6) translate(-540 -1250)', kidFront(540, 1300, 1, J({ t, mouth: 'o', talk: Math.abs(Math.sin(t * 13)), lookY: lt < 1 ? 1 : 0, brow: 'up' }))), 300],
+  [A(3) - .1, (t, lt) => {                  // Heist Crew: steal the golden idol
+    const up = eIO(prog(lt, 0, 1.2));
+    let s = lt < .6 ? mansionNight(t, 1080, 1920) + kidFront(540, 1500, 1.4, M({ t, mouth: 'grin', brow: 'up' })) : heistMap(t, 1080, 1920) + C(540, 420, 160 + Math.sin(t * 6) * 20, 'none', 0, `stroke="#ffd84d" stroke-width="10"`);
+    s += G(`translate(540 1200) rotate(-3) scale(${pop(lt, .7, .3)})`, TS(0, 0, 'HEIST', 170, '#ffd84d', 16) + TS(0, 160, 'CREW', 170, '#fff', 16));
+    if (t > W_(3, /idol/) - .2) s += G(`translate(540 420) scale(${pop(t, W_(3, /idol/) - .2, .3)})`, idol(0, 80, 1.1));
+    return s;
+  }, 300],
+  [A(4) - .1, (t, lt) => {                  // roles
+    let s = R(-20, -20, 1120, 1960, 0, '#141838', 0) + rays(540, 1000, 22, 1500, '#ffd84d', .07, t * .2);
+    const k1 = pop(t, W_(4, /hacker/) - .2, .35), k2 = pop(t, W_(4, /ghost/) - .2, .35);
+    s += roleCard(290, 1000, k1, 'HACKER', LIME, kidFront(0, 0, .9, M({ t, mouth: 'grin' })), R(-60, 210, 120, 70, 10, '#2b2f45', 5) + T(0, 255, '</>', 36, LIME, 'middle', 'Chakra'));
+    s += roleCard(790, 1000, k2, 'GHOST', '#ff8a3d', kidFront(0, 0, .9, J({ t: t + 1, mouth: 'smile' })), noisemaker(0, 250, .9, t));
+    return s;
+  }, 300],
+  [A(5) - .1, (t, lt) => {                  // two switches, two rooms, the exact same time
+    const k1 = W_(5, /switches/), k2 = W_(5, /different/), k3 = W_(5, /exact/);
+    let s = heistMap(t, 1080, 1920);
+    if (t > k1) s += C(300, 900, 110 + Math.sin(t * 8) * 14, 'none', 0, `stroke="${LIME}" stroke-width="10"`) + C(780, 900, 110 + Math.sin(t * 8) * 14, 'none', 0, `stroke="${LIME}" stroke-width="10"`);
+    if (t > k2) s += P('M300 790 Q540 690 780 790', 'none', 0, `stroke="#fff" stroke-width="8" stroke-dasharray="20 14"`);
+    if (t > k3) s += G(`translate(540 1300) scale(${pop(t, k3, .3)})`, C(0, 0, 120, '#fff', 9) + L(0, 0, 0, -80, 12) + L(0, 0, 60, 0, 12) + C(0, 0, 10, INK, 0));
+    return s;
+  }, 1500],
+  [A(6) - .1, (t, lt) => {                  // a guard turned the corner
+    const k = eOut(prog(lt, 0, 1.4));
+    let s = heistMap(t, 1080, 1920, { noCams: true }) + R(380, 1300, 120, 120, 10, '#8a5a2b', 6) + kidTop(450, 1450, 1, -90, M({ t })) + kidTop(350, 1460, 1, -90, J({ t }));
+    s += guardTop(lerp(1100, 860, k), 1380, lerp(180, 200, k), 1.1, t);
+    return G(`translate(540 1380) scale(1.5) translate(-540 -1380)`, s);
+  }, 300],
+  [A(7) - .1, (t, lt) => {                  // the noisemaker
+    const tt = W_(7, /noisemaker/) - .3, fly = eOut(prog(t, tt, tt + .7)), walk = eIO(prog(t, W_(7, /wandered/), E_(7) + .4));
+    let s = heistMap(t, 1080, 1920, { noCams: true }) + R(380, 1300, 120, 120, 10, '#8a5a2b', 6) + kidTop(450, 1450, 1, -90, M({ t })) + kidTop(350, 1460, 1, -90, J({ t }));
+    const nx = lerp(360, 950, fly), ny = lerp(1440, 1230, fly) - Math.sin(fly * Math.PI) * 200;
+    if (t > tt) s += noisemaker(nx, ny, .8, t);
+    s += guardTop(lerp(860, 920, walk), lerp(1380, 1270, walk), walk > 0 ? lerp(200, -40, walk) : 200, 1.1, t, { q: t > tt + .7 ? '?!' : '' });
+    return G(`translate(540 1380) scale(1.5) translate(-540 -1380)`, s);
+  }, 300],
+  [A(8) - .1, (t, lt) => {                  // jam the cameras, the lasers blink out
+    const jam = t > W_(8, /cameras/) - .2, laserOff = t > W_(8, /blinked/);
+    if (lt < 1.0) { let scr = R(0, 0, 700, 440, 0, '#0e1226', 0) + T(40, 80, '> JAMMING CAMERAS', 40, LIME, 'start', 'DejaVu Sans Mono') + R(40, 200, 620, 50, 10, '#1b1f3a', 0) + R(40, 200, 620 * eOut(prog(lt, .1, .9)), 50, 10, LIME, 0);
+      return R(-20, -20, 1120, 1960, 0, '#141838', 0) + laptopFront(190, 600, 700, 440, scr) + kidBack(540, 2000, 1.4, { t, typing: true, hoodie: MILO_H.hoodie }); }
+    return heistMap(t, 1080, 1920, { jammed: laserOff || jam }) + G(`translate(540 1300) scale(${pop(t, W_(8, /blinked/), .3)})`, R(-260, -60, 520, 100, 20, LIME, 8) + T(0, 16, 'SECURITY OFF', 60, INK, 'middle', 'Luckiest'));
+  }, t => t < A(8) + .9 ? 300 : 1500],
+  [A(9) - .1, (t, lt) => {                  // split up: switch 1, switch 2
+    const k = eIO(prog(lt, 0, 1.8));
+    let s = heistMap(t, 1080, 1920, { jammed: true }) + kidTop(lerp(450, 300, k), lerp(1450, 1000, k), 1, -90, M({ t, walk: true })) + kidTop(lerp(350, 780, k), lerp(1460, 1000, k), 1, -90, J({ t, walk: true }));
+    return s;
+  }, 1500],
+  ...[10, 11, 12, 13].map((ln, i) => [A(ln) - .1, (t, lt) => {   // 3... 2... 1... NOW!
+    const now = ln === 13, p = now ? pop(lt, .05, .2) : 0;
+    let s = R(-20, -20, 1120, 1960, 0, '#141838', 0);
+    const half = (y, kid, n) => R(-20, y, 1120, 960, 0, y ? '#1d2142' : '#22264d', 0) + switchPlate(540, y + 700, n, 1.6, now) + kid + E(540, y + 600 + (now ? 60 * p : 0), 90, 70, SKIN);
+    s += half(0, kidFront(540, 380, 1, M({ t, mouth: 'flat', brow: 'mad', lookY: 1 })), 1) + half(960, kidFront(540, 1340, 1, J({ t, mouth: 'flat', brow: 'mad', lookY: 1 })), 2) + L(-20, 960, 1100, 960, 12);
+    s += G(`translate(540 960) scale(${lerp(2, 1, eOut(prog(lt, 0, .2)))})`, C(0, 0, 150, now ? LIME : '#ffd84d', 12) + T(0, 60, now ? 'NOW' : String(3 - i), now ? 110 : 170, INK, 'middle', 'Luckiest'));
+    return s;
+  }, null]),
+  [A(14) - .1, (t, lt) => {                 // the vault swings open
+    const open = eOut(prog(lt, .1, 1.0)), lift = eOut(prog(t, W_(14, /theirs/) - .6, W_(14, /theirs/) + .2));
+    let s = R(-20, -20, 1120, 1960, 0, '#2a2f45', 0) + C(540, 900, 420, '#1a1208', 10) + C(540, 900, 600, '#ffd84d', 0, `opacity="${.35 * open}" filter="url(#blur30)"`) + idol(540, lerp(1180, 1000, lift), 1.6);
+    s += G(`translate(540 900) scale(${1 - open * .92} 1) translate(${-open * 300} 0)`, C(0, 0, 400, '#8a8f9c', 12) + C(0, 0, 300, 'none', 8) + [0, 1, 2, 3, 4, 5].map(i => L(0, 0, Math.cos(i * 1.05 + open * 3) * 250, Math.sin(i * 1.05 + open * 3) * 250, 18)).join('') + C(0, 0, 60, '#c9c4dd', 8));
+    if (lift > 0) s += E(380, lerp(1500, 1250, lift), 80, 60, SKIN) + E(700, lerp(1500, 1250, lift), 80, 60, SKIN);
+    return s;
+  }, 1600],
+  [A(15) - .1, (t, lt) => {                 // the alarm
+    const red = Math.floor(t * 5) % 2;
+    let s = heistMap(t, 1080, 1920, { vaultOpen: true, jammed: true }) + kidTop(500, 640, 1, -90, M({ t })) + kidTop(600, 660, 1, -90, J({ t }));
+    s += R(-20, -20, 1120, 1960, 0, '#ff2d55', 0, `opacity="${red ? .35 : .1}"`) + G(`translate(540 1250) rotate(-4) scale(${pop(lt, .1, .25)})`, TS(0, 0, 'ALARM!', 200, '#ff2d55', 18));
+    return G(`translate(${Math.sin(t * 50) * 8} 0)`, s);
+  }, 300],
+  [A(16) - .1, (t, lt) => {                 // they cuffed Jay
+    let s = R(-20, -20, 1120, 1960, 0, '#2a2f45', 0) + policeLights(t, .6) + guardFront(760, 1350, 1.05, t) + kidFront(380, 1380, 1.05, J({ t, mouth: 'o', talk: Math.abs(Math.sin(t * 14)), brow: 'up' }));
+    s += G('translate(380 1590)', C(-40, 0, 28, 'none', 0, 'stroke="#c8ccd8" stroke-width="12"') + C(40, 0, 28, 'none', 0, 'stroke="#c8ccd8" stroke-width="12"') + L(-12, 0, 12, 0, 8, '#c8ccd8'));
+    return s;
+  }, 300],
+  [A(17) - .1, (t, lt) => {                 // the van was right there... he ran back
+    const back = t > W_(17, /ran/) - .1, k = eIn(prog(t, W_(17, /ran/), E_(17) + .3));
+    let s = R(-20, -20, 1120, 1960, 0, '#121733', 0) + R(-20, 1500, 1120, 460, 0, '#2a2f45', 0) + policeLights(t, .4) + vanSide(340, 1500, 1.4, t, { open: true });
+    s += back ? kidRun(lerp(600, 1250, k), 1640, 1.6, M({ t, mouth: 'o' })) : kidFront(640, 1300, 1.1, M({ t, mouth: 'flat', lookX: 1, brow: 'up' }));
+    return s;
+  }, 300],
+  [A(18) - .1, (t, lt) => {                 // freed Jay, grabbed the idol, dove into the van
+    const free = t > W_(18, /freed/) + .1, dive = eIn(prog(t, W_(18, /dove/) - .2, W_(18, /street/)));
+    if (!free) return R(-20, -20, 1120, 1960, 0, '#2a2f45', 0) + policeLights(t, .6) + kidFront(380, 1380, 1.05, J({ t, mouth: 'o' })) + kidRun(800, 1640, 1.5, M({ t, mouth: 'o', dir: -1 }));
+    let s = R(-20, -20, 1120, 1960, 0, '#121733', 0) + R(-20, 1500, 1120, 460, 0, '#2a2f45', 0) + policeLights(t, .8) + vanSide(300, 1500, 1.4, t, { open: true });
+    if (t < W_(18, /freed/) + .5) s += burst(540, 1300, 60, 140, 12, '#fff', t * 8, 7) + TS(540, 1320, 'CLICK', 80, INK, 0);
+    s += kidRun(lerp(1000, 300, dive), 1640 - Math.sin(dive * Math.PI) * 200, 1.4, M({ t, mouth: 'o', dir: -1 })) + kidRun(lerp(1200, 340, dive), 1660 - Math.sin(dive * Math.PI) * 220, 1.4, J({ t: t + .3, mouth: 'grin', dir: -1 }));
+    s += idol(lerp(960, 300, dive), 1380 - Math.sin(dive * Math.PI) * 200, .7);
+    return s;
+  }, 300],
+  [A(19) - .1, (t, lt) => {                 // off the edge of the screen
+    const tb = W_(19, /bedroom/) - .5;
+    if (t < tb) { const k = eIn(prog(t, W_(19, /edge/) - .4, tb));
+      let s = R(-20, -20, 1120, 1960, 0, '#121733', 0) + R(-20, 1300, 1120, 660, 0, '#2a2f45', 0) + policeLights(t, .5);
+      for (let i = 0; i < 12; i++) s += L(((i * 211 + t * 2600) % 1400) - 200, 600 + i * 70, ((i * 211 + t * 2600) % 1400) - 500, 600 + i * 70, 8, '#fff', 'opacity=".3"');
+      s += vanSide(lerp(400, 1500, k), 1400 + Math.sin(t * 30) * 6, 1.3, t);
+      if (k > .7) s += P(`M1080 0 L${1080 - (k - .7) * 900} 960 L1080 1920Z`, '#fff', 0, `opacity="${(k - .7) * 3}"`);
+      return s; }
+    const k = eOut(prog(t, tb, tb + .5));
+    return bedroomFloor(t, { dawn: true, clock: '6:00' }) + R(400, 1660, 320, 200, 24, '#191c2c', 8) + G(`translate(0 ${lerp(-300, 0, k)})`, kidFront(330, 1250, 1, M({ t, mouth: 'o', mask: false })) + kidFront(760, 1250, 1, J({ t, mouth: 'o', mask: false }))) + R(-20, -20, 1120, 1960, 0, '#fff', 0, `opacity="${1 - k}"`);
+  }, 300],
+  [A(20) - .1, (t, lt) => bedroomFloor(t, { dawn: true, clock: '6:00' }) + R(560, 1100, 460, 40, 8, '#7a4b2c') + idol(790, 1100, 1.1) + kidFront(330, 1300, 1.05, J({ t, mouth: 'o', mask: false, brow: 'up', lookX: 1 })), 300],
+  [A(21) - .1, (t, lt) => bedroomFloor(t, { dawn: true, clock: '6:00' }) + kidFront(540, 1300, 1.1, M({ t, mouth: 'grin', mask: false, brow: 'up' })) + idol(540, 1500, .9, true), 300],
+  [A(22) - .1, (t, lt) => {                 // it's real
+    let s = R(-20, -20, 1120, 1960, 0, '#0b0d14', 0) + rays(540, 1000, 24, 1600, '#ffd84d', .08, t * .2);
+    s += phone(540, 1080, 680, 1240, realGameCard(t, 'heist-crew', 'Heist Crew', 'Co-op break-in · up to 4 friends', G(`translate(340 900) scale(${pop(t, W_(22, /^5/), .3)})`, R(-170, -45, 340, 90, 20, '#fff', 5) + T(0, 18, '5 HEISTS', 44, INK, 'middle', 'Luckiest'))), lerp(8, -2, eOut(prog(lt, 0, .4))));
+    return s + pulseboxLogo(540, 250, pop(lt, .1, .3) * .85);
+  }, 1720],
+  [A(23) - .1, (t, lt) => {                 // which game next? then the end card
+    if (lt < 3.8) { let s = R(-20, -20, 1120, 1960, 0, '#0b0d14', 0) + rays(540, 960, 24, 1600, LIME, .06, t * .2);
+      const ids = Object.keys(GAMES).filter(id => id !== 'heist-tease');
+      for (let r = 0; r < 6; r++) for (let c = 0; c < 5; c++) { const id = ids[(r * 5 + c) % ids.length], x = 30 + c * 206, y = 260 + r * 206, k = pop(lt, (r * 5 + c) * .02, .2);
+        s += G(`translate(${x + 98} ${y + 98}) scale(${k}) translate(${-x - 98} ${-y - 98})`, R(x, y, 196, 196, 20, '#171a2b', 5) + nest(x + 6, y + 6, 184, 184, GAMES[id][1](t + r + c, 184, 184))); }
+      return s + kidFront(330, 1760, 1, M({ t, mouth: 'grin', mask: false, lookY: -1 })) + kidFront(760, 1760, 1, J({ t, mouth: 'grin', mask: false, lookY: -1 })); }
+    return endCard(t, lt - 3.8, 'comment the next game') + seriesBadge(3, 330, 1700);
+  }, 1560],
+];
+const CUES = { bpm: 104, key: 'minor',
+  music: [[0, A(6) - .1, 'hard'], [A(6) - .1, A(9) - .1, 'tense'], [A(9) - .1, A(10) - .1, 'tense'], [A(10) - .1, A(13) - .1, 'tense'], [A(13) - .1, A(20) - .1, 'hard'], [A(20) - .1, A(22) - .1, 'calm'], [A(22) - .1, TIMELINE.end, 'hard']],
+  fx: [[W_(1, /masks/) - .1, 'pop', .6], [A(6) + .2, 'sting', .6], [W_(7, /noisemaker/) - .3, 'whoosh', .6], [W_(7, /noisemaker/) + .5, 'buzz', .5], [W_(8, /blinked/), 'pop', .6],
+       ...[10, 11, 12].map(l => [A(l), 'tick', 1.2]), [A(13), 'thud', 1], [A(13) + .05, 'ding', .7], [A(14), 'thud', .7], [W_(14, /theirs/), 'cheer', .6],
+       [A(15), 'buzz', .9], [A(15) + .5, 'buzz', .9], [A(15) + 1.0, 'buzz', .9], [W_(18, /freed/) + .1, 'pop', .8], [W_(18, /dove/), 'whoosh', .8], [W_(19, /edge/), 'riser', .6, 1.4], [W_(19, /bedroom/) - .5, 'thud', .8],
+       [A(20) + .3, 'ding', .5], [A(22), 'pop', .5], [A(23) + 3.8, 'pop', .5]] };
+startVideo(SC, CUES);
+</script>
+</body></html>

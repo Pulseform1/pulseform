@@ -124,6 +124,7 @@ function face(r, o = {}) { // front face, centered on 0,0
    L${r * .8} ${-r * .3} L${r * .55} ${-r * .12} L${r * .35} ${-r * .42} L${r * .1} ${-r * .22} L${-r * .15} ${-r * .5} L${-r * .35} ${-r * .2} L${-r * .6} ${-r * .45} L${-r * .8} ${-r * .15} Z`, o.hair || '#3b2416');
   s += P(`M${-r * .2} ${-r * 1.0} L${-r * .3} ${-r * 1.3} L${r * .05} ${-r * 1.02} L${r * .2} ${-r * 1.28} L${r * .32} ${-r * .98}`, o.hair || '#3b2416');
   const ey = r * .12, ex = r * .38, eh = blink ? 3 : 30;
+  if (o.mask) s += R(-r * .98, ey - 42, r * 1.96, 84, 42, '#151519', 6);
   for (const sx of [-1, 1]) {
     s += E(sx * ex, ey, 25, eh, '#fff', 6);
     if (!blink) s += C(sx * ex + lookX * 9, ey + lookY * 9, 13, INK, 0) + C(sx * ex + lookX * 9 + 5, ey + lookY * 9 - 6, 4.5, '#fff', 0);
@@ -150,8 +151,10 @@ function kidFront(x, y, k, o = {}) {  // o.armsUp, o.phone, o.controller, o.wave
   s += P('M-175 260 C-180 90 -120 10 0 10 C120 10 180 90 175 260 Z', hoodie);
   s += P('M-55 20 L0 90 L55 20', 'none', 6) + L(-30, 60, -38, 140, 5, '#fff') + L(30, 60, 38, 140, 5, '#fff');  // hood strings
   // headphones around neck
+  if (!o.noPhones) {
   s += P('M-95 20 C-80 70 80 70 95 20', 'none', 0, `stroke="${INK}" stroke-width="22" stroke-linecap="round"`) + P('M-95 20 C-80 70 80 70 95 20', 'none', 0, `stroke="${LIME}" stroke-width="11" stroke-linecap="round"`);
   s += R(-120, 0, 38, 54, 14, LIME, 6) + R(82, 0, 38, 54, 14, LIME, 6);
+  }
   // arms
   const arm = (d) => P(d, 'none', 62) + P(d, 'none', 0, `stroke="${hoodie}" stroke-width="48" stroke-linecap="round"`);
   if (o.armsUp) { const w = Math.sin(t * 14) * 14;
@@ -166,6 +169,7 @@ function kidFront(x, y, k, o = {}) {  // o.armsUp, o.phone, o.controller, o.wave
     s += C(-50, 200, 30, SKIN) + C(50, 200, 30, SKIN);
   }
   s += G(`translate(0 -110) rotate(${o.tilt || 0})`, face(118, o));
+  if (o.wet) for (let i = 0; i < 7; i++) { const dx = -120 + i * 40, dy = ((t * 160 + i * 47) % 140) - 240; s += P(`M${dx} ${dy} q-9 16 0 20 q9 -4 0 -20Z`, '#8fd3ff', 3); }
   return G(`translate(${x} ${y}) scale(${k})`, s);
 }
 
@@ -407,7 +411,7 @@ function startVideo(SC, CUES) {
     if (!c || y == null) { capEl.innerHTML = ''; return; }
     capEl.style.top = y + 'px';
     capEl.innerHTML = c.words.filter(w => t >= w.t - .04).map(w => { const k = eBack(clamp((t - w.t + .04) / .14)), sc = lerp(.4, 1, k);
-      return `<span class="${w.hot ? 'hot' : ''}" style="transform:scale(${sc.toFixed(3)}) rotate(${w.hot ? -3 : 0}deg)">${esc(w.w)}</span>`; }).join(' ');
+      return `<span class="${w.hot ? 'hot' : ''} w${c.who || 'N'}" style="transform:scale(${sc.toFixed(3)}) rotate(${w.hot ? -3 : 0}deg)">${esc(w.w)}</span>`; }).join(' ');
   }
   window.render = function (t) {
     let i = 0; for (let j = 0; j < SC.length; j++) if (t >= SC[j][0]) i = j;

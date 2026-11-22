@@ -18,6 +18,22 @@ so there are no samples or licences to track.
 | `pick-a-door/` | "Pick a door. 1, 2, or 3. No switching." Game show: doors and suitcases hide games | `pick-a-door/out/pulsebox-pick-a-door.mp4` |
 | `pulsebox-secrets/` | "5 things nobody tells you about Pulsebox. #5 isn't even out yet." Real features as top-secret files | `pulsebox-secrets/out/pulsebox-pulsebox-secrets.mp4` |
 
+### Stuck in Pulsebox (story series)
+
+Milo (the developer) and his best friend Jay get pulled into one of his Pulsebox games each episode and escape using
+how the game really works. Three voices: the narrator is the Sky + Emma blend, Milo is `am_puck`, Jay is `am_echo`
+(`voices` and `who` in `video.json`; captions are coloured by speaker). The plan and scripts are in `stories/PLAN.md`;
+the shared story art (running poses, the Hollow, the raft, the mansion...) is in `lib/story.js`.
+
+| Episode | Hook | Output |
+|---------|------|--------|
+| `stuck-ep1-still-here/` | "Milo made a horror game. At 2 AM, it pulled him and his best friend inside." | `stuck-ep1-still-here/out/pulsebox-stuck-ep1-still-here.mp4` |
+| `stuck-ep2-blackwater/` | "Four wooden planks. No land. No boat. Just a rope hook... and a fin." | `stuck-ep2-blackwater/out/pulsebox-stuck-ep2-blackwater.mp4` |
+| `stuck-ep3-heist-crew/` | "Outside a mansion. In masks. Next to a getaway van." | `stuck-ep3-heist-crew/out/pulsebox-stuck-ep3-heist-crew.mp4` |
+
+Thumbnails for every video (9:16 covers and 16:9) are in `thumbnails/out/`; `node thumbnails/thumbs.js [id ...]` remakes them
+from `thumbnails/thumbs.html`.
+
 ## Make or change a video
 
 Each video folder (except `secret-dev/`, the first one, which has its own scripts) has:

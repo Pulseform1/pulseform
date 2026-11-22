@@ -1,0 +1,1840 @@
+{
+ "end": 74.62,
+ "fps": 30,
+ "lines": [
+  {
+   "n": 1,
+   "at": 0.15,
+   "dur": 5.333,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/01-0d3fca44c9.wav",
+   "say": "Milo and Jay woke up on four wooden planks. No land. No boat. Just a rope hook, and a fin.",
+   "who": "N"
+  },
+  {
+   "n": 2,
+   "at": 6.183,
+   "dur": 2.901,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/02-84a27608bb.wav",
+   "say": "Please tell me this isn't another one of your games.",
+   "who": "J"
+  },
+  {
+   "n": 3,
+   "at": 9.485,
+   "dur": 3.243,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/03-c1620babc4.wav",
+   "say": "Blackwater Drift. Okay. It's definitely one of my games.",
+   "who": "M"
+  },
+  {
+   "n": 4,
+   "at": 13.227,
+   "dur": 4.309,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/04-2ef55db511.wav",
+   "say": "Throw the hook at anything floating. Reel it in. We build the raft ourselves.",
+   "who": "M"
+  },
+  {
+   "n": 5,
+   "at": 18.137,
+   "dur": 5.312,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/05-517552a393.wav",
+   "say": "Barrels. Planks. Rope. Piece by piece, the raft grew. Walls. A sail. A fire to cook the fish.",
+   "who": "N"
+  },
+  {
+   "n": 6,
+   "at": 24.149,
+   "dur": 1.899,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/06-9ae72e477c.wav",
+   "say": "Then the shark came back. Hungry.",
+   "who": "N"
+  },
+  {
+   "n": 7,
+   "at": 26.347,
+   "dur": 1.451,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/07-9d545a7a0d.wav",
+   "say": "It's eating the raft!",
+   "who": "J"
+  },
+  {
+   "n": 8,
+   "at": 28.198,
+   "dur": 2.709,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/08-dc003ef0e0.wav",
+   "say": "Jay grabbed the iron spear. The shark swam off.",
+   "who": "N"
+  },
+  {
+   "n": 9,
+   "at": 31.607,
+   "dur": 3.925,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/09-fa8598b8de.wav",
+   "say": "But Milo was watching the horizon. A wave. Taller than a house.",
+   "who": "N"
+  },
+  {
+   "n": 10,
+   "at": 35.833,
+   "dur": 1.387,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/10-e89ba33d06.wav",
+   "say": "Brace! Hold on to something!",
+   "who": "M"
+  },
+  {
+   "n": 11,
+   "at": 37.719,
+   "dur": 1.941,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/11-a7cc250df0.wav",
+   "say": "The raft climbed the wave, and held.",
+   "who": "N"
+  },
+  {
+   "n": 12,
+   "at": 40.561,
+   "dur": 5.803,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/12-c756689e09.wav",
+   "say": "That night, the sea went quiet. Something huge rose beside the raft. Looked at them. And sank back down.",
+   "who": "N"
+  },
+  {
+   "n": 13,
+   "at": 47.163,
+   "dur": 1.92,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/13-8e0df82cf9.wav",
+   "say": "Milo. Did you code that?",
+   "who": "J"
+  },
+  {
+   "n": 14,
+   "at": 49.683,
+   "dur": 1.557,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/14-bb22e2be17.wav",
+   "say": "I don't remember coding that.",
+   "who": "M"
+  },
+  {
+   "n": 15,
+   "at": 52.141,
+   "dur": 4.672,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/15-57e20ad60f.wav",
+   "say": "At dawn, they found a whirlpool. Players paddle away from it. Milo paddled straight in.",
+   "who": "N"
+  },
+  {
+   "n": 16,
+   "at": 57.413,
+   "dur": 3.221,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/16-ae9ea1ea98.wav",
+   "say": "Splash. Back on the bedroom floor. Soaked. Holding a fish.",
+   "who": "N"
+  },
+  {
+   "n": 17,
+   "at": 61.234,
+   "dur": 1.707,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/17-d8a108dcff.wav",
+   "say": "I'm keeping the fish.",
+   "who": "J"
+  },
+  {
+   "n": 18,
+   "at": 63.741,
+   "dur": 4.523,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/18-7ebf1b6ad2.wav",
+   "say": "Blackwater Drift is real, and it's on Pulsebox. Up to four friends on one raft.",
+   "who": "N"
+  },
+  {
+   "n": 19,
+   "at": 68.863,
+   "dur": 2.752,
+   "file": "/home/user/pulseform/pulsebox/promo/stuck-ep2-blackwater/vo/19-2778796fcc.wav",
+   "say": "Next time, they're not escaping. They're breaking in.",
+   "who": "N"
+  }
+ ],
+ "caps": [
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "Milo",
+     "t": 0.15,
+     "hot": false
+    },
+    {
+     "w": "and",
+     "t": 0.35,
+     "hot": false
+    },
+    {
+     "w": "Jay",
+     "t": 0.59,
+     "hot": false
+    }
+   ],
+   "start": 0.15,
+   "end": 0.77
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "woke",
+     "t": 0.77,
+     "hot": false
+    },
+    {
+     "w": "up",
+     "t": 0.99,
+     "hot": false
+    },
+    {
+     "w": "on",
+     "t": 1.17,
+     "hot": false
+    }
+   ],
+   "start": 0.77,
+   "end": 1.35
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "4",
+     "t": 1.35,
+     "hot": false
+    },
+    {
+     "w": "wooden",
+     "t": 1.59,
+     "hot": false
+    },
+    {
+     "w": "planks.",
+     "t": 1.81,
+     "hot": false
+    }
+   ],
+   "start": 1.35,
+   "end": 2.41
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "No",
+     "t": 2.91,
+     "hot": false
+    },
+    {
+     "w": "land.",
+     "t": 2.93,
+     "hot": false
+    }
+   ],
+   "start": 2.91,
+   "end": 3.51
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "No",
+     "t": 3.51,
+     "hot": false
+    },
+    {
+     "w": "boat.",
+     "t": 3.59,
+     "hot": false
+    }
+   ],
+   "start": 3.51,
+   "end": 4.11
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "Just",
+     "t": 4.11,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 4.19,
+     "hot": false
+    },
+    {
+     "w": "rope",
+     "t": 4.31,
+     "hot": false
+    }
+   ],
+   "start": 4.11,
+   "end": 4.45
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "hook...",
+     "t": 4.45,
+     "hot": true
+    }
+   ],
+   "start": 4.45,
+   "end": 4.69
+  },
+  {
+   "line": 1,
+   "who": "N",
+   "words": [
+    {
+     "w": "and",
+     "t": 4.69,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 4.93,
+     "hot": false
+    },
+    {
+     "w": "fin.",
+     "t": 5.01,
+     "hot": false
+    }
+   ],
+   "start": 4.69,
+   "end": 5.29
+  },
+  {
+   "line": 2,
+   "who": "J",
+   "words": [
+    {
+     "w": "Please",
+     "t": 6.183,
+     "hot": false
+    },
+    {
+     "w": "tell",
+     "t": 6.363,
+     "hot": false
+    },
+    {
+     "w": "me",
+     "t": 6.703,
+     "hot": false
+    }
+   ],
+   "start": 6.183,
+   "end": 6.903
+  },
+  {
+   "line": 2,
+   "who": "J",
+   "words": [
+    {
+     "w": "this",
+     "t": 6.903,
+     "hot": false
+    },
+    {
+     "w": "isn't",
+     "t": 7.103,
+     "hot": false
+    },
+    {
+     "w": "another",
+     "t": 7.523,
+     "hot": false
+    }
+   ],
+   "start": 6.903,
+   "end": 7.723
+  },
+  {
+   "line": 2,
+   "who": "J",
+   "words": [
+    {
+     "w": "one",
+     "t": 7.723,
+     "hot": false
+    },
+    {
+     "w": "of",
+     "t": 8.023,
+     "hot": false
+    },
+    {
+     "w": "your",
+     "t": 8.143,
+     "hot": false
+    }
+   ],
+   "start": 7.723,
+   "end": 8.243
+  },
+  {
+   "line": 2,
+   "who": "J",
+   "words": [
+    {
+     "w": "games.",
+     "t": 8.243,
+     "hot": false
+    }
+   ],
+   "start": 8.243,
+   "end": 8.643
+  },
+  {
+   "line": 3,
+   "who": "M",
+   "words": [
+    {
+     "w": "Blackwater",
+     "t": 9.485,
+     "hot": false
+    },
+    {
+     "w": "Drift.",
+     "t": 9.825,
+     "hot": false
+    }
+   ],
+   "start": 9.485,
+   "end": 10.365
+  },
+  {
+   "line": 3,
+   "who": "M",
+   "words": [
+    {
+     "w": "Okay.",
+     "t": 10.365,
+     "hot": false
+    }
+   ],
+   "start": 10.365,
+   "end": 10.865
+  },
+  {
+   "line": 3,
+   "who": "M",
+   "words": [
+    {
+     "w": "It's",
+     "t": 10.865,
+     "hot": false
+    },
+    {
+     "w": "definitely",
+     "t": 11.005,
+     "hot": false
+    },
+    {
+     "w": "one",
+     "t": 11.285,
+     "hot": false
+    }
+   ],
+   "start": 10.865,
+   "end": 11.665
+  },
+  {
+   "line": 3,
+   "who": "M",
+   "words": [
+    {
+     "w": "of",
+     "t": 11.665,
+     "hot": false
+    },
+    {
+     "w": "my",
+     "t": 11.745,
+     "hot": false
+    },
+    {
+     "w": "games.",
+     "t": 11.885,
+     "hot": false
+    }
+   ],
+   "start": 11.665,
+   "end": 12.305
+  },
+  {
+   "line": 4,
+   "who": "M",
+   "words": [
+    {
+     "w": "Throw",
+     "t": 13.227,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 13.367,
+     "hot": false
+    },
+    {
+     "w": "hook",
+     "t": 13.527,
+     "hot": true
+    }
+   ],
+   "start": 13.227,
+   "end": 13.707
+  },
+  {
+   "line": 4,
+   "who": "M",
+   "words": [
+    {
+     "w": "at",
+     "t": 13.707,
+     "hot": false
+    },
+    {
+     "w": "anything",
+     "t": 13.887,
+     "hot": false
+    },
+    {
+     "w": "floating.",
+     "t": 14.147,
+     "hot": false
+    }
+   ],
+   "start": 13.707,
+   "end": 15.067
+  },
+  {
+   "line": 4,
+   "who": "M",
+   "words": [
+    {
+     "w": "Reel",
+     "t": 15.067,
+     "hot": false
+    },
+    {
+     "w": "it",
+     "t": 15.187,
+     "hot": false
+    },
+    {
+     "w": "in.",
+     "t": 15.407,
+     "hot": false
+    }
+   ],
+   "start": 15.067,
+   "end": 15.827
+  },
+  {
+   "line": 4,
+   "who": "M",
+   "words": [
+    {
+     "w": "We",
+     "t": 15.827,
+     "hot": false
+    },
+    {
+     "w": "build",
+     "t": 15.887,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 16.087,
+     "hot": false
+    }
+   ],
+   "start": 15.827,
+   "end": 16.227
+  },
+  {
+   "line": 4,
+   "who": "M",
+   "words": [
+    {
+     "w": "raft",
+     "t": 16.227,
+     "hot": true
+    },
+    {
+     "w": "ourselves.",
+     "t": 16.407,
+     "hot": false
+    }
+   ],
+   "start": 16.227,
+   "end": 16.987
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "Barrels.",
+     "t": 18.137,
+     "hot": false
+    }
+   ],
+   "start": 18.137,
+   "end": 18.397
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "Planks.",
+     "t": 18.397,
+     "hot": false
+    }
+   ],
+   "start": 18.397,
+   "end": 18.857
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "Rope.",
+     "t": 18.857,
+     "hot": false
+    }
+   ],
+   "start": 18.857,
+   "end": 19.057
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "Piece",
+     "t": 19.057,
+     "hot": false
+    },
+    {
+     "w": "by",
+     "t": 19.457,
+     "hot": false
+    },
+    {
+     "w": "piece,",
+     "t": 19.677,
+     "hot": false
+    }
+   ],
+   "start": 19.057,
+   "end": 19.957
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "the",
+     "t": 19.957,
+     "hot": false
+    },
+    {
+     "w": "raft",
+     "t": 20.117,
+     "hot": true
+    },
+    {
+     "w": "grew.",
+     "t": 20.277,
+     "hot": false
+    }
+   ],
+   "start": 19.957,
+   "end": 20.877
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "Walls.",
+     "t": 20.877,
+     "hot": false
+    }
+   ],
+   "start": 20.877,
+   "end": 21.197
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "A",
+     "t": 21.197,
+     "hot": false
+    },
+    {
+     "w": "sail.",
+     "t": 21.577,
+     "hot": false
+    }
+   ],
+   "start": 21.197,
+   "end": 21.857
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "A",
+     "t": 21.857,
+     "hot": false
+    },
+    {
+     "w": "fire",
+     "t": 22.197,
+     "hot": false
+    },
+    {
+     "w": "to",
+     "t": 22.437,
+     "hot": false
+    }
+   ],
+   "start": 21.857,
+   "end": 22.677
+  },
+  {
+   "line": 5,
+   "who": "N",
+   "words": [
+    {
+     "w": "cook",
+     "t": 22.677,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 22.817,
+     "hot": false
+    },
+    {
+     "w": "fish.",
+     "t": 22.977,
+     "hot": false
+    }
+   ],
+   "start": 22.677,
+   "end": 23.317
+  },
+  {
+   "line": 6,
+   "who": "N",
+   "words": [
+    {
+     "w": "Then",
+     "t": 24.149,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 24.349,
+     "hot": false
+    },
+    {
+     "w": "shark",
+     "t": 24.449,
+     "hot": true
+    }
+   ],
+   "start": 24.149,
+   "end": 24.669
+  },
+  {
+   "line": 6,
+   "who": "N",
+   "words": [
+    {
+     "w": "came",
+     "t": 24.669,
+     "hot": false
+    },
+    {
+     "w": "back.",
+     "t": 24.969,
+     "hot": false
+    }
+   ],
+   "start": 24.669,
+   "end": 25.229
+  },
+  {
+   "line": 6,
+   "who": "N",
+   "words": [
+    {
+     "w": "Hungry.",
+     "t": 25.229,
+     "hot": false
+    }
+   ],
+   "start": 25.229,
+   "end": 25.769
+  },
+  {
+   "line": 7,
+   "who": "J",
+   "words": [
+    {
+     "w": "It's",
+     "t": 26.347,
+     "hot": false
+    },
+    {
+     "w": "eating",
+     "t": 26.527,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 26.707,
+     "hot": false
+    }
+   ],
+   "start": 26.347,
+   "end": 26.987
+  },
+  {
+   "line": 7,
+   "who": "J",
+   "words": [
+    {
+     "w": "raft!",
+     "t": 26.987,
+     "hot": true
+    }
+   ],
+   "start": 26.987,
+   "end": 27.347
+  },
+  {
+   "line": 8,
+   "who": "N",
+   "words": [
+    {
+     "w": "Jay",
+     "t": 28.198,
+     "hot": false
+    },
+    {
+     "w": "grabbed",
+     "t": 28.338,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 28.658,
+     "hot": false
+    }
+   ],
+   "start": 28.198,
+   "end": 28.838
+  },
+  {
+   "line": 8,
+   "who": "N",
+   "words": [
+    {
+     "w": "iron",
+     "t": 28.838,
+     "hot": false
+    },
+    {
+     "w": "spear.",
+     "t": 29.018,
+     "hot": false
+    }
+   ],
+   "start": 28.838,
+   "end": 29.778
+  },
+  {
+   "line": 8,
+   "who": "N",
+   "words": [
+    {
+     "w": "The",
+     "t": 29.778,
+     "hot": false
+    },
+    {
+     "w": "shark",
+     "t": 29.838,
+     "hot": true
+    },
+    {
+     "w": "swam",
+     "t": 30.038,
+     "hot": false
+    }
+   ],
+   "start": 29.778,
+   "end": 30.438
+  },
+  {
+   "line": 8,
+   "who": "N",
+   "words": [
+    {
+     "w": "off.",
+     "t": 30.438,
+     "hot": false
+    }
+   ],
+   "start": 30.438,
+   "end": 30.778
+  },
+  {
+   "line": 9,
+   "who": "N",
+   "words": [
+    {
+     "w": "But",
+     "t": 31.607,
+     "hot": false
+    },
+    {
+     "w": "Milo",
+     "t": 31.707,
+     "hot": false
+    },
+    {
+     "w": "was",
+     "t": 31.847,
+     "hot": false
+    }
+   ],
+   "start": 31.607,
+   "end": 32.167
+  },
+  {
+   "line": 9,
+   "who": "N",
+   "words": [
+    {
+     "w": "watching",
+     "t": 32.167,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 32.507,
+     "hot": false
+    },
+    {
+     "w": "horizon.",
+     "t": 32.687,
+     "hot": false
+    }
+   ],
+   "start": 32.167,
+   "end": 33.107
+  },
+  {
+   "line": 9,
+   "who": "N",
+   "words": [
+    {
+     "w": "A",
+     "t": 33.667,
+     "hot": false
+    },
+    {
+     "w": "wave.",
+     "t": 33.767,
+     "hot": false
+    }
+   ],
+   "start": 33.667,
+   "end": 34.067
+  },
+  {
+   "line": 9,
+   "who": "N",
+   "words": [
+    {
+     "w": "Taller",
+     "t": 34.067,
+     "hot": false
+    },
+    {
+     "w": "than",
+     "t": 34.547,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 34.827,
+     "hot": false
+    }
+   ],
+   "start": 34.067,
+   "end": 34.927
+  },
+  {
+   "line": 9,
+   "who": "N",
+   "words": [
+    {
+     "w": "house.",
+     "t": 34.927,
+     "hot": false
+    }
+   ],
+   "start": 34.927,
+   "end": 35.267
+  },
+  {
+   "line": 10,
+   "who": "M",
+   "words": [
+    {
+     "w": "Brace!",
+     "t": 35.833,
+     "hot": false
+    }
+   ],
+   "start": 35.833,
+   "end": 36.133
+  },
+  {
+   "line": 10,
+   "who": "M",
+   "words": [
+    {
+     "w": "Hold",
+     "t": 36.133,
+     "hot": false
+    },
+    {
+     "w": "on",
+     "t": 36.253,
+     "hot": false
+    },
+    {
+     "w": "to",
+     "t": 36.373,
+     "hot": false
+    }
+   ],
+   "start": 36.133,
+   "end": 36.473
+  },
+  {
+   "line": 10,
+   "who": "M",
+   "words": [
+    {
+     "w": "something!",
+     "t": 36.473,
+     "hot": false
+    }
+   ],
+   "start": 36.473,
+   "end": 36.893
+  },
+  {
+   "line": 11,
+   "who": "N",
+   "words": [
+    {
+     "w": "The",
+     "t": 37.719,
+     "hot": false
+    },
+    {
+     "w": "raft",
+     "t": 37.779,
+     "hot": true
+    },
+    {
+     "w": "climbed",
+     "t": 37.939,
+     "hot": false
+    }
+   ],
+   "start": 37.719,
+   "end": 38.279
+  },
+  {
+   "line": 11,
+   "who": "N",
+   "words": [
+    {
+     "w": "the",
+     "t": 38.279,
+     "hot": false
+    },
+    {
+     "w": "wave...",
+     "t": 38.539,
+     "hot": false
+    }
+   ],
+   "start": 38.279,
+   "end": 38.779
+  },
+  {
+   "line": 11,
+   "who": "N",
+   "words": [
+    {
+     "w": "and",
+     "t": 38.779,
+     "hot": false
+    },
+    {
+     "w": "held.",
+     "t": 39.079,
+     "hot": false
+    }
+   ],
+   "start": 38.779,
+   "end": 39.439
+  },
+  {
+   "line": 12,
+   "who": "N",
+   "words": [
+    {
+     "w": "That",
+     "t": 40.561,
+     "hot": false
+    },
+    {
+     "w": "night,",
+     "t": 40.681,
+     "hot": false
+    }
+   ],
+   "start": 40.561,
+   "end": 40.861
+  },
+  {
+   "line": 12,
+   "who": "N",
+   "words": [
+    {
+     "w": "the",
+     "t": 40.861,
+     "hot": false
+    },
+    {
+     "w": "sea",
+     "t": 41.061,
+     "hot": false
+    },
+    {
+     "w": "went",
+     "t": 41.221,
+     "hot": false
+    }
+   ],
+   "start": 40.861,
+   "end": 41.381
+  },
+  {
+   "line": 12,
+   "who": "N",
+   "words": [
+    {
+     "w": "quiet.",
+     "t": 41.381,
+     "hot": false
+    }
+   ],
+   "start": 41.381,
+   "end": 42.281
+  },
+  {
+   "line": 12,
+   "who": "N",
+   "words": [
+    {
+     "w": "Something",
+     "t": 42.281,
+     "hot": false
+    },
+    {
+     "w": "huge",
+     "t": 42.581,
+     "hot": true
+    },
+    {
+     "w": "rose",
+     "t": 42.881,
+     "hot": false
+    }
+   ],
+   "start": 42.281,
+   "end": 43.241
+  },
+  {
+   "line": 12,
+   "who": "N",
+   "words": [
+    {
+     "w": "beside",
+     "t": 43.241,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 43.621,
+     "hot": false
+    },
+    {
+     "w": "raft.",
+     "t": 43.781,
+     "hot": true
+    }
+   ],
+   "start": 43.241,
+   "end": 43.981
+  },
+  {
+   "line": 12,
+   "who": "N",
+   "words": [
+    {
+     "w": "Looked",
+     "t": 43.981,
+     "hot": false
+    },
+    {
+     "w": "at",
+     "t": 44.361,
+     "hot": false
+    },
+    {
+     "w": "them.",
+     "t": 44.561,
+     "hot": false
+    }
+   ],
+   "start": 43.981,
+   "end": 44.761
+  },
+  {
+   "line": 12,
+   "who": "N",
+   "words": [
+    {
+     "w": "And",
+     "t": 44.761,
+     "hot": false
+    },
+    {
+     "w": "sank",
+     "t": 45.221,
+     "hot": false
+    },
+    {
+     "w": "back",
+     "t": 45.421,
+     "hot": false
+    }
+   ],
+   "start": 44.761,
+   "end": 45.681
+  },
+  {
+   "line": 12,
+   "who": "N",
+   "words": [
+    {
+     "w": "down.",
+     "t": 45.681,
+     "hot": false
+    }
+   ],
+   "start": 45.681,
+   "end": 46.181
+  },
+  {
+   "line": 13,
+   "who": "J",
+   "words": [
+    {
+     "w": "Milo.",
+     "t": 47.163,
+     "hot": false
+    }
+   ],
+   "start": 47.163,
+   "end": 47.723
+  },
+  {
+   "line": 13,
+   "who": "J",
+   "words": [
+    {
+     "w": "Did",
+     "t": 47.723,
+     "hot": false
+    },
+    {
+     "w": "you",
+     "t": 47.803,
+     "hot": false
+    },
+    {
+     "w": "code",
+     "t": 47.923,
+     "hot": false
+    }
+   ],
+   "start": 47.723,
+   "end": 48.203
+  },
+  {
+   "line": 13,
+   "who": "J",
+   "words": [
+    {
+     "w": "THAT?",
+     "t": 48.203,
+     "hot": false
+    }
+   ],
+   "start": 48.203,
+   "end": 48.663
+  },
+  {
+   "line": 14,
+   "who": "M",
+   "words": [
+    {
+     "w": "I...",
+     "t": 49.683,
+     "hot": false
+    }
+   ],
+   "start": 49.683,
+   "end": 49.763
+  },
+  {
+   "line": 14,
+   "who": "M",
+   "words": [
+    {
+     "w": "don't",
+     "t": 49.763,
+     "hot": false
+    },
+    {
+     "w": "remember",
+     "t": 49.923,
+     "hot": false
+    },
+    {
+     "w": "coding",
+     "t": 50.103,
+     "hot": false
+    }
+   ],
+   "start": 49.763,
+   "end": 50.543
+  },
+  {
+   "line": 14,
+   "who": "M",
+   "words": [
+    {
+     "w": "that.",
+     "t": 50.543,
+     "hot": false
+    }
+   ],
+   "start": 50.543,
+   "end": 50.963
+  },
+  {
+   "line": 15,
+   "who": "N",
+   "words": [
+    {
+     "w": "At",
+     "t": 52.141,
+     "hot": false
+    },
+    {
+     "w": "dawn,",
+     "t": 52.241,
+     "hot": false
+    }
+   ],
+   "start": 52.141,
+   "end": 52.401
+  },
+  {
+   "line": 15,
+   "who": "N",
+   "words": [
+    {
+     "w": "they",
+     "t": 52.401,
+     "hot": false
+    },
+    {
+     "w": "found",
+     "t": 52.661,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 52.861,
+     "hot": false
+    }
+   ],
+   "start": 52.401,
+   "end": 52.981
+  },
+  {
+   "line": 15,
+   "who": "N",
+   "words": [
+    {
+     "w": "whirlpool.",
+     "t": 52.981,
+     "hot": false
+    }
+   ],
+   "start": 52.981,
+   "end": 53.441
+  },
+  {
+   "line": 15,
+   "who": "N",
+   "words": [
+    {
+     "w": "Players",
+     "t": 53.981,
+     "hot": false
+    },
+    {
+     "w": "paddle",
+     "t": 53.981,
+     "hot": false
+    },
+    {
+     "w": "away",
+     "t": 54.261,
+     "hot": false
+    }
+   ],
+   "start": 53.981,
+   "end": 54.621
+  },
+  {
+   "line": 15,
+   "who": "N",
+   "words": [
+    {
+     "w": "from",
+     "t": 54.621,
+     "hot": false
+    },
+    {
+     "w": "it.",
+     "t": 54.841,
+     "hot": false
+    }
+   ],
+   "start": 54.621,
+   "end": 55.481
+  },
+  {
+   "line": 15,
+   "who": "N",
+   "words": [
+    {
+     "w": "Milo",
+     "t": 55.481,
+     "hot": false
+    },
+    {
+     "w": "paddled",
+     "t": 55.501,
+     "hot": false
+    },
+    {
+     "w": "straight",
+     "t": 56.081,
+     "hot": true
+    }
+   ],
+   "start": 55.481,
+   "end": 56.301
+  },
+  {
+   "line": 15,
+   "who": "N",
+   "words": [
+    {
+     "w": "in.",
+     "t": 56.301,
+     "hot": false
+    }
+   ],
+   "start": 56.301,
+   "end": 56.721
+  },
+  {
+   "line": 16,
+   "who": "N",
+   "words": [
+    {
+     "w": "Splash.",
+     "t": 57.413,
+     "hot": false
+    }
+   ],
+   "start": 57.413,
+   "end": 57.753
+  },
+  {
+   "line": 16,
+   "who": "N",
+   "words": [
+    {
+     "w": "Back",
+     "t": 57.753,
+     "hot": false
+    },
+    {
+     "w": "on",
+     "t": 58.053,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 58.253,
+     "hot": false
+    }
+   ],
+   "start": 57.753,
+   "end": 58.333
+  },
+  {
+   "line": 16,
+   "who": "N",
+   "words": [
+    {
+     "w": "bedroom",
+     "t": 58.333,
+     "hot": false
+    },
+    {
+     "w": "floor.",
+     "t": 58.553,
+     "hot": false
+    }
+   ],
+   "start": 58.333,
+   "end": 59.253
+  },
+  {
+   "line": 16,
+   "who": "N",
+   "words": [
+    {
+     "w": "Soaked.",
+     "t": 59.253,
+     "hot": false
+    }
+   ],
+   "start": 59.253,
+   "end": 59.513
+  },
+  {
+   "line": 16,
+   "who": "N",
+   "words": [
+    {
+     "w": "Holding",
+     "t": 59.513,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 59.953,
+     "hot": false
+    },
+    {
+     "w": "fish.",
+     "t": 60.113,
+     "hot": false
+    }
+   ],
+   "start": 59.513,
+   "end": 60.413
+  },
+  {
+   "line": 17,
+   "who": "J",
+   "words": [
+    {
+     "w": "I'm",
+     "t": 61.234,
+     "hot": false
+    },
+    {
+     "w": "keeping",
+     "t": 61.474,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 61.694,
+     "hot": false
+    }
+   ],
+   "start": 61.234,
+   "end": 62.014
+  },
+  {
+   "line": 17,
+   "who": "J",
+   "words": [
+    {
+     "w": "fish.",
+     "t": 62.014,
+     "hot": false
+    }
+   ],
+   "start": 62.014,
+   "end": 62.414
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "Blackwater",
+     "t": 63.741,
+     "hot": false
+    },
+    {
+     "w": "Drift",
+     "t": 64.101,
+     "hot": false
+    },
+    {
+     "w": "is",
+     "t": 64.321,
+     "hot": false
+    }
+   ],
+   "start": 63.741,
+   "end": 64.621
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "real,",
+     "t": 64.621,
+     "hot": false
+    }
+   ],
+   "start": 64.621,
+   "end": 65.241
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "and",
+     "t": 65.241,
+     "hot": false
+    },
+    {
+     "w": "it's",
+     "t": 65.281,
+     "hot": false
+    },
+    {
+     "w": "on",
+     "t": 65.441,
+     "hot": false
+    }
+   ],
+   "start": 65.241,
+   "end": 65.521
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "PULSEBOX.",
+     "t": 65.521,
+     "hot": false
+    }
+   ],
+   "start": 65.521,
+   "end": 66.541
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "Up",
+     "t": 66.541,
+     "hot": false
+    },
+    {
+     "w": "to",
+     "t": 66.661,
+     "hot": false
+    },
+    {
+     "w": "4",
+     "t": 66.841,
+     "hot": false
+    }
+   ],
+   "start": 66.541,
+   "end": 67.041
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "friends",
+     "t": 67.041,
+     "hot": false
+    },
+    {
+     "w": "on",
+     "t": 67.321,
+     "hot": false
+    },
+    {
+     "w": "one",
+     "t": 67.521,
+     "hot": false
+    }
+   ],
+   "start": 67.041,
+   "end": 67.661
+  },
+  {
+   "line": 18,
+   "who": "N",
+   "words": [
+    {
+     "w": "raft.",
+     "t": 67.661,
+     "hot": true
+    }
+   ],
+   "start": 67.661,
+   "end": 68.021
+  },
+  {
+   "line": 19,
+   "who": "N",
+   "words": [
+    {
+     "w": "Next",
+     "t": 68.863,
+     "hot": false
+    },
+    {
+     "w": "time,",
+     "t": 69.023,
+     "hot": false
+    }
+   ],
+   "start": 68.863,
+   "end": 69.383
+  },
+  {
+   "line": 19,
+   "who": "N",
+   "words": [
+    {
+     "w": "they're",
+     "t": 69.383,
+     "hot": false
+    },
+    {
+     "w": "not",
+     "t": 69.623,
+     "hot": false
+    },
+    {
+     "w": "escaping.",
+     "t": 69.743,
+     "hot": false
+    }
+   ],
+   "start": 69.383,
+   "end": 70.703
+  },
+  {
+   "line": 19,
+   "who": "N",
+   "words": [
+    {
+     "w": "They're",
+     "t": 70.703,
+     "hot": false
+    },
+    {
+     "w": "breaking",
+     "t": 70.823,
+     "hot": true
+    },
+    {
+     "w": "in.",
+     "t": 71.023,
+     "hot": false
+    }
+   ],
+   "start": 70.703,
+   "end": 71.483
+  }
+ ],
+ "code": []
+}

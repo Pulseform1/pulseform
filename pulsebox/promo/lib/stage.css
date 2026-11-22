@@ -9,3 +9,5 @@ svg { position: absolute; inset: 0; }
 #cap span { display: inline-block; margin: 0 14px; color: #fff; -webkit-text-stroke: 18px #0b0d1a; paint-order: stroke fill;
   text-shadow: 0 10px 0 #0b0d1a; }
 #cap span.hot { color: #c6ff3d; }
+#cap span.wM { color: #c6ff3d; }
+#cap span.wJ { color: #ffb547; }

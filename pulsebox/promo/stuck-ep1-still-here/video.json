@@ -1,0 +1,23 @@
+{"voice": "af_sky+bf_emma", "voices": {"N": "af_sky+bf_emma", "M": "am_puck", "J": "am_echo"}, "start": 0.15, "tail": 3.0,
+ "hot": ["horror", "2", "AM,", "inside.", "dolls", "watching.", "tall", "Hollow.", "footsteps", "flash.", "elevator", "claws.", "bedroom.", "PULSEBOX.", "code,", "dare.", "ocean."],
+ "lines": [
+  {"who": "N", "say": "Milo made a horror game. At 2 AM, it pulled him and his best friend inside.", "speed": 1.05},
+  {"who": "J", "say": "Milo... where are we?", "gap": 0.9, "speed": 1.0},
+  {"who": "M", "say": "Saint Verity Hospital. My game.", "gap": 0.4, "speed": 1.05},
+  {"who": "M", "say": "Find three fuses, power the elevator, ride it down. That's the only way out.", "cap": "Find 3 fuses, power the elevator, ride it down. That's the only way out.", "gap": 0.5, "speed": 1.12},
+  {"who": "M", "say": "And Jay? Never stop looking at the dolls.", "gap": 0.6, "speed": 1.0},
+  {"who": "N", "say": "Because in Still Here, the dolls only move when nobody is watching.", "gap": 0.5, "speed": 1.05},
+  {"who": "N", "say": "Fuse one. Fuse two.", "cap": "Fuse 1. Fuse 2.", "gap": 0.7, "speed": 1.0},
+  {"who": "J", "say": "Uh, Milo? That doll was way further away a second ago.", "gap": 0.6, "speed": 1.1},
+  {"who": "N", "say": "Then the lights died. And something tall stepped into the hall.", "gap": 0.7, "speed": 1.0},
+  {"who": "M", "say": "The Hollow. It hunts by sound. Hide!", "gap": 0.5, "speed": 1.15},
+  {"who": "N", "say": "Its footsteps stopped. Right outside Jay's locker.", "gap": 0.9, "speed": 1.0},
+  {"who": "M", "say": "Jay. Close your eyes.", "gap": 0.9, "speed": 0.95},
+  {"who": "N", "say": "Milo kicked his locker open, and fired the camera flash.", "gap": 0.4, "speed": 1.15},
+  {"who": "M", "say": "Now! Run!", "gap": 0.3, "speed": 1.15},
+  {"who": "N", "say": "Fuse three. The elevator hummed to life, and the doors slammed shut, an inch from its claws.", "cap": "Fuse 3. The elevator hummed to life, and the doors slammed shut, an inch from its claws.", "gap": 0.6, "speed": 1.1},
+  {"who": "N", "say": "Then the floor dropped. Right back into Milo's bedroom.", "gap": 0.6, "speed": 1.05},
+  {"who": "J", "say": "That. Was. Amazing. Again?", "gap": 0.8, "speed": 1.0},
+  {"who": "N", "say": "Still Here is a real game on Pulsebox. Make a room, send your friends the code, and play it tonight. If you dare.", "cap": "Still Here is a real game on PULSEBOX. Make a room, send your friends the code, and play it tonight. If you dare.", "gap": 0.9, "speed": 1.08},
+  {"who": "N", "say": "But the laptop wasn't done with them. Next time, the ocean.", "cap": "But the laptop wasn't done with them. Next time... the ocean.", "gap": 0.7, "speed": 1.0}
+ ]}
