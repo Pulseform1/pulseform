@@ -676,6 +676,13 @@
     if (M.mode === 'range') f.credits = CASH.cap;
     emit('buy', f, ok); return ok;
   }
+  // SELL BACK one ability charge or smoke bought this round, however many you hold (you need not fill up first)
+  function sellBack(f, k) {
+    if (!canBuy()) return false; const sp = f.spent; let ok = false;
+    if ((k === 'abq' || k === 'abc') && sp[k] > 0 && (f.ab[k[2]] | 0) > 0) { sp[k]--; f.ab[k[2]]--; f.credits += OPS[f.op][k[2]].cost; ok = true; }
+    else if (k === NADE.k && sp.smoke > 0 && f.smokes > 0) { sp.smoke--; f.smokes--; f.credits += NADE.cost; ok = true; }
+    if (ok) emit('buy', f, ok); return ok;
+  }
   // REBUY: buy again what you bought last round (main gun, sidearm, shields, smokes, ability charges), as far as the money goes
   function lastBuyOf(f) { const sp = f.spent || {}, o = { g1: sp[1] && sp[1].k, g2: sp[2] && sp[2].k, sh: sp.sh && sp.sh.k, sm: sp.smoke | 0, q: sp.abq | 0, c: sp.abc | 0 }; return o.g1 || o.g2 || o.sh || o.sm || o.q || o.c ? o : null; }
   on('live', () => { if (M) for (const f of M.fs) if (!f.net) { const b = lastBuyOf(f); if (b) f.lastBuy = b; } });

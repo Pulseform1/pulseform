@@ -258,10 +258,11 @@
       const hold = gunHold.position, Rt = gd.dead ? gd.dead[0] : [hold.x + gd.grip[0] * s, hold.y + gd.grip[1] * s, hold.z + gd.grip[2] * s];   // (dead: the hands wherever the body left them)
       let Lt = gd.dead ? gd.dead[1] : knife ? [-.2, -.34, -.2] : gd.pistolHold ? [Rt[0] - .05, Rt[1] - .015, Rt[2] + .005] : [hold.x + gd.sup[0] * s - .01, hold.y + gd.sup[1] * s, hold.z + gd.sup[2] * s];
       // the hand cups the handguard from below (not inside it); on a vertical foregrip it closes round the post itself
-      if (!knife && !gd.pistolHold && !gd.dead && !gd.vgrip && !gd.angled) Lt[1] -= .012;
+      const cradle = !knife && !gd.pistolHold && !gd.dead && !gd.vgrip && !gd.angled && gd.cr, CO = [-.024, -.044, .05];   // CO: the wrist from the palm under the gun
+      if (cradle) { Lt[1] = hold.y + gd.cr.bot; Lt[0] += .01; for (let i = 0; i < 3; i++) Lt[i] += CO[i]; }
       // a long handguard: the support arm stretches a little (up to 28%) to keep the hand out on it, then the hand slides back if it must
       const kL = knife || gd.pistolHold || gd.dead ? 1 : Math.min(1.28, Math.max(1, Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) / (a + b - .02)));
-      const lt0 = Lt[2]; while (Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) > (a + b) * kL - .02 && Lt[2] < -.2) Lt[2] += .02; gunHold.userData.slide = Lt[2] - lt0;   // a long handguard: slide the hand back to where the arm reaches
+      const lt0 = Lt[2]; while (Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) > (a + b) * kL - .02 && Lt[2] < -.2) Lt[2] += .02; gunHold.userData.slide = Lt[2] - lt0; const C = cradle ? [Lt[0] - CO[0], Lt[1] - CO[1], Lt[2] - CO[2]] : null;   // a long handguard: slide the hand back to where the arm reaches
       T = armMesh;
       for (const [S, Tg, px] of [[SR, Rt, 1], [SL, Lt, -1]]) {
         const a = a0 * (px < 0 ? kL : 1), b = b0 * (px < 0 ? kL : 1);
@@ -273,6 +274,14 @@
         const br = add(cyl(.052, .058, .12, 10), M.plate, mid[0], mid[1], mid[2]); br.quaternion.setFromUnitVectors(UP, fa); add(sph(.03, 8, 6), M.acc, mid[0] - fa.y * .0 + px * .0, mid[1] + .05, mid[2]).scale.set(1, .4, 1.4);   // bracer with a light on it
         // the hand: a palm in line with the forearm, four fingers closed round the grip (or cupped under the handguard), a thumb
         // (on a vertical foregrip the support fist turns upright round it)
+        if (px < 0 && C) {   // the cradle: the gun lies along the palm, the fingers wrap up its far side, the thumb along the near side
+          const cw = new THREE.Group(); cw.position.set(Hn[0], Hn[1], Hn[2]); cw.lookAt(Hn[0] + fa.x, Hn[1] + fa.y, Hn[2] + fa.z); armMesh.add(cw); let was = T; T = cw; add(cyl(.044, .048, .03, 10), M.dark, 0, 0, -.005, Math.PI / 2); T = was;   // the cuff, on the wrist
+          const hg = new THREE.Group(), w2 = gd.cr.hw; hg.position.set(C[0], C[1], C[2]); armMesh.add(hg); was = T; T = hg;
+          add(rb(.066, .022, .088, .01), M.dark, -.004, -.012, 0);   // palm, flat under the handguard
+          add(rb(.05, .03, .05, .012), M.dark, -.018, -.034, .036, -.55);   // the heel of the hand, down to the wrist
+          add(rb(.02, .054, .078, .008), M.dark, w2 + .011, .012, -.004, 0, 0, .16); add(rb(.022, .014, .072, .006), M.dark, w2 + .003, .038, -.004, 0, 0, .8);   // four fingers up the far side, their tips curling over
+          add(rb(.018, .034, .052, .007), M.dark, -w2 - .01, .006, .014, 0, 0, -.14); add(rb(.012, .02, .06, .004), M.plate, w2 + .021, .012, -.004, 0, 0, .16);   // the thumb along the near side; a knuckle guard
+          T = was; continue; }
         const hand = new THREE.Group(); hand.position.set(Hn[0], Hn[1], Hn[2]); hand.lookAt(Hn[0] + fa.x, Hn[1] + fa.y, Hn[2] + fa.z); if (px < 0 && !gd.pistolHold && !knife && !gd.dead) hand.rotateZ(gd.vgrip ? -Math.PI / 2 : -1.2); armMesh.add(hand); const was = T; T = hand;
         add(cyl(.044, .048, .03, 10), M.dark, 0, 0, -.005, Math.PI / 2); add(rb(.074, .034, .078, .012), M.dark, 0, 0, .042);   // cuff, palm
         add(rb(.07, .03, .05, .012), M.dark, -px * .012, -.02, .09, .9); add(rb(.066, .028, .04, .012), M.dark, -px * .014, -.05, .092, 1.9);   // fingers, curled
@@ -387,7 +396,12 @@
   function gunRear(gm) { if (gm.userData.rear != null) return; const prev = gm.parent; gm.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(gm.matrixWorld).invert(), sc = new THREE.Matrix4().makeScale(gm.scale.x, gm.scale.y, gm.scale.z), v = new THREE.Vector3(); let r = 0;
     gm.traverse(o => { if (!o.isMesh || !o.geometry || o.userData.isOL || (o.material && o.material.transparent)) return; const P = o.geometry.attributes.position, mw = new THREE.Matrix4().multiplyMatrices(sc, new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld));
       for (let i = 0; i < P.count; i += 2) { v.fromBufferAttribute(P, i).applyMatrix4(mw); if (v.y > -.2) r = Math.max(r, v.z); } });   // (not counting a magazine hanging low)
-    gm.userData.rear = r; }
+    gm.userData.rear = r;
+    // the handguard where the support hand cradles it: its underside and half its width, round the support point (scale included)
+    const sp = gm.userData.sup; if (sp) { const sz = sp[2] * gm.scale.z, sy = sp[1] * gm.scale.y; let bot = 1, hw = 0;
+      gm.traverse(o => { if (!o.isMesh || !o.geometry || o.userData.isOL || (o.material && o.material.transparent)) return; const P = o.geometry.attributes.position, mw = new THREE.Matrix4().multiplyMatrices(sc, new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld));
+        for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(mw); if (Math.abs(v.z - sz) < .03 && v.y > sy - .03 && v.y < sy + .1) { bot = Math.min(bot, v.y); hw = Math.max(hw, Math.abs(v.x)); } } });
+      if (bot < 1) gm.userData.cr = { bot, hw: Math.min(Math.max(hw, .015), .045) }; } }
   function updateAgent(f, dt) {
     let A = X.agents.get(f);
     if (!A || A.userData.op !== f.op) { if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); } A = agentModel(f); X.agents.set(f, A); }

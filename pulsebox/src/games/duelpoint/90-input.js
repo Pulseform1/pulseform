@@ -121,7 +121,7 @@
       const s = .0022 * (trackpad() ? CFG.tpsens * TS.slow : CFG.sens) / zoomOf(P) * (P.scoped ? CFG.zsens : 1); TS.mvT = performance.now(); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
     // (on a Mac, Ctrl+click arrives as a right click: while crouching that is still a shot)
     document.addEventListener('mousedown', e => { if (M && screen === 'play' && !me().alive && UI.spec && X) { nextSpec(); return; } if (!locked() || !playing()) return;
-      if (UI.armory) { if (e.button === 0) { const z = zoneAt(ptr.x, ptr.y); if (z) { if (z.drag) dragZ = z; z.fn(ptr.x, ptr.y); } } return; }   // a click on the armory, at our cursor
+      if (UI.armory) { if (e.button === 0) { const z = zoneAt(ptr.x, ptr.y); if (z) { if (z.drag) dragZ = z; z.fn(ptr.x, ptr.y); } } else if (e.button === 2) { const z = zoneAt(ptr.x, ptr.y); if (z && z.alt) z.alt(); } return; }   // a click on the armory, at our cursor
       if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = mouse.tap = true; else if (e.button === 2) altAction(me()); else if (e.button === 1) { e.preventDefault(); ping(me()); } });
     document.addEventListener('mouseup', e => { if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = false; if (vcursor()) dragZ = null; });
     document.addEventListener('contextmenu', e => { if (screen === 'play') e.preventDefault(); });

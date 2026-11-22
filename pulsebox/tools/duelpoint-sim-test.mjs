@@ -15,7 +15,7 @@ const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
   return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, readyAb, castReady, abData, hexShot, lensShot, duelOk, unready, canSee, castShot, viewDir, blocked, ARMOR, xpForLevel, levelOf, seasonNow, passRewards, myPass, passTier, passGrant, buyPremium, giveReward, dailyChallenges, weeklyChallenges, myChallenges, challengeProgress, matchTally, matchXp, payProgress, botCard, cardFrom, matchAwards, csOf, PASS_TIERS, PASS_XP, PASS_PRICE, TITLES, BANNERS, CH_DAILY, CH_WEEKLY, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
-    seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
+    seed, startMatch, tick, buy, sellBack, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     hitboxes, headOf, castShot, viewDir, BRKS, BRKX, setWall, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, gunStats, dmgAt, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; }, CH, siteAt };`)(K, MP);
 
 let failed = 0;
@@ -116,6 +116,8 @@ function gunplayChecks() {
   ok(T.buy(P, 'quill') && P.credits === 800 && P.guns[2] === 'pip', 'choosing it again sells it back');
   ok(!T.buy(P, 'lancer') && P.credits === 800, 'you cannot buy what you cannot afford');
   ok(T.buy(P, 'smoke') && T.buy(P, 'smoke') && P.smokes === 2 && P.credits === 400 && !T.buy(P, 'nothing'), 'smoke grenades cost 200 each, two at most');
+  ok(T.sellBack(P, 'smoke') && P.smokes === 1 && P.credits === 600 && T.sellBack(P, 'smoke') && P.smokes === 0 && P.credits === 800 && !T.sellBack(P, 'smoke'), 'smokes sell back one at a time, without holding two first');
+  { const Qc = T.OPS[P.op].q, c0 = P.credits, a0 = P.ab.q | 0; T.buy(P, 'abq'); ok((P.ab.q | 0) === a0 + 1 && T.sellBack(P, 'abq') && (P.ab.q | 0) === a0 && P.credits === c0 && !T.sellBack(P, 'abq'), 'one ability charge bought sells back without buying the second', Qc.cost + ' each, max ' + Qc.max); }
   ok(T.buy(P, 'smoke') && P.smokes === 1 && P.credits === 600, 'pressing smoke with two in hand sells one back');
   M.phase = 'live'; T.endRound(0, 'elim_def'); ok(P.credits === 600 + 3200 && F.credits === 800 + 2100, 'win +3200, first loss +2100', P.credits + ' ' + F.credits);
   M.phase = 'live'; T.endRound(0, 'elim_def'); M.phase = 'live'; T.endRound(0, 'elim_def'); ok(F.credits === 800 + 2100 + 2600 + 3000, 'losses pay 2100, 2600, then 3000');
@@ -518,6 +520,8 @@ function kit2Checks() {
   runPinned(20, F, 50, 3); ok(M.kit.eyes.includes(eye), 'it lasts past the old 20 s limit', M.kit.eyes.length + ' eyes');
   [M, P, F] = setup('bastion'); P.sh = 0; T.ability(P, 'c', false); runPinned(1, null); ok(P.sh === 30, 'Ward Beacon: 30 shield a moment after it is set', 'shield ' + P.sh);
   [M, P, F] = setup('nova'); const y0 = P.y; T.ability(P, 'c', false); let top = y0; for (let i = 0; i < 40; i++) { T.tick(DT); top = Math.max(top, P.y); } ok(top - y0 > 2, 'Updraft: up more than 2 m', (top - y0).toFixed(1) + ' m');
+  // and onto the tallest boxes: stand beside a 3.2 m box, Updraft, drift onto it, and stay up there
+  { const H = T.HIGH_H || 3.2; ok(top - y0 > H + .6, 'Updraft clears the tallest boxes (' + H + ' m) with room to spare', (top - y0).toFixed(1) + ' m'); }
   [M, P, F] = setup('wraith'); T.ability(P, 'c', false); ok(P.tether && P.ab.c === 1, 'Tether: an anchor where you stand'); Object.assign(P, { x: 46, z: 3 }); T.readyAb(P, 'c'); ok(Math.abs(P.x - 40) < .5 && !P.tether && P.ab.c === 1, 'the key again steps you back to it, free', P.x.toFixed(1));
   [M, P, F] = setup('talon'); const hp0 = F.hp; T.on('shockPop', g => { if (T.M === M) pin(F, g.x + .8, g.z); }); T.ability(P, 'c', false); runLob(2.5, F); ok(F.hp < hp0, 'Shock Bolt: bursts and hurts a rival near it', `${hp0} → ${F.hp}`);
   [M, P, F] = setup('ember'); T.ability(P, 'c', false); ok(M.flares.length === 1, 'Flashpoint: a flash bent round a corner'); const dL = T.abData(P, 'c', false), dR = T.abData(P, 'c', true); ok(dL.z < dL.az - .3 && dR.z > dR.az + .3, 'left click bends it left, right click right', `${dL.z.toFixed(1)} / ${dR.z.toFixed(1)}`);

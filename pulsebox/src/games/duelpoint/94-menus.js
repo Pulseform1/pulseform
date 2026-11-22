@@ -440,6 +440,7 @@
       const on = A ? P.sh >= A.sh : AB ? (P.ab[AB.s2] | 0) >= AB.ab[AB.s2].max : N ? (P.smokes || 0) >= NADE.per : P.guns[G.slot] === it.k, mineNow = A ? sp.sh && sp.sh.k === it.k : AB ? sp[AB.k] > 0 : N ? sp.smoke > 0 : sp[G.slot] && sp[G.slot].k === it.k;
       const refund = A ? (sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0) : N || AB ? 0 : (sp[G.slot] ? GUNS[sp[G.slot].k].cost : 0), can = !on && P.credits + refund >= it.cost;
       const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
+      const canSell = (AB || N) && mineNow; if (canSell) zones[zones.length - 1].alt = () => { UI.pick = it.k; sellBack(P, it.k); };   // (right click sells one back)
       rr(g, cx, cy, cw, ch, 8, on ? 'rgba(53,224,200,.14)' : hot && can ? 'rgba(255,138,61,.18)' : 'rgba(255,255,255,.045)', on ? YOU : hot || UI.pick === it.k ? 'rgba(239,233,220,.6)' : can ? 'rgba(239,233,220,.2)' : 'rgba(255,255,255,.06)');
       const tp = Math.min(15 * u, ch * .2, cw * .075), ty = cy + tp * .95;
       g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nm = it.short && g.measureText((it.n + '  ◈ 200').toUpperCase()).width > cw - 18 * u ? it.short : it.n;
@@ -449,6 +450,8 @@
       g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nmW = g.measureText(nm.toUpperCase()).width; g.font = `700 ${fitPx(g, tp * .85)}px ${FONT}`; const prW = g.measureText(price).width, foot = nmW + prW + 12 * u > cw - 17 * u;
       tx(g, nm.toUpperCase(), cx + 9 * u, ty, tp, can || on || have ? it.col : '#5a6272', 'left');
       if (foot) tx(g, price, cx + cw / 2, cy + ch - tp * .7, tp * .85, pcol, 'center'); else tx(g, price, cx + cw - 8 * u, ty, tp * .85, pcol, 'right');
+      if (canSell && !on) { const sw = Math.min(52 * u, cw * .34), sh = Math.min(20 * u, ch * .2), sx = cx + cw - sw - 5 * u, sy = cy + ch - sh - 5 * u, sh2 = zone(sx, sy, sw, sh, () => { UI.pick = it.k; sellBack(P, it.k); });   // a bought one you can hand back, whether or not you filled up
+        rr(g, sx, sy, sw, sh, 4, sh2 ? 'rgba(53,224,200,.3)' : 'rgba(12,16,22,.85)', YOU, 1.2); tx(g, 'SELL', sx + sw / 2, sy + sh / 2 + 1, sh * .55, YOU, 'center', 900); }
       g.save(); g.globalAlpha = can || on || have ? 1 : .35; g.beginPath(); g.rect(cx + 2, cy + 2, cw - 4, ch - 4); g.clip(); const iy = cy + tp * 1.7, ih = ch - tp * 1.7 - 3;
       if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih * (G.cat === 'Sidearm' ? 1.12 : 1.05), (cw - 12 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.5 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.2 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } }
       else if (AB) { const mx = cx + cw / 2, my = iy + ih / 2, r = Math.min(ih * .36, cw * .22), mx2 = AB.ab[AB.s2].max; g.strokeStyle = it.col; g.lineWidth = 3 * u; g.beginPath(); g.arc(mx, my - 4 * u, r, 0, TAU); g.stroke(); abIcon(g, ABICON[me().op + AB.s2] || 'orb', mx, my - 4 * u, r * .62, BONE, it.col);

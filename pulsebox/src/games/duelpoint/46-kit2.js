@@ -62,7 +62,7 @@
       K2.eyes = K2.eyes.filter(W => W.by !== f); K2.eyes.push({ id: kitId(f, 'c') + ':' + (K2.eyeN = (K2.eyeN || 0) + 1), x: d.x, y: d.y, z: d.z, yaw: d.yaw, act: 0, cd: 0, tick: 0, by: f, seen: 0 }); return true; }   // (it stays, asleep, until woken or shot)
     if (key === 'bastionc') { K2.beacons.push({ x: d.x, y: hAt(d.x, d.z), z: d.z, t: .8, by: f }); return true; }
     // (Updraft: high enough to land on a shipping container, 3 m)
-    if (key === 'novac') { if (!f.net) { f.vy = 11; f.ground = false; } emit('updraft', f); return true; }
+    if (key === 'novac') { if (!f.net) { f.vy = 13; f.ground = false; } emit('updraft', f); return true; }
     if (key === 'wraithc') {
       if (d.back) { const T = f.tether; f.tether = null; if (T) { const from = [f.x, f.z]; if (!f.net) { f.x = T.x; f.z = T.z; f.y = hAt(T.x, T.z); f.vx = f.vz = f.vy = 0; } emit('tetherBack', f, from, [T.x, T.z]); } return true; }
       f.tether = { x: d.x, z: d.z, y: hAt(d.x, d.z) }; emit('tetherSet', f); return true; }
