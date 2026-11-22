@@ -135,6 +135,9 @@ function firstShotChecks() {
   const gs = Object.values(T.GUNS).filter(G => ['Sidearm', 'SMG', 'Rifle'].includes(G.cat) && !G.pel), low = gs.filter(G => odds(G.acc.fs) < .85);
   ok(gs.length >= 10 && !low.length, 'a standing first shot from any pistol, SMG or rifle lands on a head at 30 m at least 85% of the time', low.map(G => G.k + ' ' + Math.round(100 * odds(G.acc.fs)) + '%').join(', ') || gs.map(G => G.k + ' ' + Math.round(100 * odds(G.acc.fs)) + '%').join(' '));
   ok(odds(T.GUNS.torrent.acc.fs) >= .5 && T.GUNS.paladin.acc.fs <= .06 && T.GUNS.lancer.acc.fs < T.GUNS.vesper.acc.fs, 'the heavy gun\'s first shot is fair at range; the tap rifles are pin-point');
+  { const [M0, P0, F0] = lab('kite'); T.switchTo(P0, 1); P0.scoped = 0; P0.vx = P0.vz = 0; const at = (x, z) => { Object.assign(F0, { x, z, y: T.hAt(x, z), alive: true }); P0.yaw = T.yawTo(P0.x, P0.z, x, z); P0.pitch = Math.atan2(F0.y + 1.1 - T.eyeY(P0), Math.hypot(x - P0.x, z - P0.z)); M0.time += .02; return T.spreadOf(P0) / T.D2R; };
+    const near = at(50, 3), mid = at(58, 3), far = at(61.9, 3);
+    ok(T.GUNS.kite.acc.near && near < .5 && far >= 2.2 && mid > near && mid < far, 'the Kite fires true without the scope up to 15 m, then widens to its usual 2.5°', `${near.toFixed(2)}° at 10 m, ${mid.toFixed(2)}° at 18 m, ${far.toFixed(2)}° at 22 m`); }
   let I = idle(); T.setInput(() => I); let [M, P] = lab('vesper'); I = Object.assign({}, I, { mx: 1 }); run(1.2); const v0 = Math.hypot(P.vx, P.vz); I = Object.assign({}, I, { mx: 0 }); let t = 0; while (T.spreadOf(P) / T.D2R > T.GUNS.vesper.acc.fs + 1e-6 && t < 1) { run(1 / 60); t += 1 / 60; }
   ok(v0 > 5 && t > 0 && t <= .125, 'let go of the keys at a run and you are accurate again within 125 ms', Math.round(t * 1000) + ' ms from ' + v0.toFixed(1) + ' m/s');
 }

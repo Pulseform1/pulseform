@@ -125,10 +125,16 @@
   function spreadOf(f) {
     const G = gun(f), A = G.acc, sc = G.scope && f.scoped, ad = !G.scope && G.ads && f.scoped;
     const n = Math.max(0, f.spray - A.free), sp = A.inc * n + (A.inc2 ? A.inc2 * Math.max(0, n - A.n2) : 0);   // inc2: a gun that gets wilder after its n2th shot
-    let e = (sc ? A.sfs : A.fs) * (ad ? .8 : 1) + Math.min(A.max, sp) * (ad ? .85 : 1) + moveErr(f, G);
+    let e = (sc ? A.sfs : A.near ? nearFs(f, A) : A.fs) * (ad ? .8 : 1) + Math.min(A.max, sp) * (ad ? .85 : 1) + moveErr(f, G);
     if (f.crouch > .5 && f.ground) e *= .85;
     if (f.daze > 0) e += 2.5;   // dazed by a Shockwave
     return e * D2R;
+  }
+  /* a gun that fires true without its scope up to a range (acc.near = [r0, r1, fs]): aimed at something within r0 metres the
+     first-shot error is fs; it widens back to the gun's own fs by r1. Where the crosshair rests is traced once a tick. */
+  function nearFs(f, A) {
+    if (f.ndT !== M.time) { f.ndT = M.time; f.nd = castShot(f, viewDir(f.yaw, f.pitch)).dist; }
+    const [r0, r1, fs] = A.near; return fs + (A.fs - fs) * cl((f.nd - r0) / (r1 - r0), 0, 1);
   }
   // where the spray has pushed the next bullet: up first, then side to side
   function patOf(f, G) {
