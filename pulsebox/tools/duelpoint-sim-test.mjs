@@ -547,6 +547,7 @@ function kit2Checks() {
   if (P.duel) { pin(other, 44, 3); pin(mate, 43, 3.5); const hp1 = tgt.hp, hp2 = P.hp;
     T.applyDamage(tgt, 30, mate, false, 'pip'); T.applyDamage(P, 30, other, false, 'pip'); ok(tgt.hp === hp1 && P.hp === hp2, 'nobody outside can hurt the two inside');
     ok(!T.canSee(other, P) && !T.canSee(P, other) && !T.duelOk(mate, tgt), 'nor see them, nor be seen');
+    { const D0 = P.duel; for (let i = 0; i < 20 * 60; i++) T.tick(DT); ok(P.duel === D0 && tgt.duel === D0, 'the dome holds for as long as both stand (20 s on)'); }
     Object.assign(P, { x: P.duel.x + P.duel.r + 5 }); T.tick(DT); ok(Math.hypot(P.x - P.duel.x, P.z - P.duel.z) <= P.duel.r + .01, 'and neither gets out'); T.applyDamage(tgt, 200, P, true, 'pip'); T.tick(DT);
     ok(!P.duel && !tgt.alive, 'one falls: the dome is gone'); }
   // Tessel: Lightline, Lull, Bloom, Glasshouse

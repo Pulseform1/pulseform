@@ -259,8 +259,8 @@
       for (let i = 0; i < 2; i++) for (let j = 0; j < 12; j++) { const x = i ? V.x1 - s2 * .9 : V.x0 + s2 * .9, y = V.y0 + H * .15 + j * s2 * 1.55; g.beginPath(); for (let k = 0; k < 6; k++) { const an = k * Math.PI / 3; g.lineTo(x + Math.cos(an) * s2 * .8, y + Math.sin(an) * s2 * .8); } g.closePath(); g.stroke(); }
       txo(g, '◆ WARD', V.x0 + 330 * u, V.y1 - 100 * u, 11 * u, OPS.vanta.col, u); }
     if (P.over > 0) txo(g, `OVERCHARGE  ${Math.ceil(P.over)}`, cx, V.y1 - 150 * u, 12 * u, OPS.vanta.col, u);
-    if (P.duel) { const D = P.duel, left = Math.max(0, D.until - M.time); g.fillStyle = 'rgba(80,10,90,.16)'; g.fillRect(V.x0, V.y0, W, H); edge('#2a0a30', .7, .4);
-      const o = D.a === P ? D.b : D.a; txo(g, 'DUEL FIELD', cx, V.y0 + 150 * u, 18 * u, OPS.vanta.col, u); txo(g, `${o ? o.name.toUpperCase() : ''}  ·  ${left.toFixed(1)} s`, cx, V.y0 + 174 * u, 12 * u, BONE, u); }   // (below the round's own hints)
+    if (P.duel) { const D = P.duel; g.fillStyle = 'rgba(80,10,90,.16)'; g.fillRect(V.x0, V.y0, W, H); edge('#2a0a30', .7, .4);
+      const o = D.a === P ? D.b : D.a; txo(g, 'DUEL FIELD', cx, V.y0 + 150 * u, 18 * u, OPS.vanta.col, u); txo(g, `${o ? o.name.toUpperCase() : ''}  ·  UNTIL ONE FALLS`, cx, V.y0 + 174 * u, 12 * u, BONE, u); }   // (below the round's own hints)
   }
   function txo(g, s2, x, y, px, col, u) { px = fitPx(g, px); g.font = `900 ${px}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = Math.max(3, px * .28); g.strokeStyle = 'rgba(6,8,12,.85)'; g.strokeText(s2, x, y); g.fillStyle = col; g.fillText(s2, x, y); }   // words with a dark edge
   function drawBanner(g, V, u) {

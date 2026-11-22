@@ -156,7 +156,7 @@
     for (const h of K2.hexes) if (h.by.bot && !h.by.net && h.t < 2.5 && h.by.alive) { takeHex(h.by, h, false); break; }
     // Duel Field: kept inside; over when one falls, leaves, or the time runs out
     for (const f of M.fs) { const D = f.duel; if (!D) continue; const o = D.a === f ? D.b : D.a;
-      if (!f.alive || !o || !o.alive || o.gone || f.gone || M.time > D.until || o.duel !== D || M.phase !== 'live') { f.duel = null; if (o && o.duel === D) o.duel = null; emit('duelEnd', D, f.alive ? f : o && o.alive ? o : null); continue; }
+      if (!f.alive || !o || !o.alive || o.gone || f.gone || o.duel !== D || M.phase !== 'live') { f.duel = null; if (o && o.duel === D) o.duel = null; emit('duelEnd', D, f.alive ? f : o && o.alive ? o : null); continue; }
       if (!f.net) { const dx = f.x - D.x, dz = f.z - D.z, L = Math.hypot(dx, dz), R2 = D.r - RAD; if (L > R2) { const k = R2 / L, nx = D.x + dx * k, nz = D.z + dz * k; if (!blocked(nx, nz, f.y)) { f.x = nx; f.z = nz; } f.vx *= .3; f.vz *= .3; } } }
     stepTessel(dt);   // (47: Lightlines, Lull, Glasshouse)
   }
