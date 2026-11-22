@@ -16,7 +16,6 @@ LINES = [
 INSTR = ("Young, energetic storyteller voice for a viral short video. Fast pace, punchy. "
  "Line 1 is hushed and conspiratorial. 'Wait.' is a sudden dead stop. The Pulsebox reveal is hyped.")
 only = None
-if __name__ != "__main__": LINES = LINES
 for i, t in (enumerate(LINES, 1) if __name__ == "__main__" else []):
     if only and i not in only: continue
     body = json.dumps({"model":"gpt-4o-mini-tts","voice":"ash","input":t,"instructions":INSTR,"response_format":"wav","speed":1.08}).encode()
