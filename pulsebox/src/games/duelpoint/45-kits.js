@@ -11,7 +11,7 @@
                        E Tripmine: a mine at your feet that arms, then bursts for up to 75 when a rival comes near.
      The things they leave in the world live in M.kit and are stepped by stepKits. Like damage, every effect on a fighter
      is worked out on that fighter's own device: a trap or mine that goes off there tells the others, so all screens agree. */
-  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], decoys: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [] };
+  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [], lobs: [], decoys: [], glooms: [], fields: [], eyes: [], beacons: [], sunders: [], hexes: [], lines: [], lenses: [], houses: [] };
   const freshKit = () => Object.fromEntries(Object.keys(KIT_N).map(k => [k, []]));
   const enemyOf = (a, b) => a.team !== b.team;
   const kitId = (f, k) => f.key + ':' + k + ':' + M.round;
@@ -53,7 +53,7 @@
     if (key === 'wraithx') { f.cloak = 8; f.phase = 8; if (f === me()) say('PHASE', OPS.wraith.col); return true; }
     if (key === 'talonx') { f.volley = { n: 3, t: .35 }; if (f === me()) say('PIERCER', OPS.talon.col); return true; }
     if (key === 'emberx') { K2.bombs.push({ x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, big: true }); return true; }
-    if (key.endsWith('c') || key.startsWith('vanta')) return kitApply2(f, key, d);
+    if (key.endsWith('c') || key.startsWith('vanta') || key.startsWith('tessel')) return kitApply2(f, key, d);
     if (key === 'axiomx') { K2.locks.push({ x: d.x, z: d.z, y: hAt(d.x, d.z), t: 2.5, T: 2.5, R: 14, by: f }); if (me().team !== f.team && Math.hypot(me().x - d.x, me().z - d.z) < 18) say('LOCKDOWN INCOMING', WARN); return true; }
     return false;
   }

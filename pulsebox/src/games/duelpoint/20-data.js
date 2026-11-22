@@ -62,6 +62,7 @@
     ember: { n: 'EMBER', role: 'Pyre', col: '#ff7a2f', bio: 'Foundry-born. Thinks every problem is a fuel problem.', q: { n: 'Ignite', d: 'Lob a firebomb: its pool burns rivals for 30 a second, 5 s.' }, e: { n: 'Heat Haze', d: 'A wall of amber haze across your view that blocks sight for 10 s.' } },
     axiom: { n: 'AXIOM', role: 'Engineer', col: '#5aa0ff', bio: 'Builds the thing that holds the angle, then goes for coffee.', q: { n: 'Sentry', d: 'A turret that fires on rivals in front of it until it is shot down.' }, e: { n: 'Tripmine', d: 'A mine at your feet. Armed, it bursts for up to 75 when a rival comes near.' } },
     vanta: { n: 'VANTA', role: 'Duelist', col: '#e25cff', bio: 'A fixer who settles things one on one. Nobody asks for a second meeting.', q: { n: 'Sunder', d: 'A bolt that strikes instantly down your aim: a headshot kills, any hit Exposes (25% more damage for 4 s). It goes on through walls, Exposing rivals behind them.' }, e: { n: 'Overcharge', d: 'For 12 s, a rival you kill leaves a charge: shoot it for a ward that stops the next hit. Back after 2 kills.' } },
+    tessel: { n: 'TESSEL', role: 'Architect', col: '#ff9ec7', bio: 'She built stage sets until the stages got smaller and the crowds came armed. Now she builds the room first, then lets you walk in.', q: { n: 'Lull', d: 'Lob a glass lens: for 7 s, rivals within 4.5 m of it move at half speed. One bullet from a rival breaks it.' }, e: { n: 'Lightline', d: 'Draw a curtain of light from your feet along your aim (up to 20 m), or across your view with the other click. For 14 s it blocks sight both ways, not bullets; a rival who walks through it is shown through walls for 2.5 s.' } },
   };
   /* C: the second bought ability (cheaper, a smaller trick), one per operative */
   const ABC_KIT = {
@@ -74,15 +75,16 @@
     ember: [{ n: 'Flashpoint', d: 'A flash that bends round a corner: left click bends it left, right click right.' }, 200, 2],
     axiom: [{ n: 'Slow Field', d: 'Lob a canister: a 5 m field that slows rivals inside for 6 s.' }, 200, 1],
     vanta: [{ n: 'Phase Front', d: 'A wall of light rolls 14 m ahead of you, straight through walls, stopping bullets and sight. Anyone can walk through it.' }, 200, 1],
+    tessel: [{ n: 'Bloom', d: 'Lob a seed of light: where it lands it opens into a globe of glare that blocks sight for 9 s.' }, 150, 2],
   };
   for (const k in ABC_KIT) { const [c, cost, max] = ABC_KIT[k]; OPS[k].c = Object.assign({}, c, { cost, max }); }
   // signatures (E) that come back during a round: after some seconds, or after some kills
-  OPS.iris.e.rech = 40; OPS.wraith.e.rech = 35; OPS.vanta.e.kills = 2;
+  OPS.iris.e.rech = 40; OPS.wraith.e.rech = 35; OPS.vanta.e.kills = 2; OPS.tessel.e.rech = 40;
   /* Abilities the way the genre does them: C and Q are bought in the armory (a price a charge, up to its most), E is the signature that
      comes free every round, X is the ultimate, which charges a point at a time: a kill, a death, planting or defusing the
      charge, and the two orbs that sit on the map each round (hold F over one). Bought charges you don't use carry into the
      next round; they are cleared when sides swap. Ultimate points never are. */
-  const ABQ = { vex: [150, 2], iris: [250, 1], bastion: [300, 1], nova: [150, 2], wraith: [250, 1], talon: [150, 2], ember: [250, 1], axiom: [300, 1], vanta: [200, 2] };
+  const ABQ = { vex: [150, 2], iris: [250, 1], bastion: [300, 1], nova: [150, 2], wraith: [250, 1], talon: [150, 2], ember: [250, 1], axiom: [300, 1], vanta: [200, 2], tessel: [200, 2] };
   const ULTS = {
     vex: { n: 'Nightwalk', d: 'Gather the dark for a second, then step out of it wherever you aim, up to 30 m away.', pts: 6 },
     iris: { n: 'Allsight', d: 'Every rival on the map shows through the walls for 6 s.', pts: 6 },
@@ -93,6 +95,7 @@
     ember: { n: 'Inferno', d: 'Lob a great firebomb: a 5.5 m blaze that burns rivals for 40 a second, 8 s.', pts: 6 },
     axiom: { n: 'Lockdown', d: 'Plant a device; 2.5 s later every rival within 14 m is held: slowed, and unable to fire or use abilities, for 4 s.', pts: 7 },
     vanta: { n: 'Duel Field', d: 'Point at a spot: the rival nearest it, within 5 m, is pulled into a dome with you for up to 12 s. Nobody else sees in, shoots in or gets in.', pts: 7 },
+    tessel: { n: 'Glasshouse', d: 'Point at a spot up to 30 m away: a 10 m square of Lightlines rises round it for 10 s, and rivals inside it move at half speed.', pts: 7 },
   };
   for (const k in OPS) { OPS[k].q.cost = ABQ[k][0]; OPS[k].q.max = ABQ[k][1]; OPS[k].x = ULTS[k]; }
   const ultCost = f => OPS[f.op] ? OPS[f.op].x.pts : 6;

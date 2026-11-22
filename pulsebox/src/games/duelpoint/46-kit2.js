@@ -19,6 +19,7 @@
   const LOB_G = 14;
   function kitAim2(f, key, d, S, alt) {
     const e = eyeY(f), lob = (sp, up) => ({ x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * sp + f.vx * .4, vy: d[1] * sp + up, vz: d[2] * sp + f.vz * .4 });
+    if (key.startsWith('tessel')) return tesselAim(f, key, d, S, alt);   // (47: Tessel)
     if (key === 'vexc') return lob(alt ? 8 : 15, alt ? 2 : 3);
     if (key === 'talonc') return lob(alt ? 11 : 19, 2);
     if (key === 'axiomc') return lob(alt ? 8 : 14, 3);
@@ -55,6 +56,7 @@
   const duelOk = (a, b) => !a || !b || a === b || (a.duel ? a.duel.id : 0) === (b.duel ? b.duel.id : 0);
   function kitApply2(f, key, d) {
     const K2 = M.kit;
+    if (key.startsWith('tessel')) return tesselApply(f, key, d);   // (47: Tessel)
     if (key === 'vexc' || key === 'talonc' || key === 'axiomc') { K2.lobs.push({ k: key, x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, bounce: key === 'talonc' ? 1 : 0 }); return true; }
     if (key === 'irisc') { if (d.act) { const W = irisEye(f); if (W) { W.act = EYE_ON; W.tick = .15; emit('eyeWake', W); } return true; }
       K2.eyes = K2.eyes.filter(W => W.by !== f); K2.eyes.push({ id: kitId(f, 'c') + ':' + (K2.eyeN = (K2.eyeN || 0) + 1), x: d.x, y: d.y, z: d.z, yaw: d.yaw, act: 0, cd: 0, tick: 0, by: f, seen: 0 }); return true; }   // (it stays, asleep, until woken or shot)
@@ -154,10 +156,12 @@
     for (const f of M.fs) { const D = f.duel; if (!D) continue; const o = D.a === f ? D.b : D.a;
       if (!f.alive || !o || !o.alive || o.gone || f.gone || M.time > D.until || o.duel !== D || M.phase !== 'live') { f.duel = null; if (o && o.duel === D) o.duel = null; emit('duelEnd', D, f.alive ? f : o && o.alive ? o : null); continue; }
       if (!f.net) { const dx = f.x - D.x, dz = f.z - D.z, L = Math.hypot(dx, dz), R2 = D.r - RAD; if (L > R2) { const k = R2 / L, nx = D.x + dx * k, nz = D.z + dz * k; if (!blocked(nx, nz, f.y)) { f.x = nx; f.z = nz; } f.vx *= .3; f.vz *= .3; } } }
+    stepTessel(dt);   // (47: Lightlines, Lull, Glasshouse)
   }
   // where a lobbed thing lands
   function lobLand(B) {
     const K2 = M.kit, x = B.x, z = B.z, y = hAt(x, z);
+    if (B.k.startsWith('tessel')) { tesselLand(B, x, z); return; }   // (47: Bloom and Lull)
     if (B.k === 'vexc') { const G2 = { x, y: Math.max(y, B.y), z, t: 3.5, by: B.by }; K2.glooms.push(G2); emit('gloomPop', G2);
       for (const v of localFs()) { if (!enemyOf(B.by, v)) continue; const d = Math.hypot(v.x - x, v.z - z); if (d > 6 || los(x, G2.y + .4, z, v.x, eyeY(v), v.z, false) < Math.hypot(d, eyeY(v) - G2.y - .4) - .4) continue; v.murk = 3.5; if (v === me()) say('GLOOM', OPS.vex.col); } }
     if (B.k === 'talonc') { emit('shockPop', { x, y: B.y, z, by: B.by });

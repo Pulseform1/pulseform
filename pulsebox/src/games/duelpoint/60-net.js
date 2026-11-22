@@ -74,6 +74,7 @@
       case 'orb': takeOrb(m.i | 0, F); break;   // someone took an ultimate orb
       case 'kx': kitTrip(m.id, m.v, true); break;   // a snare or mine went off on the victim's device
       case 'ed': { const W = M.kit && M.kit.eyes.find(q => q.id === m.id); if (W) breakEye(W, true); break; }   // someone shot out a Watcher
+      case 'lz': { const Z = typeof m.id === 'string' && M.kit && M.kit.lenses && M.kit.lenses.find(q => q.id === m.id); if (Z) breakLens(Z, true); break; }   // someone shot out a Lull lens
       case 'kd': { const s2 = M.kit && M.kit.sentries.find(q => q.id === m.id); if (s2) hurtSentry(s2, m.d, true); break; }   // someone shot a sentry
       case 'nd': F.smokes = Math.max(0, (F.smokes || 0) - 1); F.throwT = .6; addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); emit('throw', F); break;
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;

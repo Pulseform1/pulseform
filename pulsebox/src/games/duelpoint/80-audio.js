@@ -255,6 +255,11 @@
     if (key === 'vantaq') { tone(o, 1800, .25, 'sawtooth', .07, -1500); hiss(o, .2, .14, 'highpass', 2500); return; }
     if (key === 'vantae') { tone(o, 440, .4, 'triangle', .09, 440); tone(o, 880, .3, 'sine', .06, 0, .15); return; }
     if (key === 'vantax') { tone(o, 90, 1.2, 'sawtooth', .16, -40); tone(o, 1200, .5, 'sine', .1, -900); hiss(o, 1, .14, 'bandpass', 500); return; }
+    // Tessel: glass and light. A soft toss for Bloom and Lull, a rising shimmer for Lightline, a chord for Glasshouse
+    if (key === 'tesselc') { hiss(o, .16, .1, 'bandpass', 2200); tone(o, 1320, .18, 'sine', .05, 400, .02); return; }
+    if (key === 'tesselq') { hiss(o, .14, .1, 'bandpass', 1600); tone(o, 2100, .12, 'triangle', .04, -300); tone(o, 2800, .1, 'sine', .03, 0, .06); return; }
+    if (key === 'tessele') { tone(o, 392, .7, 'sine', .08, 392); tone(o, 587, .6, 'sine', .05, 587, .08); hiss(o, .6, .05, 'highpass', 5000, .05); return; }
+    if (key === 'tesselx') { for (const [q, dl] of [[262, 0], [330, .06], [392, .12], [523, .2]]) tone(o, q, 1.3, 'sine', .07, 0, dl); tone(o, 65, 1.2, 'triangle', .14, -10); hiss(o, 1, .06, 'highpass', 6000, .1); return; }
     if (key === 'vexq') tone(o, 500, .16, 'sine', .14, 1100); else if (key === 'vexe') hiss(o, .5, .2, 'lowpass', 500);
     else if (key === 'irisq') { tone(o, 1300, .25, 'sine', .12, -700); tone(o, 1300, .25, 'sine', .08, -700, .18); } else if (key === 'irise') hiss(o, .08, .12, 'highpass', 1800);
     else if (key === 'bastionq') { tone(o, 80, .35, 'sawtooth', .16, 90); hiss(o, .3, .14, 'lowpass', 600); }
@@ -285,6 +290,11 @@
   cue('wardOn', f => { if (f === me()) { const o = outFor(null); tone(o, 700, .2, 'triangle', .1, 500); tone(o, 1400, .25, 'sine', .06, 0, .08); } });
   cue('wardBreak', () => { const o = outFor(null); hiss(o, .2, .2, 'highpass', 3000); tone(o, 900, .2, 'square', .06, -500); });
   cue('duelStart', D => { const o = outFor(null); tone(o, 70, 1.4, 'sawtooth', .18, -30); tone(o, 300, .8, 'sine', .08, -150, .1); hiss(o, 1, .12, 'bandpass', 400); });
+  cue('bloomPop', s => { const o = outFor(at(s.x, s.y + 1.4, s.z), 1.2); tone(o, 1568, .6, 'sine', .07, -200); tone(o, 2093, .5, 'sine', .04, 0, .04); hiss(o, .6, .12, 'highpass', 4000); });
+  cue('lullStart', Z => { const o = outFor(at(Z.x, Z.y + 1, Z.z)); tone(o, 880, 1.1, 'sine', .07, -560); tone(o, 1320, .9, 'sine', .03, -840, .1); });   // (a note that sags: everything near it slows)
+  cue('lensBreak', Z => { const o = outFor(at(Z.x, Z.y + 1, Z.z)); hiss(o, .25, .25, 'highpass', 5000); tone(o, 3200, .08, 'square', .04, -1200); tone(o, 2400, .12, 'triangle', .05, -900, .05); });
+  cue('lit', (L, v) => { if (!M || (v !== me() && L.by.team !== me().team)) return; const o = outFor(null); tone(o, 1175, .12, 'triangle', .07); tone(o, 1568, .16, 'triangle', .06, 0, .09); });
+  cue('glasshouse', H => { const o = outFor(at(H.x, H.y + 1, H.z), 1.4); tone(o, 110, 1.6, 'sine', .2, -20); hiss(o, 1.2, .08, 'bandpass', 3200, .1, 2); });
   cue('duelEnd', () => { const o = outFor(null); tone(o, 200, .6, 'sine', .1, 300); hiss(o, .5, .1, 'highpass', 2000); });
   cue('unlock', sk => { const o = outFor(null), t = sk.R.tier, notes = [523, 659, 784, 1046, 1318, 1568].slice(0, 3 + t);
     notes.forEach((f, i) => { tone(o, f, .5 + t * .1, 'triangle', .1, 0, i * .09); tone(o, f * 2, .35, 'sine', .04, 0, i * .09 + .02); });

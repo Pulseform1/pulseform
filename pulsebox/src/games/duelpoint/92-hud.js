@@ -168,9 +168,10 @@
   /* ---- ability icons: a small line drawing for each, in the bar and the armory */
   const ABICON = { vexc: 'orb', vexq: 'dash', vexe: 'smoke', vexx: 'portal', irisc: 'eye', irisq: 'wave', irise: 'flash', irisx: 'eye', bastionc: 'beacon', bastionq: 'wall', bastione: 'heart', bastionx: 'shield',
     novac: 'up', novaq: 'bolt', novae: 'wave', novax: 'bolt', wraithc: 'anchor', wraithq: 'shroud', wraithe: 'twin', wraithx: 'ghost', talonc: 'spark', talonq: 'arrow', talone: 'trap', talonx: 'arrow',
-    emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'mine', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel' };
+    emberc: 'flash', emberq: 'flame', embere: 'smoke', emberx: 'flame', axiomc: 'rings', axiomq: 'turret', axiome: 'mine', axiomx: 'hex', vantac: 'wall', vantaq: 'pierce', vantae: 'hex', vantax: 'duel',
+    tesselc: 'bloom', tesselq: 'lull', tessele: 'lightline', tesselx: 'glasshouse' };
   // what the other click does, for the hint under the bar
-  const ABALT = { vexc: 'A SHORT LOB', talonc: 'A SHORT LOB', axiomc: 'A SHORT LOB', emberq: 'A SHORT LOB', emberx: 'A SHORT LOB', emberc: 'BENT RIGHT', bastionq: 'TURNED ALONG YOUR VIEW' };
+  const ABALT = { vexc: 'A SHORT LOB', talonc: 'A SHORT LOB', axiomc: 'A SHORT LOB', emberq: 'A SHORT LOB', emberx: 'A SHORT LOB', emberc: 'BENT RIGHT', bastionq: 'TURNED ALONG YOUR VIEW', tesselc: 'A SHORT LOB', tesselq: 'A SHORT LOB', tessele: 'ACROSS YOUR VIEW' };
   function abIcon(g, kind, cx, cy, r, col, acc) {
     g.save(); g.translate(cx, cy); g.strokeStyle = col; g.fillStyle = col; g.lineWidth = r * .16; g.lineCap = 'round'; g.lineJoin = 'round'; const P2 = (pts, close) => { g.beginPath(); pts.forEach(([a, b], i) => i ? g.lineTo(a * r, b * r) : g.moveTo(a * r, b * r)); if (close) g.closePath(); };
     const C = (x, y, rad, a0 = 0, a1 = TAU) => { g.beginPath(); g.arc(x * r, y * r, rad * r, a0, a1); };
@@ -200,6 +201,11 @@
     else if (kind === 'turret') { g.fillRect(-.45 * r, -.35 * r, .9 * r, .5 * r); g.fillRect(0, -.22 * r, .9 * r, .2 * r); P2([[-.3, .15], [-.6, .85]]); g.stroke(); P2([[.3, .15], [.6, .85]]); g.stroke(); }
     else if (kind === 'mine') { C(0, .2, .55, Math.PI, 0); g.fill(); g.fillRect(-.7 * r, .2 * r, 1.4 * r, .2 * r); C(0, -.45, .12); g.fill(); }
     else if (kind === 'hex') { P2([0, 1, 2, 3, 4, 5].map(i => [Math.cos(i * Math.PI / 3 + Math.PI / 6) * .85, Math.sin(i * Math.PI / 3 + Math.PI / 6) * .85]), true); g.stroke(); C(0, 0, .3); g.fill(); }
+    // Tessel's: a seed of light opening (Bloom), an hourglass over a ripple (Lull), a curtain stood on a line (Lightline), a room of light (Glasshouse)
+    else if (kind === 'bloom') { for (let i = 0; i < 6; i++) { const a = i * TAU / 6; g.save(); g.rotate(a); g.beginPath(); g.ellipse(0, -.55 * r, .17 * r, .3 * r, 0, 0, TAU); g.stroke(); g.restore(); } C(0, 0, .24); g.fill(); }
+    else if (kind === 'lull') { P2([[-.5, -.85], [.5, -.85], [-.5, .45], [.5, .45]], true); g.stroke(); g.save(); g.globalAlpha *= .7; P2([[-.22, .1], [.22, .1], [0, -.18]], true); g.fill(); g.restore(); g.strokeStyle = acc; g.beginPath(); g.ellipse(0, .72 * r, .85 * r, .18 * r, 0, 0, TAU); g.stroke(); }
+    else if (kind === 'lightline') { P2([[-.85, .75], [.85, .35]]); g.stroke(); g.save(); g.globalAlpha *= .45; P2([[-.85, .75], [.85, .35], [.85, -.65], [-.85, -.85]], true); g.fill(); g.restore(); for (const q of [-.42, .02, .45]) { const yb = .75 - (q + .85) / 1.7 * .4, yt = -.85 + (q + .85) / 1.7 * .2; P2([[q, yb], [q, yt]]); g.stroke(); } }
+    else if (kind === 'glasshouse') { const T2 = [[0, -.15], [.85, .2], [0, .55], [-.85, .2]]; P2(T2, true); g.stroke(); P2(T2.map(([a, b]) => [a, b - .7]), true); g.stroke(); for (const [a, b] of T2) { P2([[a, b], [a, b - .7]]); g.stroke(); } g.save(); g.globalAlpha *= .4; P2([[0, -.15], [.85, .2], [.85, -.5], [0, -.85], [-.85, -.5], [-.85, .2]], true); g.fill(); g.restore(); }
     else if (kind === 'duel') { C(0, 0, .85); g.stroke(); P2([[-.55, .55], [.55, -.55]]); g.stroke(); P2([[-.55, -.55], [.55, .55]]); g.stroke(); }
     g.restore();
   }
@@ -220,6 +226,8 @@
     else if (op === 'talon') { g.fillStyle = grey(kt.cloth); g.beginPath(); g.arc(0, -8, 10, Math.PI, TAU); g.fill(); g.fillRect(-14, -9, 28, 2.6); g.fillStyle = grey('#15171c'); g.fillRect(-7, -13, 14, 4); g.fillStyle = glow; g.beginPath(); g.arc(-3.5, -11, 1.6, 0, TAU); g.arc(3.5, -11, 1.6, 0, TAU); g.fill(); }
     else if (op === 'ember') { g.fillStyle = grey('#15171c'); g.fillRect(-6, -2, 12, 7); g.fillStyle = grey(kt.plate); g.beginPath(); g.arc(-5.5, 2, 2.4, 0, TAU); g.arc(5.5, 2, 2.4, 0, TAU); g.fill(); g.fillStyle = glow; for (let i = 0; i < 4; i++) { g.beginPath(); g.moveTo(-6 + i * 4, -13); g.lineTo(-4 + i * 4, -23 + Math.abs(i - 1.5) * 3); g.lineTo(-2 + i * 4, -13); g.closePath(); g.fill(); } }
     else if (op === 'vanta') { g.fillStyle = grey(kt.plate); g.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; g.lineTo(Math.cos(a) * 11, -6 + Math.sin(a) * 11); } g.closePath(); g.fill(); g.fillStyle = glow; g.fillRect(-10, -7, 20, 3.4); g.beginPath(); g.moveTo(5, -14); g.lineTo(14, -24); g.lineTo(9, -13); g.closePath(); g.fill(); }
+    else if (op === 'tessel') { g.strokeStyle = glow; g.lineWidth = 1.6; g.beginPath(); g.moveTo(0, -24); g.lineTo(13, -9); g.lineTo(0, 6); g.lineTo(-13, -9); g.closePath(); g.stroke();   // the diamond of light behind the helm
+      g.fillStyle = grey(kt.plate); g.beginPath(); g.ellipse(0, -6, 10.5, 12, 0, 0, TAU); g.fill(); g.fillStyle = grey('#15171c'); g.fillRect(-9.5, -8, 19, 3); g.fillStyle = glow; g.fillRect(-1.2, -16, 2.4, 18); }
     else if (op === 'axiom') { g.fillStyle = grey(kt.plate); g.beginPath(); g.arc(0, -8, 10, Math.PI, TAU); g.fill(); g.fillRect(-13, -9, 26, 2.4); g.fillStyle = glow; g.fillRect(-8, -6, 16, 2.6); g.beginPath(); g.arc(0, -16, 1.8, 0, TAU); g.fill(); }
     else { g.fillStyle = glow; tx(g, (O.n || '?')[0], 0, -4, 12, glow, 'center', 900); }
     g.restore();
