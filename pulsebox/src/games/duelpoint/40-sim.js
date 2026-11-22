@@ -287,7 +287,8 @@
   on('kill', (v, by, head, wk) => {
     if (!M || !by || !v || v === by || by.team === v.team || M.mode === 'range') return; const s = by.stat;
     s.rk = (s.rk || 0) + 1; if (s.rk > 1) s.mb = (s.mb || 0) + 50; if (s.rk === 3) s.mk = (s.mk || 0) + 1;   // (mk: rounds with three kills)
-    { const c = GUNS[wk] ? GUNS[wk].cat : 'Utility'; s.cat = s.cat || {}; s.cat[c] = (s.cat[c] || 0) + 1; }   // kills by kind of weapon, for the challenges if (!M.fk) { M.fk = by.key; s.fk = (s.fk || 0) + 1; emit('firstKill', by, v); }
+    { const c = GUNS[wk] ? GUNS[wk].cat : 'Utility'; s.cat = s.cat || {}; s.cat[c] = (s.cat[c] || 0) + 1; }   // kills by kind of weapon, for the challenges
+    if (!M.fk) { M.fk = by.key; s.fk = (s.fk || 0) + 1; emit('firstKill', by, v); }
     const foes = M.fs.filter(q => q.team === v.team && !q.gone); if (foes.length >= 3 && s.rk >= foes.length && foes.every(q => !q.alive)) emit('ace', by);
     if (!M.clutch) for (const t of [0, 1]) { const up = M.fs.filter(q => q.team === t && q.alive), them = M.fs.filter(q => q.team !== t && q.alive); if (up.length === 1 && them.length >= 2) M.clutch = { key: up[0].key, team: t, vs: them.length }; }
   });

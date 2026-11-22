@@ -266,7 +266,8 @@
       g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; for (let k = 0; k < 18; k++) { let x = Math.random() * w, y = Math.random() * h; g.beginPath(); g.moveTo(x, y); for (let q = 0; q < 5; q++) { x += (Math.random() - .5) * 120; y += (Math.random() - .5) * 120; g.lineTo(x, y); } g.stroke(); }
       for (let k = 0; k < 40; k++) { g.fillStyle = `rgba(255,255,255,${.1 + Math.random() * .2})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 10 + Math.random() * 50, 4 + Math.random() * 12, Math.random() * 3, 0, 7); g.fill(); } });
     const beltDraw = dir => (g, w, h) => { g.fillStyle = '#26282c'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(255,255,255,.05)'; for (let y = 0; y < h; y += 8) g.fillRect(0, y, w, 2);
-      g.translate(w / 2, h / 2); g.rotate([Math.PI / 2, 0, -Math.PI / 2, Math.PI][dir]);   // (the canvas's up lies along +z, south: east, south, west, north) g.strokeStyle = '#f2b51e'; g.lineWidth = 16; g.lineJoin = 'round'; g.beginPath(); g.moveTo(-38, 26); g.lineTo(0, -16); g.lineTo(38, 26); g.stroke(); g.setTransform(1, 0, 0, 1, 0, 0);
+      g.translate(w / 2, h / 2); g.rotate([Math.PI / 2, 0, -Math.PI / 2, Math.PI][dir]);   // (the canvas's up lies along +z, south: east, south, west, north)
+      g.strokeStyle = '#f2b51e'; g.lineWidth = 16; g.lineJoin = 'round'; g.beginPath(); g.moveTo(-38, 26); g.lineTo(0, -16); g.lineTo(38, 26); g.stroke(); g.setTransform(1, 0, 0, 1, 0, 0);
       g.fillStyle = '#111'; g.fillRect(0, 0, 6, h); g.fillRect(w - 6, 0, 6, h); };
     X.beltT = [0, 1, 2, 3].map(dir => { const t = canvasTex(128, 128, beltDraw(dir)); t.userData = { dir }; T['belt' + dir] = t; return t; });
     T.vent = canvasTex(128, 128, (g, w, h) => { g.fillStyle = '#2a2c30'; g.fillRect(0, 0, w, h); g.fillStyle = '#0c0d0f'; for (let x = 12; x < w - 8; x += 14) g.fillRect(x, 10, 7, h - 20); g.strokeStyle = '#5a5e66'; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6); });

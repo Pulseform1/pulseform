@@ -180,7 +180,8 @@
       const P = me(); click();
       if (b.k === 'fire') { TS.fire = id; TS.tap = true; TS.look = { id, x, y }; try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} }   // the fire thumb keeps aiming while it holds
       else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (canSlide(me())) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
-      else if (b.k === 'c' || b.k === 'q' || b.k === 'e' || b.k === 'x') readyAb(P, b.k);   // ready it (FIRE uses it, the alt button its other way; tap again to put it away) else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);
+      else if (b.k === 'c' || b.k === 'q' || b.k === 'e' || b.k === 'x') readyAb(P, b.k);   // ready it (FIRE uses it, the alt button its other way; tap again to put it away)
+      else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);
       return;
     }
     if (M && screen === 'play' && !me().alive && UI.spec && X && M.mode !== 'range') { nextSpec(); return; }   // dead: a tap moves to the next teammate
