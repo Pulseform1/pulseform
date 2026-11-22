@@ -264,7 +264,7 @@ function start(level) {
 stop(); level = clamp(level | 0, 0, G.levels.length - 1); screenName = 'play'; endData = null; app.innerHTML = ''; app.append(topBar());
 const hud = h('div', { class: 'hud' }), bar = h('div', { class: 'tbar', hidden: true }, h('div')), stage = h('div', { class: 'stage' });
 const btns = h('div', { class: 'row' },
-h('button', { class: 'btn sm', type: 'button', title: 'Restart (R)', onclick: () => start(level) }, '↻ ', h('span', { class: 'lt', text: 'Restart' })),
+h('button', { class: 'btn sm', type: 'button', title: 'Restart', onclick: () => start(level) }, '↻ ', h('span', { class: 'lt', text: 'Restart' })),
 h('button', { class: 'btn sm', type: 'button', title: 'Menu (Esc)', onclick: menu }, '☰ ', h('span', { class: 'lt', text: 'Menu' })));
 app.append(h('main', { class: 'play' }, h('div', { class: 'hud' }, hud, h('span', { class: 'sp' }), btns), bar, stage));
 const c = ctx = {
@@ -311,7 +311,7 @@ if (c.lives_ != null) hud.append(chip('Lives', c.lives_ > 0 ? '❤️'.repeat(Ma
 for (const k in H) if (H[k] != null && H[k] !== '') hud.append(chip(k, H[k]));
 }
 drawHud();
-c.on(document, 'keydown', e => { if (e.key === 'Escape') menu(); else if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey && !(e.target && e.target.tagName === 'INPUT')) start(level); }, undefined, true);
+c.on(document, 'keydown', e => { if (e.key === 'Escape') menu(); }, undefined, true);
 sfx.click();
 try { G.start(c); } catch (e) { console.error(e); }
 }

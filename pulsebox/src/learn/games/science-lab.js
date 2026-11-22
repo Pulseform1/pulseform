@@ -138,6 +138,7 @@
     parts.push(`<g class="${lit ? 'sl-glow' : ''}"><circle cx="60" cy="18" r="9" fill="${bulb}" stroke="${wire}" stroke-width="2"/><path d="M55 20q2.5-6 5 0q2.5-6 5 0" fill="none" stroke="${lit ? '#b8860b' : '#9aa3b8'}" stroke-width="1.5"/></g>`);
     return h('div', { style: { width: w + 'px', maxWidth: '100%' }, html: `<svg viewBox="0 0 120 86" style="width:100%;display:block">${parts.join('')}</svg>` });
   }
+  const lc = s => s[0].toLowerCase() + s.slice(1);
   const obj = (name, big) => { const o = OB[name], k = big ? 1.4 : 1; return h('span', { class: 'sl-ob', style: { background: o[0], width: `calc(${o[1]} * ${k})`, height: `calc(${o[2]} * ${k})`, borderRadius: o[3] } }); };
 
   Edu.game({
@@ -216,7 +217,7 @@
             ch = c.choices(area, ['⬆ Floats', '⬇ Sinks'], i => answer(i), { cols: 2 }); };
           const answer = i => { if (busy) return; busy = true; ch.lock(); const name = list[k], fl = OB[name][4], right = (i === 0) === !!fl, el = cur;
             el.style.left = (14 + (k * 24) % 72) + '%'; const oh = el.firstChild.offsetHeight; el.style.top = (fl ? 58 - oh / 2 : 166 - el.offsetHeight) + 'px'; if (fl) c.after(900, () => el.classList.add('bob'));
-            c.after(700, () => { const msg = `${name} ${fl ? 'floats' : 'sinks'}: it is ${fl ? 'less dense' : 'denser'} than water.`;
+            c.after(700, () => { const msg = `The ${lc(name)} ${fl ? 'floats' : 'sinks'}: it is ${fl ? 'less dense' : 'denser'} than water.`;
               k++; if (right) { ch.mark(i, true); good(ch.btns[i]); note.textContent = '✓ ' + msg; c.after(350, step); }
               else { ch.mark(i, false); if (bad(ch.btns[i], '✗ ' + msg, msg)) c.after(1100, step); else dead(); } }); };
           step();
@@ -232,8 +233,8 @@
           tray.append(...btns); let busy = false;
           function tryIt(name, el) { if (busy || el.classList.contains('ok')) return; busy = true; const ok = !!OB[name][5]; gap.textContent = 'gap: ' + name; draw(ok);
             c.after(450, () => { busy = false;
-              if (ok) { el.classList.add('ok'); found++; note.textContent = `✓ ${name} is a conductor: the bulb lights up!`; good(el); if (found >= need) done(900); else c.after(700, () => { draw(false); gap.textContent = 'gap: (empty)'; }); }
-              else { el.classList.add('no'); draw(false); if (!bad(el, `✗ ${name} is an insulator: no electricity flows.`, FACT.conduct)) dead(); } }); }
+              if (ok) { el.classList.add('ok'); found++; note.textContent = `✓ The ${lc(name)} conducts electricity: the bulb lights up!`; good(el); if (found >= need) done(900); else c.after(700, () => { draw(false); gap.textContent = 'gap: (empty)'; }); }
+              else { el.classList.add('no'); draw(false); if (!bad(el, `✗ The ${lc(name)} is an insulator: no electricity flows.`, FACT.conduct)) dead(); } }); }
           c.botMove = () => { const n = items.find(x => OB[x][5] && !b(x).classList.contains('ok')); if (n && !busy) b(n).click(); };
           c.missMove = () => { const n = items.find(x => !OB[x][5]); if (n && !busy) b(n).click(); };
         },
@@ -281,8 +282,8 @@
             const zr = zone.getBoundingClientRect(), r = el.getBoundingClientRect(), dx = r.left + r.width / 2 - (zr.left + zr.width / 2), dy = r.top - zr.top - 40;
             mag.style.transform = `translate(${dx}px, ${Math.max(0, dy)}px)`;
             c.after(380, () => { const ok = !!OB[n][6];
-              if (ok) { el.classList.add('ok'); el.style.transform = 'translateY(-12px) scale(.9)'; found++; note.textContent = `✓ ${n} contains iron, so the magnet picks it up.`; good(el); }
-              else { el.classList.add('no'); if (!bad(el, `✗ ${n} is not magnetic.`, FACT.magnet)) return dead(); }
+              if (ok) { el.classList.add('ok'); el.style.transform = 'translateY(-12px) scale(.9)'; found++; note.textContent = `✓ The magnet picks up the ${lc(n)}: ${/Steel/.test(n) ? 'steel is mostly iron' : 'iron is magnetic'}.`; good(el); }
+              else { el.classList.add('no'); if (!bad(el, `✗ The ${lc(n)} is not magnetic.`, FACT.magnet)) return dead(); }
               mag.style.transform = ''; c.after(350, () => { busy = false; if (found >= need) done(500); }); }); }
           c.botMove = () => { const n = items.find(x => OB[x][6] && !btns[items.indexOf(x)].classList.contains('ok')); if (n && !busy) grab(n); };
           c.missMove = () => { if (!busy) grab(items.find(x => !OB[x][6])); };

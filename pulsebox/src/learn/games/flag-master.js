@@ -89,8 +89,8 @@
         const r = sky.getBoundingClientRect(), ratio = t.flag[0] / t.flag[1];
         let fh = Math.min(r.height - 34, 210, (Math.min(r.width, 520) - 40) / ratio), fw = fh * ratio;
         const mast = h('div', { class: 'fm-mast' }), pole = h('div', { class: 'fm-pole', style: { height: (fh + 70) + 'px' } }),
-          fl = h('div', { class: 'fm-flag', style: { width: fw + 'px', height: fh + 'px' } }), N = 12;
-        for (let i = 0; i < N; i++) fl.append(h('div', { class: 'fm-sl', style: { left: (i * fw / N) + 'px', width: (fw / N + 1) + 'px', animationDelay: -(i * .11) + 's', '--a': (i / N * Math.max(3, fh * .045)).toFixed(1) + 'px' } },
+          fl = h('div', { class: 'fm-flag', style: { width: fw + 'px', height: fh + 'px' } }), N = 16;
+        for (let i = 0; i < N; i++) fl.append(h('div', { class: 'fm-sl', style: { left: (i * fw / N) + 'px', width: (fw / N + 1) + 'px', animationDelay: -(i * .11) + 's' }, '--a': (i / N * Math.max(3, fh * .045)).toFixed(1) + 'px' },
           h('div', { style: { left: -(i * fw / N) + 'px', width: fw + 'px' }, html: flagSVG(t.flag) })));
         mast.append(pole, fl); [...sky.querySelectorAll('.fm-mast')].forEach(m => m.remove()); sky.append(mast); c.flagEl = fl;
       }
