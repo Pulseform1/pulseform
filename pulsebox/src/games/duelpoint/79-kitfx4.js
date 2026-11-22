@@ -1,6 +1,6 @@
   /* ---------- 79 kit effects, fourth part: holding a site (48) ----------
      SENTRY: the arc it guards lies faint on the floor for everyone (blue sweeping, amber locking on, red firing; 79-kitfx
-     colours its eye the same). TRIPWIRE: two anchors and a hot wire at shin height; rivals see it within 10 m. SLOW FIELD
+     colours its eye the same). TRIPWIRE: an emitter on each wall of the doorway and a hot wire across at shin height; rivals see it within 10 m. SLOW FIELD
      canister: a squat can with a blinking light (rivals see it within 12 m; its own side also sees the ring it watches).
      RAMPART: it shows its own damage: cracks, then dead panels, then holes, on both faces. WARD BEACON: a tall amber light anyone can see, and its reach on the floor for
      its own side. SNARE, sprung: the leash from the trap to whoever it holds.
@@ -18,10 +18,11 @@
       fan.position.y = .03; rim.position.y = .035; g.add(fan, rim); g.userData = { fan, rim }; K4.arcs.push(add(g)); }
     // the Tripwire: a group whose +x runs from one anchor to the other
     K4.wires = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), wire = new THREE.Mesh(new THREE.BoxGeometry(1, .022, .022), basic('#ff5a2a', { opacity: .9, blending: THREE.NormalBlending })); wire.geometry.translate(.5, 0, 0); wire.position.y = WIRE.h;   // (normal blending: it stays red on a pale floor)
-      const anc = [0, 1].map(j => { const a = new THREE.Group(), h = WIRE.h, lamp = sprite('#ff7a4a', .22);   // a post: foot plate, stem, an armoured emitter head with Axiom's blue, its nozzle facing along the wire
-        a.add(kbx(.15, .025, .15, devM, -.02, .0125, 0), kbx(.035, h, .035, midM, -.05, h / 2, 0), kbx(.1, .13, .11, devM, 0, h, 0), kbx(.102, .014, .112, stripe, 0, h + .045, 0));
-        for (const sz of [-1, 1]) a.add(kbx(.07, .09, .012, midM, -.01, h, sz * .062)); const nz = kcyl(.03, .036, .06, 8, midM, .07, h, 0); nz.rotation.z = Math.PI / 2; a.add(nz);
-        lamp.position.set(.105, h, 0); a.add(lamp); bakeKit(a, [lamp]); if (j) a.rotation.y = Math.PI; g.add(a); a.userData = { lamp }; return a; });
+      const anc = [0, 1].map(j => { const a = new THREE.Group(), h = WIRE.h, lamp = sprite('#ff7a4a', .2);   // an emitter fixed flat to the doorway's wall (the anchor sits 6 cm off it): a bolted wall plate, an armoured housing with Axiom's blue, its nozzle facing across the gap
+        a.add(kbx(.02, .2, .14, midM, -.05, h, 0), kbx(.07, .1, .09, devM, -.005, h, 0), kbx(.072, .012, .092, stripe, -.005, h + .035, 0));
+        for (const [by, bz] of [[.085, .055], [.085, -.055], [-.085, .055], [-.085, -.055]]) { const bt = kcyl(.011, .011, .012, 6, plateM, -.036, h + by, bz); bt.rotation.z = Math.PI / 2; a.add(bt); }
+        for (const sy of [-1, 1]) a.add(kbx(.05, .012, .07, midM, -.01, h + sy * .056, 0)); const nz = kcyl(.022, .03, .045, 8, plateM, .05, h, 0); nz.rotation.z = Math.PI / 2; a.add(nz);
+        lamp.position.set(.078, h, 0); a.add(lamp); bakeKit(a, [lamp]); if (j) a.rotation.y = Math.PI; g.add(a); a.userData = { lamp }; return a; });
       g.add(wire); g.userData = { wire, anc }; K4.wires.push(add(g)); }
     // the Slow Field canister
     K4.cans = []; for (let i = 0; i < 3; i++) {   // a squat canister: foot ring, a glowing core showing between armour ribs, a capped top with a valve and its lamp
