@@ -1,0 +1,126 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../lib/stage.css">
+<style>#cap { display: none; }</style></head>
+<body>
+<!-- Thumbnails for every promo video, in 9:16 (cover) and 16:9. Rendered by thumbs.js. -->
+<script>window.TIMELINE = { end: 1, fps: 30, lines: [], caps: [], code: [] };</script>
+<script src="../lib/art.js"></script>
+<script src="../lib/more.js"></script>
+<script src="../lib/games3.js"></script>
+<script>
+const t = 1.7;   // the moment every animated piece is frozen at
+// ---------- art pieces, each drawn in a 1000 x 1000 box ----------
+const glowBehind = (col, op = .6) => `<circle cx="500" cy="520" r="520" fill="${col}" opacity="${op}" filter="url(#blur30)"/>`;
+function handShush() { return E(0, 0, 46, 60, SKIN) + R(-14, -120, 28, 110, 14, SKIN); }
+const ART = {
+  'secret-dev': () => glowBehind(LIME, .35) +
+    Array.from({ length: 10 }, (_, i) => L(60 + (i % 2) * 700, 120 + i * 70, 220 + (i % 2) * 700 + (i * 37 % 60), 120 + i * 70, 12, i % 3 ? LIME : PINK, 'opacity=".75"')).join('') +
+    kidFront(500, 640, 2.05, { t, mouth: 'whistle', brow: 'up', lookX: .9 }) + G('translate(610 520) rotate(8)', handShush()) +
+    R(250, 840, 500, 200, 40, '#191c2c', 9) + logoMark(455, 880, 3.8) + `<ellipse cx="500" cy="840" rx="420" ry="70" fill="${LIME}" opacity=".35" filter="url(#blur30)"/>`,
+  'one-more-game': () => {
+    let s = R(0, 0, 1000, 1000, 0, '#3b3f7a', 0) + G('translate(560 40)', R(-16, -16, 412, 352, 16, '#2a2f55') +
+      `<defs><linearGradient id="dw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a7fe0"/><stop offset=".6" stop-color="#ff9ab0"/><stop offset="1" stop-color="#ffcf5a"/></linearGradient></defs>` + R(0, 0, 380, 320, 8, 'url(#dw)') + C(230, 320, 100, '#fff1a8', 6) + L(190, 0, 190, 320, 8) + L(0, 160, 380, 160, 8));
+    s += R(-40, 520, 1080, 260, 60, '#e6e9ff') + kidFront(500, 820, 1.9, { t, tired: .85, mouth: 'flat' }) + P('M-40 900 Q500 820 1040 900 L1040 1000 L-40 1000Z', '#6a52d9');
+    s += G('translate(250 230) rotate(-6)', R(-210, -80, 420, 160, 28, '#0c0f24', 9) + T(0, 40, '6:02 AM', 104, '#ff4f6e', 'middle', 'DejaVu Sans Mono', 'font-weight="bold"'));
+    return s;
+  },
+  'tier-list': () => {
+    let s = glowBehind('#ffd84d', .3);
+    [['S', '#ff4f6e'], ['A', '#ffb547'], ['B', '#ffd84d']].forEach(([l, c], r) => { s += R(20, 640 + r * 120, 110, 105, 14, c, 7) + T(75, 718 + r * 120, l, 80, INK, 'middle', 'Luckiest') + R(140, 640 + r * 120, 840, 105, 14, '#1b1f3a', 5); });
+    ['axe-spin', 'hyperlane', 'bumper-brawl'].forEach((id, i) => { s += R(160 + i * 170, 650, 150, 85, 10, '#171a2b', 4) + nest(165 + i * 170, 655, 140, 75, GAMES[id][1](t, 140, 75)); });
+    s += kidFront(330, 520, 1.45, { t, mouth: 'o', brow: 'up', talk: .8, lookX: .8 });
+    s += G('translate(760 420) rotate(8)', `<circle r="220" fill="#ffd84d" opacity=".5" filter="url(#blur30)"/>` + R(-160, -200, 320, 400, 26, '#ffd84d', 10) + T(0, 70, '#1', 190, INK, 'middle', 'Luckiest') + T(0, -100, '?', 110, INK, 'middle', 'Luckiest'));
+    return s;
+  },
+  'guess-the-game': () => {
+    let s = glowBehind(LIME, .25);
+    const cols = [LIME, PINK, ORANGE, '#4fe3ff', '#ffd84d'];
+    cols.forEach((c, i) => { const a = (i - 2) * 14; s += G(`translate(${500 + (i - 2) * 175} ${420 + Math.abs(i - 2) * 40}) rotate(${a})`, R(-120, -170, 240, 340, 26, c, 9) + T(0, 60, '?', 200, INK, 'middle', 'Luckiest')); });
+    s += kidFront(500, 860, 1.4, { t, mouth: 'o', brow: 'up', lookY: -1 });
+    return s;
+  },
+  'play-with-friends': () => glowBehind('#ffd84d', .25) +
+    kidFront(240, 620, 1.5, { t, mouth: 'grin', brow: 'mad', lookX: .7 }) + kidFront(760, 620, 1.5, { t: t + 1, hoodie: '#ff8a3d', hair: '#e8c07a', mouth: 'grin', brow: 'mad', lookX: -.7 }) +
+    P('M520 120 L450 420 L560 420 L470 760', 'none', 0, `stroke="#ffd84d" stroke-width="40" stroke-linejoin="round" filter="url(#blur8)"`) + P('M520 120 L450 420 L560 420 L470 760', 'none', 12) +
+    TS(500, 960, 'VS', 220, '#ffd84d', 20),
+  'satisfying': () => { let s = nest(0, 0, 1000, 1000, skyStack(6, 1000, 1000)) + `<circle cx="500" cy="560" r="380" fill="none" stroke="#fff" stroke-width="14" opacity=".8"/>`;
+    for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5; s += G(`translate(${500 + Math.cos(a) * 420} ${560 + Math.sin(a) * 420})`, P('M0 -34 L9 -9 L34 0 L9 9 L0 34 L-9 9 L-34 0 L-9 -9Z', '#fff', 5)); }
+    return s + G('translate(500 470) rotate(-6)', TS(0, 0, 'PERFECT!', 170, '#ffd84d', 18)); },
+  'rage-games': () => {
+    let s = R(0, 0, 1000, 1000, 0, '#5a0d1a', 0) + rays(500, 500, 24, 900, '#ff2d55', .3, .2);
+    s += `<clipPath id="fc"><circle cx="460" cy="520" r="380"/></clipPath><g clip-path="url(#fc)">` + R(0, 0, 1000, 1000, 0, '#2a2f55', 0) + kidFront(460, 790, 2.3, { t, skin: '#ff7b6b', mouth: 'o', talk: 1, brow: 'mad' }) + '</g>' + C(460, 520, 380, 'none', 14);
+    for (let i = 0; i < 2; i++) s += C(i ? 820 : 110, 160 - i * 40, 70, '#fff', 0, 'opacity=".75"') + C(i ? 870 : 70, 80 - i * 40, 45, '#fff', 0, 'opacity=".6"');
+    const r = rng(3); let d = ''; for (let i = 0; i < 9; i++) { let x = 640, y = 330, a = i * .7; d += `M${x} ${y}`; for (let j = 0; j < 4; j++) { a += (r() - .5) * .9; x += Math.cos(a) * (70 + r() * 110); y += Math.sin(a) * (70 + r() * 110); d += ` L${x.toFixed(0)} ${y.toFixed(0)}`; } }
+    s += `<path d="${d}" fill="none" stroke="${INK}" stroke-width="10"/><path d="${d}" fill="none" stroke="#fff" stroke-width="5"/>`;
+    s += G('translate(930 520)', R(-45, -330, 90, 660, 40, '#0b0d1a', 8) + R(-30, -315, 60, 630, 30, '#ff2d55', 0)) + R(330, 860, 260, 70, 18, '#ff2d55', 7) + T(460, 910, 'LIVE', 52, '#fff', 'middle', 'Chakra');
+    return s;
+  },
+  'pick-a-door': () => {
+    let s = R(0, 0, 1000, 1000, 0, '#1c1240', 0);
+    for (let i = 0; i < 3; i++) s += `<path d="M${180 + i * 320} 0 L${40 + i * 320} 1000 L${320 + i * 320} 1000Z" fill="#fff" opacity=".07"/>`;
+    [['#ff4f6e', 0], ['#ffd84d', .75], ['#4fa3ff', 0]].forEach(([c, k], i) => { const x = 180 + i * 320 - 140, y = 260, w = 280, h = 560;
+      s += R(x - 22, y - 22, w + 44, h + 34, 10, '#3a2a55', 8);
+      s += k ? `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff6c9"/>` + `<circle cx="${x + w / 2}" cy="${y + h / 2}" r="260" fill="#fff6c9" opacity=".7" filter="url(#blur30)"/>` + TS(x + w / 2, y + h / 2 + 60, '?', 220, '#ffd84d', 14) : R(x, y, w, h, 0, '#120b24', 0);
+      const e = x + w * (1 - k * .85); s += P(`M${x} ${y} L${e} ${y - k * 26} L${e} ${y + h + k * 26} L${x} ${y + h}Z`, c, 8) + (k < .5 ? C(e - 38, y + h / 2, 16, '#ffd84d', 5) : '');
+      s += G(`translate(${x + w / 2} ${y - 80})`, R(-62, -46, 124, 84, 16, '#ffd84d', 7) + T(0, 26, String(i + 1), 70, INK, 'middle', 'Luckiest')); });
+    return s;
+  },
+  'pulsebox-secrets': () => {
+    let s = R(0, 0, 1000, 1000, 0, '#2b2238', 0) + rays(500, 520, 20, 900, '#ffd84d', .08, .3);
+    s += P('M90 260 L380 260 L420 310 L910 310 L910 940 L90 940Z', '#d9b36a', 9);
+    [-2, -1, 0, 1, 2].forEach(i => { s += G(`rotate(${i * 7} 500 700)`, R(190, 200, 620, 560, 12, '#f3e6c4', 7) + T(500, 300, '#' + (i + 3), 70, i === 2 ? '#8b93b8' : '#e5484d', 'middle', 'Luckiest')); });
+    s += P('M90 430 L910 430 L910 940 L90 940Z', '#e8c27a', 9) + T(500, 720, 'PULSEBOX', 110, '#7a5a2a', 'middle', 'Chakra');
+    s += G('translate(520 860) rotate(-8)', R(-300, -70, 600, 120, 14, 'none', 0, 'stroke="#e5484d" stroke-width="14"') + T(0, 32, 'TOP SECRET', 90, '#e5484d', 'middle', 'Luckiest'));
+    return s;
+  },
+};
+// ---------- each thumbnail: background, art, the big words ----------
+const THUMBS = {
+  'secret-dev': { bg: '#141838', ray: LIME, lines: [['THIS KID HAS A', '#fff'], ['SECRET', LIME]], sticker: ['77 GAMES', '#ffd84d'] },
+  'one-more-game': { bg: '#2a2f63', ray: '#ffcf5a', lines: [['"ONE MORE', '#fff'], ['GAME..."', '#ffcf5a']], sticker: ['8 HOURS LATER', PINK] },
+  'tier-list': { bg: '#0b0d1a', ray: '#ffd84d', lines: [['#1 SHOCKED', '#ffd84d'], ['ME', '#fff']], sticker: ['TIER LIST', '#ff4f6e'] },
+  'guess-the-game': { bg: '#101330', ray: LIME, lines: [['GUESS THE', '#fff'], ['GAME', LIME]], sticker: ['ONLY REAL GAMERS', '#ffd84d'] },
+  'play-with-friends': { bg: '#141838', ray: LIME, lines: [['SEND THIS TO', '#fff'], ['YOUR FRIEND', LIME]], sticker: ['LOSER BUYS SNACKS', '#ff8a3d'] },
+  'satisfying': { bg: '#2a1350', ray: '#ffd84d', lines: [['SO', '#fff'], ['SATISFYING', '#ffd84d']], sticker: ['SLOW-MO', '#4fe3ff'] },
+  'rage-games': { bg: '#3a0812', ray: '#ff2d55', lines: [["DON'T PLAY IF", '#fff'], ['YOU RAGE', '#ff2d55']], sticker: ['RAGE 100%', '#ffd84d'] },
+  'pick-a-door': { bg: '#1c1240', ray: '#ffd84d', lines: [['PICK A', '#fff'], ['DOOR', '#ffd84d']], sticker: ['NO SWITCHING', '#ff4f6e'] },
+  'pulsebox-secrets': { bg: '#2b2238', ray: '#e5484d', lines: [['5 SECRETS', '#ffd84d'], ['NOBODY TELLS YOU', '#fff']], sticker: ['#5 ISN\'T OUT YET', LIME] },
+};
+function words(lines, x, y, maxW, size, anchor = 'middle') {   // big stroked title, each line shrunk to fit maxW; y is the top
+  let s = '', base = y;
+  lines.forEach(([txt, col], i) => { const fs = Math.min(size * (i ? 1.18 : 1), maxW / (txt.length * .6));
+    base += i ? fs * .98 : fs * .82;
+    s += `<text x="${x}" y="${base}" font-family="Luckiest" font-size="${fs}" fill="${col}" text-anchor="${anchor}" stroke="${INK}" stroke-width="${fs * .16}" paint-order="stroke" stroke-linejoin="round">${esc(txt)}</text>`; });
+  return [s, base + 20];
+}
+function sticker(txt, col, x, y, k = 1, rot = 5) { const w = txt.length * 34 + 70; return G(`translate(${x} ${y}) rotate(${rot}) scale(${k})`, R(-w / 2, -50, w, 90, 20, col, 8) + T(0, 18, txt, 54, INK, 'middle', 'Luckiest')); }
+const artBox = (id, x, y, s) => `<svg x="${x}" y="${y}" width="${s}" height="${s}" viewBox="0 0 1000 1000" overflow="hidden">${ART[id]()}</svg>`;
+window.thumb = function (id, wide) {
+  const T_ = THUMBS[id], W = wide ? 1280 : 1080, H = wide ? 720 : 1920;
+  const svg = document.getElementById('svg'), stage = document.getElementById('stage');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H); stage.style.width = W + 'px'; stage.style.height = H + 'px';
+  document.getElementById('world').setAttribute('transform', '');
+  ['grainRect', 'flash'].forEach(k => { const e = document.getElementById(k); e.setAttribute('width', W); e.setAttribute('height', H); });
+  document.querySelector('#svg > rect[fill="url(#vig)"]').setAttribute('width', W); document.querySelector('#svg > rect[fill="url(#vig)"]').setAttribute('height', H);
+  let s = R(-20, -20, W + 40, H + 40, 0, T_.bg, 0) + rays(W / 2, H * .55, 26, Math.max(W, H) * 1.2, T_.ray, .09, .3);
+  const fade = (x, y, w, h) => `<defs><linearGradient id="fd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${T_.bg}"/><stop offset="1" stop-color="${T_.bg}" stop-opacity="0"/></linearGradient>` +
+    `<linearGradient id="fdl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${T_.bg}"/><stop offset="1" stop-color="${T_.bg}" stop-opacity="0"/></linearGradient></defs>` + `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#${w > h ? 'fd' : 'fdl'})"/>`;
+  const logo = (x, y, k) => G(`translate(${x} ${y}) scale(${k})`, logoMark(-250, -45, 3.6) + `<text x="-150" y="22" font-family="Chakra" font-size="78" fill="#fff" stroke="${INK}" stroke-width="10" paint-order="stroke">PULSE<tspan fill="${LIME}">BOX</tspan></text>`);
+  if (!wide) {
+    s += artBox(id, 0, 840, 1080) + fade(0, 830, 1080, 200);
+    s += logo(560, 250, .85);
+    const [w, bot] = words(T_.lines, 540, 320, 990, 160);
+    s += w + sticker(T_.sticker[0], T_.sticker[1], 540, bot + 40, 1, -3);
+  } else {
+    s += artBox(id, 600, 20, 680) + fade(590, 0, 160, 720);
+    const lines = T_.lines, [w0, b0] = words(lines, 0, 0, 560, 118), top = (720 - (b0 + 230)) / 2;
+    const [w, bot] = words(lines, 320, top, 560, 118);
+    s += w + sticker(T_.sticker[0], T_.sticker[1], 320, bot + 40, .85, -3) + logo(330, bot + 150, .8);
+  }
+  document.getElementById('world').innerHTML = s;
+  document.getElementById('turb').setAttribute('seed', '3');
+  return [W, H];
+};
+window.THUMB_IDS = Object.keys(THUMBS);
+</script>
+</body></html>
