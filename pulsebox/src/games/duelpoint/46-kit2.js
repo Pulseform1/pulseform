@@ -144,7 +144,9 @@
     K2.beacons = K2.beacons.filter(B => !B.done);
     // Phase Front: rolls out 14 m, through walls and all, then holds
     for (const w of M.walls) { const F = w.front; if (!F) continue;
-      if (F.s < 14 && !F.stop) { const was = F.s, step = dt * 4.4; F.s = Math.min(14, F.s + step); const cx = F.x + (F.ax ? F.dir * F.s : 0), cz = F.z + (F.ax ? 0 : F.dir * F.s); placeFront(w); }   // (it rolls through walls)
+      // rivals just ahead of it (within its width, up to 5 m in front) stay shown to Vanta's side through it
+      { const cx = F.x + (F.ax ? F.dir * F.s : 0), cz = F.z + (F.ax ? 0 : F.dir * F.s); for (const q of M.fs) { if (!q.alive || q.team === F.by.team) continue; const ahead = (F.ax ? q.x - cx : q.z - cz) * F.dir, side = Math.abs(F.ax ? q.z - cz : q.x - cx); if (ahead > -.3 && ahead < 5 && side < 3.3) q.reveal = Math.max(q.reveal || 0, .25); } }
+      if (F.s < 14 && !F.stop) { const was = F.s, step = dt * 2.6; F.s = Math.min(14, F.s + step); const cx = F.x + (F.ax ? F.dir * F.s : 0), cz = F.z + (F.ax ? 0 : F.dir * F.s); placeFront(w); }   // (it rolls through walls)
       else { F.hold += dt; if (F.hold >= 5) w.t = 0; } }
     // Sunder: flies 40 m/s for 35 m through anything; rivals it passes are Exposed
     for (const B of K2.sunders) if ((B.t -= dt) <= 0) B.done = true;   // (the bolt is instant: this is only how long it shows)

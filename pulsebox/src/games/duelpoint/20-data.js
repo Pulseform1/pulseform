@@ -74,7 +74,7 @@
     talon: [{ n: 'Shock Bolt', d: 'A bolt that bounces once, then bursts for up to 45.' }, 150, 2],
     ember: [{ n: 'Flashpoint', d: 'A flash that bends round a corner: left click bends it left, right click right.' }, 200, 2],
     axiom: [{ n: 'Slow Field', d: 'Lob a canister: a 5 m field that slows rivals inside for 6 s.' }, 200, 1],
-    vanta: [{ n: 'Phase Front', d: 'A wall of light rolls 14 m ahead of you, straight through walls, stopping bullets and sight. Anyone can walk through it.' }, 200, 1],
+    vanta: [{ n: 'Phase Front', d: 'A wall of light rolls slowly 14 m ahead of you, straight through walls, stopping bullets and sight. Rivals just ahead of it stay shown to your side. Anyone can walk through it.' }, 200, 1],
     tessel: [{ n: 'Bloom', d: 'Lob a seed of light: where it lands it opens into a globe of glare that blocks sight for 9 s.' }, 150, 2],
   };
   for (const k in ABC_KIT) { const [c, cost, max] = ABC_KIT[k]; OPS[k].c = Object.assign({}, c, { cost, max }); }
