@@ -1,0 +1,11 @@
+{"voice": "af_sky+bf_emma", "start": 0.15, "tail": 3.5,
+ "hot": ["5", "PULSEBOX.", "isn't", "out", "yet.", "follows", "phone.", "room,", "code,", "leaderboard.", "Games", "Day", "top,", "Elite", "coming.", "good.", "77", "free", "box.pulseform.org"],
+ "lines": [
+  {"say": "Five things nobody tells you about Pulsebox. Number five isn't even out yet.", "cap": "5 things nobody tells you about PULSEBOX. #5 isn't even out yet.", "speed": 1.1},
+  {"say": "One. Your progress follows you. Start on a laptop, finish on your phone.", "cap": "#1. Your progress follows you. Start on a laptop, finish on your phone.", "gap": 0.6},
+  {"say": "Two. Make a room, share a four letter code, and play with your friends.", "cap": "#2. Make a room, share a 4-letter code, and play with your friends.", "gap": 0.6},
+  {"say": "Three. Your name and your level go on the leaderboard.", "cap": "#3. Your name and your level go on the leaderboard.", "gap": 0.6},
+  {"say": "Four. The Games of the Day sit right at the top, so you always know what to play.", "cap": "#4. The Games of the Day sit right at the top, so you always know what to play.", "gap": 0.6},
+  {"say": "And five. Elite games are coming. Invite three friends, and they're yours for good.", "cap": "And #5. Elite games are coming. Invite 3 friends, and they're yours for good.", "gap": 0.7},
+  {"say": "Seventy-seven free games, nothing to download. Box dot pulseform dot org.", "cap": "77 free games, nothing to download. box.pulseform.org", "gap": 0.7}
+ ]}

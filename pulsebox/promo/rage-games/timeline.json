@@ -1,0 +1,589 @@
+{
+ "end": 28.49,
+ "fps": 30,
+ "lines": [
+  {
+   "n": 1,
+   "at": 0.15,
+   "dur": 2.475,
+   "file": "/home/user/pulseform/pulsebox/promo/rage-games/vo/01-8f2817c92e.wav",
+   "say": "Do not play these games if you rage easily."
+  },
+  {
+   "n": 2,
+   "at": 3.225,
+   "dur": 2.923,
+   "file": "/home/user/pulseform/pulsebox/promo/rage-games/vo/02-a661ad2953.wav",
+   "say": "Chaos Climb. One saw blade, and you're back at the start."
+  },
+  {
+   "n": 3,
+   "at": 6.747,
+   "dur": 2.752,
+   "file": "/home/user/pulseform/pulsebox/promo/rage-games/vo/03-648bdce6d3.wav",
+   "say": "Tank Trouble. Your own bullet bounces back, and hits you."
+  },
+  {
+   "n": 4,
+   "at": 10.099,
+   "dur": 2.688,
+   "file": "/home/user/pulseform/pulsebox/promo/rage-games/vo/04-439e617826.wav",
+   "say": "Penalty Shootout. You pick a corner. So does the keeper."
+  },
+  {
+   "n": 5,
+   "at": 13.387,
+   "dur": 2.112,
+   "file": "/home/user/pulseform/pulsebox/promo/rage-games/vo/05-a9b32555ec.wav",
+   "say": "Axe Spin. Hit another axe, and it's over."
+  },
+  {
+   "n": 6,
+   "at": 16.099,
+   "dur": 1.664,
+   "file": "/home/user/pulseform/pulsebox/promo/rage-games/vo/06-edd0b689b4.wav",
+   "say": "Rage level. Maximum."
+  },
+  {
+   "n": 7,
+   "at": 18.563,
+   "dur": 1.579,
+   "file": "/home/user/pulseform/pulsebox/promo/rage-games/vo/07-e83564534e.wav",
+   "say": "And you'll still press play again."
+  },
+  {
+   "n": 8,
+   "at": 20.742,
+   "dur": 4.245,
+   "file": "/home/user/pulseform/pulsebox/promo/rage-games/vo/08-7ec48247b9.wav",
+   "say": "They're all free on Pulsebox. Box dot pulseform dot org. What's your rage game?"
+  }
+ ],
+ "caps": [
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "Do",
+     "t": 0.15,
+     "hot": false
+    },
+    {
+     "w": "NOT",
+     "t": 0.23,
+     "hot": true
+    },
+    {
+     "w": "play",
+     "t": 0.35,
+     "hot": false
+    }
+   ],
+   "start": 0.15,
+   "end": 0.59
+  },
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "these",
+     "t": 0.59,
+     "hot": false
+    },
+    {
+     "w": "games",
+     "t": 0.83,
+     "hot": false
+    },
+    {
+     "w": "if",
+     "t": 1.17,
+     "hot": false
+    }
+   ],
+   "start": 0.59,
+   "end": 1.49
+  },
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "you",
+     "t": 1.49,
+     "hot": false
+    },
+    {
+     "w": "rage",
+     "t": 1.59,
+     "hot": true
+    },
+    {
+     "w": "easily.",
+     "t": 1.81,
+     "hot": false
+    }
+   ],
+   "start": 1.49,
+   "end": 2.39
+  },
+  {
+   "line": 2,
+   "words": [
+    {
+     "w": "Chaos",
+     "t": 3.225,
+     "hot": true
+    },
+    {
+     "w": "Climb.",
+     "t": 3.505,
+     "hot": false
+    }
+   ],
+   "start": 3.225,
+   "end": 4.265
+  },
+  {
+   "line": 2,
+   "words": [
+    {
+     "w": "One",
+     "t": 4.265,
+     "hot": false
+    },
+    {
+     "w": "saw",
+     "t": 4.365,
+     "hot": false
+    },
+    {
+     "w": "blade,",
+     "t": 4.545,
+     "hot": false
+    }
+   ],
+   "start": 4.265,
+   "end": 4.765
+  },
+  {
+   "line": 2,
+   "words": [
+    {
+     "w": "and",
+     "t": 4.765,
+     "hot": false
+    },
+    {
+     "w": "you're",
+     "t": 5.065,
+     "hot": false
+    },
+    {
+     "w": "back",
+     "t": 5.165,
+     "hot": false
+    }
+   ],
+   "start": 4.765,
+   "end": 5.345
+  },
+  {
+   "line": 2,
+   "words": [
+    {
+     "w": "at",
+     "t": 5.345,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 5.505,
+     "hot": false
+    },
+    {
+     "w": "start.",
+     "t": 5.585,
+     "hot": false
+    }
+   ],
+   "start": 5.345,
+   "end": 5.985
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "Tank",
+     "t": 6.747,
+     "hot": true
+    },
+    {
+     "w": "Trouble.",
+     "t": 6.907,
+     "hot": false
+    }
+   ],
+   "start": 6.747,
+   "end": 7.567
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "Your",
+     "t": 7.567,
+     "hot": false
+    },
+    {
+     "w": "own",
+     "t": 7.627,
+     "hot": false
+    },
+    {
+     "w": "bullet",
+     "t": 7.827,
+     "hot": false
+    }
+   ],
+   "start": 7.567,
+   "end": 8.027
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "bounces",
+     "t": 8.027,
+     "hot": false
+    },
+    {
+     "w": "back,",
+     "t": 8.427,
+     "hot": false
+    }
+   ],
+   "start": 8.027,
+   "end": 8.707
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "and",
+     "t": 8.707,
+     "hot": false
+    },
+    {
+     "w": "hits",
+     "t": 8.907,
+     "hot": false
+    },
+    {
+     "w": "you.",
+     "t": 9.067,
+     "hot": false
+    }
+   ],
+   "start": 8.707,
+   "end": 9.447
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "Penalty",
+     "t": 10.099,
+     "hot": true
+    },
+    {
+     "w": "Shootout.",
+     "t": 10.414,
+     "hot": false
+    }
+   ],
+   "start": 10.099,
+   "end": 10.798
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "You",
+     "t": 10.798,
+     "hot": false
+    },
+    {
+     "w": "pick",
+     "t": 10.972,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 11.182,
+     "hot": false
+    }
+   ],
+   "start": 10.798,
+   "end": 11.287
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "corner.",
+     "t": 11.287,
+     "hot": false
+    }
+   ],
+   "start": 11.287,
+   "end": 11.601
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "So",
+     "t": 11.601,
+     "hot": false
+    },
+    {
+     "w": "does",
+     "t": 11.741,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 11.95,
+     "hot": false
+    }
+   ],
+   "start": 11.601,
+   "end": 12.125
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "keeper.",
+     "t": 12.125,
+     "hot": false
+    }
+   ],
+   "start": 12.125,
+   "end": 12.559
+  },
+  {
+   "line": 5,
+   "words": [
+    {
+     "w": "Axe",
+     "t": 13.387,
+     "hot": true
+    },
+    {
+     "w": "Spin.",
+     "t": 13.527,
+     "hot": false
+    }
+   ],
+   "start": 13.387,
+   "end": 14.047
+  },
+  {
+   "line": 5,
+   "words": [
+    {
+     "w": "Hit",
+     "t": 14.047,
+     "hot": false
+    },
+    {
+     "w": "another",
+     "t": 14.127,
+     "hot": false
+    },
+    {
+     "w": "axe,",
+     "t": 14.347,
+     "hot": false
+    }
+   ],
+   "start": 14.047,
+   "end": 14.647
+  },
+  {
+   "line": 5,
+   "words": [
+    {
+     "w": "and",
+     "t": 14.647,
+     "hot": false
+    },
+    {
+     "w": "it's",
+     "t": 14.907,
+     "hot": false
+    },
+    {
+     "w": "over.",
+     "t": 15.067,
+     "hot": false
+    }
+   ],
+   "start": 14.647,
+   "end": 15.367
+  },
+  {
+   "line": 6,
+   "words": [
+    {
+     "w": "Rage",
+     "t": 16.099,
+     "hot": false
+    },
+    {
+     "w": "level:",
+     "t": 16.399,
+     "hot": false
+    }
+   ],
+   "start": 16.099,
+   "end": 16.759
+  },
+  {
+   "line": 6,
+   "words": [
+    {
+     "w": "MAXIMUM.",
+     "t": 16.759,
+     "hot": false
+    }
+   ],
+   "start": 16.759,
+   "end": 17.259
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "And",
+     "t": 18.563,
+     "hot": false
+    },
+    {
+     "w": "you'll",
+     "t": 18.683,
+     "hot": false
+    },
+    {
+     "w": "still",
+     "t": 18.803,
+     "hot": false
+    }
+   ],
+   "start": 18.563,
+   "end": 18.983
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "press",
+     "t": 18.983,
+     "hot": false
+    },
+    {
+     "w": "play",
+     "t": 19.223,
+     "hot": false
+    },
+    {
+     "w": "again.",
+     "t": 19.523,
+     "hot": false
+    }
+   ],
+   "start": 18.983,
+   "end": 19.883
+  },
+  {
+   "line": 8,
+   "words": [
+    {
+     "w": "They're",
+     "t": 20.742,
+     "hot": false
+    },
+    {
+     "w": "all",
+     "t": 21.18,
+     "hot": false
+    },
+    {
+     "w": "free",
+     "t": 21.423,
+     "hot": false
+    }
+   ],
+   "start": 20.742,
+   "end": 21.715
+  },
+  {
+   "line": 8,
+   "words": [
+    {
+     "w": "on",
+     "t": 21.715,
+     "hot": false
+    },
+    {
+     "w": "PULSEBOX.",
+     "t": 21.909,
+     "hot": false
+    }
+   ],
+   "start": 21.715,
+   "end": 22.444
+  },
+  {
+   "line": 8,
+   "words": [
+    {
+     "w": "box.pulseform.org",
+     "t": 22.444,
+     "hot": true
+    },
+    {
+     "w": "What's",
+     "t": 23.369,
+     "hot": false
+    },
+    {
+     "w": "your",
+     "t": 23.758,
+     "hot": false
+    }
+   ],
+   "start": 22.444,
+   "end": 24.05
+  },
+  {
+   "line": 8,
+   "words": [
+    {
+     "w": "rage",
+     "t": 24.05,
+     "hot": true
+    },
+    {
+     "w": "game?",
+     "t": 24.342,
+     "hot": false
+    }
+   ],
+   "start": 24.05,
+   "end": 24.802
+  }
+ ],
+ "code": []
+}

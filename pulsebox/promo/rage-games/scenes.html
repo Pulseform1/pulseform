@@ -1,0 +1,83 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../lib/stage.css"></head>
+<body>
+<script src="timeline.js"></script>
+<script src="../lib/art.js"></script>
+<script src="../lib/more.js"></script>
+<script src="../lib/games3.js"></script>
+<script>
+/* "Rage games": four real Pulsebox games that test your patience, a facecam and a rage meter. */
+const A = i => VO[i - 1];
+// [game, line, fail word, loop speed + phase of the drawer at the fail moment (or null)]
+const FAILS = [['chaos-climb', 2, /^start/, null], ['tank-trouble', 3, /^you\./, [.6, .95]], ['penalty-shootout', 4, /^keeper/, [.55, .62]], ['axe-spin', 5, /^over/, null]];
+const failT = f => wordT(f[1], f[2]);
+function gt(f, t) { const d = t - failT(f); if (!f[3]) return 30 + d; const [sp, ph] = f[3]; return 30 / sp + ph / sp + d; }
+function rage(t) { let r = .08 + .1 * prog(t, 0, 3); FAILS.forEach(f => { r += .2 * eOut(prog(t, failT(f), failT(f) + .4)); }); r += .2 * eOut(prog(t, A(6), A(6) + .5)); return Math.min(1, r); }
+const rageCol = r => r < .4 ? '#3ddc84' : r < .7 ? '#ffd84d' : r < .9 ? ORANGE : '#ff2d55';
+function meter(t) {
+  const r = rage(t), h = 860, flash = r >= 1 && (t * 6) % 1 < .5;
+  return G('translate(990 470)', R(-46, -20, 92, h + 40, 40, '#0b0d1a', 8, 'opacity=".85"') + R(-30, h * (1 - r), 60, h * r, 30, flash ? '#fff' : rageCol(r), 0) +
+    T(0, h + 90, 'RAGE', 44, '#fff', 'middle', 'Luckiest', `stroke="${INK}" stroke-width="8" paint-order="stroke"`) + T(0, -40, Math.round(r * 100) + '%', 40, '#fff', 'middle', 'Luckiest', `stroke="${INK}" stroke-width="8" paint-order="stroke"`));
+}
+function facecam(t, x = 190, y = 1560, k = 1) {
+  const r = rage(t), skin = r > .85 ? '#ff7b6b' : r > .6 ? '#f7a07c' : SKIN;
+  const mouth = r > .85 ? 'o' : r > .5 ? 'flat' : 'smile';
+  let s = `<clipPath id="fc"><circle cx="0" cy="0" r="150"/></clipPath>` + C(0, 0, 160, '#0b0d1a', 0) + `<g clip-path="url(#fc)">` + R(-160, -160, 320, 320, 0, '#2a2f55', 0) +
+    kidFront(0, 105, .9, { t, skin, mouth, talk: Math.abs(Math.sin(t * 20)), brow: r > .5 ? 'mad' : 'up', lookY: .5 }) + '</g>' + C(0, 0, 150, 'none', 9);
+  if (r > .85) for (let i = 0; i < 2; i++) { const ph = (t * 1.5 + i * .5) % 1; s += C(i ? 120 : -120, -90 - ph * 120, 20 + ph * 30, '#fff', 0, `opacity="${.8 - ph * .8}"`); }
+  s += R(-70, 128, 140, 44, 12, '#ff2d55', 5) + T(0, 160, 'LIVE', 30, '#fff', 'middle', 'Chakra');
+  return G(`translate(${x} ${y}) scale(${k})`, s);
+}
+function cracks(cx, cy, seed, k = 1) {
+  const r = rng(seed); let s = '';
+  for (let i = 0; i < 9; i++) { let x = cx, y = cy, a = i * 2 * Math.PI / 9 + r() * .4, d = `M${x} ${y}`;
+    for (let j = 0; j < 5; j++) { const l = (80 + r() * 160) * k; a += (r() - .5) * .9; x += Math.cos(a) * l; y += Math.sin(a) * l; d += ` L${x.toFixed(0)} ${y.toFixed(0)}`; }
+    s += `<path d="${d}" fill="none" stroke="${INK}" stroke-width="9" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>`; }
+  return s + C(cx, cy, 40 * k, 'none', 0, `stroke="#fff" stroke-width="5"`);
+}
+function failScene(i) {
+  const f = FAILS[i], tf = failT(f);
+  return (t, lt) => {
+    const sh = t > tf && t < tf + .3 ? Math.sin(t * 130) * 18 : 0;
+    let s = G(`translate(${sh} 0)`, GAMES[f[0]][1](gt(f, t), 1080, 1920));
+    s += tag(540, 330, GAMES[f[0]][0].toUpperCase(), ['#f6a54a', '#4fa3ff', '#3ddc84', '#c9c4dd'][i], pop(lt, .05, .3), -3);
+    if (t >= tf) { s += R(-20, -20, 1120, 1960, 0, '#ff2d55', 0, `opacity="${.25 * (1 - prog(t, tf, tf + .6))}"`);
+      s += G(`translate(540 900) rotate(-8) scale(${lerp(2.4, 1, eOut(prog(t, tf, tf + .15)))})`, R(-290, -110, 580, 190, 30, '#ff2d55', 10) + T(0, 52, i === 3 ? 'GAME OVER' : 'FAIL', i === 3 ? 110 : 150, '#fff', 'middle', 'Luckiest')); }
+    return s + meter(t) + facecam(t);
+  };
+}
+const SC = [
+  [0, (t, lt) => {                               // HOOK: warning sign
+    let s = R(-20, -20, 1120, 1960, 0, '#1a1a1a', 0);
+    for (let i = -4; i < 14; i++) s += P(`M${i * 120 + (t * 80) % 240} 0 l120 0 l-300 1920 l-120 0Z`, '#ffd84d', 0, 'opacity=".9"');
+    s += R(-20, 500, 1120, 900, 0, '#1a1a1a', 0);
+    const k = lerp(1.6, 1, eOut(prog(lt, 0, .25)));
+    s += G(`translate(540 820) scale(${k})`, P('M0 -250 L260 200 L-260 200Z', '#ffd84d', 14) + T(0, 140, '!', 300, INK, 'middle', 'Luckiest'));
+    s += G(`translate(540 1250) scale(${pop(lt, .3, .3)})`, TS(0, 0, 'WARNING', 150, '#ff2d55', 14));
+    return s + meter(t) + facecam(t);
+  }, 210],
+  ...FAILS.map((f, i) => [A(f[1]) - .1, failScene(i), 1180]),
+  [A(6) - .1, (t, lt) => {                       // RAGE LEVEL: MAXIMUM
+    const sh = Math.sin(t * 90) * 14 * prog(lt, .3, .6);
+    let s = R(-20, -20, 1120, 1960, 0, '#5a0d1a', 0) + rays(540, 900, 26, 1600, '#ff2d55', .25, t * .8);
+    s += G(`translate(${sh} 0)`, facecam(t, 540, 900, 2.6));
+    if (t > wordT(6, /MAXIMUM/) - .05) s += cracks(560, 760, 3, 1.4) + G(`translate(540 1640) scale(${pop(t, wordT(6, /MAXIMUM/), .25)})`, TS(0, 0, 'MAXIMUM', 170, '#ff2d55', 16));
+    return s + meter(t);
+  }, 230],
+  [A(7) - .1, (t, lt) => {                       // ...and you press play again
+    let s = R(-20, -20, 1120, 1960, 0, '#141838', 0) + rays(540, 900, 24, 1600, LIME, .06, t * .2);
+    s += facecam(t, 540, 620, 1.7) + cracks(820, 300, 5, .8);
+    const tap = (lt % 1.1) < .15;
+    s += G(`translate(540 1250) scale(${tap ? .92 : 1})`, R(-330, -95, 660, 190, 95, LIME, 10) + T(0, 30, '▶ PLAY AGAIN', 84, INK, 'middle', 'Luckiest'));
+    s += G(`translate(${640} ${tap ? 1290 : 1340})`, E(0, 60, 70, 90, SKIN) + R(-24, -60, 48, 120, 24, SKIN));
+    return s;
+  }, 1560],
+  [A(8) - .1, (t, lt) => endCard(t, lt, "what's your rage game?"), 1560],
+];
+const CUES = { bpm: 120, key: 'minor',
+  music: [[0, A(6) - .1, 'hard'], [A(6) - .1, A(7) - .1, 'tense'], [A(7) - .1, TIMELINE.end, 'hard']],
+  fx: [[0.2, 'buzz', .6], ...FAILS.flatMap(f => [[failT(f), 'buzz', .8], [failT(f), 'thud', .7]]), [wordT(6, /MAXIMUM/) - .05, 'scratch', .9], [wordT(6, /MAXIMUM/), 'thud', 1],
+       [A(7) + .1, 'click', 2], [A(7) + 1.2, 'click', 2], [A(8), 'pop', .5]] };
+startVideo(SC, CUES);
+</script>
+</body></html>

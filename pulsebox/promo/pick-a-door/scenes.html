@@ -1,0 +1,92 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../lib/stage.css"></head>
+<body>
+<script src="timeline.js"></script>
+<script src="../lib/art.js"></script>
+<script src="../lib/more.js"></script>
+<script src="../lib/games3.js"></script>
+<script>
+/* "Pick a door": three doors, three suitcases, six real Pulsebox games. */
+const A = i => VO[i - 1];
+const DOORS = [['cluck-launch', 3, '#ff4f6e', 'TO SPACE!'], ['pizza-empire', 4, '#ffd84d', '3.42 BILLION'], ['tiny-tee', 5, '#4fa3ff', 'HOLE IN ONE?']];
+const CASES = [['baggage-panic', 7, '#c0392b', 'PACK IT ALL'], ['stick-brawl', 8, '#3ddc84', 'FIGHT!'], ['cardboard-car-wars', 9, '#8a5cff', 'BUILD IT']];
+const DW = 270, DH = 480, DX = [200, 540, 880], DY = 640;
+function openK(t, line) { return eOut(prog(t, A(line) + .05, A(line) + .5)); }
+function door(i, t, k) {
+  const [id, , col] = DOORS[i], x = DX[i] - DW / 2, y = DY;
+  let s = R(x - 22, y - 22, DW + 44, DH + 30, 10, '#3a2a55', 8);
+  if (k > 0) s += nest(x, y, DW, DH, GAMES[id][1](t, DW, DH));
+  else s += R(x, y, DW, DH, 0, '#120b24', 0);
+  const e = x + DW * (1 - k * .88);
+  s += P(`M${x} ${y} L${e} ${y - k * 26} L${e} ${y + DH + k * 26} L${x} ${y + DH}Z`, col, 7) +
+    (k < .7 ? R(x + 24 + 0, y + 30, (e - x) - 48, DH * .38, 10, 'none', 5, 'opacity=".5"') + R(x + 24, y + DH * .52, (e - x) - 48, DH * .38, 10, 'none', 5, 'opacity=".5"') + C(e - 34, y + DH * .5, 14, '#ffd84d', 5) : '');
+  s += G(`translate(${DX[i]} ${y - 70})`, R(-60, -44, 120, 80, 16, '#ffd84d', 7) + T(0, 24, String(i + 1), 66, INK, 'middle', 'Luckiest'));
+  return s;
+}
+const CW_ = 290, CH_ = 230, CY = 900;
+function suitcase(i, t, k, belt) {
+  const [id, , col] = CASES[i], x = DX[i] - CW_ / 2 + belt, y = CY;
+  let s = R(x + CW_ / 2 - 50, y - 50, 100, 60, 26, 'none', 0, `stroke="${INK}" stroke-width="18"`) + R(x, y, CW_, CH_, 26, col, 8);
+  if (k > 0) s += nest(x + 14, y + 14, CW_ - 28, CH_ - 28, GAMES[id][1](t, CW_ - 28, CH_ - 28)) + R(x + 14, y + 14, CW_ - 28, CH_ - 28, 12, 'none', 5);
+  else s += L(x + 70, y, x + 70, y + CH_, 8, 'rgba(0,0,0,.3)') + L(x + CW_ - 70, y, x + CW_ - 70, y + CH_, 8, 'rgba(0,0,0,.3)');
+  if (k > 0) s += G(`translate(0 ${y}) scale(1 ${-k * .9})`, R(x, -CH_ * .55, CW_, CH_ * .55, 26, col, 8), `opacity="${1 - k * .3}"`);
+  s += G(`translate(${x + CW_ - 30} ${y + 40}) rotate(12)`, R(-40, -30, 80, 64, 10, '#fff7e0', 6) + T(0, 18, String(i + 1), 48, INK, 'middle', 'Luckiest'));
+  return s;
+}
+function stage(t) {
+  let s = R(-20, -20, 1120, 1960, 0, '#1c1240', 0);
+  for (let i = 0; i < 3; i++) s += `<path d="M${200 + i * 340} -20 L${60 + i * 340} 1400 L${340 + i * 340} 1400Z" fill="#fff" opacity="${.06 + .03 * Math.sin(t * 3 + i)}"/>`;
+  s += R(-20, 1200, 1120, 760, 0, '#2a1a5e', 0) + L(-20, 1200, 1100, 1200, 8);
+  for (let i = 0; i < 24; i++) s += C(30 + i * 45, 1190, 9, (Math.floor(t * 6) + i) % 2 ? '#ffd84d' : '#ff4fa3', 3);
+  return s;
+}
+function zoomInto(t, t0, cx, cy, w, inner) {   // camera push from the wide shot into one door/suitcase
+  const k = eIn(prog(t, t0, t0 + .55)), sc = lerp(1, 1080 / w * 1.02, k);
+  return G(`translate(540 960) scale(${sc}) translate(${-lerp(540, cx, k)} ${-lerp(960, cy, k)})`, inner);
+}
+function doorsScene(t, lt, openI) {
+  const ks = DOORS.map((d, i) => i < openI ? 1 : i === openI ? openK(t, d[1]) : 0);
+  const shake = t > A(2) && t < A(3) ? Math.sin(t * 50) * 5 : 0;
+  let wide = stage(t) + DOORS.map((d, i) => G(`translate(${shake * (i % 2 ? -1 : 1)} 0)`, door(i, t, ks[i]))).join('') + kidBack(540, 2010, 1.15, { t, tilt: Math.sin(t * 2) * 5 });
+  if (openI < 0) return wide;
+  const d = DOORS[openI], tz = A(d[1]) + .55;
+  if (t < tz + .55) return zoomInto(t, tz, DX[openI], DY + DH / 2, DW, wide);
+  return GAMES[d[0]][1](t, 1080, 1920) + tag(540, 330, 'DOOR ' + (openI + 1) + ': ' + GAMES[d[0]][0].toUpperCase(), d[2], pop(t, tz + .55, .3), -3) +
+    G(`translate(540 1780) rotate(3) scale(${pop(t, tz + .8, .3)})`, R(-290, -60, 580, 100, 20, '#fff', 8) + T(0, 14, d[3], 60, INK, 'middle', 'Luckiest'));
+}
+function casesScene(t, lt, openI) {
+  const belt = openI < 0 ? lerp(-1200, 0, eOut(prog(lt, 0, .7))) : 0;
+  const ks = CASES.map((c, i) => i < openI ? 1 : i === openI ? openK(t, c[1]) : 0);
+  let wide = stage(t) + R(-20, CY + CH_ + 20, 1120, 60, 0, '#3a3f55', 7);
+  for (let i = 0; i < 14; i++) wide += C(((i * 90 + t * 200) % 1260) - 40, CY + CH_ + 50, 18, '#8b93b8', 5);
+  wide += CASES.map((c, i) => suitcase(i, t, ks[i], belt)).join('') + kidBack(540, 2060, 1.15, { t, tilt: Math.sin(t * 2) * 5 });
+  if (openI < 0) return wide;
+  const c = CASES[openI], tz = A(c[1]) + .55;
+  if (t < tz + .55) return zoomInto(t, tz, DX[openI], CY + CH_ / 2, CW_, wide);
+  return GAMES[c[0]][1](t, 1080, 1920) + tag(540, 330, 'SUITCASE ' + (openI + 1) + ': ' + GAMES[c[0]][0].toUpperCase(), c[2], pop(t, tz + .55, .3), -3) +
+    G(`translate(540 1780) rotate(-3) scale(${pop(t, tz + .8, .3)})`, R(-290, -60, 580, 100, 20, '#fff', 8) + T(0, 14, c[3], 60, INK, 'middle', 'Luckiest'));
+}
+const tEnd = wordT(10, /box\.pulse/) - .1;
+const SC = [
+  [0, (t, lt) => G(`translate(540 960) scale(${lerp(1.3, 1, eOut(prog(lt, 0, .3)))}) translate(-540 -960)`, doorsScene(t, lt, -1)) +
+     (lt > .6 ? G(`translate(${540 + Math.sin(t * 3) * 340} 1420)`, E(0, 60, 60, 80, SKIN) + R(-20, -50, 40, 100, 20, SKIN)) : ''), 220],
+  [A(2) - .1, (t, lt) => doorsScene(t, lt, -1), 220],
+  ...DOORS.map((d, i) => [A(d[1]) - .1, (t, lt) => doorsScene(t, lt, i), 1560]),
+  [A(6) - .1, (t, lt) => casesScene(t, lt, -1), 220],
+  ...CASES.map((c, i) => [A(c[1]) - .1, (t, lt) => casesScene(t, lt, i), i === 0 ? 1250 : 1560]),
+  [A(10) - .1, (t, lt) => {                      // recap: all six, and Pulsebox
+    let s = R(-20, -20, 1120, 1960, 0, '#1c1240', 0) + rays(540, 900, 24, 1600, LIME, .07, t * .25);
+    [...DOORS, ...CASES].forEach(([id, , col], i) => { const x = DX[i % 3], y = i < 3 ? 640 : 1170, k = pop(lt, i * .07, .25);
+      s += G(`translate(${x} ${y}) scale(${k})`, R(-150, -220, 300, 440, 22, col, 8) + nest(-136, -206, 272, 360, GAMES[id][1](t, 272, 360)) + T(0, 205, (i < 3 ? 'DOOR ' : 'CASE ') + (i % 3 + 1), 34, INK, 'middle', 'Luckiest')); });
+    s += pulseboxLogo(540, 260, pop(t, wordT(10, /PULSEBOX/), .35) * .85);
+    return s;
+  }, 1560],
+  [tEnd, (t, lt) => endCard(t, lt, 'comment your 2 numbers'), 1560],
+];
+const CUES = { bpm: 104, key: 'bright',
+  music: [[0, A(2) - .1, 'hard'], [A(2) - .1, A(3) + .05, 'tense'], [A(3) + .05, A(6) - .1, 'hard'], [A(6) - .1, A(7) + .05, 'tense'], [A(7) + .05, TIMELINE.end, 'hard']],
+  fx: [[A(2), 'ticks', .5, A(3) - A(2) - .1, .07], [A(7) - 1.3, 'ticks', .5, 1.2, .07],
+       ...[...DOORS, ...CASES].flatMap(([, l]) => [[A(l) + .05, 'whoosh', .7], [A(l) + 1.1, 'ding', .6], [A(l) + 1.1, 'cheer', .4]]), [wordT(10, /PULSEBOX/), 'pop', .6], [tEnd, 'pop', .5]] };
+startVideo(SC, CUES);
+</script>
+</body></html>

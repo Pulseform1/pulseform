@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Build several videos one after another: bash lib/queue.sh dir1 dir2 ...
+cd "$(dirname "$0")/.."; for d in "$@"; do bash lib/make.sh "$d" video > "/tmp/make-$d.log" 2>&1 && echo "OK $d" || echo "FAIL $d"; done

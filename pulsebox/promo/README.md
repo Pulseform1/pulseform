@@ -12,6 +12,11 @@ so there are no samples or licences to track.
 | `one-more-game/` | "You said one more game. That was 8 hours ago." A night of Pulsebox games, 10 PM to sunrise | `one-more-game/out/pulsebox-one-more-game.mp4` |
 | `tier-list/` | "I ranked the games on a free website. #1 shocked me." S/A/B tier list, comment bait | `tier-list/out/pulsebox-tier-list.mp4` |
 | `guess-the-game/` | "Only real gamers can name all 5." Five clues, 3-2-1, reveal | `guess-the-game/out/pulsebox-guess-the-game.mp4` |
+| `play-with-friends/` | "Send this to the friend who thinks they're better than you." Best of five multiplayer games, room code | `play-with-friends/out/pulsebox-play-with-friends.mp4` |
+| `satisfying/` | "The most satisfying video you watch today." Slow-motion money shots, satisfaction meter | `satisfying/out/pulsebox-satisfying.mp4` |
+| `rage-games/` | "Do NOT play these games if you rage easily." Facecam, rage meter, cracked screen | `rage-games/out/pulsebox-rage-games.mp4` |
+| `pick-a-door/` | "Pick a door. 1, 2, or 3. No switching." Game show: doors and suitcases hide games | `pick-a-door/out/pulsebox-pick-a-door.mp4` |
+| `pulsebox-secrets/` | "5 things nobody tells you about Pulsebox. #5 isn't even out yet." Real features as top-secret files | `pulsebox-secrets/out/pulsebox-pulsebox-secrets.mp4` |
 
 ## Make or change a video
 
@@ -25,10 +30,11 @@ bash lib/make.sh one-more-game voice                 # voice + word timings only
 bash lib/make.sh one-more-game sheet 0.5 3 10 20     # preview stills in one-more-game/preview/
 python3 lib/sheet.py one-more-game 0.5 3 10 20       # ...as one contact sheet
 bash lib/make.sh one-more-game                       # the whole video -> one-more-game/out/
+bash lib/queue.sh tier-list satisfying               # several videos, one after another
 ```
 
-`lib/art.js` has the characters, props, the first six games and the caption engine; `lib/more.js` has nine more games
-(`GAMES` maps a game id to its title and draw function). Scenes are keyed to the voice (`VO[i]`, `wordT(line, /word/)`),
+`lib/art.js` has the characters, props, the first six games and the caption engine; `lib/more.js` and `lib/games3.js` have
+25 more games (`GAMES` maps a game id to its title and draw function; `lib/gallery.html` shows the newest 16 at once). Scenes are keyed to the voice (`VO[i]`, `wordT(line, /word/)`),
 so changing a line re-times the video by itself.
 
 Needs ffmpeg, node with Playwright (Chromium), and Python 3. `make.sh` sets up a venv with `kokoro-onnx`,

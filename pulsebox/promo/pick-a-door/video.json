@@ -1,0 +1,14 @@
+{"voice": "af_sky+bf_emma", "start": 0.15, "tail": 3.5,
+ "hot": ["door.", "switching.", "space.", "billions.", "golf.", "lucky.", "suitcase.", "bag.", "snowy", "cardboard", "box.", "PULSEBOX.", "box.pulseform.org", "numbers."],
+ "lines": [
+  {"say": "Pick a door. One, two, or three. No switching.", "cap": "Pick a door. 1, 2, or 3. No switching.", "speed": 1.05},
+  {"say": "Got it? Let's open them.", "gap": 1.2},
+  {"say": "Door one. You launch a chicken all the way to space.", "cap": "Door 1. You launch a chicken all the way to space.", "gap": 0.5},
+  {"say": "Door two. You run a pizza empire worth billions.", "cap": "Door 2. You run a pizza empire worth billions.", "gap": 0.6},
+  {"say": "Door three. Mini golf. Hole in one, if you're lucky.", "cap": "Door 3. Mini golf. Hole in one, if you're lucky.", "gap": 0.6},
+  {"say": "Now pick a suitcase.", "gap": 0.8},
+  {"say": "Suitcase one. Fit every awkward thing into your bag.", "cap": "Suitcase 1. Fit every awkward thing into your bag.", "gap": 1.2},
+  {"say": "Suitcase two. A stick fight on a snowy mountain.", "cap": "Suitcase 2. A stick fight on a snowy mountain.", "gap": 0.6},
+  {"say": "Suitcase three. A battle car made out of a cardboard box.", "cap": "Suitcase 3. A battle car made out of a cardboard box.", "gap": 0.6},
+  {"say": "Every one is a real game on Pulsebox. Box dot pulseform dot org. Comment your two numbers.", "cap": "Every one is a real game on PULSEBOX. box.pulseform.org Comment your two numbers.", "gap": 0.7}
+ ]}

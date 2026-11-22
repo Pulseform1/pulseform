@@ -1,0 +1,13 @@
+{"voice": "af_sky+bf_emma", "start": 0.15, "tail": 3.5,
+ "hot": ["satisfying", "perfect", "stack.", "cleared.", "clean", "merged", "exact", "color.", "right", "in.", "PULSEBOX.", "box.pulseform.org", "most"],
+ "lines": [
+  {"say": "This might be the most satisfying video you watch today.", "speed": 1.0},
+  {"say": "A perfect stack.", "gap": 0.9, "speed": 1.0},
+  {"say": "A whole line, cleared.", "gap": 1.6, "speed": 1.0},
+  {"say": "Fruit, sliced clean in half.", "gap": 1.6, "speed": 1.0},
+  {"say": "Two monsters, merged into one.", "gap": 1.6, "speed": 1.0},
+  {"say": "A ball, slipping through the exact right color.", "gap": 1.6, "speed": 1.0},
+  {"say": "And a putt that rolls right in.", "gap": 1.6, "speed": 1.0},
+  {"say": "All of these are free games on Pulsebox.", "cap": "All of these are free games on PULSEBOX.", "gap": 1.6, "speed": 1.05},
+  {"say": "Box dot pulseform dot org. Which one was the most satisfying?", "cap": "box.pulseform.org Which one was the most satisfying?", "gap": 0.4, "speed": 1.05}
+ ]}

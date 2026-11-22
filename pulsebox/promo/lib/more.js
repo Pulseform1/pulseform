@@ -150,7 +150,7 @@ const GAMES = MINI;   // id -> [title, drawFn]
 function fullGame(id, t, title, col = LIME, tagY = 300, tagK = 1) {   // a game full-bleed with its name tag
   return GAMES[id][1](t, 1080, 1920) + (title !== false ? tag(540, tagY, title || GAMES[id][0].toUpperCase(), col, tagK, -4) : '');
 }
-function tag(x, y, txt, col = LIME, k = 1, rot = -4) { return G(`translate(${x} ${y}) rotate(${rot}) scale(${k})`, R(-txt.length * 24 - 40, -64, txt.length * 48 + 80, 100, 22, col, 8) + T(0, 8, txt, 64, INK, 'middle', 'Luckiest')); }
+function tag(x, y, txt, col = LIME, k = 1, rot = -4) { k *= Math.min(1, 1010 / (txt.length * 48 + 80)); return G(`translate(${x} ${y}) rotate(${rot}) scale(${k})`, R(-txt.length * 24 - 40, -64, txt.length * 48 + 80, 100, 22, col, 8) + T(0, 8, txt, 64, INK, 'middle', 'Luckiest')); }
 function urlPill(x, y, k = 1) { return G(`translate(${x} ${y}) scale(${k})`, R(-450, -80, 900, 140, 70, LIME, 9) + T(0, 26, 'box.pulseform.org', 78, INK, 'middle', 'Chakra')); }
 function pulseboxLogo(x, y, k = 1) { return G(`translate(${x} ${y}) scale(${k})`, logoMark(-390, -60, 4.6) + `<text x="-250" y="40" font-family="Chakra" font-size="122" fill="#fff" stroke="${INK}" stroke-width="14" paint-order="stroke">PULSE<tspan fill="${LIME}">BOX</tspan></text>`); }
 function endCard(t, lt, line2 = 'what should game #78 be?') {

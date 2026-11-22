@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../lib/stage.css"></head>
+<body>
+<script src="timeline.js"></script>
+<script src="../lib/art.js"></script>
+<script src="../lib/more.js"></script>
+<script src="../lib/games3.js"></script>
+<script>
+/* "Send this to your friend": five multiplayer rounds, best of five. */
+const A = i => VO[i - 1];
+const lineEnd = i => TIMELINE.lines[i - 1].at + TIMELINE.lines[i - 1].dur;
+// [game, voice line, who wins the round: 0 = you, 1 = them, colour]
+const ROUNDS = [['bumper-brawl', 2, 0, '#b14fff'], ['paint-wars', 3, 1, '#ff4f6e'], ['sea-battle', 4, 0, '#4fa3ff'], ['doodle-guess', 5, 1, '#ffd84d'], ['turbo-laps', 6, 0, LIME]];
+const decided = i => lineEnd(ROUNDS[i][1]) - .1;           // the round's result lands as its line ends
+function score(t) { let a = 0, b = 0; ROUNDS.forEach(([, , w], i) => { if (t >= decided(i)) w ? b++ : a++; }); return [a, b]; }
+function lastWinner(t) { let w = -1; ROUNDS.forEach((r, i) => { if (t >= decided(i)) w = r[2]; }); return w; }
+function duo(t, y, k, big = false) {                          // you (left) vs them (right)
+  const w = lastWinner(t), fresh = ROUNDS.some((r, i) => t >= decided(i) && t < decided(i) + .9);
+  const you = { t, hoodie: '#7457ff', mouth: w === 0 ? 'grin' : w === 1 ? 'o' : 'smile', brow: w === 1 ? 'mad' : 'up', armsUp: fresh && w === 0, lookX: .4 };
+  const them = { t: t + 1, hoodie: '#ff8a3d', hair: '#e8c07a', mouth: w === 1 ? 'grin' : w === 0 ? 'o' : 'smile', brow: w === 0 ? 'mad' : 'up', armsUp: fresh && w === 1, lookX: -.4 };
+  return kidFront(250, y, k, you) + kidFront(830, y, k, them) +
+    tag(250, y + 300 * k + 40, 'YOU', LIME, big ? 1 : .8, -4) + tag(830, y + 300 * k + 40, 'THEM', '#ff8a3d', big ? 1 : .8, 4);
+}
+function scoreboard(t, x, y) {
+  const [a, b] = score(t), bump = ROUNDS.some((r, i) => t >= decided(i) && t < decided(i) + .3) ? 1.15 : 1;
+  return G(`translate(${x} ${y}) scale(${bump})`, R(-150, -70, 300, 120, 24, '#0c0f24', 8) + T(-60, 26, String(a), 90, LIME, 'middle', 'Luckiest') + T(0, 22, '-', 80, '#fff', 'middle', 'Luckiest') + T(60, 26, String(b), 90, '#ff8a3d', 'middle', 'Luckiest'));
+}
+function roundScene(t, lt, i) {
+  const [id, line, win, col] = ROUNDS[i];
+  let s = R(-20, -20, 1120, 1960, 0, '#141838', 0) + rays(540, 800, 22, 1500, col, .07, t * .25);
+  const k = lerp(.75, 1, eOut(prog(lt, 0, .25)));
+  s += G(`translate(540 800) scale(${k}) translate(-540 -800)`, R(50, 330, 980, 920, 36, '#262b45', 9) + nest(70, 350, 940, 880, GAMES[id][1](t, 940, 880)) + R(70, 350, 940, 880, 24, 'none', 7));
+  s += tag(540, 340, i === 4 ? 'FINAL: ' + GAMES[id][0].toUpperCase() : 'ROUND ' + (i + 1) + ': ' + GAMES[id][0].toUpperCase(), col, pop(lt, .05, .3), -3);
+  s += duo(t, 1450, .62) + scoreboard(t, 540, 1430);
+  const d = decided(i);
+  if (t >= d) s += G(`translate(${win ? 830 : 250} 1130) scale(${pop(t, d, .25)})`, burst(0, 0, 70, 120, 12, '#ffd84d', t, 7) + TS(0, 22, '+1', 80, '#fff', 10));
+  return s;
+}
+const SC = [
+  [0, (t, lt) => {                               // HOOK: face-off
+    let s = R(-20, -20, 1120, 1960, 0, '#141838', 0) + rays(540, 1000, 26, 1600, LIME, .08, t * .3);
+    s += G(`translate(${lerp(-400, 0, eOut(prog(lt, 0, .3)))} 0)`, kidFront(270, 1100, 1.05, { t, mouth: 'grin', brow: 'mad', lookX: .6 }) + tag(270, 1520, 'YOU', LIME, 1, -4));
+    s += G(`translate(${lerp(400, 0, eOut(prog(lt, 0, .3)))} 0)`, kidFront(810, 1100, 1.05, { t: t + 1, hoodie: '#ff8a3d', hair: '#e8c07a', mouth: 'grin', brow: 'mad', lookX: -.6 }) + tag(810, 1520, 'THEM', '#ff8a3d', 1, 4));
+    s += P(`M540 700 L500 900 L570 900 L520 1120`, 'none', 0, `stroke="#ffd84d" stroke-width="26" stroke-linejoin="round" filter="url(#blur8)"`) + P(`M540 700 L500 900 L570 900 L520 1120`, 'none', 9);
+    s += G(`translate(540 1300) scale(${pop(lt, .2, .3)})`, TS(0, 0, 'VS', 220, '#ffd84d', 18));
+    return s;
+  }, 170],
+  ...ROUNDS.map((r, i) => [A(r[1]) - .1, (t, lt) => roundScene(t, lt, i), 170]),
+  [A(7) - .1, (t, lt) => {                       // the room code
+    let s = R(-20, -20, 1120, 1960, 0, '#101330', 0) + rays(540, 900, 24, 1600, LIME, .08, t * .25);
+    s += pulseboxLogo(540, 520, pop(lt, .05, .3) * .9);
+    s += G(`translate(540 830) scale(${pop(t, wordT(7, /^code/), .3)})`, R(-380, -130, 760, 230, 30, '#fff', 9) + T(0, -60, 'ROOM CODE', 40, '#8b93b8', 'middle', 'Chakra') + T(0, 60, 'K7QX', 140, INK, 'middle', 'Luckiest'));
+    const kids = [['#7457ff', '#3b2416'], ['#ff8a3d', '#e8c07a'], ['#3ddc84', '#a0522d'], ['#e5484d', '#1b1b1b']], tj = wordT(7, /^jump/);
+    kids.forEach(([h, hair], i) => { const k = pop(t, tj - .3 + i * .18, .3); if (k > 0) s += G(`translate(${180 + i * 240} 1300) scale(${k})`, kidFront(0, 0, .55, { t: t + i, hoodie: h, hair, mouth: 'grin', armsUp: true })); });
+    return s;
+  }, 1560],
+  [A(8) - .1, (t, lt) => endCard(t, lt, 'loser buys the snacks'), 1560],
+];
+const CUES = { bpm: 112, key: 'bright',
+  music: [[0, TIMELINE.end, 'hard']],
+  fx: [[0.35, 'thud', .8], ...ROUNDS.flatMap((r, i) => [[decided(i), 'ding', .6], [decided(i) + .05, 'cheer', .5]]), [wordT(7, /^code/), 'thud', .7], [wordT(7, /^jump/), 'pop', .5], [wordT(7, /^jump/) + .2, 'pop', .5], [A(8), 'pop', .5]] };
+startVideo(SC, CUES);
+</script>
+</body></html>

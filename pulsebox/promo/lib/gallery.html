@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="stage.css"></head><body>
+<!-- Dev page: every redrawn game at phone size. node render.js lib gallery -->
+<script>window.TIMELINE = { end: 1, fps: 30, lines: [], caps: [], code: [] };</script>
+<script src="art.js"></script><script src="more.js"></script><script src="games3.js"></script>
+<script>
+const ids = Object.keys(GAMES).slice(-16);
+startVideo([[0, (t) => { let s = R(-20, -20, 1120, 1960, 0, '#000', 0);
+  ids.forEach((id, i) => { const x = (i % 4) * 270, y = Math.floor(i / 4) * 480; s += nest(x + 4, y + 4, 262, 472, GAMES[id][1](t, 262, 472)) + T(x + 135, y + 470, id, 22, '#fff', 'middle', 'Chakra', `stroke="${INK}" stroke-width="5" paint-order="stroke"`); });
+  return s; }, null]]);
+</script></body></html>

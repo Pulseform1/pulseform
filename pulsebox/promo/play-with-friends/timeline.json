@@ -1,0 +1,669 @@
+{
+ "end": 29.97,
+ "fps": 30,
+ "lines": [
+  {
+   "n": 1,
+   "at": 0.15,
+   "dur": 2.56,
+   "file": "/home/user/pulseform/pulsebox/promo/play-with-friends/vo/01-64736cba59.wav",
+   "say": "Send this to the friend who thinks they're better than you."
+  },
+  {
+   "n": 2,
+   "at": 3.31,
+   "dur": 2.539,
+   "file": "/home/user/pulseform/pulsebox/promo/play-with-friends/vo/02-c763c24887.wav",
+   "say": "Round one. Bumper Brawl. Knock them out of the ring."
+  },
+  {
+   "n": 3,
+   "at": 6.449,
+   "dur": 2.731,
+   "file": "/home/user/pulseform/pulsebox/promo/play-with-friends/vo/03-e30537af1b.wav",
+   "say": "Round two. Paint Wars. Cover more of the map than them."
+  },
+  {
+   "n": 4,
+   "at": 9.779,
+   "dur": 2.389,
+   "file": "/home/user/pulseform/pulsebox/promo/play-with-friends/vo/04-234af5f060.wav",
+   "say": "Round three. Sea Battle. Sink their ships first."
+  },
+  {
+   "n": 5,
+   "at": 12.769,
+   "dur": 2.368,
+   "file": "/home/user/pulseform/pulsebox/promo/play-with-friends/vo/05-90cf142540.wav",
+   "say": "Round four. Doodle Guess. Draw a cat. Badly."
+  },
+  {
+   "n": 6,
+   "at": 15.737,
+   "dur": 2.475,
+   "file": "/home/user/pulseform/pulsebox/promo/play-with-friends/vo/06-6c7fb1aebe.wav",
+   "say": "Final round. Turbo Laps. Winner takes all."
+  },
+  {
+   "n": 7,
+   "at": 19.011,
+   "dur": 3.883,
+   "file": "/home/user/pulseform/pulsebox/promo/play-with-friends/vo/07-de56202a40.wav",
+   "say": "Make a room on Pulsebox, share the code, and your friends jump right in. It's free."
+  },
+  {
+   "n": 8,
+   "at": 23.294,
+   "dur": 3.179,
+   "file": "/home/user/pulseform/pulsebox/promo/play-with-friends/vo/08-30c7610abc.wav",
+   "say": "Box dot pulseform dot org. Loser buys the snacks."
+  }
+ ],
+ "caps": [
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "Send",
+     "t": 0.15,
+     "hot": true
+    },
+    {
+     "w": "this",
+     "t": 0.35,
+     "hot": false
+    },
+    {
+     "w": "to",
+     "t": 0.53,
+     "hot": false
+    }
+   ],
+   "start": 0.15,
+   "end": 0.69
+  },
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "the",
+     "t": 0.69,
+     "hot": false
+    },
+    {
+     "w": "friend",
+     "t": 0.77,
+     "hot": true
+    },
+    {
+     "w": "who",
+     "t": 1.03,
+     "hot": false
+    }
+   ],
+   "start": 0.69,
+   "end": 1.43
+  },
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "thinks",
+     "t": 1.43,
+     "hot": false
+    },
+    {
+     "w": "they're",
+     "t": 1.59,
+     "hot": false
+    },
+    {
+     "w": "better",
+     "t": 1.87,
+     "hot": true
+    }
+   ],
+   "start": 1.43,
+   "end": 2.07
+  },
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "than",
+     "t": 2.07,
+     "hot": false
+    },
+    {
+     "w": "you.",
+     "t": 2.29,
+     "hot": false
+    }
+   ],
+   "start": 2.07,
+   "end": 2.63
+  },
+  {
+   "line": 2,
+   "words": [
+    {
+     "w": "Round",
+     "t": 3.31,
+     "hot": false
+    },
+    {
+     "w": "1.",
+     "t": 3.47,
+     "hot": false
+    }
+   ],
+   "start": 3.31,
+   "end": 3.89
+  },
+  {
+   "line": 2,
+   "words": [
+    {
+     "w": "Bumper",
+     "t": 3.89,
+     "hot": true
+    },
+    {
+     "w": "Brawl.",
+     "t": 4.09,
+     "hot": false
+    }
+   ],
+   "start": 3.89,
+   "end": 4.79
+  },
+  {
+   "line": 2,
+   "words": [
+    {
+     "w": "Knock",
+     "t": 4.79,
+     "hot": false
+    },
+    {
+     "w": "them",
+     "t": 4.93,
+     "hot": false
+    },
+    {
+     "w": "out",
+     "t": 5.15,
+     "hot": false
+    }
+   ],
+   "start": 4.79,
+   "end": 5.27
+  },
+  {
+   "line": 2,
+   "words": [
+    {
+     "w": "of",
+     "t": 5.27,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 5.35,
+     "hot": false
+    },
+    {
+     "w": "ring.",
+     "t": 5.43,
+     "hot": false
+    }
+   ],
+   "start": 5.27,
+   "end": 5.73
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "Round",
+     "t": 6.449,
+     "hot": false
+    },
+    {
+     "w": "2.",
+     "t": 6.589,
+     "hot": false
+    }
+   ],
+   "start": 6.449,
+   "end": 7.089
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "Paint",
+     "t": 7.089,
+     "hot": true
+    },
+    {
+     "w": "Wars.",
+     "t": 7.209,
+     "hot": false
+    }
+   ],
+   "start": 7.089,
+   "end": 7.869
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "Cover",
+     "t": 7.869,
+     "hot": false
+    },
+    {
+     "w": "more",
+     "t": 7.989,
+     "hot": false
+    },
+    {
+     "w": "of",
+     "t": 8.229,
+     "hot": false
+    }
+   ],
+   "start": 7.869,
+   "end": 8.369
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "the",
+     "t": 8.369,
+     "hot": false
+    },
+    {
+     "w": "map",
+     "t": 8.449,
+     "hot": false
+    },
+    {
+     "w": "than",
+     "t": 8.609,
+     "hot": false
+    }
+   ],
+   "start": 8.369,
+   "end": 8.829
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "them.",
+     "t": 8.829,
+     "hot": false
+    }
+   ],
+   "start": 8.829,
+   "end": 9.109
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "Round",
+     "t": 9.779,
+     "hot": false
+    },
+    {
+     "w": "3.",
+     "t": 9.939,
+     "hot": false
+    }
+   ],
+   "start": 9.779,
+   "end": 10.259
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "Sea",
+     "t": 10.259,
+     "hot": true
+    },
+    {
+     "w": "Battle.",
+     "t": 10.439,
+     "hot": false
+    }
+   ],
+   "start": 10.259,
+   "end": 11.039
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "Sink",
+     "t": 11.039,
+     "hot": false
+    },
+    {
+     "w": "their",
+     "t": 11.159,
+     "hot": false
+    },
+    {
+     "w": "ships",
+     "t": 11.319,
+     "hot": false
+    }
+   ],
+   "start": 11.039,
+   "end": 11.519
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "first.",
+     "t": 11.519,
+     "hot": false
+    }
+   ],
+   "start": 11.519,
+   "end": 11.979
+  },
+  {
+   "line": 5,
+   "words": [
+    {
+     "w": "Round",
+     "t": 12.769,
+     "hot": false
+    },
+    {
+     "w": "4.",
+     "t": 12.909,
+     "hot": false
+    }
+   ],
+   "start": 12.769,
+   "end": 13.349
+  },
+  {
+   "line": 5,
+   "words": [
+    {
+     "w": "Doodle",
+     "t": 13.349,
+     "hot": true
+    },
+    {
+     "w": "Guess.",
+     "t": 13.569,
+     "hot": false
+    }
+   ],
+   "start": 13.349,
+   "end": 14.069
+  },
+  {
+   "line": 5,
+   "words": [
+    {
+     "w": "Draw",
+     "t": 14.069,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 14.149,
+     "hot": false
+    },
+    {
+     "w": "cat.",
+     "t": 14.269,
+     "hot": false
+    }
+   ],
+   "start": 14.069,
+   "end": 14.469
+  },
+  {
+   "line": 5,
+   "words": [
+    {
+     "w": "Badly.",
+     "t": 14.469,
+     "hot": false
+    }
+   ],
+   "start": 14.469,
+   "end": 14.929
+  },
+  {
+   "line": 6,
+   "words": [
+    {
+     "w": "Final",
+     "t": 15.737,
+     "hot": false
+    },
+    {
+     "w": "round.",
+     "t": 15.977,
+     "hot": false
+    }
+   ],
+   "start": 15.737,
+   "end": 16.237
+  },
+  {
+   "line": 6,
+   "words": [
+    {
+     "w": "Turbo",
+     "t": 16.237,
+     "hot": true
+    },
+    {
+     "w": "Laps.",
+     "t": 16.617,
+     "hot": false
+    }
+   ],
+   "start": 16.237,
+   "end": 17.117
+  },
+  {
+   "line": 6,
+   "words": [
+    {
+     "w": "Winner",
+     "t": 17.117,
+     "hot": false
+    },
+    {
+     "w": "takes",
+     "t": 17.417,
+     "hot": true
+    },
+    {
+     "w": "all.",
+     "t": 17.697,
+     "hot": false
+    }
+   ],
+   "start": 17.117,
+   "end": 18.077
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "Make",
+     "t": 19.011,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 19.231,
+     "hot": false
+    },
+    {
+     "w": "room",
+     "t": 19.341,
+     "hot": false
+    }
+   ],
+   "start": 19.011,
+   "end": 19.56
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "on",
+     "t": 19.56,
+     "hot": false
+    },
+    {
+     "w": "PULSEBOX,",
+     "t": 19.707,
+     "hot": false
+    }
+   ],
+   "start": 19.56,
+   "end": 20.109
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "share",
+     "t": 20.109,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 20.366,
+     "hot": false
+    },
+    {
+     "w": "code,",
+     "t": 20.549,
+     "hot": false
+    }
+   ],
+   "start": 20.109,
+   "end": 20.805
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "and",
+     "t": 20.805,
+     "hot": false
+    },
+    {
+     "w": "your",
+     "t": 20.988,
+     "hot": false
+    },
+    {
+     "w": "friends",
+     "t": 21.207,
+     "hot": false
+    }
+   ],
+   "start": 20.805,
+   "end": 21.537
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "jump",
+     "t": 21.537,
+     "hot": false
+    },
+    {
+     "w": "right",
+     "t": 21.756,
+     "hot": false
+    },
+    {
+     "w": "in.",
+     "t": 22.013,
+     "hot": false
+    }
+   ],
+   "start": 21.537,
+   "end": 22.196
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "It's",
+     "t": 22.196,
+     "hot": false
+    },
+    {
+     "w": "free.",
+     "t": 22.415,
+     "hot": false
+    }
+   ],
+   "start": 22.196,
+   "end": 22.791
+  },
+  {
+   "line": 8,
+   "words": [
+    {
+     "w": "box.pulseform.org",
+     "t": 23.294,
+     "hot": true
+    },
+    {
+     "w": "Loser",
+     "t": 24.451,
+     "hot": false
+    },
+    {
+     "w": "buys",
+     "t": 24.877,
+     "hot": false
+    }
+   ],
+   "start": 23.294,
+   "end": 25.242
+  },
+  {
+   "line": 8,
+   "words": [
+    {
+     "w": "the",
+     "t": 25.242,
+     "hot": false
+    },
+    {
+     "w": "snacks.",
+     "t": 25.546,
+     "hot": false
+    }
+   ],
+   "start": 25.242,
+   "end": 26.214
+  }
+ ],
+ "code": []
+}

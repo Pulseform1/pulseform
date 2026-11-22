@@ -1,0 +1,12 @@
+{"voice": "af_sky+bf_emma", "start": 0.15, "tail": 3.5,
+ "hot": ["NOT", "rage", "Chaos", "Climb.", "start.", "Tank", "Trouble.", "you.", "Penalty", "Shootout.", "keeper.", "Axe", "Spin.", "over.", "MAXIMUM.", "again.", "PULSEBOX.", "box.pulseform.org", "game?"],
+ "lines": [
+  {"say": "Do not play these games if you rage easily.", "cap": "Do NOT play these games if you rage easily.", "speed": 1.05},
+  {"say": "Chaos Climb. One saw blade, and you're back at the start.", "gap": 0.6},
+  {"say": "Tank Trouble. Your own bullet bounces back, and hits you.", "gap": 0.6},
+  {"say": "Penalty Shootout. You pick a corner. So does the keeper.", "gap": 0.6},
+  {"say": "Axe Spin. Hit another axe, and it's over.", "gap": 0.6},
+  {"say": "Rage level. Maximum.", "cap": "Rage level: MAXIMUM.", "gap": 0.6, "speed": 1.0},
+  {"say": "And you'll still press play again.", "gap": 0.8},
+  {"say": "They're all free on Pulsebox. Box dot pulseform dot org. What's your rage game?", "cap": "They're all free on PULSEBOX. box.pulseform.org What's your rage game?", "gap": 0.6}
+ ]}

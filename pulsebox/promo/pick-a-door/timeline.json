@@ -1,0 +1,795 @@
+{
+ "end": 37.31,
+ "fps": 30,
+ "lines": [
+  {
+   "n": 1,
+   "at": 0.15,
+   "dur": 2.389,
+   "file": "/home/user/pulseform/pulsebox/promo/pick-a-door/vo/01-9a057efd90.wav",
+   "say": "Pick a door. One, two, or three. No switching."
+  },
+  {
+   "n": 2,
+   "at": 3.739,
+   "dur": 1.429,
+   "file": "/home/user/pulseform/pulsebox/promo/pick-a-door/vo/02-10746ab18d.wav",
+   "say": "Got it? Let's open them."
+  },
+  {
+   "n": 3,
+   "at": 5.669,
+   "dur": 2.667,
+   "file": "/home/user/pulseform/pulsebox/promo/pick-a-door/vo/03-1ed111ddb3.wav",
+   "say": "Door one. You launch a chicken all the way to space."
+  },
+  {
+   "n": 4,
+   "at": 8.935,
+   "dur": 2.709,
+   "file": "/home/user/pulseform/pulsebox/promo/pick-a-door/vo/04-34816e6b65.wav",
+   "say": "Door two. You run a pizza empire worth billions."
+  },
+  {
+   "n": 5,
+   "at": 12.245,
+   "dur": 2.496,
+   "file": "/home/user/pulseform/pulsebox/promo/pick-a-door/vo/05-0df36102a9.wav",
+   "say": "Door three. Mini golf. Hole in one, if you're lucky."
+  },
+  {
+   "n": 6,
+   "at": 15.541,
+   "dur": 1.344,
+   "file": "/home/user/pulseform/pulsebox/promo/pick-a-door/vo/06-c4dc136d2c.wav",
+   "say": "Now pick a suitcase."
+  },
+  {
+   "n": 7,
+   "at": 18.085,
+   "dur": 2.795,
+   "file": "/home/user/pulseform/pulsebox/promo/pick-a-door/vo/07-6d35bfc51d.wav",
+   "say": "Suitcase one. Fit every awkward thing into your bag."
+  },
+  {
+   "n": 8,
+   "at": 21.479,
+   "dur": 2.645,
+   "file": "/home/user/pulseform/pulsebox/promo/pick-a-door/vo/08-8117374392.wav",
+   "say": "Suitcase two. A stick fight on a snowy mountain."
+  },
+  {
+   "n": 9,
+   "at": 24.725,
+   "dur": 3.157,
+   "file": "/home/user/pulseform/pulsebox/promo/pick-a-door/vo/09-6ab7e936eb.wav",
+   "say": "Suitcase three. A battle car made out of a cardboard box."
+  },
+  {
+   "n": 10,
+   "at": 28.582,
+   "dur": 5.227,
+   "file": "/home/user/pulseform/pulsebox/promo/pick-a-door/vo/10-1a04ff34bf.wav",
+   "say": "Every one is a real game on Pulsebox. Box dot pulseform dot org. Comment your two numbers."
+  }
+ ],
+ "caps": [
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "Pick",
+     "t": 0.15,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 0.23,
+     "hot": false
+    },
+    {
+     "w": "door.",
+     "t": 0.31,
+     "hot": false
+    }
+   ],
+   "start": 0.15,
+   "end": 0.79
+  },
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "1,",
+     "t": 0.79,
+     "hot": false
+    }
+   ],
+   "start": 0.79,
+   "end": 1.03
+  },
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "2,",
+     "t": 1.03,
+     "hot": false
+    }
+   ],
+   "start": 1.03,
+   "end": 1.31
+  },
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "or",
+     "t": 1.31,
+     "hot": false
+    },
+    {
+     "w": "3.",
+     "t": 1.35,
+     "hot": false
+    }
+   ],
+   "start": 1.31,
+   "end": 1.75
+  },
+  {
+   "line": 1,
+   "words": [
+    {
+     "w": "No",
+     "t": 1.75,
+     "hot": false
+    },
+    {
+     "w": "switching.",
+     "t": 1.85,
+     "hot": false
+    }
+   ],
+   "start": 1.75,
+   "end": 2.25
+  },
+  {
+   "line": 2,
+   "words": [
+    {
+     "w": "Got",
+     "t": 3.739,
+     "hot": false
+    },
+    {
+     "w": "it?",
+     "t": 3.939,
+     "hot": false
+    }
+   ],
+   "start": 3.739,
+   "end": 4.219
+  },
+  {
+   "line": 2,
+   "words": [
+    {
+     "w": "Let's",
+     "t": 4.219,
+     "hot": false
+    },
+    {
+     "w": "open",
+     "t": 4.419,
+     "hot": false
+    },
+    {
+     "w": "them.",
+     "t": 4.659,
+     "hot": false
+    }
+   ],
+   "start": 4.219,
+   "end": 5.019
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "Door",
+     "t": 5.669,
+     "hot": false
+    },
+    {
+     "w": "1.",
+     "t": 5.809,
+     "hot": false
+    }
+   ],
+   "start": 5.669,
+   "end": 6.309
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "You",
+     "t": 6.309,
+     "hot": false
+    },
+    {
+     "w": "launch",
+     "t": 6.409,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 6.569,
+     "hot": false
+    }
+   ],
+   "start": 6.309,
+   "end": 6.729
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "chicken",
+     "t": 6.729,
+     "hot": false
+    },
+    {
+     "w": "all",
+     "t": 6.949,
+     "hot": false
+    },
+    {
+     "w": "the",
+     "t": 7.269,
+     "hot": false
+    }
+   ],
+   "start": 6.729,
+   "end": 7.409
+  },
+  {
+   "line": 3,
+   "words": [
+    {
+     "w": "way",
+     "t": 7.409,
+     "hot": false
+    },
+    {
+     "w": "to",
+     "t": 7.549,
+     "hot": false
+    },
+    {
+     "w": "space.",
+     "t": 7.729,
+     "hot": false
+    }
+   ],
+   "start": 7.409,
+   "end": 8.069
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "Door",
+     "t": 8.935,
+     "hot": false
+    },
+    {
+     "w": "2.",
+     "t": 9.055,
+     "hot": false
+    }
+   ],
+   "start": 8.935,
+   "end": 9.595
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "You",
+     "t": 9.595,
+     "hot": false
+    },
+    {
+     "w": "run",
+     "t": 9.655,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 9.795,
+     "hot": false
+    }
+   ],
+   "start": 9.595,
+   "end": 9.875
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "pizza",
+     "t": 9.875,
+     "hot": false
+    },
+    {
+     "w": "empire",
+     "t": 10.135,
+     "hot": false
+    },
+    {
+     "w": "worth",
+     "t": 10.395,
+     "hot": false
+    }
+   ],
+   "start": 9.875,
+   "end": 10.875
+  },
+  {
+   "line": 4,
+   "words": [
+    {
+     "w": "billions.",
+     "t": 10.875,
+     "hot": false
+    }
+   ],
+   "start": 10.875,
+   "end": 11.295
+  },
+  {
+   "line": 5,
+   "words": [
+    {
+     "w": "Door",
+     "t": 12.245,
+     "hot": false
+    },
+    {
+     "w": "3.",
+     "t": 12.365,
+     "hot": false
+    }
+   ],
+   "start": 12.245,
+   "end": 12.665
+  },
+  {
+   "line": 5,
+   "words": [
+    {
+     "w": "Mini",
+     "t": 12.665,
+     "hot": false
+    },
+    {
+     "w": "golf.",
+     "t": 12.885,
+     "hot": false
+    }
+   ],
+   "start": 12.665,
+   "end": 13.605
+  },
+  {
+   "line": 5,
+   "words": [
+    {
+     "w": "Hole",
+     "t": 13.605,
+     "hot": false
+    },
+    {
+     "w": "in",
+     "t": 13.685,
+     "hot": false
+    },
+    {
+     "w": "one,",
+     "t": 13.825,
+     "hot": false
+    }
+   ],
+   "start": 13.605,
+   "end": 13.965
+  },
+  {
+   "line": 5,
+   "words": [
+    {
+     "w": "if",
+     "t": 13.965,
+     "hot": false
+    },
+    {
+     "w": "you're",
+     "t": 14.125,
+     "hot": false
+    },
+    {
+     "w": "lucky.",
+     "t": 14.225,
+     "hot": false
+    }
+   ],
+   "start": 13.965,
+   "end": 14.505
+  },
+  {
+   "line": 6,
+   "words": [
+    {
+     "w": "Now",
+     "t": 15.541,
+     "hot": false
+    },
+    {
+     "w": "pick",
+     "t": 15.741,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 15.961,
+     "hot": false
+    }
+   ],
+   "start": 15.541,
+   "end": 16.041
+  },
+  {
+   "line": 6,
+   "words": [
+    {
+     "w": "suitcase.",
+     "t": 16.041,
+     "hot": false
+    }
+   ],
+   "start": 16.041,
+   "end": 16.401
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "Suitcase",
+     "t": 18.085,
+     "hot": false
+    },
+    {
+     "w": "1.",
+     "t": 18.465,
+     "hot": false
+    }
+   ],
+   "start": 18.085,
+   "end": 18.985
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "Fit",
+     "t": 18.985,
+     "hot": false
+    },
+    {
+     "w": "every",
+     "t": 19.185,
+     "hot": false
+    },
+    {
+     "w": "awkward",
+     "t": 19.505,
+     "hot": false
+    }
+   ],
+   "start": 18.985,
+   "end": 19.745
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "thing",
+     "t": 19.745,
+     "hot": false
+    },
+    {
+     "w": "into",
+     "t": 20.065,
+     "hot": false
+    },
+    {
+     "w": "your",
+     "t": 20.265,
+     "hot": false
+    }
+   ],
+   "start": 19.745,
+   "end": 20.405
+  },
+  {
+   "line": 7,
+   "words": [
+    {
+     "w": "bag.",
+     "t": 20.405,
+     "hot": false
+    }
+   ],
+   "start": 20.405,
+   "end": 20.705
+  },
+  {
+   "line": 8,
+   "words": [
+    {
+     "w": "Suitcase",
+     "t": 21.479,
+     "hot": false
+    },
+    {
+     "w": "2.",
+     "t": 21.839,
+     "hot": false
+    }
+   ],
+   "start": 21.479,
+   "end": 22.379
+  },
+  {
+   "line": 8,
+   "words": [
+    {
+     "w": "A",
+     "t": 22.379,
+     "hot": false
+    },
+    {
+     "w": "stick",
+     "t": 22.459,
+     "hot": false
+    },
+    {
+     "w": "fight",
+     "t": 22.639,
+     "hot": false
+    }
+   ],
+   "start": 22.379,
+   "end": 22.899
+  },
+  {
+   "line": 8,
+   "words": [
+    {
+     "w": "on",
+     "t": 22.899,
+     "hot": false
+    },
+    {
+     "w": "a",
+     "t": 23.079,
+     "hot": false
+    },
+    {
+     "w": "snowy",
+     "t": 23.139,
+     "hot": true
+    }
+   ],
+   "start": 22.899,
+   "end": 23.339
+  },
+  {
+   "line": 8,
+   "words": [
+    {
+     "w": "mountain.",
+     "t": 23.339,
+     "hot": false
+    }
+   ],
+   "start": 23.339,
+   "end": 23.879
+  },
+  {
+   "line": 9,
+   "words": [
+    {
+     "w": "Suitcase",
+     "t": 24.725,
+     "hot": false
+    },
+    {
+     "w": "3.",
+     "t": 25.125,
+     "hot": false
+    }
+   ],
+   "start": 24.725,
+   "end": 25.645
+  },
+  {
+   "line": 9,
+   "words": [
+    {
+     "w": "A",
+     "t": 25.645,
+     "hot": false
+    },
+    {
+     "w": "battle",
+     "t": 25.765,
+     "hot": false
+    },
+    {
+     "w": "car",
+     "t": 26.005,
+     "hot": false
+    }
+   ],
+   "start": 25.645,
+   "end": 26.305
+  },
+  {
+   "line": 9,
+   "words": [
+    {
+     "w": "made",
+     "t": 26.305,
+     "hot": false
+    },
+    {
+     "w": "out",
+     "t": 26.565,
+     "hot": false
+    },
+    {
+     "w": "of",
+     "t": 26.765,
+     "hot": false
+    }
+   ],
+   "start": 26.305,
+   "end": 26.885
+  },
+  {
+   "line": 9,
+   "words": [
+    {
+     "w": "a",
+     "t": 26.885,
+     "hot": false
+    },
+    {
+     "w": "cardboard",
+     "t": 26.905,
+     "hot": true
+    },
+    {
+     "w": "box.",
+     "t": 27.145,
+     "hot": false
+    }
+   ],
+   "start": 26.885,
+   "end": 27.665
+  },
+  {
+   "line": 10,
+   "words": [
+    {
+     "w": "Every",
+     "t": 28.582,
+     "hot": false
+    },
+    {
+     "w": "one",
+     "t": 28.946,
+     "hot": false
+    },
+    {
+     "w": "is",
+     "t": 29.206,
+     "hot": false
+    }
+   ],
+   "start": 28.582,
+   "end": 29.414
+  },
+  {
+   "line": 10,
+   "words": [
+    {
+     "w": "a",
+     "t": 29.414,
+     "hot": false
+    },
+    {
+     "w": "real",
+     "t": 29.57,
+     "hot": false
+    },
+    {
+     "w": "game",
+     "t": 29.882,
+     "hot": false
+    }
+   ],
+   "start": 29.414,
+   "end": 30.194
+  },
+  {
+   "line": 10,
+   "words": [
+    {
+     "w": "on",
+     "t": 30.194,
+     "hot": false
+    },
+    {
+     "w": "PULSEBOX.",
+     "t": 30.402,
+     "hot": false
+    }
+   ],
+   "start": 30.194,
+   "end": 30.974
+  },
+  {
+   "line": 10,
+   "words": [
+    {
+     "w": "box.pulseform.org",
+     "t": 30.974,
+     "hot": true
+    },
+    {
+     "w": "Comment",
+     "t": 31.962,
+     "hot": false
+    },
+    {
+     "w": "your",
+     "t": 32.43,
+     "hot": false
+    }
+   ],
+   "start": 30.974,
+   "end": 32.742
+  },
+  {
+   "line": 10,
+   "words": [
+    {
+     "w": "two",
+     "t": 32.742,
+     "hot": false
+    },
+    {
+     "w": "numbers.",
+     "t": 33.002,
+     "hot": false
+    }
+   ],
+   "start": 32.742,
+   "end": 33.642
+  }
+ ],
+ "code": []
+}

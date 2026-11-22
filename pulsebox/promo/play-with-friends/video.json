@@ -1,0 +1,12 @@
+{"voice": "af_sky+bf_emma", "start": 0.15, "tail": 3.5,
+ "hot": ["Send", "friend", "better", "Bumper", "Brawl.", "Paint", "Wars.", "Sea", "Battle.", "Doodle", "Guess.", "Badly.", "Turbo", "Laps.", "takes", "all.", "PULSEBOX,", "code,", "free.", "box.pulseform.org", "snacks."],
+ "lines": [
+  {"say": "Send this to the friend who thinks they're better than you.", "speed": 1.1},
+  {"say": "Round one. Bumper Brawl. Knock them out of the ring.", "cap": "Round 1. Bumper Brawl. Knock them out of the ring.", "gap": 0.6},
+  {"say": "Round two. Paint Wars. Cover more of the map than them.", "cap": "Round 2. Paint Wars. Cover more of the map than them.", "gap": 0.6},
+  {"say": "Round three. Sea Battle. Sink their ships first.", "cap": "Round 3. Sea Battle. Sink their ships first.", "gap": 0.6},
+  {"say": "Round four. Doodle Guess. Draw a cat. Badly.", "cap": "Round 4. Doodle Guess. Draw a cat. Badly.", "gap": 0.6},
+  {"say": "Final round. Turbo Laps. Winner takes all.", "gap": 0.6},
+  {"say": "Make a room on Pulsebox, share the code, and your friends jump right in. It's free.", "cap": "Make a room on PULSEBOX, share the code, and your friends jump right in. It's free.", "gap": 0.8},
+  {"say": "Box dot pulseform dot org. Loser buys the snacks.", "cap": "box.pulseform.org Loser buys the snacks.", "gap": 0.4}
+ ]}

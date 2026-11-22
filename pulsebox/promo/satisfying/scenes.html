@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../lib/stage.css"></head>
+<body>
+<script src="timeline.js"></script>
+<script src="../lib/art.js"></script>
+<script src="../lib/more.js"></script>
+<script src="../lib/games3.js"></script>
+<script>
+/* "Most satisfying": six real Pulsebox games, each with a slow-motion money shot on the key word. */
+const A = i => VO[i - 1];
+// [game, line, key word, game time at which its satisfying moment happens: (speed, phase) of the drawer's loop]
+const SHOTS = [
+  ['sky-stack', 2, /stack/, null], ['combo-cubes', 3, /cleared/, [.7, .5]], ['fruit-frenzy', 4, /clean/, [.55, .5]],
+  ['merge-monsters', 5, /merged/, [.6, .5]], ['hue-hop', 6, /color/, null], ['tiny-tee', 7, /in\./, [.4, .9]]];
+const keyT = s => wordT(s[1], s[2]);
+function gameTime(shot, t) {          // aligns the drawer's loop so the money shot lands on the key word, in slow motion
+  const tk = keyT(shot), d = t - tk, ad = Math.abs(d);
+  const w = ad < .9 ? d * .35 : Math.sign(d) * (.315 + (ad - .9));
+  if (!shot[3]) return 20 + w;
+  const [sp, ph] = shot[3]; return 20 / sp + ph / sp + w;
+}
+function sparkle(t, tk, x, y, col) {
+  const k = prog(t, tk, tk + .9); if (k <= 0 || k >= 1) return '';
+  let s = C(x, y, 60 + eOut(k) * 520, 'none', 0, `stroke="${col}" stroke-width="${16 * (1 - k)}" opacity="${1 - k}"`);
+  for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6, r = 80 + eOut(k) * 420; s += G(`translate(${x + Math.cos(a) * r} ${y + Math.sin(a) * r}) scale(${1 - k})`, P('M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7Z', '#fff', 4)); }
+  return s;
+}
+function slowLabel(t, tk) { const on = Math.abs(t - tk) < .9; return on ? G('translate(900 300) rotate(6)', R(-110, -50, 220, 84, 20, '#0b0d1a', 0, 'opacity=".75"') + T(0, 12, '0.35x', 50, '#fff', 'middle', 'Chakra')) : ''; }
+function shotScene(i) {
+  const sh = SHOTS[i], tk = keyT(sh);
+  return (t, lt) => {
+    const gt = gameTime(sh, t);
+    let s = GAMES[sh[0]][1](gt, 1080, 1920);
+    if (sh[0] === 'sky-stack' && t >= tk) s += G(`translate(540 1060) scale(${pop(t, tk, .25)})`, TS(0, 0, 'PERFECT!', 140, '#ffd84d', 14));
+    s += sparkle(t, tk - .05, sh[0] === 'tiny-tee' ? 778 : 540, sh[0] === 'tiny-tee' ? 1920 * .25 : 960, ['#ffd84d', '#fff', '#ff4fa3', '#4fe3ff', LIME, '#fff'][i]);
+    s += slowLabel(t, tk) + tag(540, 1800, GAMES[sh[0]][0].toUpperCase(), LIME, pop(lt, .1, .3), -3);
+    return s;
+  };
+}
+const SC = [
+  [0, (t, lt) => {                              // HOOK: a 4-shot teaser, one money shot every 0.7 s
+    const order = [1, 2, 3, 5], j = Math.min(3, Math.floor(lt / .72)), sh = SHOTS[order[j]], bl = lt - j * .72;
+    const fake = [sh[0], sh[1], sh[2], sh[3]], tk = .36; const sp = sh[3];
+    const gt = sp ? 20 / sp[0] + sp[1] / sp[0] + (bl - tk) * .5 : 20 + bl;
+    let s = GAMES[sh[0]][1](gt, 1080, 1920) + sparkle(bl, tk, 540, sh[0] === 'tiny-tee' ? 480 : 960, '#fff');
+    s += G('translate(540 260)', R(-380, -60, 760, 110, 55, '#0b0d1a', 7, 'opacity=".85"') + R(-360, -42, 720 * Math.min(1, lt / 2.9), 74, 37, LIME, 0) + T(0, 18, 'SATISFACTION ' + Math.min(100, Math.round(lt / 2.9 * 100)) + '%', 46, '#fff', 'middle', 'Luckiest', `stroke="${INK}" stroke-width="8" paint-order="stroke"`));
+    return s;
+  }, 1500],
+  ...SHOTS.map((sh, i) => [A(sh[1]) - .15, shotScene(i), 1500]),
+  [A(8) - .1, (t, lt) => {                      // all of them are free on Pulsebox
+    let s = R(-20, -20, 1120, 1960, 0, '#0b0d14', 0) + rays(540, 900, 24, 1600, LIME, .07, t * .2);
+    SHOTS.forEach((sh, i) => { const x = 195 + (i % 3) * 345, y = 640 + Math.floor(i / 3) * 520, k = pop(lt, i * .07, .25);
+      s += G(`translate(${x} ${y}) scale(${k})`, R(-160, -230, 320, 460, 26, '#171a2b', 7) + nest(-150, -220, 300, 400, GAMES[sh[0]][1](gameTime(sh, keyT(sh) + 3 + lt), 300, 400)) + R(-150, -220, 300, 400, 18, 'none', 5) + T(0, 214, GAMES[sh[0]][0], 30, '#fff', 'middle', 'Chakra')); });
+    s += pulseboxLogo(540, 230, pop(t, wordT(8, /PULSEBOX/), .35) * .85);
+    return s;
+  }, 1500],
+  [A(9) - .1, (t, lt) => endCard(t, lt, 'which one won?'), 1560],
+];
+const CUES = { bpm: 84, key: 'dreamy',
+  music: [[0, TIMELINE.end, 'calm']],
+  fx: [...SHOTS.flatMap(sh => [[keyT(sh) - .05, 'pop', .6], [keyT(sh), 'ding', .45], [keyT(sh) + .02, 'splash', .25]]), [.36, 'pop', .5], [1.08, 'pop', .5], [1.8, 'pop', .5], [2.52, 'pop', .5], [A(9), 'pop', .4]] };
+startVideo(SC, CUES);
+</script>
+</body></html>

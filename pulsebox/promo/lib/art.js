@@ -116,9 +116,9 @@ function kidBack(x, y, k, o = {}) {  // seen from behind at the desk. o.t time, 
 }
 function face(r, o = {}) { // front face, centered on 0,0
   const t = o.t || 0, lookX = o.lookX || 0, lookY = o.lookY || 0, blink = (o.blink && (t % 3.1) < .09) ? 1 : 0;
-  let s = C(0, 0, r, SKIN);
-  s += E(-r * 1.0, r * .08, 18, 26, SKIN, 6) + E(r * 1.0, r * .08, 18, 26, SKIN, 6);    // ears
-  s += C(0, 0, r, SKIN);
+  let s = C(0, 0, r, (o.skin || SKIN));
+  s += E(-r * 1.0, r * .08, 18, 26, (o.skin || SKIN), 6) + E(r * 1.0, r * .08, 18, 26, (o.skin || SKIN), 6);    // ears
+  s += C(0, 0, r, (o.skin || SKIN));
   // hair fringe
   s += P(`M${-r * 1.02} ${r * .05} C${-r * 1.15} ${-r * 1.0} ${r * 1.15} ${-r * 1.0} ${r * 1.02} ${r * .05}
    L${r * .8} ${-r * .3} L${r * .55} ${-r * .12} L${r * .35} ${-r * .42} L${r * .1} ${-r * .22} L${-r * .15} ${-r * .5} L${-r * .35} ${-r * .2} L${-r * .6} ${-r * .45} L${-r * .8} ${-r * .15} Z`, o.hair || '#3b2416');
@@ -131,7 +131,7 @@ function face(r, o = {}) { // front face, centered on 0,0
     s += P(`M${sx * (ex - 26)} ${by + (o.brow === 'mad' ? sx * -0 : 0)} L${sx * (ex + 26)} ${by + (o.brow === 'mad' ? -8 : -6)}`, 'none', 9);
   }
   if (o.tired) for (const sx of [-1, 1]) {   // droopy lids, eye bags, red veins
-    s += P(`M${sx * ex - 28} ${ey + 2} A28 ${30 * o.tired} 0 0 1 ${sx * ex + 28} ${ey + 2}Z`, SKIN, 6);
+    s += P(`M${sx * ex - 28} ${ey + 2} A28 ${30 * o.tired} 0 0 1 ${sx * ex + 28} ${ey + 2}Z`, (o.skin || SKIN), 6);
     s += P(`M${sx * ex - 26} ${ey + 34} Q${sx * ex} ${ey + 52} ${sx * ex + 26} ${ey + 34}`, 'none', 0, `stroke="#7b4a9e" stroke-width="7" stroke-linecap="round" opacity=".8"`);
     s += L(sx * ex - 20, ey + 10, sx * ex - 8, ey + 14, 2, '#e5484d') + L(sx * ex + 22, ey + 12, sx * ex + 10, ey + 15, 2, '#e5484d');
   }

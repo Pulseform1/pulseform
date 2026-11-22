@@ -1,0 +1,98 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../lib/stage.css"></head>
+<body>
+<script src="timeline.js"></script>
+<script src="../lib/art.js"></script>
+<script src="../lib/more.js"></script>
+<script src="../lib/games3.js"></script>
+<script>
+/* "5 Pulsebox secrets": real features (cloud saves, rooms, leaderboard, Games of the Day, Elite coming soon). */
+const A = i => VO[i - 1];
+const RED = '#e5484d';
+function paper(t, n) {                         // a top-secret file page
+  let s = R(-20, -20, 1120, 1960, 0, '#2b2238', 0) + G('rotate(-2 540 960)', R(70, 300, 940, 1380, 18, '#f3e6c4', 8) + Array.from({ length: 22 }, (_, i) => L(110, 420 + i * 58, 970, 420 + i * 58, 2, '#e0cfa6')).join('') +
+    P('M760 270 L760 380 Q760 410 790 410 Q820 410 820 380 L820 300', 'none', 0, `stroke="#9aa3b8" stroke-width="12" stroke-linecap="round"`));
+  if (n) s += G(`translate(200 400) rotate(-12) scale(${n.k})`, C(0, 0, 105, 'none', 0, `stroke="${RED}" stroke-width="12"`) + T(0, 38, '#' + n.i, 110, RED, 'middle', 'Luckiest'));
+  return s;
+}
+function stamp(x, y, txt, k, rot = -10, col = RED) { return G(`translate(${x} ${y}) rotate(${rot}) scale(${k})`, R(-txt.length * 30 - 30, -70, txt.length * 60 + 60, 120, 14, 'none', 0, `stroke="${col}" stroke-width="12"`) + T(0, 30, txt, 90, col, 'middle', 'Luckiest')); }
+const laptop = (x, y, w, inner) => R(x - 16, y - 16, w + 32, w * .62 + 32, 16, '#262b45', 7) + nest(x, y, w, w * .62, inner) + P(`M${x - 50} ${y + w * .62 + 16} L${x + w + 50} ${y + w * .62 + 16} L${x + w + 90} ${y + w * .62 + 70} L${x - 90} ${y + w * .62 + 70}Z`, '#303656', 7);
+function avatar(x, y, k, hoodie, hair, t) { return G(`translate(${x} ${y}) scale(${k})`, kidFront(0, 0, .5, { t, hoodie, hair, mouth: 'grin', blink: true })); }
+const SC = [
+  [0, (t, lt) => {                               // HOOK: the top-secret folder
+    let s = R(-20, -20, 1120, 1960, 0, '#2b2238', 0) + rays(540, 1000, 24, 1600, '#ffd84d', .05, t * .2);
+    const k = lerp(1.5, 1, eOut(prog(lt, 0, .25)));
+    let f = P('M120 560 L420 560 L460 610 L960 610 L960 1500 L120 1500Z', '#d9b36a', 8);
+    for (let i = 0; i < 5; i++) { const out = eOut(prog(lt, 1.1 + i * .22, 1.4 + i * .22));
+      f += G(`translate(${lerp(0, (i - 2) * 150, out)} ${lerp(0, -260 - Math.abs(i - 2) * -30, out)}) rotate(${lerp(0, (i - 2) * 8, out)} 540 1000)`, R(190, 640, 700, 800, 12, '#f3e6c4', 6) + T(540, 760, '#' + (i + 1), 80, i === 4 ? '#8b93b8' : RED, 'middle', 'Luckiest') + (i === 4 ? G('translate(540 900)', R(-40, -10, 80, 70, 10, '#ffd84d', 6) + P('M-24 -10 L-24 -40 Q0 -70 24 -40 L24 -10', 'none', 8)) : '')); }
+    f += P('M120 700 L960 700 L960 1500 L120 1500Z', '#e8c27a', 8) + T(540, 1180, 'PULSEBOX', 110, '#7a5a2a', 'middle', 'Chakra');
+    s += G(`translate(540 1000) scale(${k}) translate(-540 -1000)`, f);
+    s += stamp(560, 1350, 'TOP SECRET', pop(lt, .3, .2), -10);
+    return s;
+  }, 220],
+  [A(2) - .1, (t, lt) => {                       // #1 progress follows you
+    let s = paper(t, { i: 1, k: pop(lt, .05, .25) });
+    s += laptop(140, 700, 500, lanternKeep(t, 500, 310) + R(10, 260, 200, 40, 10, LIME, 0) + T(110, 288, 'LEVEL 12', 26, INK, 'middle', 'Chakra'));
+    s += phone(820, 940, 260, 470, lanternKeep(t, 260, 470) + R(20, 410, 220, 40, 10, LIME, 0) + T(130, 438, 'LEVEL 12', 26, INK, 'middle', 'Chakra'), 4);
+    const k = prog(t, wordT(2, /^Start/), wordT(2, /^phone/) + .2), cx = lerp(390, 820, k), cy = 720 - Math.sin(k * Math.PI) * 260;
+    s += G('translate(600 520)', E(0, 0, 120, 60, '#fff', 7) + E(-60, 10, 60, 45, '#fff', 0) + E(60, 10, 70, 45, '#fff', 0) + T(0, 22, 'SAVED', 40, INK, 'middle', 'Luckiest'));
+    if (k > 0 && k < 1) s += G(`translate(${cx} ${cy})`, R(-40, -40, 80, 80, 12, '#4fa3ff', 6) + R(-22, -40, 44, 28, 4, '#fff', 0) + R(-26, 6, 52, 30, 4, '#c8ddff', 0));
+    if (t > wordT(2, /^phone/)) s += G('translate(820 1300)', C(0, 0, 50, '#3ddc84', 7) + P('M-22 0 L-6 18 L24 -18', 'none', 10));
+    return s;
+  }, 1520],
+  [A(3) - .1, (t, lt) => {                       // #2 rooms
+    let s = paper(t, { i: 2, k: pop(lt, .05, .25) });
+    const tc = wordT(3, /^code/);
+    'K7QX'.split('').forEach((ch, i) => { const k = pop(t, tc - .5 + i * .12, .25); s += G(`translate(${270 + i * 180} 800) rotate(${(i % 2 ? 4 : -4)}) scale(${k})`, R(-75, -90, 150, 180, 18, '#fff7e0', 8) + T(0, 50, ch, 140, INK, 'middle', 'Luckiest')); });
+    s += T(540, 640, 'ROOM CODE', 60, '#7a5a2a', 'middle', 'Luckiest');
+    const tf = wordT(3, /^friends/);
+    [['#7457ff', '#3b2416'], ['#ff8a3d', '#e8c07a'], ['#3ddc84', '#a0522d'], ['#e5484d', '#1b1b1b']].forEach(([h, hair], i) => { const k = pop(t, tf - .6 + i * .15, .3); if (k > 0) s += avatar(230 + i * 205, 1250, k, h, hair, t + i); });
+    return s;
+  }, 1520],
+  [A(4) - .1, (t, lt) => {                       // #3 leaderboard
+    let s = paper(t, { i: 3, k: pop(lt, .05, .25) }) + T(600, 560, 'LEADERBOARD', 80, '#7a5a2a', 'middle', 'Luckiest');
+    const rows = [['Maya', 41], ['Leo', 38], ['Ava', 35], ['Sam', 33], ['Noor', 30], ['Kai', 27]], climb = eIO(prog(t, wordT(4, /^name/), wordT(4, /leaderboard/) + .3));
+    const youPos = lerp(6, 2, climb);   // 0-based row index while climbing
+    rows.forEach(([n, lv], i) => { const yi = i + (i >= Math.ceil(youPos) ? 1 : 0); s += G(`translate(0 ${640 + yi * 120})`, R(170, 0, 760, 100, 18, '#fff7e0', 6) + T(230, 66, String(yi + 1), 50, '#8b93b8', 'middle', 'Luckiest') + T(290, 66, n, 50, INK, 'start', 'Chakra') + T(890, 66, 'LV ' + lv, 46, '#7a5a2a', 'end', 'Chakra')); });
+    s += G(`translate(0 ${640 + youPos * 120}) scale(1)`, R(150, -10, 800, 120, 22, LIME, 8) + T(230, 70, String(Math.round(youPos) + 1), 56, INK, 'middle', 'Luckiest') + T(290, 70, 'YOU', 56, INK, 'start', 'Luckiest') + T(890, 70, 'LV 36', 50, INK, 'end', 'Chakra'));
+    if (climb > 0 && climb < 1) s += P(`M960 ${640 + youPos * 120 + 50} l40 -40 l40 40`, 'none', 0, `stroke="${'#3ddc84'}" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"`);
+    return s;
+  }, 1520],
+  [A(5) - .1, (t, lt) => {                       // #4 Games of the Day
+    let s = paper(t, { i: 4, k: pop(lt, .05, .25) });
+    s += phone(560, 1000, 520, 940, siteScreen(t, 520, 940, 0), -3);
+    const k = pop(t, wordT(5, /^top/) - .2, .3);
+    s += G(`translate(560 760) scale(${k})`, E(0, 0, 300, 220, 'none', 0, `stroke="${RED}" stroke-width="12" stroke-dasharray="40 14"`));
+    s += G(`translate(560 440) rotate(-3) scale(${k})`, R(-330, -60, 660, 110, 20, '#ffd84d', 8) + T(0, 22, 'GAMES OF THE DAY', 64, INK, 'middle', 'Luckiest'));
+    return s;
+  }, 1560],
+  [A(6) - .1, (t, lt) => {                       // #5 Elite, coming soon
+    let s = paper(t, { i: 5, k: pop(lt, .05, .25) }) + rays(540, 900, 20, 700, '#ffd84d', .2, t * .5);
+    const invites = [wordT(6, /^Invite/), wordT(6, /^3/) + .1, wordT(6, /^friends/)], unlock = wordT(6, /^good/) - .2, open = eOut(prog(t, unlock, unlock + .35));
+    s += G('translate(540 900)', R(-260, -40, 520, 300, 30, '#b07a2a', 9) + R(-260, -40, 520, 60, 0, '#8a5a1a', 0) + R(-280, -20, 560, 26, 8, '#ffd84d', 6) +
+      G(`translate(0 -40) rotate(${-open * 25} -260 0)`, P('M-270 0 Q0 -160 270 0Z', '#c8913a', 9)) + P('M-90 -170 L-60 -250 L-20 -190 L0 -270 L20 -190 L60 -250 L90 -170Z', '#ffd84d', 8, `transform="translate(0 ${-open * 120})"`) +
+      (open < 1 ? G(`translate(0 120) rotate(${open * 40})`, R(-60, -20, 120, 110, 16, '#ffd84d', 7) + P(`M-36 -20 L-36 ${-60 - open * 30} Q0 -110 36 -60 L36 -20`, 'none', 12) + C(0, 30, 14, INK, 0)) : '') +
+      T(0, 220, 'ELITE', 90, '#fff', 'middle', 'Luckiest', `stroke="${INK}" stroke-width="10" paint-order="stroke"`));
+    invites.forEach((ti, i) => { const k = pop(t, ti, .3); s += G(`translate(${300 + i * 240} 1360)`, C(0, 0, 80, k > 0 ? LIME : '#e0cfa6', 7) + (k > 0 ? G(`scale(${k})`, avatar(0, 60, .9, ['#7457ff', '#ff8a3d', '#3ddc84'][i], '#3b2416', t + i)) : T(0, 25, '?', 70, '#b8a27a', 'middle', 'Luckiest'))); });
+    s += T(540, 1625, Math.min(3, invites.filter(ti => t >= ti).length) + ' / 3 FRIENDS', 56, '#7a5a2a', 'middle', 'Luckiest');
+    s += stamp(780, 560, 'COMING SOON', pop(lt, .3, .2) * .75, 10);
+    return s;
+  }, 1660],
+  [A(7) - .1, (t, lt) => {                       // 77 free games
+    let s = R(-20, -20, 1120, 1960, 0, '#0b0d14', 0) + rays(540, 960, 24, 1600, LIME, .06, t * .2);
+    const ids = Object.keys(GAMES); let n = 0;
+    for (let r = 0; r < 7; r++) for (let c = 0; c < 5; c++) { const id = ids[(r * 5 + c) % ids.length], k = pop(lt, (r * 5 + c) * .025, .2), x = 30 + c * 206, y = 380 + r * 206;
+      s += G(`translate(${x + 98} ${y + 98}) scale(${k}) translate(${-x - 98} ${-y - 98})`, R(x, y, 196, 196, 20, '#171a2b', 5) + nest(x + 6, y + 6, 184, 184, GAMES[id][1](t + r + c, 184, 184)) + R(x + 6, y + 6, 184, 184, 14, 'none', 4)); }
+    s += G(`translate(540 1150) scale(${pop(t, wordT(7, /^77/), .3)})`, C(0, 0, 230, '#ff4f6e', 12) + T(0, 30, '77', 200, '#fff', 'middle', 'Luckiest') + T(0, 120, 'FREE GAMES', 50, '#fff', 'middle', 'Luckiest'));
+    s += pulseboxLogo(540, 240, pop(lt, .1, .3) * .85);
+    return s;
+  }, 1660],
+  [wordT(7, /box\.pulse/) - .1, (t, lt) => endCard(t, lt, "it's free. go."), 1560],
+];
+const CUES = { bpm: 100, key: 'minor',
+  music: [[0, A(6) - .1, 'hard'], [A(6) - .1, wordT(6, /^good/) - .2, 'tense'], [wordT(6, /^good/) - .2, TIMELINE.end, 'hard']],
+  fx: [[0.05, 'thud', .9], [0.3, 'thud', .7], ...[2, 3, 4, 5, 6].map(i => [A(i) + .05, 'thud', .6]), ...'K7QX'.split('').map((c, i) => [wordT(3, /^code/) - .5 + i * .12, 'pop', .5]),
+       [wordT(2, /^phone/), 'ding', .5], [wordT(4, /leaderboard/), 'ding', .5], [wordT(6, /^good/) - .2, 'cheer', .8], [wordT(6, /^good/) - .2, 'ding', .6], [wordT(7, /^77/), 'thud', .8], [wordT(7, /box\.pulse/), 'pop', .5]] };
+startVideo(SC, CUES);
+</script>
+</body></html>
