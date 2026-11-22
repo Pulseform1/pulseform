@@ -11,6 +11,7 @@
     desert: { sky: ['#4f8fd0', '#9cc6e8', '#f2dcb0'], fog: '#f0d9ae', far: 300, hemi: ['#fff1d6', '#b08a58'], sun: ['#ffe2b0', 1.45], tint: { wall: '#f0d29a', ground: '#f2d6a0', crate: '#c8a070', steeltop: '#e8d0a0', dock: '#f0d8a4' }, steel: ['#a0522d', '#c9a227', '#6b7f5a', '#8a6a48'] },
     jungle: { sky: ['#4a8a7a', '#9fc9a8', '#cfe6c8'], fog: '#b7d4b0', far: 200, hemi: ['#d8f0d0', '#4a5a30'], sun: ['#fff4c8', 1.1], tint: { wall: '#a8b890', ground: '#9ab070', crate: '#b08a58', steeltop: '#a0b080', dock: '#c4cca8' }, steel: ['#4f6b3a', '#7a5a3a', '#3a5a5a', '#8a8a4a'] },
     lava: { sky: ['#1a0e0c', '#5a1e10', '#c2501e'], fog: '#5a2414', far: 220, hemi: ['#ff9a6a', '#2a1410'], sun: ['#ffb070', .9], glow: 1, tint: { wall: '#7a6a62', ground: '#6a5a54', crate: '#9a7e66', steel: '#b0a0a0', steeltop: '#8a7a74', dock: '#94847a' }, steel: ['#ff6a1a', '#6a6a74', '#c9862e', '#8a3a22'] },
+    autumn: { sky: ['#5f88b8', '#d9b48c', '#f3d3a2'], fog: '#ecd2a8', far: 260, hemi: ['#fff0d6', '#7a5a38'], sun: ['#ffd49a', 1.3], tint: { wall: '#f2e6d2', ground: '#efe2cc', crate: '#b8804c', steeltop: '#d8c4a4', dock: '#dcc8a6' }, steel: ['#9a3a24', '#6b7a3a', '#c08a2a', '#4a5a6a', '#7a4a6a'] },
     space: { sky: ['#000004', '#060a1e', '#141a3a'], fog: '#0a1028', far: 320, hemi: ['#bcd4ff', '#2a3044'], sun: ['#e8f0ff', 1.2], stars: 1, glow: 1, tint: { wall: '#d4dcea', ground: '#aab4c8', crate: '#8a96aa', steeltop: '#c8d0e0', dock: '#dfe6f2' }, steel: ['#e8eef6', '#38e8ff', '#ff8a3d', '#5a6680'] },
   };
   // a new map: clear the old world away and build this one, with its sky and light
@@ -328,11 +329,16 @@
     // the sites: every plantable cell painted on the floor, and on a map of two or three, big letters on the walls round each
     (X.siteTex || []).forEach(t => t.dispose()); X.siteTex = [];   // the last map's paint
     X.wallMarks = []; for (const S of SITES) siteMarks(W, S, TH, sh);
-    // door signs
-    const signMat = {};
-    for (const s of signs) {
-      const m = signMat[s.a.k] || (signMat[s.a.k] = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, map: (() => { const t = canvasTex(256, 64, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = s.a.col; g.fillRect(0, 8, 14, 48); g.font = '700 46px "Chakra Petch", sans-serif'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(40,38,34,.82)'; g.fillText(s.a.n.toUpperCase(), 26, 34); }); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; })() }));
-      const p = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), m); p.position.set(s.x, 3.35, s.z); p.rotation.y = s.ry; W.add(p);
+    // door signs: every name painted once, in rows of one texture, and every sign on the map in one mesh (one draw; a mesh
+    // and a texture for each sign cost a map with many doorways forty draws)
+    if (signs.length) {
+      const names = [...new Set(signs.map(s => s.a))], rowH = 64, H2 = 2 ** Math.ceil(Math.log2(names.length * rowH));
+      const t = canvasTex(256, H2, (g, w) => { g.clearRect(0, 0, w, H2); names.forEach((a, r) => { const y = r * rowH; g.fillStyle = a.col; g.fillRect(0, y + 8, 14, 48); const txt = a.n.toUpperCase(); g.font = '700 46px "Chakra Petch", sans-serif'; const px = Math.min(46, Math.floor(46 * (w - 32) / g.measureText(txt).width)); g.font = `700 ${px}px "Chakra Petch", sans-serif`; g.textBaseline = 'middle'; g.fillStyle = 'rgba(40,38,34,.82)'; g.fillText(txt, 26, y + 34); }); });   // (a long name is set smaller, not cut off)
+      t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+      const geos = signs.map(s => { const r = names.indexOf(s.a), v0 = 1 - (r + 1) * rowH / H2, v1 = 1 - r * rowH / H2, q = new THREE.PlaneGeometry(2.6, .65), uv = q.attributes.uv;
+        for (let k = 0; k < uv.count; k++) uv.setY(k, v0 + uv.getY(k) * (v1 - v0));
+        return q.rotateY(s.ry).translate(s.x, 3.35, s.z); });
+      W.add(new THREE.Mesh(mergeGeos(geos), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, map: t })));
     }
     detail(W, TH, sh, roofed, signs);
     horizonBackdrop(W, TH);   // the far distance, all the way round (72-horizon)
@@ -403,7 +409,7 @@
     // one material per colour: bake() merges the props by material, so a fresh material for every prop left each one its own draw
     const MC = new Map(), memo = (k, mk) => MC.get(k) || (MC.set(k, mk()), MC.get(k));
     const lam = (c, o) => memo('l' + c + JSON.stringify(o || {}), () => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o || {}))), bas = c => memo('b' + c, () => new THREE.MeshBasicMaterial({ color: LC(c) }));
-    const PAL = { harbor: ['#6f7780', '#b8452e'], neon: ['#3a3f58', '#ff3ea5'], snow: ['#7d8a96', '#c0392b'], desert: ['#8a6a48', '#c9862e'], jungle: ['#5a6448', '#8a6a40'], lava: ['#5a4a44', '#ff6a1a'], space: ['#9aa6ba', '#38e8ff'] }[t] || ['#6f7780', '#b8452e'];
+    const PAL = { harbor: ['#6f7780', '#b8452e'], neon: ['#3a3f58', '#ff3ea5'], snow: ['#7d8a96', '#c0392b'], desert: ['#8a6a48', '#c9862e'], jungle: ['#5a6448', '#8a6a40'], lava: ['#5a4a44', '#ff6a1a'], space: ['#9aa6ba', '#38e8ff'], autumn: ['#5a4a3a', '#a0522d'] }[t] || ['#6f7780', '#b8452e'];
     const pipeM = lam(PAL[0]), bracketM = lam('#2e3136'), boxM = lam('#8f9690'), boxDoorM = lam('#a9b0aa'), lampM = lam('#30343a'), bulbM = lam(t === 'lava' ? '#e8b48a' : '#f2e8cc');
     const neon = t === 'neon' || t === 'space', NEON = t === 'space' ? ['#38e8ff', '#9ad8ff', '#ff8a3d'] : ['#ff3ea5', '#3df2ff', '#ffd23f', '#9a7cff'], neonM = NEON.map(c => lam(c));
     const put = (geo, m, x, y, z, ry = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.y = ry; G.add(o); return o; };
@@ -463,6 +469,7 @@
         if (t === 'snow' && hash(i, j, e, 11) < .5) for (let n = 0; n < 4; n++) { const L = .25 + hash(i, j, e, 12 + n) * .7, [x, z] = at(-.8 + n * .5 + hash(i, j, n, 20) * .2, .07); put(new THREE.ConeGeometry(.06 + L * .04, L, 5), lam('#e6f2fb', { emissive: LC('#2a3a48') }), x, WALL_H - L / 2, z).rotation.x = Math.PI; }
         if (t === 'jungle' && hash(i, j, e, 13) < .32) { const L = 1.8 + hash(i, j, e, 14) * 2.2, [x, z] = at((hash(i, j, e, 15) - .5) * .6, .03); quad('vine', x, WALL_H - L / 2, z, ux, uz, 0, 1, 0, 1.2, L); }
         if (t === 'harbor' && hash(i, j, e, 16) < .045 && !site && !nearMark(fx, fz, 1.9, 2.8)) { const [x, z] = at(0, .1); const r = put(new THREE.TorusGeometry(.3, .075, 6, 16), lam('#e8622c'), x, 2.35, z, ry); for (let q = 0; q < 4; q++) { const a = q * Math.PI / 2 + Math.PI / 4; put(new THREE.BoxGeometry(.09, .1, .17), lam('#f2efe6'), x + ux * Math.cos(a) * .3, 2.35 + Math.sin(a) * .3, z + uz * Math.cos(a) * .3, ry); } }
+        if (t === 'autumn' && hash(i, j, e, 18) < .06 && !site && !nearMark(fx, fz, 2.6, 5.6)) { const [x, z] = at(0, .03); quad('banner', x, 4.25, z, ux, uz, 0, 1, 0, .9, 2.4); const [bx, bz] = at(0, .07); put(new THREE.CylinderGeometry(.035, .035, 1.2, 6), lam('#5a4026'), bx, 5.47, bz, ry).rotation.z = Math.PI / 2; }   // harvest banners
         if (t === 'desert' && hash(i, j, e, 17) < .07 && !nearMark(fx, fz, 2.6, 5.6)) { const [x, z] = at(0, .03); quad('banner', x, 4.25, z, ux, uz, 0, 1, 0, .9, 2.4); const [bx, bz] = at(0, .07); put(new THREE.CylinderGeometry(.035, .035, 1.2, 6), lam('#5a4026'), bx, 5.47, bz, ry).rotation.z = Math.PI / 2; }
       }
     }
@@ -473,6 +480,7 @@
       if (wall && hash(i, j, 30) < .06) { const [di, dj] = wall;   // a grate lying along the wall, its long side with it
         if (dj) quad('grate', cx, y, cz + dj * .62, 1, 0, 0, 0, 1, .9, .42); else quad('grate', cx + di * .62, y, cz, 0, 1, 1, 0, 0, .9, .42); }
       else if (!wall && hash(i, j, 31) < .025 && !roofed[idx(i, j)]) quad('manhole', cx, y, cz, 1, 0, 0, 0, 1, 1.05, 1.05);
+      else if (t === 'autumn' && wall && hash(i, j, 36) < .07) { const [di, dj] = wall, s = .26 + hash(i, j, 37) * .12; put(new THREE.SphereGeometry(s, 8, 6), lam('#e0782a'), cx + di * .7, y + s * .7, cz + dj * .7).scale.y = .75; }   // a pumpkin against the wall
       else if (hash(i, j, 32) < .018) { const s = 1.2 + hash(i, j, 33) * 1.2; quad('stain', cx + (hash(i, j, 34) - .5), y, cz + (hash(i, j, 35) - .5), 1, 0, 0, 0, 1, s, s); }
     }
     // the merged meshes
@@ -576,6 +584,11 @@
       lavaT.wrapS = lavaT.wrapT = THREE.RepeatWrapping; lavaT.repeat.set(30, 30); const lv = put(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshBasicMaterial({ map: lavaT }), MW / 2, -1.2, MH / 2); lv.rotation.x = -Math.PI / 2; X.seaT = lavaT;
       ring(12, 50, 110, (x, z) => { const h = 30 + Math.random() * 30; put(new THREE.CylinderGeometry(2.2, 3, h, 10), lam('#3a3030'), x, h / 2, z); put(new THREE.CylinderGeometry(2.4, 2.4, 1.2, 10), bas('#ff7a2a'), x, h - 2, z); put(new THREE.CylinderGeometry(3.4, 3.4, 1.4, 10), lam('#2a2222'), x, h * .3, z); });
       ring(30, 40, 70, (x, z) => { const r = 1 + Math.random() * 3; const b = put(new THREE.DodecahedronGeometry(r, 0), lam('#2a2020'), x, 0, z); b.scale.y = .55; });   // cooled rock at the shore
+    } else if (t === 'autumn') {   // a valley in autumn: orchard trees and woods in red, orange and gold, hay in the stubble, poplars on the skyline
+      floor('#8a7a46'); const LEAF = ['#d2691e', '#b8321e', '#e0a030', '#a8641e'];
+      ring(84, 38, 110, (x, z, i) => { const s = .9 + Math.random() * 1.4; put(new THREE.CylinderGeometry(.35 * s, .55 * s, 5 * s, 6), lam('#5a3e28'), x, 2.5 * s, z); const c = put(new THREE.SphereGeometry(3.4 * s, 8, 6), lam(LEAF[i % LEAF.length]), x, 6.4 * s, z); c.scale.y = .8; });
+      ring(26, 34, 60, (x, z) => { const b = put(new THREE.CylinderGeometry(1.1, 1.1, 1.5, 10), lam('#d8b860'), x, 1.1, z); b.rotation.set(0, Math.random() * 3, Math.PI / 2); });   // round hay bales in the stubble
+      ring(16, 120, 170, (x, z) => { const h = 14 + Math.random() * 8; put(new THREE.CylinderGeometry(.4, .6, h * .3, 5), lam('#5a3e28'), x, h * .15, z); put(new THREE.ConeGeometry(2.2, h, 7), lam('#e0a030'), x, h * .62, z); });   // poplars
     } else if (t === 'space') {   // a station deck over nothing: a planet, a ring of panels, guide lights
       const planet = put(new THREE.SphereGeometry(140, 32, 20), lam('#3a6ab8', { emissive: LC('#0a1a3a') }), MW / 2 - 120, -60, -320); planet.rotation.z = .4;
       const rg = put(new THREE.RingGeometry(170, 230, 48), new THREE.MeshBasicMaterial({ color: LC('#9ab0d8'), side: THREE.DoubleSide, transparent: true, opacity: .35 }), MW / 2 - 120, -60, -320); rg.rotation.x = 1.2;

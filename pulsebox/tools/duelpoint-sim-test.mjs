@@ -2,6 +2,7 @@
 //   node tools/duelpoint-sim-test.mjs            every check
 //   node tools/duelpoint-sim-test.mjs map        print the map with the attack routes (1-4) and hold spots (H)
 //   node tools/duelpoint-sim-test.mjs matches N  only the bot matches, N of them (default 20)
+//   node tools/duelpoint-sim-test.mjs copperleaf  only the checks on Copperleaf (three sites)
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +16,7 @@ const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name:
 const T = new Function('K', 'MP', code + `
   return { SRC, get GW() { return GW; }, get GH() { return GH; }, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, readyAb, castReady, abData, hexShot, duelOk, unready, canSee, castShot, viewDir, blocked, ARMOR, xpForLevel, levelOf, seasonNow, passRewards, myPass, passTier, passGrant, buyPremium, giveReward, dailyChallenges, weeklyChallenges, myChallenges, challengeProgress, matchTally, matchXp, payProgress, botCard, cardFrom, matchAwards, csOf, PASS_TIERS, PASS_XP, PASS_PRICE, TITLES, BANNERS, CH_DAILY, CH_WEEKLY, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
-    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, setWall, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, gunStats, dmgAt, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
+    hitboxes, headOf, castShot, viewDir, BRKS, BRKX, setWall, lootAt, setCharge, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, ping, DEFUSE_T, sideOf: f => sideOf(f), netMsg, gunStats, dmgAt, HALF: () => HALF(), get WIN() { return WIN_ROUNDS; }, CFG, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; }, CH, siteAt };`)(K, MP);
 
 let failed = 0;
 const ok = (cond, name, extra = '') => { if (!cond) failed++; console.log((cond ? '  ok   ' : '  FAIL ') + name + (extra !== '' ? '  (' + extra + ')' : '')); };
@@ -560,7 +561,7 @@ function loadChecks() {
 function twoSiteChecks(count) {
   section(`${count} matches on the two-site maps`);
   const pool = T.mapPool(2), bySite = [0, 0, 0], why = {}, sizes = {}; let rounds = 0, plants = 0, done = 0, err = 0, boomWins = 0, plantWins = 0;
-  ok(pool.length === 6 && T.mapPool(1).length === 7, 'six two-site maps and seven one-site maps', `${pool.length} and ${T.mapPool(1).length}`);
+  ok(pool.length === 7 && T.mapPool(1).length === 7, 'seven STANDARD maps (two or three sites) and seven one-site maps', `${pool.length} and ${T.mapPool(1).length}`);
   for (let n = 0; n < count; n++) {
     try {
       T.seed(n * 6151 + 17); const size = [1, 2, 1, 4][n % 4]; sizes[size] = (sizes[size] || 0) + 1; T.startMatch({ mode: 'bot', diff: 1, size, map: pool[n % pool.length] }); const M = T.M; M.fs[0].bot = { diff: 1 + (n % 2) }; M.fs[0].local = false;
@@ -581,6 +582,63 @@ function twoSiteChecks(count) {
   // charge always defuse it now, so the charge itself rarely goes off between them; it used to when a defender stalled short of it)
   ok(plants / Math.max(1, rounds) > .2 && plantWins >= plants * .25, 'planting is a real way to win', `${plants} plants in ${rounds} rounds, ${plantWins} won after the plant (${boomWins} by the charge going off)`);
   console.log(`    ${Object.entries(why).map(([k, v]) => `${T.WHY[k]} ${v}`).join(', ')}; team sizes ${Object.entries(sizes).map(([k, v]) => `${k}v${k} x${v}`).join(', ')}`);
+}
+
+// COPPERLEAF, the autumn cider estate with three sites: it loads, every site can be reached from both spawns and by every
+// way in, a bot plants on each of A, B and C, no spawn stands in a wall, and five a side the defenders spread over all
+// three sites while the attackers plant on more than one and the charge gets defused
+function copperleafChecks() {
+  section('Copperleaf: three sites on an autumn cider estate');
+  const mi = T.MAPS.findIndex(m => m.k === 'copperleaf'); ok(mi > 0, 'Copperleaf is one of the maps', mi);
+  if (mi < 0) return;
+  const mp = T.loadMap(mi);
+  ok(T.SITES.length === 3 && T.SITES.map(S => S.k).join('') === 'ABC' && T.SITES.every(S => S.cells.length >= 40), 'it loads with three sites, A, B and C, each a good size', T.SITES.map(S => S.k + ' ' + S.cells.length + ' cells').join(', '));
+  ok(T.SITES.every((S, s) => S.cells.every(c => T.siteAt(c[0], c[1]) === s)), 'each site cell answers with its own letter (siteAt)');
+  ok(T.mapPool(2).includes(mi) && !T.mapPool(1).includes(mi) && T.roundT() >= 100, 'it is played in STANDARD, with the longer rounds', T.roundT() + ' s');
+  ok(mp.theme === 'autumn' && mp.n === 'Copperleaf' && !/#ff4655/i.test(JSON.stringify(mp)), 'its own name and its own autumn theme');
+  ok(T.SPAWN.att.length >= 5 && T.SPAWN.def.length >= 5, 'spawn spots for five a side', `${T.SPAWN.att.length} attackers, ${T.SPAWN.def.length} defenders`);
+  // no spawn spot in or against a wall: a fighter's width of open, flat ground all round it
+  const clear = p => [[0, 0], [.45, 0], [-.45, 0], [0, .45], [0, -.45]].every(([dx, dz]) => { const k = T.idx(Math.floor((p[0] + dx) / T.CS), Math.floor((p[1] + dz) / T.CS)); return k >= 0 && T.NAV[k] && T.CH[k] < .01; });
+  ok([...T.SPAWN.att, ...T.SPAWN.def].every(clear), 'no spawn spot overlaps a wall, a crate or a container');
+  const walkT = (a, b) => { const q = T.findPath(a[0], a[1], b[0], b[1]); return q.length ? T.pathLen(q, a[0], a[1]) / T.SPD : Math.hypot(a[0] - b[0], a[1] - b[1]) < 1.5 ? 0 : Infinity; };
+  const far = []; for (const S of T.SITES) for (const side of ['att', 'def']) for (const p of T.SPAWN[side]) if (!(walkT(p, S.c) < 30)) far.push(side + ' to ' + S.k);
+  ok(!far.length, 'every site can be walked to from every spawn spot of both sides', far.slice(0, 3).join(', '));
+  const cut = T.SITES.reduce((n, S) => n + S.cells.filter(c => !(walkT(T.SPAWN.att[0], c) < 40) || !(walkT(T.SPAWN.def[0], c) < 40)).length, 0);
+  ok(!cut, 'every cell of every site can be reached by the bots\' paths from both spawns', cut + ' cut off');
+  const ways = Object.entries(T.ROUTES).map(([k, pts]) => { let a = T.SPAWN.att[0], t = 0; for (const q of [...pts, T.SITES[mp.rsite[k]].c]) { t += walkT(a, q); a = q; } return [k, t]; });
+  ok(ways.every(([, t]) => t >= 9 && t <= 21) && [0, 1, 2].every(s => Object.values(mp.rsite).filter(v => v === s).length >= 2), 'two or more ways in to each site, each 9 to 21 s from the Cart Yard', ways.map(([k, t]) => `${k} ${t.toFixed(1)}`).join(', '));
+  ok([0, 1, 2].every(s => T.HOLDS.filter(h => h.s === s).length >= 3), 'the defenders have hold spots at every site', [0, 1, 2].map(s => T.HOLDS.filter(h => h.s === s).length).join('/'));
+  // a bot attacker sent to each site in turn plants there (the defender stands out of the way)
+  const got = [];
+  for (let s = 0; s < 3; s++) {
+    T.seed(900 + s * 7); T.startMatch({ mode: 'bot', diff: 1, size: 1, map: mi }); const M = T.M;
+    for (const f of M.fs) { f.local = false; f.bot = { diff: 1 }; }
+    const d = M.fs.find(f => T.sideOf(f) === 'def'); d.bot = { diff: 0, dummy: true, home: [-40, -40] }; d.x = d.z = -40;
+    let at = null; for (let i = 0; i < 60 * 160 && !at && M.round === 1; i++) { M.atkPick = { r: M.round, s }; d.x = d.z = -40; T.tick(DT); if (M.planted) at = M.planted; }
+    got.push(at ? at.s : -1);
+  }
+  ok(got.join() === '0,1,2', 'a bot attacker plants on each site: A, B and C', got.map(s => s < 0 ? 'none' : 'ABC'[s]).join(' '));
+  // five a side, bots only
+  const bySite = [0, 0, 0], held = [0, 0, 0], why = {}; let rounds = 0, done = 0, nan = 0, err = 0, spreadOk = 0, spreadOf = 0;
+  for (let n = 0; n < 2; n++) {
+    try {
+      T.seed(4242 + n * 17); T.startMatch({ mode: 'bot', diff: 1, size: 5, map: mi }); const M = T.M; M.fs[0].bot = { diff: 1 }; M.fs[0].local = false;
+      if (!n) { const spots = M.fs.map(f => f.x.toFixed(1) + ',' + f.z.toFixed(1)); ok(M.fs.length === 10 && new Set(spots).size === 10 && M.fs.every(f => clear([f.x, f.z])), 'five a side: everyone starts on a spot of their own, clear of the walls'); }
+      let seen = 0, planted = 0;
+      for (let i = 0; i < 60 * 60 * 30 && !M.over; i++) {
+        T.tick(DT);
+        if (M.planted && planted !== M.round) { planted = M.round; bySite[M.planted.s]++; }
+        if (M.phase === 'live' && seen !== M.round && M.t < T.roundT() - 1.5) { seen = M.round; const hs = M.fs.filter(f => f.alive && f.bot && T.sideOf(f) === 'def' && f.bot.plan && f.bot.plan.h).map(f => f.bot.hs);
+          hs.forEach(s => held[s]++); if (hs.length >= 3) { spreadOf++; if (new Set(hs).size === 3) spreadOk++; } }
+        if (M.phase === 'end' && M.last && !M.last.seenCL) { M.last.seenCL = true; rounds++; why[M.last.why] = (why[M.last.why] || 0) + 1; }
+        if (i % 120 === 0 && M.fs.some(f => !Number.isFinite(f.x + f.z + f.y))) nan++;
+      }
+      if (M.over) done++;
+    } catch (e) { err++; console.log(e.stack); }
+  }
+  ok(!err && !nan && done === 2, 'two 5v5 bot matches on Copperleaf finish, with no errors', `${done}/2, ${rounds} rounds`);
+  ok(spreadOf > 0 && spreadOk === spreadOf && held.every(v => v > 0), 'five defenders spread over all three sites every round', `${spreadOk}/${spreadOf} rounds; held A ${held[0]}, B ${held[1]}, C ${held[2]}`);
+  ok(bySite.filter(v => v > 0).length >= 2 && (why.defuse || 0) > 0, 'plants on more than one site, and the charge gets defused', `A ${bySite[0]}, B ${bySite[1]}, C ${bySite[2]}; ${Object.entries(why).map(([k, v]) => `${T.WHY[k]} ${v}`).join(', ')}`);
 }
 
 // every map, bots only: a 1v1 and a 3v3 on each, and the map's own feature gets used
@@ -707,6 +765,7 @@ else if (arg === 'ults') ultChecks();
 else if (arg === 'skins') skinChecks();
 else if (arg === 'progress') progressChecks();
 else if (arg === 'kit2') kit2Checks();
-else { mapChecks(); gunplayChecks(); firstShotChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); ultChecks(); skinChecks(); progressChecks(); kit2Checks(); teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); matchChecks(20); twoSiteChecks(12); }
+else if (arg === 'copperleaf') copperleafChecks();
+else { mapChecks(); gunplayChecks(); firstShotChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); ultChecks(); skinChecks(); progressChecks(); kit2Checks(); teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); matchChecks(20); twoSiteChecks(12); copperleafChecks(); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

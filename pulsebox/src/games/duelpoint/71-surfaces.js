@@ -171,6 +171,39 @@
       sfEdges(g, w, h, cop, sk, [120, 130, 150], [104, 114, 134], 128);
       for (let x = 0; x < w; x += 64) { g.fillStyle = 'rgba(232,140,60,.55)'; g.beginPath(); g.moveTo(x + 8, h - 9); g.lineTo(x + 20, h - sk + 12); g.lineTo(x + 30, h - sk + 12); g.lineTo(x + 18, h - 9); g.fill(); }   // chevrons on the kick panel
     },
+    // AUTUMN: the estate's walls. Fieldstone laid in rough courses up to the waist, a sill beam of old oak, and above it
+    // lime-washed panels between oak posts, a brace in every other panel, under a coping of red clay tiles. Virginia
+    // creeper climbs from the foot in red and orange and hangs down from the tiles
+    autumn(g, w, h) {
+      const cop = 24, sk = 30, sill = Math.round(h * .5), bh = 18, oak = [92, 64, 42];
+      // the lime-wash above, warm and mottled, and the stone below
+      g.fillStyle = sfTone([236, 224, 198]); g.fillRect(0, 0, w, sill); sfWash(g, 0, cop, w, sill - cop, 90, [252, 244, 222], [190, 166, 128], .07, 1.3);
+      g.fillStyle = sfTone([88, 76, 62]); g.fillRect(0, sill, w, h - sill);
+      const rows = [46, 50, 44]; rows.push(h - sk - sill - bh - rows.reduce((a, b) => a + b, 0));
+      sfBlocks(g, 0, sill + bh, w, { rows, min: 56, max: 130, col: [156, 142, 120], vary: 34, joint: 6, lit: .2, shade: .3, each: (x, y, bw, bh2) => {
+        const warm = Math.random(); g.fillStyle = warm < .3 ? 'rgba(190,140,80,.16)' : warm < .55 ? 'rgba(110,118,128,.14)' : 'rgba(255,240,210,.08)'; g.fillRect(x, y, bw, bh2);   // ochre, grey or pale stones
+        g.fillStyle = 'rgba(255,248,230,.14)'; g.beginPath(); g.ellipse(x + bw * .4, y + bh2 * .35, bw * .3, bh2 * .22, 0, 0, 7); g.fill();   // rounded: lit on top
+        if (Math.random() < .2) { g.fillStyle = 'rgba(110,130,60,.28)'; g.beginPath(); g.ellipse(x + bw * Math.random(), y + bh2 * .8, bw * .25, bh2 * .18, 0, 0, 7); g.fill(); } } });   // lichen
+      // the oak: sill beam, posts every two metres, a brace across every other panel, the plate under the coping
+      const beam = (x, y, bw, bh2) => { g.fillStyle = sfTone(oak); g.fillRect(x, y, bw, bh2); g.fillStyle = 'rgba(255,220,170,.16)'; g.fillRect(x, y, bw, 2); g.fillStyle = 'rgba(30,18,10,.35)'; g.fillRect(x, y + bh2 - 3, bw, 3);
+        for (let i = 0; i < bw * bh2 / 900; i++) { g.fillStyle = 'rgba(40,24,14,.25)'; g.fillRect(x + Math.random() * bw, y + 3 + Math.random() * (bh2 - 6), bw > bh2 ? 20 + Math.random() * 60 : 1.5, bw > bh2 ? 1.5 : 20 + Math.random() * 40); } };   // the grain
+      beam(0, sill, w, bh); beam(0, cop, w, 14);
+      for (let x = 0; x < w; x += 256) {
+        if ((x / 256) % 2) { g.save(); g.beginPath(); g.rect(x, cop + 14, 256, sill - cop - 14); g.clip(); g.strokeStyle = sfTone(oak, -6); g.lineWidth = 15; g.beginPath(); g.moveTo(x, sill); g.lineTo(x + 256, cop + 14); g.stroke();
+          g.strokeStyle = 'rgba(255,220,170,.14)'; g.lineWidth = 2; g.beginPath(); g.moveTo(x, sill - 8); g.lineTo(x + 256, cop + 6); g.stroke(); g.restore(); }
+        beam(x - 9, cop + 14, 18, sill - cop - 14); }
+      // the clay tiles along the top and a stone plinth at the foot
+      sfEdges(g, w, h, cop, sk, [150, 70, 46], [104, 92, 76], 64);
+      for (let x = 0; x < w; x += 32) { g.fillStyle = 'rgba(255,190,150,.18)'; g.beginPath(); g.ellipse(x + 16, cop - 6, 13, 4, 0, 0, 7); g.fill(); }
+      // creeper: leaves in clumps, climbing from the foot and hanging from the tiles, the same at both edges so it tiles
+      const LEAF = [[176, 48, 30], [204, 84, 34], [222, 128, 40], [150, 40, 36], [120, 96, 40]];
+      const leaf = (x, y, s) => { for (const ox of [0, w, -w]) { g.fillStyle = sfA(LEAF[Math.floor(Math.random() * LEAF.length)], .85); g.save(); g.translate(x + ox, y); g.rotate(Math.random() * 6.3); g.beginPath(); g.moveTo(0, -s); g.lineTo(s * .8, 0); g.lineTo(0, s * .7); g.lineTo(-s * .8, 0); g.closePath(); g.fill(); g.restore(); } };
+      const bed = (x, y, rx, ry) => { for (const ox of [0, w, -w]) { const gr = g.createRadialGradient(x + ox, y, 0, x + ox, y, rx); gr.addColorStop(0, 'rgba(120,34,22,.55)'); gr.addColorStop(1, 'rgba(120,34,22,0)'); g.save(); g.translate(x + ox, y); g.scale(1, ry / rx); g.translate(-x - ox, -y); g.fillStyle = gr; g.fillRect(x + ox - rx, y - rx, rx * 2, rx * 2); g.restore(); } };   // the shade under a clump
+      for (let n = 0; n < 5; n++) { const x0 = Math.random() * w, top = h - sk - 90 - Math.random() * (h - sk - cop - 160), wide = 60 + Math.random() * 90;
+        bed(x0, (top + h - sk) / 2, wide * 1.1, (h - sk - top) * .55);
+        for (let i = 0; i < 120; i++) { const t = Math.random(), y = h - sk - t * (h - sk - top), spread = wide * (.35 + .65 * (1 - t)); leaf(x0 + (Math.random() - .5) * spread * 2, y, 8 + Math.random() * 5); } }
+      for (let n = 0; n < 6; n++) { const x0 = Math.random() * w, len = 40 + Math.random() * 110; bed(x0, cop + len / 2, 40, len * .55); for (let i = 0; i < 40; i++) { const t = Math.random(); leaf(x0 + (Math.random() - .5) * (70 - t * 40), cop + 2 + t * len, 7 + Math.random() * 4); } }
+    },
   };
 
   const SURF_GROUND = {
@@ -232,6 +265,18 @@
         g.strokeStyle = 'rgba(60,70,92,.3)'; g.lineWidth = 1.5; g.strokeRect(px + 26, py + 26, 204, 204);
         for (const [bx, by] of [[13, 13], [243, 13], [13, 243], [243, 243]]) { g.fillStyle = 'rgba(40,48,68,.7)'; g.beginPath(); g.arc(px + bx, py + by, 4, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.4)'; g.beginPath(); g.arc(px + bx - 1, py + by - 1.2, 1.7, 0, 7); g.fill(); } }
       for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(40,48,68,${.1 + Math.random() * .12})`; g.save(); g.translate(sfR(30, w - 30), sfR(30, h - 30)); g.rotate(Math.random() * 3); g.fillRect(-14 - Math.random() * 24, 0, 28 + Math.random() * 48, 2.2); g.restore(); }
+    },
+    // AUTUMN: worn setts laid in courses, earth and moss in the joints, and the leaves that came down this week
+    autumn(g, w, h) {
+      g.fillStyle = '#5e4a34'; g.fillRect(0, 0, w, h);   // earth in the joints
+      sfBlocks(g, 0, 0, w, { rows: [64, 64, 64, 64, 64, 64, 64, 64], min: 70, max: 130, col: [172, 156, 132], vary: 26, joint: 7, lit: .18, shade: .24, each: (x, y, bw, bh) => {
+        g.fillStyle = sfA(Math.random() < .5 ? [214, 196, 160] : [120, 104, 84], .14); g.beginPath(); g.ellipse(x + bw * Math.random(), y + bh * Math.random(), bw * .34, bh * .3, 0, 0, 7); g.fill();
+        if (Math.random() < .18) { g.fillStyle = 'rgba(110,128,62,.35)'; g.fillRect(x + (Math.random() < .5 ? 0 : bw - 5), y, 5, bh); } } });   // moss along a joint
+      const LEAF = ['rgba(204,84,34,.9)', 'rgba(176,48,30,.88)', 'rgba(222,150,44,.9)', 'rgba(150,96,48,.85)', 'rgba(232,180,70,.85)'];
+      for (let i = 0; i < 46; i++) { const x = Math.random() * w, y = Math.random() * h, a = Math.random() * 6.3, s = 6 + Math.random() * 5, c = LEAF[i % LEAF.length];
+        for (const [ox, oy] of [[0, 0], [w, 0], [-w, 0], [0, h], [0, -h]]) { g.save(); g.translate(x + ox, y + oy); g.rotate(a); g.fillStyle = 'rgba(40,26,14,.25)'; g.beginPath(); g.ellipse(1.5, 2, s, s * .55, 0, 0, 7); g.fill();
+          g.fillStyle = c; g.beginPath(); g.ellipse(0, 0, s, s * .55, 0, 0, 7); g.fill(); g.strokeStyle = 'rgba(80,40,20,.5)'; g.lineWidth = 1; g.beginPath(); g.moveTo(-s, 0); g.lineTo(s + 4, 0); g.stroke(); g.restore(); } }
+      for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(60,44,28,.12)'; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 30 + Math.random() * 60, 16 + Math.random() * 30, Math.random() * 3, 0, 7); g.fill(); }   // damp
     },
   };
   // (the harbour maps keep their plaster and their stone slabs, with a few things only a harbour wall has)

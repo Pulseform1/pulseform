@@ -37,6 +37,16 @@
       const c = hzNoise(60); hzRange(g, x => .2 + .07 * c(x) + .025 * Math.abs(Math.sin(x * TAU * 90)), L('#3d6a3c', .58), 2);
       { const tx = W * .63, ty = H - H * .2; g.fillStyle = L('#7a8a6a', .55); for (let s = 0; s < 5; s++) g.fillRect(tx - 46 + s * 8, ty - 10 - s * 9, 92 - s * 16, 10); g.fillRect(tx - 6, ty - 60, 12, 12); }   // a temple's steps above the trees
       const n = hzNoise(90); hzRange(g, x => .14 + .06 * n(x) + .03 * Math.abs(Math.sin(x * TAU * 140)), L('#244a26', .8), 2);
+    } else if (t === 'autumn') {
+      // rolling hills fading blue into the haze; woods in their autumn colours along the nearer ridges; a church spire and
+      // a farm on the middle ridge; a near line of trees, red, orange and gold
+      const a = hzNoise(8), b = hzNoise(23), c = hzNoise(47), mid = x => .17 + .12 * b(x) + .02 * c(x * 4);
+      hzRange(g, x => .25 + .2 * a(x) + .03 * b(x * 3), L('#8c8cae', .42), 2);
+      const WOOD = ['#c8642a', '#b8401e', '#d8a030', '#8a5a2a', '#a8782a'];
+      hzRange(g, mid, L('#a8904e', .56), 2, (x, top) => { if (b(x / W) > .45 && Math.random() < .45) { g.fillStyle = L(WOOD[Math.floor(Math.random() * WOOD.length)], .56); g.beginPath(); g.arc(x, top + 3, 3 + Math.random() * 4, 0, 7); g.fill(); } });
+      for (const sx of [.21, .69]) { const x = sx * W, top = H - mid(sx) * H; g.fillStyle = L('#d8ccb0', .55); g.fillRect(x - 7, top - 16, 14, 18); g.fillRect(x + 7, top - 8, 22, 10); g.beginPath(); g.moveTo(x - 7, top - 16); g.lineTo(x, top - 44); g.lineTo(x + 7, top - 16); g.fill(); }   // the spire and its church
+      { const x = W * .46, top = H - mid(.46) * H; g.fillStyle = L('#9a3a24', .5); g.fillRect(x, top - 9, 26, 10); g.beginPath(); g.moveTo(x - 3, top - 9); g.lineTo(x + 13, top - 18); g.lineTo(x + 29, top - 9); g.fill(); }   // a barn
+      hzRange(g, x => .11 + .06 * c(x) + .015 * Math.abs(Math.sin(x * TAU * 80)), L('#6a5a2a', .8), 2, (x, top) => { if (Math.random() < .5) { g.fillStyle = L(WOOD[Math.floor(Math.random() * WOOD.length)], .82); g.beginPath(); g.arc(x, top + 2, 4 + Math.random() * 6, 0, 7); g.fill(); } });
     } else if (t === 'neon') {
       // the rest of the city: two layers of towers, lit windows in the nearer one, a glow of light over it all
       { const gr = g.createLinearGradient(0, H * .3, 0, H); gr.addColorStop(0, 'rgba(255,90,200,0)'); gr.addColorStop(1, 'rgba(255,90,200,.35)'); g.fillStyle = gr; g.fillRect(0, H * .3, W, H * .7); }
@@ -82,7 +92,7 @@
      underneath; thin streaks high up. Smoky and lit from below over the lava; faint violet haze over the city at night;
      colourful nebula wisps in space. sx: where the sun is across the texture (0..1). */
   function skyClouds(g, w, h, TH, sx) {
-    const t = MAP.theme || 'harbor', hor = h * .5, n = { snow: 26, jungle: 22, harbor: 16, desert: 7, lava: 18, neon: 10, space: 12 }[t] || 14;
+    const t = MAP.theme || 'harbor', hor = h * .5, n = { snow: 26, jungle: 22, harbor: 16, desert: 7, lava: 18, neon: 10, space: 12, autumn: 15 }[t] || 14;
     if (t === 'space') { for (let i = 0; i < n; i++) { const x = Math.random() * w, y = h * (.12 + Math.random() * .3), c = ['120,80,220', '60,160,255', '255,90,160'][i % 3]; for (let k = 0; k < 8; k++) { const gr = g.createRadialGradient(x + k * 18, y + Math.sin(k) * 10, 0, x + k * 18, y + Math.sin(k) * 10, 60 + Math.random() * 60); gr.addColorStop(0, `rgba(${c},.09)`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.fillRect(0, 0, w, hor); } } return; }
     // high streaks
     if (t !== 'lava') for (let i = 0; i < 10; i++) { const x = Math.random() * w, y = h * (.12 + Math.random() * .16); g.fillStyle = `rgba(255,255,255,${t === 'neon' ? .03 : .08 + Math.random() * .08})`; g.beginPath(); g.ellipse(x, y, 120 + Math.random() * 200, 3 + Math.random() * 4, (Math.random() - .5) * .1, 0, 7); g.fill(); }

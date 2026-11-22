@@ -4,7 +4,7 @@
      running chevrons, vent glow, the gates (which rise out of the floor), the breakable walls (which crack, then fall),
      tall grass that sways, motes drifting in low gravity, and each theme's life beyond the walls (gulls, traffic, snow,
      dust, fireflies, embers, a turning station ring). mechFrame steps it all once a frame. */
-  const MECH_COL = { harbor: '#38e8ff', neon: '#ff3ea5', snow: '#5ad1ff', desert: '#ffb347', jungle: '#9dff6b', lava: '#ff7a2a', space: '#38e8ff' };
+  const MECH_COL = { harbor: '#38e8ff', neon: '#ff3ea5', snow: '#5ad1ff', desert: '#ffb347', jungle: '#9dff6b', lava: '#ff7a2a', space: '#38e8ff', autumn: '#ffc04a' };
   function buildMech(W, TH) {
     const Z = X.mech = { gates: [], brks: [], tps: [], pads: [], vents: [], motes: null, grass: null, life: [], t: 0 };
     const col = MECH_COL[MAP.theme] || '#38e8ff', add = o => { W.add(o); return o; };
@@ -109,7 +109,7 @@
         life(T => { const a = ph + T * w / r * 6; m.position.set(ox + Math.cos(a) * r, h + Math.sin(T * .7 + ph) * 2, oz + Math.sin(a) * r * .7); m.rotation.y = -a + (w > 0 ? 0 : Math.PI); const f = Math.sin(T * 9 + ph) * .5; m.scale.y = 1 + f; }); } };
     // a cloud of drifting points (snow, dust, embers, fireflies)
     const drift = (n, c, size, box, step, op = .85) => { const pos = new Float32Array(n * 3); for (let a = 0; a < n; a++) { pos[a * 3] = box[0] + Math.random() * (box[1] - box[0]); pos[a * 3 + 1] = box[2] + Math.random() * (box[3] - box[2]); pos[a * 3 + 2] = box[4] + Math.random() * (box[5] - box[4]); }
-      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const p = add(new THREE.Points(geo, new THREE.PointsMaterial({ color: LC(c), size, transparent: true, opacity: op, depthWrite: false, blending: t === 'snow' || t === 'desert' ? THREE.NormalBlending : THREE.AdditiveBlending }))); p.frustumCulled = false;
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const p = add(new THREE.Points(geo, new THREE.PointsMaterial({ color: LC(c), size, transparent: true, opacity: op, depthWrite: false, blending: t === 'snow' || t === 'desert' || t === 'autumn' ? THREE.NormalBlending : THREE.AdditiveBlending }))); p.frustumCulled = false;
       life((T, dt) => { const a = geo.attributes.position.array; for (let k = 0; k < n; k++) step(a, k * 3, T, dt, box); geo.attributes.position.needsUpdate = true; }); };
     const wrap = (a, i, box) => { if (a[i] < box[0]) a[i] += box[1] - box[0]; if (a[i] > box[1]) a[i] -= box[1] - box[0]; if (a[i + 2] < box[4]) a[i + 2] += box[5] - box[4]; if (a[i + 2] > box[5]) a[i + 2] -= box[5] - box[4]; };
     const lowN = X.low ? .5 : 1, mapBox = [-6, MW + 6, 0, 16, -6, MH + 6];
@@ -156,6 +156,9 @@
       const puffM = new THREE.MeshLambertMaterial({ color: LC('#4a4040'), transparent: true, opacity: .5, depthWrite: false }), puffG = new THREE.SphereGeometry(2.4, 8, 6);
       const tops = []; W.traverse(o => { if (o.isMesh && o.geometry && o.geometry.parameters && o.geometry.parameters.radiusTop === 2.4) tops.push(o.position.clone()); });
       for (const p of tops.slice(0, 8)) for (let k = 0; k < 3; k++) { const m = add(new THREE.Mesh(puffG, puffM.clone())), ph = k / 3; life(T => { const u = (T * .12 + ph) % 1; m.position.set(p.x + u * 6, p.y + 1 + u * 22, p.z + u * 3); m.scale.setScalar(.6 + u * 2.4); m.material.opacity = .45 * (1 - u); }); }
+    } else if (t === 'autumn') {
+      // leaves coming down: slowly, swinging from side to side, carried east on the breeze (the rooks are the far flocks)
+      drift(Math.round(380 * lowN), '#d8662a', .13, [-6, MW + 6, 0, 12, -6, MH + 6], (a, i, T, dt, box) => { a[i + 1] -= dt * (.7 + (i % 5) * .12); a[i] += dt * (1 + Math.sin(T * 1.3 + i) * 1.4); a[i + 2] += Math.cos(T * 1.1 + i * .7) * dt * .8; if (a[i + 1] < .05) a[i + 1] += 12; wrap(a, i, box); }, .9);
     } else if (t === 'space') {
       // the station's great ring turning overhead, a shuttle on its way in, tumbling rocks
       const ring = add(new THREE.Mesh(new THREE.TorusGeometry(120, 3.5, 8, 64), lam('#8a96aa'))); ring.position.set(cx, 70, cz - 160); ring.rotation.x = 1.1;
@@ -253,6 +256,18 @@
       const scrT = canvasTex(256, 64, (g, w, h) => { g.fillStyle = '#100820'; g.fillRect(0, 0, w, h); g.font = '900 40px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ff3ea5'; g.fillText('DUELPOINT', w / 2, h / 2 + 2); });
       for (const sd of [-1, 1]) { const scr = new THREE.Mesh(new THREE.PlaneGeometry(12, 3), new THREE.MeshBasicMaterial({ map: scrT, side: THREE.DoubleSide })); scr.position.set(0, -.5, sd * 4.05); blimp.add(scr); }
       blimp.scale.setScalar(1.6); const R6 = D(120), ph = Math.random() * TAU; life(T => { const a = ph + T * .03; blimp.position.set(cx + Math.cos(a) * R6, 105, cz + Math.sin(a) * R6 * .8); blimp.rotation.y = -a + Math.PI / 2; scrT.offset.x = (T * .1) % 1; });
+    } else if (t === 'autumn') {
+      // a windmill on the far hill, its sails turning, facing the estate; a hot-air balloon drifting slowly over the valley
+      const a0 = Math.random() * TAU, R7 = D(150), wx = cx + Math.cos(a0) * R7, wz = cz + Math.sin(a0) * R7 * .8, mill = add(new THREE.Group()); mill.position.set(wx, 0, wz); mill.rotation.y = Math.atan2(cx - wx, cz - wz);
+      // (each part in one colour is one mesh: the tower and cap, the sails and their stocks)
+      mill.add(new THREE.Mesh(mergeGeos([new THREE.CylinderGeometry(3, 4.4, 18, 10).translate(0, 9, 0), new THREE.ConeGeometry(3.8, 4.4, 10).translate(0, 20.2, 0)]), lam('#d8c8aa')));
+      const sails = new THREE.Group(); sails.position.set(0, 17.6, 4.2); mill.add(sails);
+      sails.add(new THREE.Mesh(mergeGeos([new THREE.BoxGeometry(1, 1, 1.4), ...[0, 1, 2, 3].map(k => new THREE.BoxGeometry(.3, 11, .2).translate(0, 5.6, 0).rotateZ(k * Math.PI / 2))]), lam('#4a3424')));
+      sails.add(new THREE.Mesh(mergeGeos([0, 1, 2, 3].map(k => new THREE.BoxGeometry(1.7, 9, .1).translate(.95, 6.4, .05).rotateZ(k * Math.PI / 2))), lam('#efe6d2')));
+      const bal = add(new THREE.Group()), env = new THREE.Mesh(new THREE.SphereGeometry(5, 14, 10).scale(1, 1.2, 1), lam('#c8452a')); bal.add(env);
+      bal.add(new THREE.Mesh(mergeGeos([new THREE.CylinderGeometry(5.05, 5.05, 2.2, 14, 1, true).translate(0, .6, 0), new THREE.BoxGeometry(1.6, 1.2, 1.6).translate(0, -7.6, 0)]), lam('#d8a038')));
+      const R8 = D(110), ph = Math.random() * TAU;
+      life(T => { sails.rotation.z = -T * .55; const a = ph + T * .006; bal.position.set(cx + Math.cos(a) * R8, 52 + Math.sin(T * .2) * 3, cz + Math.sin(a) * R8 * .8); bal.rotation.y = T * .05; });
     } else if (t === 'space') {
       // freighters crossing on long lanes, nav lights blinking; a satellite turning
       for (let k = 0; k < (low ? 2 : 4); k++) { const g = add(new THREE.Group()), hm = lam(['#9aa6ba', '#c9d2e0', '#7a8496', '#b8a88a'][k]); g.add(merged([[14, 3, 4], [4, 5, 5, -6, 0, 0]], hm)); g.add(box(.6, 2, 2.4, bas('#7fd8ff'), -8.4, 0, 0)); const nl = box(.5, .5, .5, bas('#ff3b3b'), 7.2, 1.8, 0); g.add(nl);

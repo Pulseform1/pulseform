@@ -195,7 +195,7 @@
         if (on) { g.fillStyle = k === 'ranked' ? GOLD : k === 'online' ? GOLD : YOU; g.fillRect(x + pad, ty + 14 * u, ws[i] - pad * 2, 3 * u); } x += ws[i]; });
       g.fillStyle = 'rgba(239,233,220,.1)'; g.fillRect(mid - tot / 2, ty + 17 * u, tot, 1);
       const nOf = k => MAPS.filter(m => ((m.sites | 0) >= 2 ? 2 : 1) === k && !m.hidden).length;
-      const desc = { standard: `Two sites  ·  plant, hold, retake  ·  ${nOf(2)} maps  ·  with bots`, swift: `One site  ·  short, sharp rounds  ·  ${nOf(1)} maps  ·  with bots`, ranked: 'Your rank on the line  ·  first to 5  ·  sides swap at the half',
+      const desc = { standard: `Two or three sites  ·  plant, hold, retake  ·  ${nOf(2)} maps  ·  with bots`, swift: `One site  ·  short, sharp rounds  ·  ${nOf(1)} maps  ·  with bots`, ranked: 'Your rank on the line  ·  first to 5  ·  sides swap at the half',
         online: 'Real players, anywhere  ·  unrated', practice: 'The range: every gun, moving targets, no clock' }[mode];
       tx(g, desc, mid, ty + 38 * u, 12 * u, '#aeb6c2', 'center', 700); }
     // the team

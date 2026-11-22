@@ -145,7 +145,7 @@
   let verbN = null, verbKind = '';
   function verb() {
     const ac = K.ac; if (!ac || typeof MAP === 'undefined' || !MAP) return null;
-    const kind = { harbor: 'open', desert: 'open', snow: 'open', space: 'hall', lava: 'hall', jungle: 'hall', neon: 'street' }[MAP.theme] || 'street';
+    const kind = { harbor: 'open', desert: 'open', snow: 'open', space: 'hall', lava: 'hall', jungle: 'hall', neon: 'street', autumn: 'open' }[MAP.theme] || 'street';
     if (!verbN || verbN.context !== ac) { verbN = ac.createConvolver(); const wet = ac.createGain(); wet.gain.value = .55; verbN.connect(wet).connect(bus()); verbKind = ''; }
     if (verbKind !== kind) { verbKind = kind; const sr = ac.sampleRate, L = { open: 1.6, hall: .9, street: 1.2 }[kind], n = Math.floor(sr * L), B = ac.createBuffer(2, n, sr);
       for (let ch = 0; ch < 2; ch++) { const d = B.getChannelData(ch); let lpS = 0;
@@ -360,6 +360,9 @@
     lava: [o => tone(o, 48, 2.4, 'sine', .09, -10),   // the caldera rumbling
       o => { tone(o, 300, .15, 'triangle', .04, -120); tone(o, 240, .2, 'triangle', .03, -100, .12); },   // metal knocking
       o => tone(o, 90, .8, 'sawtooth', .02, -30)],
+    autumn: [o => { for (let k = 0; k < 2 + (Math.random() * 2 | 0); k++) tone(o, 480 + Math.random() * 80, .22, 'sawtooth', .022, -180, k * .34); },   // rooks
+      o => { tone(o, 392, 2.6, 'sine', .028); tone(o, 784, 1.6, 'sine', .01, 0, .01); },   // a church bell across the valley
+      o => { for (let k = 0; k < 9; k++) tone(o, 950, .02, 'square', .012, -200, k * .055); }],   // a woodpecker
     space: [o => { for (let k = 0; k < 3; k++) tone(o, 1200 + k * 400, .06, 'sine', .03, 0, k * .09); },   // radio chatter
       o => tone(o, 80, 2, 'sine', .05, 6),   // the station's hum
       o => tone(o, 520, .5, 'triangle', .02, -300)],
