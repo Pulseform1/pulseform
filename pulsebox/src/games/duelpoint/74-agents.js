@@ -165,24 +165,32 @@
     const arms = bone(torso, 0, .5, 0), armMesh = bone(arms, 0, 0, 0), gunHold = bone(arms, 0, 0, 0);
     const pose = gd => {
       while (armMesh.children.length) { const c = armMesh.children[0]; armMesh.remove(c); if (c.geometry) c.geometry.dispose(); }
-      const s = 1.08, a = .29, b = .27, knife = gd.k === 'knife';
+      const s = GUN3P, a = .31, b = .33, a0 = a, b0 = b, knife = gd.k === 'knife';
       // how far forward this body's chest reaches (armour, pouches) at the height the arms work: measured once, in the arms' frame.
       // The holds were set for a slim chest (about 21.5 cm out); a bulkier one carries a long gun further out, so its stock, the
       // grip and the arm across the chest stay in front of the armour rather than in it
-      if (pose.front == null) { G.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(arms.matrixWorld).invert(), v = new THREE.Vector3(); let fr = 0;
-        torso.traverse(o => { if (!o.isMesh || o.userData.px) return; for (let q = o; q; q = q.parent) if (q === arms) return; const P = o.geometry.attributes.position; for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld).applyMatrix4(inv); if (v.y > -.45 && v.y < .12 && Math.abs(v.x) < .2) fr = Math.min(fr, v.z); } });
-        pose.front = fr || -.215; }
+      if (pose.front == null) { G.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(arms.matrixWorld).invert(), v = new THREE.Vector3(); let fr = 0; const pts = [];
+        torso.traverse(o => { if (!o.isMesh || o.userData.px) return; for (let q = o; q; q = q.parent) if (q === arms) return; const P = o.geometry.attributes.position; for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld).applyMatrix4(inv); if (v.y > -.45 && v.y < .12 && Math.abs(v.x) < .2) fr = Math.min(fr, v.z); if (v.y > -.22 && v.y < .06 && v.z < .05) pts.push(v.x, v.z); } });
+        pose.front = fr || -.215; pose.pts = pts; }
+      // a rifle is held in a turned stance (the chest turns right, the head and gun stay on target: see updateAgent), which
+      // brings the left shoulder forward so the support hand reaches the handguard, and puts the stock in the right shoulder pocket
+      const bl = knife || gd.pistolHold || gd.dead || gd.k === 'stub' ? 0 : BLADE, cb = Math.cos(bl), sb = Math.sin(bl);
+      let fs = 0; for (let i = 0; i < pose.pts.length; i += 2) { const x = pose.pts[i] * cb - pose.pts[i + 1] * sb, z = pose.pts[i] * sb + pose.pts[i + 1] * cb; if (x > .06 && x < .2) fs = Math.min(fs, z); }
+      const frontS = fs || pose.front; G.userData.blade = bl;
       const out = Math.min(0, pose.front + .215) * 1.3;   // (negative: further forward)
       gunHold.position.set(...(knife ? [.17, -.17, -.33] : gd.pistolHold ? [.03, -.04, -.47] : gd.k === 'stub' ? [.09, -.11, -.36 + out] : [.118, -.07, -.255 + out]));
-      if (!knife && !gd.pistolHold && !gd.dead && gd.rear != null) gunHold.position.z = Math.min(gunHold.position.z, pose.front - .03 - gd.rear);   // (a long stock: the whole gun comes forward until its back end is in front of the chest)
+      if (!knife && !gd.pistolHold && !gd.dead && gd.rear != null) gunHold.position.z = Math.min(gunHold.position.z, frontS + .04 - gd.rear);   // (a long stock: the whole gun comes forward until its back end is in front of the chest)
       // (but never past where the grip hand can reach: the gun stays in the hands, even if a long stock then brushes the armour)
-      if (!knife && !gd.pistolHold && !gd.dead) { const g0 = gunHold.position, rx = g0.x + gd.grip[0] * s - .235 * w, ry = g0.y + gd.grip[1] * s; while (g0.z < -.2 && Math.hypot(rx, ry, g0.z + gd.grip[2] * s) > a + b - .03) g0.z += .01; }
+      const SR = [.235 * w * Math.cos(bl), 0, .235 * w * Math.sin(bl)], SL = [-.235 * w * Math.cos(bl), 0, -.235 * w * Math.sin(bl)];
+      if (!knife && !gd.pistolHold && !gd.dead) { const g0 = gunHold.position, rx = g0.x + gd.grip[0] * s - SR[0], ry = g0.y + gd.grip[1] * s; while (g0.z < -.2 && Math.hypot(rx, ry, g0.z + gd.grip[2] * s - SR[2]) > a + b - .03) g0.z += .01; }
       const hold = gunHold.position, Rt = gd.dead ? gd.dead[0] : [hold.x + gd.grip[0] * s, hold.y + gd.grip[1] * s, hold.z + gd.grip[2] * s];   // (dead: the hands wherever the body left them)
       let Lt = gd.dead ? gd.dead[1] : knife ? [-.2, -.34, -.2] : gd.pistolHold ? [Rt[0] - .05, Rt[1] - .015, Rt[2] + .005] : [hold.x + gd.sup[0] * s - .01, hold.y + gd.sup[1] * s, hold.z + gd.sup[2] * s];
-      const SR = [.235 * w, 0, 0], SL = [-.235 * w, 0, 0];
-      while (Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) > a + b - .02 && Lt[2] < -.2) Lt[2] += .02;   // a long handguard: slide the hand back to where the arm reaches
+      // a long handguard: the support arm stretches a little (up to 18%) to keep the hand out on it, then the hand slides back if it must
+      const kL = knife || gd.pistolHold || gd.dead ? 1 : Math.min(1.18, Math.max(1, Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) / (a + b - .02)));
+      const lt0 = Lt[2]; while (Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) > (a + b) * kL - .02 && Lt[2] < -.2) Lt[2] += .02; gunHold.userData.slide = Lt[2] - lt0;   // a long handguard: slide the hand back to where the arm reaches
       T = armMesh;
       for (const [S, Tg, px] of [[SR, Rt, 1], [SL, Lt, -1]]) {
+        const a = a0 * (px < 0 ? kL : 1), b = b0 * (px < 0 ? kL : 1);
         const d = new THREE.Vector3(Tg[0] - S[0], Tg[1] - S[1], Tg[2] - S[2]), Ld = Math.min(d.length(), a + b - .005); d.normalize();
         const x = (a * a - b * b + Ld * Ld) / (2 * Ld), h = Math.sqrt(Math.max(0, a * a - x * x)), pole = px > 0 ? new THREE.Vector3(.55, -1, .25) : new THREE.Vector3(-.9, -1, -.05); pole.addScaledVector(d, -pole.dot(d)).normalize();
         const E = [S[0] + d.x * x + pole.x * h, S[1] + d.y * x + pole.y * h, S[2] + d.z * x + pole.z * h], Hn = [S[0] + d.x * Ld, S[1] + d.y * Ld, S[2] + d.z * Ld];
@@ -298,6 +306,8 @@
     root.traverse(o => { if (o.userData.isOL) o.visible = show; });
   }
   let agentWarmT = -1;
+  const BLADE = .6;   // how far the chest turns (about 34 degrees) holding a rifle, the left shoulder forward
+  const GUN3P = .95;   // a gun in an agent's hands, seen from outside (a touch smaller than first person, so it sits in the hands)
   // how far a gun reaches back behind its hold (its stock, the back of its receiver): measured once on the gun as built
   // (scale included) and kept on it, so pose() can keep the back end clear of the chest
   function gunRear(gm) { if (gm.userData.rear != null) return; const prev = gm.parent; gm.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(gm.matrixWorld).invert(), sc = new THREE.Matrix4().makeScale(gm.scale.x, gm.scale.y, gm.scale.z), v = new THREE.Vector3(); let r = 0;
@@ -312,12 +322,12 @@
     if ((U.gk !== fk || U.gsk !== fsk) && !U.deadArms) {   // a gun once built for this fighter is kept, outline and all: switching back to it costs nothing
       U.gsk = fsk; while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]);
       const GC = U.gunCache || (U.gunCache = new Map()), gkey = fk + '|' + fsk; let gm = GC.get(gkey);
-      if (!gm) { gm = gunModel(fk, { cast: false, flash: true, skin: fsk }); gm.scale.setScalar(1.08); gm.userData.cachedGun = true; gunRear(gm); GC.set(gkey, gm); if (GC.size > 6) GC.delete(GC.keys().next().value); }
+      if (!gm) { gm = gunModel(fk, { cast: false, flash: true, skin: fsk }); gm.scale.setScalar(GUN3P); gm.userData.cachedGun = true; gunRear(gm); GC.set(gkey, gm); if (GC.size > 6) GC.delete(GC.keys().next().value); }
       else { GC.delete(gkey); GC.set(gkey, gm); gm.traverse(o => { if (o.userData.isOL) o.visible = !!U.olOn; }); }
       U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
     // and the guns in its other slots are built ahead, one gun a frame across the whole field, so a swap or a buy never builds one mid-fight
     if (agentWarmT !== X.t && f.guns) for (const sl of [1, 2, 3]) { const k = f.guns[sl]; if (!k || !GUNS[k]) continue; const sk2 = skinFor(f, k) || '', GC = U.gunCache || (U.gunCache = new Map());
-      if (GC.has(k + '|' + sk2)) continue; agentWarmT = X.t; const g2 = gunModel(k, { cast: false, flash: true, skin: sk2 }); g2.scale.setScalar(1.08); g2.userData.cachedGun = true; gunRear(g2);
+      if (GC.has(k + '|' + sk2)) continue; agentWarmT = X.t; const g2 = gunModel(k, { cast: false, flash: true, skin: sk2 }); g2.scale.setScalar(GUN3P); g2.userData.cachedGun = true; gunRear(g2);
       g2.traverse(o => { if (o.isMesh && o.geometry && !(o.material && o.material.transparent)) olNormals(o.geometry); }); GC.set(k + '|' + sk2, g2); if (GC.size > 6) GC.delete(GC.keys().next().value); break; }
     A.visible = !M || duelOk(viewer(), f); A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;   // (a Duel Field hides those in it from everyone else, and everyone else from them)
     { const P = M ? me() : null, foeSide = !!P && f.team !== P.team, op = f.cloak > 0 && f.alive ? (foeSide ? .07 : .35) : 1; U.cop = lp(U.cop == null ? 1 : U.cop, op, Math.min(1, dt * 10));
@@ -367,6 +377,8 @@
       else if (kd === 'heal') { U.arms.rotation.x += c * .35; U.arms.rotation.z += c * .25; U.torso.rotation.x += c * .1; }
       else if (kd === 'dash') { U.torso.rotation.y += c * .4; U.arms.rotation.z -= c * .35; U.torso.rotation.x += c * .15; }
       else { U.arms.rotation.x -= c * .55; U.arms.rotation.z += c * .3; U.torso.rotation.y += c * .2; } }
+    // the rifle stance: the chest turns, the arms (so the gun) and the head turn back, so both stay on target
+    { const want = f.alive && !U.deadArms ? (U.blade || 0) : 0; U.bl = lp(U.bl == null ? want : U.bl, want, Math.min(1, dt * 10)); U.torso.rotation.y -= U.bl; U.arms.rotation.y += U.bl; U.head.rotation.y = U.bl; }
     U.head.rotation.x = f.pitch * .6 - sk * .3;
     if (U.flash) { U.flash.visible = f.kick > .05 && f.alive && !gun(f).melee; if (U.flash.visible) U.flash.material.rotation = Math.random() * 6; }
     // the rival's gun works too: slide, bolt, pump, magazine; and the arms tip it over to reload
