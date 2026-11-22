@@ -215,7 +215,7 @@
       }
       function stats() { return { Mazes: G.m + ' / ' + MAZES, Stars: G.stars + ' / ' + MAZES * 3, Moves: G.total + (G.m < MAZES ? G.moves : 0), Par: G.parTotal + (G.m < MAZES && G.M ? G.M.par : 0) }; }
       function learnt() {
-        return lv === 0 ? ['A switch is either ON or OFF; stepping on it flips it.', 'A gate labelled A is open only while switch A is ON.', 'Planning the route first (key, then door) saves moves.']
+        return lv === 0 ? ['A switch is either ON or OFF; stepping on it flips it.', 'A gate labeled A is open only while switch A is ON.', 'Planning the route first (key, then door) saves moves.']
           : ['A AND B is true only when both A and B are true.', 'A OR B is true when at least one of them is true.', ...(lv === 2 ? ['NOT A is true when A is false: it flips the value.', 'One choice now (which switch to use) can make a later gate easier or harder.'] : ['Planning which switches you need before moving saves steps.'])];
       }
       function over() { c.end({ won: false, title: 'Out of lives', msg: 'Read each gate\'s rule and check the switch chips before you move.', stats: stats(), learnt: learnt() }); }

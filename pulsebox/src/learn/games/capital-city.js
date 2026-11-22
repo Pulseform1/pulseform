@@ -44,7 +44,7 @@
         c.end({ won, title: won ? 'Capital champion!' : "Time's up!", msg: won ? `You matched ${c.got} capitals.` : `Match ${L.goal} pairs before the clock runs out to clear the level.`, stats: { 'Pairs matched': c.got }, learnt }); });
       c.hud({ pairs: c.got + ' / ' + L.goal });
       const fresh = pool => { let p = pool.filter(x => !c.used.has(x.name)); if (p.length < 5) { pool.forEach(x => c.used.delete(x.name)); p = pool; } return p; };
-      const fact = x => x.big ? `${x.cap} is the capital of ${x.name}, but ${x.big} is its biggest city.` : `${x.cap} is the capital of ${x.name} (${ctName(x)}).`;
+      const fact = x => x.big ? `${x.cap}, not the bigger city of ${x.big}, is the capital of ${x.name}.` : `${x.cap} is the capital of ${x.name} (${ctName(x)}).`;
       function newBoard() {
         let list, decoy = null, label = '';
         if (c.level === 0) list = sample(fresh(CAPS.filter(x => x.f === 1)), 5);
@@ -88,7 +88,7 @@
         } else {
           [a, b].forEach(e => { e.classList.remove('no'); void e.offsetWidth; e.classList.add('no'); c.after(400, () => e.classList.remove('no')); }); c.wrong(B.left - s.left + B.width / 2, B.top - s.top, '−3s'); T.add(-3);
           const owner = COUNTRIES.find(y => y.cap === city), dec = COUNTRIES.find(y => y.big === city);
-          const m = dec ? `${city} is the biggest city of ${dec.name}, but not its capital. The capital is ${dec.cap}.` : `No: ${city} is the capital of ${owner.name}. ${x.name}'s capital is on the board too.`;
+          const m = dec ? `${city} is a bigger city in ${dec.name}, but it is not the capital. The capital is ${dec.cap}.` : `No: ${city} is the capital of ${owner.name}. ${x.name}'s capital is on the board too.`;
           msg.textContent = '✗ ' + m; c.missed.push(dec ? fact(dec) : fact(x));
         }
       }

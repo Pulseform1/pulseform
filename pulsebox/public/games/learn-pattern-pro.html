@@ -119,7 +119,7 @@ const CATALOG = [
 { id: 'math-rush', title: 'Math Rush', subject: 'Math', icon: '➕', c: '#ff9f1c', c2: '#ffd23f', ages: '6+',
 teaches: 'Fast, accurate mental arithmetic.', learn: ['Addition and subtraction facts', 'Times tables and division', 'Working quickly without losing accuracy'] },
 { id: 'number-ninja', title: 'Number Ninja', subject: 'Math', icon: '🥷', c: '#ff5a3a', c2: '#ffb347', ages: '7+',
-teaches: 'Slice the flying numbers that answer the problem.', learn: ['Recognising answers at a glance', 'Even and odd numbers, multiples and factors', 'Mental maths under pressure'] },
+teaches: 'Slice the flying numbers that answer the problem.', learn: ['Recognizing answers at a glance', 'Even and odd numbers, multiples and factors', 'Mental maths under pressure'] },
 { id: 'fraction-frenzy', title: 'Fraction Frenzy', subject: 'Math', icon: '🍕', c: '#ffcc33', c2: '#ff7a59', ages: '8+',
 teaches: 'Fractions, decimals and percentages are the same numbers.', learn: ['Reading fractions from pictures', 'Converting fractions to decimals and percentages', 'Equivalent fractions'] },
 { id: 'equation-escape', title: 'Equation Escape', subject: 'Math', icon: '🚪', c: '#3ddc84', c2: '#29e0ff', ages: '10+',
@@ -137,11 +137,11 @@ teaches: 'Fix grammar mistakes to defend the castle.', learn: ['Their, there and
 { id: 'vocabulary-quest', title: 'Vocabulary Quest', subject: 'Language', icon: '🗺️', c: '#29e0ff', c2: '#a98bff', ages: '8+',
 teaches: 'Learn word meanings, synonyms and antonyms on an adventure.', learn: ['What words mean', 'Synonyms and antonyms', 'Choosing the right word for a sentence'] },
 { id: 'flag-master', title: 'Flag Master', subject: 'Geography & Science', icon: '🏁', c: '#ff4d5e', c2: '#5ab0ff', ages: '7+',
-teaches: 'Recognise the flags of countries around the world.', learn: ['Flags of countries on every continent', 'Telling look-alike flags apart', 'Where each country is'] },
+teaches: 'Recognize the flags of countries around the world.', learn: ['Flags of countries on every continent', 'Telling look-alike flags apart', 'Where each country is'] },
 { id: 'capital-city', title: 'Capital City Challenge', subject: 'Geography & Science', icon: '🏛️', c: '#ffd23f', c2: '#3ddc84', ages: '8+',
 teaches: 'Match countries with their capital cities.', learn: ['Capital cities of the world', 'Which continent each country is on', 'Capitals that are not the biggest city'] },
 { id: 'science-lab', title: 'Science Lab', subject: 'Geography & Science', icon: '🧪', c: '#7af0d0', c2: '#29e0ff', ages: '8+',
-teaches: 'Science quizzes and hands-on experiments.', learn: ['States of matter and how they change', 'Mixing colours of light and paint', 'Forces, the body, plants and energy'] },
+teaches: 'Science quizzes and hands-on experiments.', learn: ['States of matter and how they change', 'Mixing colors of light and paint', 'Forces, the body, plants and energy'] },
 { id: 'planet-explorer', title: 'Planet Explorer', subject: 'Geography & Science', icon: '🪐', c: '#a98bff', c2: '#29e0ff', ages: '8+',
 teaches: 'Fly through the solar system and learn about each world.', learn: ['The order of the planets', 'Facts about planets, moons and the Sun', 'Size, distance and what each world is made of'] },
 { id: 'periodic-puzzle', title: 'Periodic Table Puzzle', subject: 'Geography & Science', icon: '⚛️', c: '#3ddc84', c2: '#5ab0ff', ages: '11+',
@@ -151,7 +151,7 @@ teaches: 'Remember the lit tiles and their order.', learn: ['Short-term (working
 { id: 'logic-labyrinth', title: 'Logic Labyrinth', subject: 'Logic', icon: '🌀', c: '#29e0ff', c2: '#3ddc84', ages: '8+',
 teaches: 'Find your way through mazes guarded by logic gates.', learn: ['Planning a route', 'AND, OR and NOT logic', 'Spotting the rule in a pattern'] },
 { id: 'pattern-pro', title: 'Pattern Pro', subject: 'Logic', icon: '🔷', c: '#5ab0ff', c2: '#ff7ad9', ages: '6+',
-teaches: 'Work out what comes next in a sequence.', learn: ['Number sequences (adding, doubling, squares)', 'Shape and colour patterns', 'Finding a rule and testing it'] },
+teaches: 'Work out what comes next in a sequence.', learn: ['Number sequences (adding, doubling, squares)', 'Shape and color patterns', 'Finding a rule and testing it'] },
 { id: 'sudoku-mini', title: 'Sudoku Mini', subject: 'Logic', icon: '🔢', c: '#ffd23f', c2: '#ff9f1c', ages: '7+',
 teaches: 'Fill 4×4 and 6×6 grids so no row, column or box repeats.', learn: ['Logical deduction', 'Process of elimination', 'Checking your work'] },
 { id: 'code-breaker', title: 'Code Breaker', subject: 'Logic', icon: '🤖', c: '#c6ff3d', c2: '#29e0ff', ages: '7+',
@@ -379,24 +379,24 @@ shapes() { const p = pick([2, 3]), pat = sample(SH, p), s = Array.from({ length:
 return { seq: s, ans, wrong: shuffle(SH.filter(x => x !== ans.s)).map(x => ({ k: 's', s: x })), rule: `The shapes repeat: ${names(pat)}.` }; },
 abb() { const [A, B] = sample(SH, 2), pat = Math.random() < .5 ? [A, A, B] : [A, B, B], s = Array.from({ length: 7 }, (_, i) => ({ k: 's', s: pat[i % 3] })), ans = { k: 's', s: pat[1] };
 return { seq: s, ans, wrong: [pat[1] === A ? B : A, ...shuffle(SH.filter(x => x !== A && x !== B))].map(x => ({ k: 's', s: x })), rule: `A group of three repeats: ${names(pat)}.` }; },
-colours() { const p = c4 ? pick([3, 4]) : pick([2, 3]), pat = sample([0, 1, 2, 3, 4, 5], p), len = p === 4 ? 8 : 6, s = Array.from({ length: len }, (_, i) => ({ k: 'c', c: pat[i % p] })), ans = { k: 'c', c: pat[len % p] };
-return { seq: s, ans, wrong: shuffle([0, 1, 2, 3, 4, 5].filter(x => x !== ans.c)).map(x => ({ k: 'c', c: x })), rule: `The colours repeat: ${names(pat.map(x => CL[x][0].toLowerCase()))}.` }; },
+colors() { const p = c4 ? pick([3, 4]) : pick([2, 3]), pat = sample([0, 1, 2, 3, 4, 5], p), len = p === 4 ? 8 : 6, s = Array.from({ length: len }, (_, i) => ({ k: 'c', c: pat[i % p] })), ans = { k: 'c', c: pat[len % p] };
+return { seq: s, ans, wrong: shuffle([0, 1, 2, 3, 4, 5].filter(x => x !== ans.c)).map(x => ({ k: 'c', c: x })), rule: `The colors repeat: ${names(pat.map(x => CL[x][0].toLowerCase()))}.` }; },
 arrows() { const st = (c4 ? 45 : 90) * pick([1, -1]), r0 = c4 ? rnd(0, 7) * 45 : rnd(0, 3) * 90, n = c4 ? 5 : 4, s = Array.from({ length: n }, (_, i) => ({ k: 'a', r: (r0 + i * st + 720) % 360 })), ans = { k: 'a', r: (r0 + n * st + 720) % 360 };
-return { seq: s, ans, wrong: shuffle([45, 90, 135, 180, 225, 270, 315].filter(d => c4 || d % 90 === 0)).map(d => ({ k: 'a', r: (ans.r + d) % 360 })), rule: `The arrow turns ${Math.abs(st)}° ${st > 0 ? 'clockwise' : 'anticlockwise'} each time.` }; },
+return { seq: s, ans, wrong: shuffle([45, 90, 135, 180, 225, 270, 315].filter(d => c4 || d % 90 === 0)).map(d => ({ k: 'a', r: (ans.r + d) % 360 })), rule: `The arrow turns ${Math.abs(st)}° ${st > 0 ? 'clockwise' : 'counterclockwise'} each time.` }; },
 dots() { const k = c4 ? 2 : 1, n0 = rnd(1, c4 ? 2 : 3), s = [0, 1, 2, 3].map(i => ({ k: 'd', n: n0 + i * k })), a = n0 + 4 * k;
 return { seq: s, ans: { k: 'd', n: a }, wrong: shuffle([a - 1, a + 1, a + 2, a - 2].filter(v => v > 0 && v <= 12)).map(n => ({ k: 'd', n })), rule: `${k} more dot${k > 1 ? 's' : ''} each time.` }; },
 combo() { const sp = sample(SH, 3), cp = sample([0, 1, 2, 3, 4, 5], 2), s = Array.from({ length: 6 }, (_, i) => ({ k: 's', s: sp[i % 3], c: cp[i % 2] })), ans = { k: 's', s: sp[0], c: cp[0] };
 return { seq: s, ans, wrong: [{ k: 's', s: sp[0], c: cp[1] }, { k: 's', s: pick([sp[1], sp[2]]), c: cp[0] }, { k: 's', s: pick(SH.filter(x => x !== sp[0])), c: cp[1] }],
-rule: `Two patterns at once: shapes repeat every 3, colours every 2.` }; },
+rule: `Two patterns at once: shapes repeat every 3, colors every 2.` }; },
 arrowCol() { const st = pick([90, -90, 45, -45]), r0 = rnd(0, 7) * 45, cp = sample([0, 1, 2, 3, 4, 5], 2), s = Array.from({ length: 5 }, (_, i) => ({ k: 'a', r: (r0 + i * st + 720) % 360, c: cp[i % 2] })),
 ans = { k: 'a', r: (r0 + 5 * st + 720) % 360, c: cp[1] }, bad = (ans.r + pick([90, 180, 270])) % 360;
 return { seq: s, ans, wrong: [{ k: 'a', r: ans.r, c: cp[0] }, { k: 'a', r: bad, c: cp[1] }, { k: 'a', r: (ans.r + 180) % 360, c: cp[0] }],
-rule: `The arrow turns ${Math.abs(st)}° ${st > 0 ? 'clockwise' : 'anticlockwise'} and the colours take turns.` }; }
+rule: `The arrow turns ${Math.abs(st)}° ${st > 0 ? 'clockwise' : 'counterclockwise'} and the colors take turns.` }; }
 };
 let c4 = false;
-const POOL = [['add', 'add', 'shapes', 'colours', 'arrows', 'dots'], ['double', 'sub', 'alt', 'arrows', 'dots', 'abb', 'colours'], ['squares', 'fib', 'alt2', 'combo', 'arrowCol', 'double', 'alt', 'fib']];
+const POOL = [['add', 'add', 'shapes', 'colors', 'arrows', 'dots'], ['double', 'sub', 'alt', 'arrows', 'dots', 'abb', 'colors'], ['squares', 'fib', 'alt2', 'combo', 'arrowCol', 'double', 'alt', 'fib']];
 const LV = [
-{ name: 'Easy', desc: 'Add on, repeating shapes and colours, turning arrows.', t: 20 },
+{ name: 'Easy', desc: 'Add on, repeating shapes and colors, turning arrows.', t: 20 },
 { name: 'Medium', desc: 'Doubling, two-step rules, 45° turns, longer cycles.', t: 16 },
 { name: 'Hard', desc: 'Squares, Fibonacci-style sums, two rules at once.', t: 14 }
 ];

@@ -119,7 +119,7 @@ const CATALOG = [
 { id: 'math-rush', title: 'Math Rush', subject: 'Math', icon: '➕', c: '#ff9f1c', c2: '#ffd23f', ages: '6+',
 teaches: 'Fast, accurate mental arithmetic.', learn: ['Addition and subtraction facts', 'Times tables and division', 'Working quickly without losing accuracy'] },
 { id: 'number-ninja', title: 'Number Ninja', subject: 'Math', icon: '🥷', c: '#ff5a3a', c2: '#ffb347', ages: '7+',
-teaches: 'Slice the flying numbers that answer the problem.', learn: ['Recognising answers at a glance', 'Even and odd numbers, multiples and factors', 'Mental maths under pressure'] },
+teaches: 'Slice the flying numbers that answer the problem.', learn: ['Recognizing answers at a glance', 'Even and odd numbers, multiples and factors', 'Mental maths under pressure'] },
 { id: 'fraction-frenzy', title: 'Fraction Frenzy', subject: 'Math', icon: '🍕', c: '#ffcc33', c2: '#ff7a59', ages: '8+',
 teaches: 'Fractions, decimals and percentages are the same numbers.', learn: ['Reading fractions from pictures', 'Converting fractions to decimals and percentages', 'Equivalent fractions'] },
 { id: 'equation-escape', title: 'Equation Escape', subject: 'Math', icon: '🚪', c: '#3ddc84', c2: '#29e0ff', ages: '10+',
@@ -137,11 +137,11 @@ teaches: 'Fix grammar mistakes to defend the castle.', learn: ['Their, there and
 { id: 'vocabulary-quest', title: 'Vocabulary Quest', subject: 'Language', icon: '🗺️', c: '#29e0ff', c2: '#a98bff', ages: '8+',
 teaches: 'Learn word meanings, synonyms and antonyms on an adventure.', learn: ['What words mean', 'Synonyms and antonyms', 'Choosing the right word for a sentence'] },
 { id: 'flag-master', title: 'Flag Master', subject: 'Geography & Science', icon: '🏁', c: '#ff4d5e', c2: '#5ab0ff', ages: '7+',
-teaches: 'Recognise the flags of countries around the world.', learn: ['Flags of countries on every continent', 'Telling look-alike flags apart', 'Where each country is'] },
+teaches: 'Recognize the flags of countries around the world.', learn: ['Flags of countries on every continent', 'Telling look-alike flags apart', 'Where each country is'] },
 { id: 'capital-city', title: 'Capital City Challenge', subject: 'Geography & Science', icon: '🏛️', c: '#ffd23f', c2: '#3ddc84', ages: '8+',
 teaches: 'Match countries with their capital cities.', learn: ['Capital cities of the world', 'Which continent each country is on', 'Capitals that are not the biggest city'] },
 { id: 'science-lab', title: 'Science Lab', subject: 'Geography & Science', icon: '🧪', c: '#7af0d0', c2: '#29e0ff', ages: '8+',
-teaches: 'Science quizzes and hands-on experiments.', learn: ['States of matter and how they change', 'Mixing colours of light and paint', 'Forces, the body, plants and energy'] },
+teaches: 'Science quizzes and hands-on experiments.', learn: ['States of matter and how they change', 'Mixing colors of light and paint', 'Forces, the body, plants and energy'] },
 { id: 'planet-explorer', title: 'Planet Explorer', subject: 'Geography & Science', icon: '🪐', c: '#a98bff', c2: '#29e0ff', ages: '8+',
 teaches: 'Fly through the solar system and learn about each world.', learn: ['The order of the planets', 'Facts about planets, moons and the Sun', 'Size, distance and what each world is made of'] },
 { id: 'periodic-puzzle', title: 'Periodic Table Puzzle', subject: 'Geography & Science', icon: '⚛️', c: '#3ddc84', c2: '#5ab0ff', ages: '11+',
@@ -151,7 +151,7 @@ teaches: 'Remember the lit tiles and their order.', learn: ['Short-term (working
 { id: 'logic-labyrinth', title: 'Logic Labyrinth', subject: 'Logic', icon: '🌀', c: '#29e0ff', c2: '#3ddc84', ages: '8+',
 teaches: 'Find your way through mazes guarded by logic gates.', learn: ['Planning a route', 'AND, OR and NOT logic', 'Spotting the rule in a pattern'] },
 { id: 'pattern-pro', title: 'Pattern Pro', subject: 'Logic', icon: '🔷', c: '#5ab0ff', c2: '#ff7ad9', ages: '6+',
-teaches: 'Work out what comes next in a sequence.', learn: ['Number sequences (adding, doubling, squares)', 'Shape and colour patterns', 'Finding a rule and testing it'] },
+teaches: 'Work out what comes next in a sequence.', learn: ['Number sequences (adding, doubling, squares)', 'Shape and color patterns', 'Finding a rule and testing it'] },
 { id: 'sudoku-mini', title: 'Sudoku Mini', subject: 'Logic', icon: '🔢', c: '#ffd23f', c2: '#ff9f1c', ages: '7+',
 teaches: 'Fill 4×4 and 6×6 grids so no row, column or box repeats.', learn: ['Logical deduction', 'Process of elimination', 'Checking your work'] },
 { id: 'code-breaker', title: 'Code Breaker', subject: 'Logic', icon: '🤖', c: '#c6ff3d', c2: '#29e0ff', ages: '7+',
@@ -356,7 +356,7 @@ const COLS = [{ n: 'Red', c: '#ff4d5e', s: '●' }, { n: 'Yellow', c: '#ffd23f',
 const LV = [
 { name: 'Easy', desc: 'Which tiles lit up? Any order. 3×3, growing to 4×4.', rounds: [[3, 3], [3, 3], [3, 4], [3, 4], [4, 5], [4, 5], [4, 6], [4, 7]] },
 { name: 'Medium', desc: 'Tap them back in order. The sequence grows each round.', size: 4, first: 3, n: 8, on: 560, gap: 170 },
-{ name: 'Hard', desc: 'Order and colour on a 5×5 grid, with faster flashes.', size: 5, first: 3, n: 7, on: 420, gap: 120, colour: true }
+{ name: 'Hard', desc: 'Order and color on a 5×5 grid, with faster flashes.', size: 5, first: 3, n: 7, on: 420, gap: 120, color: true }
 ];
 function css() {
 if (document.getElementById('mm-css')) return;
@@ -389,19 +389,19 @@ Edu.game({
 id: 'memory-matrix', levels: LV,
 how: ['Watch the tiles that light up, then tap them back when it says "Your turn".',
 'Easy: just the right tiles, in any order. Medium: the same order they flashed.',
-'Hard: order and colour. Pick the colour below (or keys 1 to 4) before each tile.',
+'Hard: order and color. Pick the color below (or keys 1 to 4) before each tile.',
 'Arrow keys move the cursor; Space or Enter picks a tile. A wrong tile or the clock running out costs a life.',
 'Clear every round to clear the level. You have three lives.'],
 start(c) {
 css();
-const L = LV[c.level], ord = c.level > 0, col = !!L.colour, R = ord ? L.n : L.rounds.length;
+const L = LV[c.level], ord = c.level > 0, col = !!L.color, R = ord ? L.n : L.rounds.length;
 const msg = h('div', { class: 'mm-msg' }), grid = h('div', { class: 'mm-grid' }), dots = h('div', { class: 'mm-dots' }), pal = h('div', { class: 'mm-pal' });
 c.el.append(h('div', { class: 'mm' }, msg, grid, dots, col ? pal : null));
-const S = c.S = { ord, col, round: 0, phase: 'show', n: 0, tiles: [], target: [], seq: [], pos: 0, found: new Set(), cur: 0, colour: 0, cleared: 0, longest: 0, pal: [] };
+const S = c.S = { ord, col, round: 0, phase: 'show', n: 0, tiles: [], target: [], seq: [], pos: 0, found: new Set(), cur: 0, color: 0, cleared: 0, longest: 0, pal: [] };
 c.lives(3);
 const T = c.timer(20, () => { if (S.phase === 'input') { T.paused = true; fail(null, 'Too slow!'); } }); T.paused = true;
 if (col) { S.pal = COLS.map((k, i) => h('button', { type: 'button', '--k': k.c, title: k.n + ' (key ' + (i + 1) + ')', onclick: () => setColour(i) }, h('b', { text: k.s }), k.n)); pal.append(...S.pal); setColour(0); }
-function setColour(i) { S.colour = i; S.pal.forEach((b, j) => b.classList.toggle('sel', i === j)); }
+function setColour(i) { S.color = i; S.pal.forEach((b, j) => b.classList.toggle('sel', i === j)); }
 function say(t, cls) { msg.textContent = t; msg.className = 'mm-msg' + (cls ? ' ' + cls : ''); }
 function build(n) {
 S.n = n; grid.style.setProperty('--n', n); grid.innerHTML = ''; S.cur = Math.min(S.cur, n * n - 1);
@@ -440,7 +440,7 @@ c.after(t, () => light(o.t, o.k, false)); t += w(L.gap * f);
 c.after(t + w(250), input);
 }
 function input() {
-S.phase = 'input'; grid.classList.remove('watch'); say(ord ? 'Your turn! Same order' + (col ? ' and colours' : '') : 'Your turn! Find them', 'go');
+S.phase = 'input'; grid.classList.remove('watch'); say(ord ? 'Your turn! Same order' + (col ? ' and colors' : '') : 'Your turn! Find them', 'go');
 const n = S.target.length; T.set(Math.round((col ? 7 : 5) + n * (col ? 2 : 1.4))); T.paused = false; sfx.pop();
 }
 function tap(i) {
@@ -453,7 +453,7 @@ S.found.add(i); t.classList.add('ok'); c.right(5, x, y); drawDots();
 if (S.found.size === S.target.length) won();
 } else {
 const want = S.target[S.pos];
-if (want.t !== i || (col && want.k !== S.colour)) return fail(i, col && want.t === i ? 'Wrong colour!' : null);
+if (want.t !== i || (col && want.k !== S.color)) return fail(i, col && want.t === i ? 'Wrong color!' : null);
 S.pos++; t.classList.remove('ok'); void t.offsetWidth; if (col) { t.style.setProperty('--k', COLS[want.k].c); t.textContent = COLS[want.k].s; }
 t.classList.add('ok'); tone(330 + (i % 8) * 70, .12, 'triangle', .08); c.right(5 + c.level * 3, x, y); drawDots();
 if (S.pos === S.target.length) won();
@@ -477,7 +477,7 @@ c.end({ won: ok, title: ok ? 'Memory master!' : 'Out of lives', msg: ok ? 'You r
 stats: { Rounds: S.cleared + ' / ' + R, 'Longest pattern': S.longest || '-' },
 learnt: [ord ? 'Saying the order to yourself (top left, middle, corner...) helps you hold a sequence.' : 'Seeing the lit tiles as one shape (a line, an L, a corner) is easier than remembering each tile.',
 'Grouping things into chunks lets your working memory hold more at once.',
-col ? 'Linking two details (a place and a colour) into one picture helps you recall both.' : 'Memory gets better with practice: each round stretches it a little.'] });
+col ? 'Linking two details (a place and a color) into one picture helps you recall both.' : 'Memory gets better with practice: each round stretches it a little.'] });
 }
 c.key(e => {
 const n = S.n, k = e.key; let d = 0;
@@ -493,7 +493,7 @@ round();
 bot(c) {
 const S = c.S; if (!S || S.phase !== 'input') return;
 if (!S.ord) { const o = S.target.find(o => !S.found.has(o.t)); if (o) S.tiles[o.t].click(); return; }
-const want = S.target[S.pos]; if (S.col && S.colour !== want.k) S.pal[want.k].click(); else S.tiles[want.t].click();
+const want = S.target[S.pos]; if (S.col && S.color !== want.k) S.pal[want.k].click(); else S.tiles[want.t].click();
 },
 miss(c) {
 const S = c.S; if (!S || S.phase !== 'input') return;

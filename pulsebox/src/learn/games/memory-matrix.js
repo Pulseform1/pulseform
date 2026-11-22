@@ -1,5 +1,5 @@
 /* Memory Matrix: tiles light up, then the player taps them back. Easy: which tiles (any order) on a grid that grows
-   from 3×3 to 4×4. Medium: the order matters and the sequence grows by one tile every round. Hard: order and colour on
+   from 3×3 to 4×4. Medium: the order matters and the sequence grows by one tile every round. Hard: order and color on
    a 5×5 grid with faster flashes. Three lives; a recall clock each round; clear every round to clear the level. */
 (() => {
   const { h, rnd, sample, sfx, tone } = Edu, SP = Edu.SPEED, w = ms => ms / SP;   // (show timings follow ?speed for the checks)
@@ -7,7 +7,7 @@
   const LV = [
     { name: 'Easy', desc: 'Which tiles lit up? Any order. 3×3, growing to 4×4.', rounds: [[3, 3], [3, 3], [3, 4], [3, 4], [4, 5], [4, 5], [4, 6], [4, 7]] },
     { name: 'Medium', desc: 'Tap them back in order. The sequence grows each round.', size: 4, first: 3, n: 8, on: 560, gap: 170 },
-    { name: 'Hard', desc: 'Order and colour on a 5×5 grid, with faster flashes.', size: 5, first: 3, n: 7, on: 420, gap: 120, colour: true }
+    { name: 'Hard', desc: 'Order and color on a 5×5 grid, with faster flashes.', size: 5, first: 3, n: 7, on: 420, gap: 120, color: true }
   ];
   function css() {
     if (document.getElementById('mm-css')) return;
@@ -40,19 +40,19 @@
     id: 'memory-matrix', levels: LV,
     how: ['Watch the tiles that light up, then tap them back when it says "Your turn".',
       'Easy: just the right tiles, in any order. Medium: the same order they flashed.',
-      'Hard: order and colour. Pick the colour below (or keys 1 to 4) before each tile.',
+      'Hard: order and color. Pick the color below (or keys 1 to 4) before each tile.',
       'Arrow keys move the cursor; Space or Enter picks a tile. A wrong tile or the clock running out costs a life.',
       'Clear every round to clear the level. You have three lives.'],
     start(c) {
       css();
-      const L = LV[c.level], ord = c.level > 0, col = !!L.colour, R = ord ? L.n : L.rounds.length;
+      const L = LV[c.level], ord = c.level > 0, col = !!L.color, R = ord ? L.n : L.rounds.length;
       const msg = h('div', { class: 'mm-msg' }), grid = h('div', { class: 'mm-grid' }), dots = h('div', { class: 'mm-dots' }), pal = h('div', { class: 'mm-pal' });
       c.el.append(h('div', { class: 'mm' }, msg, grid, dots, col ? pal : null));
-      const S = c.S = { ord, col, round: 0, phase: 'show', n: 0, tiles: [], target: [], seq: [], pos: 0, found: new Set(), cur: 0, colour: 0, cleared: 0, longest: 0, pal: [] };
+      const S = c.S = { ord, col, round: 0, phase: 'show', n: 0, tiles: [], target: [], seq: [], pos: 0, found: new Set(), cur: 0, color: 0, cleared: 0, longest: 0, pal: [] };
       c.lives(3);
       const T = c.timer(20, () => { if (S.phase === 'input') { T.paused = true; fail(null, 'Too slow!'); } }); T.paused = true;
       if (col) { S.pal = COLS.map((k, i) => h('button', { type: 'button', '--k': k.c, title: k.n + ' (key ' + (i + 1) + ')', onclick: () => setColour(i) }, h('b', { text: k.s }), k.n)); pal.append(...S.pal); setColour(0); }
-      function setColour(i) { S.colour = i; S.pal.forEach((b, j) => b.classList.toggle('sel', i === j)); }
+      function setColour(i) { S.color = i; S.pal.forEach((b, j) => b.classList.toggle('sel', i === j)); }
       function say(t, cls) { msg.textContent = t; msg.className = 'mm-msg' + (cls ? ' ' + cls : ''); }
       function build(n) {
         S.n = n; grid.style.setProperty('--n', n); grid.innerHTML = ''; S.cur = Math.min(S.cur, n * n - 1);
@@ -91,7 +91,7 @@
         c.after(t + w(250), input);
       }
       function input() {
-        S.phase = 'input'; grid.classList.remove('watch'); say(ord ? 'Your turn! Same order' + (col ? ' and colours' : '') : 'Your turn! Find them', 'go');
+        S.phase = 'input'; grid.classList.remove('watch'); say(ord ? 'Your turn! Same order' + (col ? ' and colors' : '') : 'Your turn! Find them', 'go');
         const n = S.target.length; T.set(Math.round((col ? 7 : 5) + n * (col ? 2 : 1.4))); T.paused = false; sfx.pop();
       }
       function tap(i) {
@@ -104,7 +104,7 @@
           if (S.found.size === S.target.length) won();
         } else {
           const want = S.target[S.pos];
-          if (want.t !== i || (col && want.k !== S.colour)) return fail(i, col && want.t === i ? 'Wrong colour!' : null);
+          if (want.t !== i || (col && want.k !== S.color)) return fail(i, col && want.t === i ? 'Wrong color!' : null);
           S.pos++; t.classList.remove('ok'); void t.offsetWidth; if (col) { t.style.setProperty('--k', COLS[want.k].c); t.textContent = COLS[want.k].s; }
           t.classList.add('ok'); tone(330 + (i % 8) * 70, .12, 'triangle', .08); c.right(5 + c.level * 3, x, y); drawDots();
           if (S.pos === S.target.length) won();
@@ -128,7 +128,7 @@
           stats: { Rounds: S.cleared + ' / ' + R, 'Longest pattern': S.longest || '-' },
           learnt: [ord ? 'Saying the order to yourself (top left, middle, corner...) helps you hold a sequence.' : 'Seeing the lit tiles as one shape (a line, an L, a corner) is easier than remembering each tile.',
             'Grouping things into chunks lets your working memory hold more at once.',
-            col ? 'Linking two details (a place and a colour) into one picture helps you recall both.' : 'Memory gets better with practice: each round stretches it a little.'] });
+            col ? 'Linking two details (a place and a color) into one picture helps you recall both.' : 'Memory gets better with practice: each round stretches it a little.'] });
       }
       c.key(e => {
         const n = S.n, k = e.key; let d = 0;
@@ -144,7 +144,7 @@
     bot(c) {
       const S = c.S; if (!S || S.phase !== 'input') return;
       if (!S.ord) { const o = S.target.find(o => !S.found.has(o.t)); if (o) S.tiles[o.t].click(); return; }
-      const want = S.target[S.pos]; if (S.col && S.colour !== want.k) S.pal[want.k].click(); else S.tiles[want.t].click();
+      const want = S.target[S.pos]; if (S.col && S.color !== want.k) S.pal[want.k].click(); else S.tiles[want.t].click();
     },
     miss(c) {
       const S = c.S; if (!S || S.phase !== 'input') return;

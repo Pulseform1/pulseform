@@ -1,4 +1,4 @@
-/* Pattern Pro: a sequence of numbers, shapes or colours with a blank at the end; pick what comes next from four.
+/* Pattern Pro: a sequence of numbers, shapes or colors with a blank at the end; pick what comes next from four.
    A clock per question that gets shorter as the streak grows, three lives, 12 right clears the level.
    Every sequence is built from one rule, and every wrong option breaks that rule. */
 (() => {
@@ -31,24 +31,24 @@
       return { seq: s, ans, wrong: shuffle(SH.filter(x => x !== ans.s)).map(x => ({ k: 's', s: x })), rule: `The shapes repeat: ${names(pat)}.` }; },
     abb() { const [A, B] = sample(SH, 2), pat = Math.random() < .5 ? [A, A, B] : [A, B, B], s = Array.from({ length: 7 }, (_, i) => ({ k: 's', s: pat[i % 3] })), ans = { k: 's', s: pat[1] };
       return { seq: s, ans, wrong: [pat[1] === A ? B : A, ...shuffle(SH.filter(x => x !== A && x !== B))].map(x => ({ k: 's', s: x })), rule: `A group of three repeats: ${names(pat)}.` }; },
-    colours() { const p = c4 ? pick([3, 4]) : pick([2, 3]), pat = sample([0, 1, 2, 3, 4, 5], p), len = p === 4 ? 8 : 6, s = Array.from({ length: len }, (_, i) => ({ k: 'c', c: pat[i % p] })), ans = { k: 'c', c: pat[len % p] };
-      return { seq: s, ans, wrong: shuffle([0, 1, 2, 3, 4, 5].filter(x => x !== ans.c)).map(x => ({ k: 'c', c: x })), rule: `The colours repeat: ${names(pat.map(x => CL[x][0].toLowerCase()))}.` }; },
+    colors() { const p = c4 ? pick([3, 4]) : pick([2, 3]), pat = sample([0, 1, 2, 3, 4, 5], p), len = p === 4 ? 8 : 6, s = Array.from({ length: len }, (_, i) => ({ k: 'c', c: pat[i % p] })), ans = { k: 'c', c: pat[len % p] };
+      return { seq: s, ans, wrong: shuffle([0, 1, 2, 3, 4, 5].filter(x => x !== ans.c)).map(x => ({ k: 'c', c: x })), rule: `The colors repeat: ${names(pat.map(x => CL[x][0].toLowerCase()))}.` }; },
     arrows() { const st = (c4 ? 45 : 90) * pick([1, -1]), r0 = c4 ? rnd(0, 7) * 45 : rnd(0, 3) * 90, n = c4 ? 5 : 4, s = Array.from({ length: n }, (_, i) => ({ k: 'a', r: (r0 + i * st + 720) % 360 })), ans = { k: 'a', r: (r0 + n * st + 720) % 360 };
-      return { seq: s, ans, wrong: shuffle([45, 90, 135, 180, 225, 270, 315].filter(d => c4 || d % 90 === 0)).map(d => ({ k: 'a', r: (ans.r + d) % 360 })), rule: `The arrow turns ${Math.abs(st)}° ${st > 0 ? 'clockwise' : 'anticlockwise'} each time.` }; },
+      return { seq: s, ans, wrong: shuffle([45, 90, 135, 180, 225, 270, 315].filter(d => c4 || d % 90 === 0)).map(d => ({ k: 'a', r: (ans.r + d) % 360 })), rule: `The arrow turns ${Math.abs(st)}° ${st > 0 ? 'clockwise' : 'counterclockwise'} each time.` }; },
     dots() { const k = c4 ? 2 : 1, n0 = rnd(1, c4 ? 2 : 3), s = [0, 1, 2, 3].map(i => ({ k: 'd', n: n0 + i * k })), a = n0 + 4 * k;
       return { seq: s, ans: { k: 'd', n: a }, wrong: shuffle([a - 1, a + 1, a + 2, a - 2].filter(v => v > 0 && v <= 12)).map(n => ({ k: 'd', n })), rule: `${k} more dot${k > 1 ? 's' : ''} each time.` }; },
     combo() { const sp = sample(SH, 3), cp = sample([0, 1, 2, 3, 4, 5], 2), s = Array.from({ length: 6 }, (_, i) => ({ k: 's', s: sp[i % 3], c: cp[i % 2] })), ans = { k: 's', s: sp[0], c: cp[0] };
       return { seq: s, ans, wrong: [{ k: 's', s: sp[0], c: cp[1] }, { k: 's', s: pick([sp[1], sp[2]]), c: cp[0] }, { k: 's', s: pick(SH.filter(x => x !== sp[0])), c: cp[1] }],
-        rule: `Two patterns at once: shapes repeat every 3, colours every 2.` }; },
+        rule: `Two patterns at once: shapes repeat every 3, colors every 2.` }; },
     arrowCol() { const st = pick([90, -90, 45, -45]), r0 = rnd(0, 7) * 45, cp = sample([0, 1, 2, 3, 4, 5], 2), s = Array.from({ length: 5 }, (_, i) => ({ k: 'a', r: (r0 + i * st + 720) % 360, c: cp[i % 2] })),
         ans = { k: 'a', r: (r0 + 5 * st + 720) % 360, c: cp[1] }, bad = (ans.r + pick([90, 180, 270])) % 360;
       return { seq: s, ans, wrong: [{ k: 'a', r: ans.r, c: cp[0] }, { k: 'a', r: bad, c: cp[1] }, { k: 'a', r: (ans.r + 180) % 360, c: cp[0] }],
-        rule: `The arrow turns ${Math.abs(st)}° ${st > 0 ? 'clockwise' : 'anticlockwise'} and the colours take turns.` }; }
+        rule: `The arrow turns ${Math.abs(st)}° ${st > 0 ? 'clockwise' : 'counterclockwise'} and the colors take turns.` }; }
   };
-  let c4 = false;   // (medium and hard use the longer colour cycles, 45° turns and +2 dots)
-  const POOL = [['add', 'add', 'shapes', 'colours', 'arrows', 'dots'], ['double', 'sub', 'alt', 'arrows', 'dots', 'abb', 'colours'], ['squares', 'fib', 'alt2', 'combo', 'arrowCol', 'double', 'alt', 'fib']];
+  let c4 = false;   // (medium and hard use the longer color cycles, 45° turns and +2 dots)
+  const POOL = [['add', 'add', 'shapes', 'colors', 'arrows', 'dots'], ['double', 'sub', 'alt', 'arrows', 'dots', 'abb', 'colors'], ['squares', 'fib', 'alt2', 'combo', 'arrowCol', 'double', 'alt', 'fib']];
   const LV = [
-    { name: 'Easy', desc: 'Add on, repeating shapes and colours, turning arrows.', t: 20 },
+    { name: 'Easy', desc: 'Add on, repeating shapes and colors, turning arrows.', t: 20 },
     { name: 'Medium', desc: 'Doubling, two-step rules, 45° turns, longer cycles.', t: 16 },
     { name: 'Hard', desc: 'Squares, Fibonacci-style sums, two rules at once.', t: 14 }
   ];

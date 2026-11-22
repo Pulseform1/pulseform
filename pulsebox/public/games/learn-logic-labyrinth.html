@@ -119,7 +119,7 @@ const CATALOG = [
 { id: 'math-rush', title: 'Math Rush', subject: 'Math', icon: '➕', c: '#ff9f1c', c2: '#ffd23f', ages: '6+',
 teaches: 'Fast, accurate mental arithmetic.', learn: ['Addition and subtraction facts', 'Times tables and division', 'Working quickly without losing accuracy'] },
 { id: 'number-ninja', title: 'Number Ninja', subject: 'Math', icon: '🥷', c: '#ff5a3a', c2: '#ffb347', ages: '7+',
-teaches: 'Slice the flying numbers that answer the problem.', learn: ['Recognising answers at a glance', 'Even and odd numbers, multiples and factors', 'Mental maths under pressure'] },
+teaches: 'Slice the flying numbers that answer the problem.', learn: ['Recognizing answers at a glance', 'Even and odd numbers, multiples and factors', 'Mental maths under pressure'] },
 { id: 'fraction-frenzy', title: 'Fraction Frenzy', subject: 'Math', icon: '🍕', c: '#ffcc33', c2: '#ff7a59', ages: '8+',
 teaches: 'Fractions, decimals and percentages are the same numbers.', learn: ['Reading fractions from pictures', 'Converting fractions to decimals and percentages', 'Equivalent fractions'] },
 { id: 'equation-escape', title: 'Equation Escape', subject: 'Math', icon: '🚪', c: '#3ddc84', c2: '#29e0ff', ages: '10+',
@@ -137,11 +137,11 @@ teaches: 'Fix grammar mistakes to defend the castle.', learn: ['Their, there and
 { id: 'vocabulary-quest', title: 'Vocabulary Quest', subject: 'Language', icon: '🗺️', c: '#29e0ff', c2: '#a98bff', ages: '8+',
 teaches: 'Learn word meanings, synonyms and antonyms on an adventure.', learn: ['What words mean', 'Synonyms and antonyms', 'Choosing the right word for a sentence'] },
 { id: 'flag-master', title: 'Flag Master', subject: 'Geography & Science', icon: '🏁', c: '#ff4d5e', c2: '#5ab0ff', ages: '7+',
-teaches: 'Recognise the flags of countries around the world.', learn: ['Flags of countries on every continent', 'Telling look-alike flags apart', 'Where each country is'] },
+teaches: 'Recognize the flags of countries around the world.', learn: ['Flags of countries on every continent', 'Telling look-alike flags apart', 'Where each country is'] },
 { id: 'capital-city', title: 'Capital City Challenge', subject: 'Geography & Science', icon: '🏛️', c: '#ffd23f', c2: '#3ddc84', ages: '8+',
 teaches: 'Match countries with their capital cities.', learn: ['Capital cities of the world', 'Which continent each country is on', 'Capitals that are not the biggest city'] },
 { id: 'science-lab', title: 'Science Lab', subject: 'Geography & Science', icon: '🧪', c: '#7af0d0', c2: '#29e0ff', ages: '8+',
-teaches: 'Science quizzes and hands-on experiments.', learn: ['States of matter and how they change', 'Mixing colours of light and paint', 'Forces, the body, plants and energy'] },
+teaches: 'Science quizzes and hands-on experiments.', learn: ['States of matter and how they change', 'Mixing colors of light and paint', 'Forces, the body, plants and energy'] },
 { id: 'planet-explorer', title: 'Planet Explorer', subject: 'Geography & Science', icon: '🪐', c: '#a98bff', c2: '#29e0ff', ages: '8+',
 teaches: 'Fly through the solar system and learn about each world.', learn: ['The order of the planets', 'Facts about planets, moons and the Sun', 'Size, distance and what each world is made of'] },
 { id: 'periodic-puzzle', title: 'Periodic Table Puzzle', subject: 'Geography & Science', icon: '⚛️', c: '#3ddc84', c2: '#5ab0ff', ages: '11+',
@@ -151,7 +151,7 @@ teaches: 'Remember the lit tiles and their order.', learn: ['Short-term (working
 { id: 'logic-labyrinth', title: 'Logic Labyrinth', subject: 'Logic', icon: '🌀', c: '#29e0ff', c2: '#3ddc84', ages: '8+',
 teaches: 'Find your way through mazes guarded by logic gates.', learn: ['Planning a route', 'AND, OR and NOT logic', 'Spotting the rule in a pattern'] },
 { id: 'pattern-pro', title: 'Pattern Pro', subject: 'Logic', icon: '🔷', c: '#5ab0ff', c2: '#ff7ad9', ages: '6+',
-teaches: 'Work out what comes next in a sequence.', learn: ['Number sequences (adding, doubling, squares)', 'Shape and colour patterns', 'Finding a rule and testing it'] },
+teaches: 'Work out what comes next in a sequence.', learn: ['Number sequences (adding, doubling, squares)', 'Shape and color patterns', 'Finding a rule and testing it'] },
 { id: 'sudoku-mini', title: 'Sudoku Mini', subject: 'Logic', icon: '🔢', c: '#ffd23f', c2: '#ff9f1c', ages: '7+',
 teaches: 'Fill 4×4 and 6×6 grids so no row, column or box repeats.', learn: ['Logical deduction', 'Process of elimination', 'Checking your work'] },
 { id: 'code-breaker', title: 'Code Breaker', subject: 'Logic', icon: '🤖', c: '#c6ff3d', c2: '#29e0ff', ages: '7+',
@@ -561,7 +561,7 @@ c.after(900, () => { G.m++; if (G.m >= MAZES) c.end({ won: true, title: 'Labyrin
 }
 function stats() { return { Mazes: G.m + ' / ' + MAZES, Stars: G.stars + ' / ' + MAZES * 3, Moves: G.total + (G.m < MAZES ? G.moves : 0), Par: G.parTotal + (G.m < MAZES && G.M ? G.M.par : 0) }; }
 function learnt() {
-return lv === 0 ? ['A switch is either ON or OFF; stepping on it flips it.', 'A gate labelled A is open only while switch A is ON.', 'Planning the route first (key, then door) saves moves.']
+return lv === 0 ? ['A switch is either ON or OFF; stepping on it flips it.', 'A gate labeled A is open only while switch A is ON.', 'Planning the route first (key, then door) saves moves.']
 : ['A AND B is true only when both A and B are true.', 'A OR B is true when at least one of them is true.', ...(lv === 2 ? ['NOT A is true when A is false: it flips the value.', 'One choice now (which switch to use) can make a later gate easier or harder.'] : ['Planning which switches you need before moving saves steps.'])];
 }
 function over() { c.end({ won: false, title: 'Out of lives', msg: 'Read each gate\'s rule and check the switch chips before you move.', stats: stats(), learnt: learnt() }); }

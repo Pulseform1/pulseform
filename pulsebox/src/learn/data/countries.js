@@ -1,6 +1,6 @@
 /* Countries for Flag Master and Capital City Challenge.
    COUNTRIES: { name, cap (capital, or '' when it is left out of the capitals game), ct (continent code), f (1 well known,
-   2 known, 3 less familiar), big (the biggest city, only when it is not the capital), flag (a drawing, or undefined) }.
+   2 known, 3 less familiar), big (a much bigger city, for capitals that are not their country's biggest city), flag (a drawing, or undefined) }.
    Countries whose capital is split, disputed or about to move are left out of the capitals (or out entirely).
    Russia and Turkey span Europe and Asia: ct is the group they are played in, CT_NAME says both.
    A flag is [width, height, ...ops], drawn by flagSVG() with simple shapes only (no emblems, no emoji):
@@ -101,7 +101,7 @@ Senegal|Dakar|AF|3
 Mali|Bamako|AF|3
 Niger|Niamey|AF|3
 Chad|N'Djamena|AF|3
-Cameroon|Yaoundé|AF|3|Douala
+Cameroon|Yaoundé|AF|3
 Gabon|Libreville|AF|3
 Angola|Luanda|AF|3
 Zambia|Lusaka|AF|3
