@@ -46,7 +46,7 @@
     [0, 'Saturn', 'Saturn is famous for its…', 'Bright rings', 'Red color', 'Oceans', 'Volcanoes'], [1, 'Saturn', "Saturn's rings are made mostly of…", 'Pieces of ice and rock', 'Gas clouds', 'Fire', 'Liquid water'],
     [1, 'Saturn', 'Saturn is the ___ planet from the Sun.', 'Sixth', 'Fifth', 'Seventh', 'Eighth'],
     [2, 'Saturn', "Saturn's largest moon, which has a thick atmosphere, is…", 'Titan', 'Europa', 'Phobos', 'Triton'],
-    [2, 'Saturn', 'Saturn is the only planet that is less dense than…', 'Water', 'Air', 'Rock', 'Iron'],
+    [2, 'Saturn', 'Saturn is the only planet that is less dense than…', 'Water', 'Air', 'Helium gas', 'Steam'],
     [1, 'Uranus', 'Uranus is the ___ planet from the Sun.', 'Seventh', 'Sixth', 'Eighth', 'Fifth'],
     [2, 'Uranus', 'What is unusual about the way Uranus spins?', 'It spins on its side', 'It does not spin at all', 'It spins once a year', 'It spins faster than light'],
     [2, 'Uranus', 'Uranus looks blue-green because of … in its atmosphere.', 'Methane', 'Oxygen', 'Water vapor', 'Iron dust'],
@@ -81,8 +81,8 @@
       const keys = {}; c.fuel = 100; c.k = 0; c.phase = 'fly'; c.follow = null; c.aim = null; c.learnt = []; c.missed = []; c.bump = 0; c.visit = null;
       const used = new Set(), order = [];
       while (order.length < L.n) { const s = shuffle(L.set); for (const n of s) if (order.length < L.n && order[order.length - 1] !== n) order.push(n); }
-      const hud = () => c.hud({ fuel: Math.max(0, Math.round(c.fuel)) + '%', mission: Math.min(c.k + 1, L.n) + ' / ' + L.n });
-      function mission() { c.target = B(order[c.k]); c.phase = 'fly'; c.follow = null; c.aim = null; c.visit = null;
+      const hud = () => c.hud({ fuel: Math.max(0, Math.round(c.fuel)) + '%', mission: (c.mi || 1) + ' / ' + L.n });
+      function mission() { c.mi = c.k + 1; c.target = B(order[c.k]); c.phase = 'fly'; c.follow = null; c.aim = null; c.visit = null;
         ban.innerHTML = ''; ban.append(`Mission ${c.k + 1}/${L.n}: fly to `, h('b', { text: c.level === 2 ? CLUE[c.target.name] : c.target.name === 'Sun' || c.target.name === 'Moon' ? 'the ' + c.target.name : c.target.name }));
         ban.style.animation = 'none'; void ban.offsetWidth; ban.style.animation = ''; hud(); }
       const over = won => { c.phase = 'end'; const learnt = [...new Set(c.missed)].slice(0, 3); for (const f of shuffle(c.learnt)) if (learnt.length < 4 && !learnt.includes(f)) learnt.push(f);
