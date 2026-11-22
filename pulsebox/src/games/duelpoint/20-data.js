@@ -53,7 +53,7 @@
   // the armory's tabs, in order
   const CLASSES = [['Sidearm', 'Sidearms'], ['SMG', 'SMGs'], ['Shotgun', 'Shotguns'], ['Rifle', 'Rifles'], ['Sniper', 'Snipers'], ['Heavy', 'Heavy'], ['Shield', 'Shields']];
   const OPS = {
-    vex: { n: 'VEX', role: 'Shade', col: '#8f6bff', bio: 'Smoke and a sudden step: Vex fights where you cannot see.', q: { n: 'Blink', d: 'Dash 6 m the way you are moving.' }, e: { n: 'Veil', d: 'Throw a smoke cloud that blocks sight for 12 s.' } },
+    vex: { n: 'VEX', role: 'Shade', col: '#8f6bff', bio: 'Smoke and a sudden step: Vex fights where you cannot see.', q: { n: 'Blink', d: 'Dash 6 m the way you are moving.' }, e: { n: 'Veil', d: 'Throw a smoke cloud that blocks sight for 12 s. Two each round; a used one slowly comes back (30 s each).' } },
     iris: { n: 'IRIS', role: 'Seer', col: '#35e0c8', bio: 'Iris sees through walls. Then she makes you look away.', q: { n: 'Ping', d: 'See rivals through walls for 2 s.' }, e: { n: 'Flare', d: 'A flash that blinds whoever is looking at it.' } },
     bastion: { n: 'BASTION', role: 'Warden', col: '#ffb347', bio: 'A wall, a patch, and a refusal to move.', q: { n: 'Rampart', d: 'Raise a wall in front of you for 20 s. It has 500 health; press Q again near it to reinforce it, once.' }, e: { n: 'Patch', d: 'Heal 60 health over 3 s.' } },
     nova: { n: 'NOVA', role: 'Striker', col: '#ffe14d', bio: 'A courier who outran everything once. She still does.', q: { n: 'Surge', d: '3.5 s of speed, and your sprays settle twice as fast.' }, e: { n: 'Shockwave', d: 'A blast where you aim: rivals caught are slowed, shaky and stung for 15.' } },
@@ -80,6 +80,7 @@
   for (const k in ABC_KIT) { const [c, cost, max] = ABC_KIT[k]; OPS[k].c = Object.assign({}, c, { cost, max }); }
   // signatures (E) that come back during a round: after some seconds, or after some kills
   OPS.iris.e.rech = 40; OPS.wraith.e.rech = 35; OPS.vanta.e.kills = 2; OPS.tessel.e.rech = 40;
+  OPS.vex.e.max = 2; OPS.vex.e.rech = 30;   // (Vex: two Veils a round, and a spent one comes back every 30 s, one at a time)
   /* Abilities the way the genre does them: C and Q are bought in the armory (a price a charge, up to its most), E is the signature that
      comes free every round, X is the ultimate, which charges a point at a time: a kill, a death, planting or defusing the
      charge, and the two orbs that sit on the map each round (hold F over one). Bought charges you don't use carry into the

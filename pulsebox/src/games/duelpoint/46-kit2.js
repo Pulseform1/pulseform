@@ -122,8 +122,8 @@
     for (const f of M.fs) {
       for (const k of ['murk', 'exposed', 'ward', 'over', 'slowF']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
       // signatures that come back with time
-      const E = OPS[f.op] && OPS[f.op].e; if (E && E.rech && (f.ab.e | 0) < 1 && M.phase === 'live' && !f.net && !(f.op === 'tessel' && tesselDorm(f, 'e'))) {   // (a Lightline set and not yet fired is still in use)
-        f.eT = (f.eT || 0) + dt; if (f.eT >= E.rech) { f.ab.e = 1; f.eT = 0; emit('abBack', f, 'e'); } }
+      const E = OPS[f.op] && OPS[f.op].e; if (E && E.rech && (f.ab.e | 0) < (E.max || 1) && M.phase === 'live' && !f.net && !(f.op === 'tessel' && tesselDorm(f, 'e'))) {   // (a Lightline set and not yet fired is still in use)
+        f.eT = (f.eT || 0) + dt; if (f.eT >= E.rech) { f.ab.e = (f.ab.e | 0) + 1; f.eT = 0; emit('abBack', f, 'e'); } }   // (one charge at a time, up to the most it holds)
     }
     // the lobbed ones: Gloom, Shock Bolt (one bounce), Slow Field
     for (const B of K2.lobs) {

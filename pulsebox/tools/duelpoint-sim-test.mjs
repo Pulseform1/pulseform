@@ -837,11 +837,13 @@ function ultChecks() {
   section('abilities and ultimates');
   let I = idle(); T.setInput(() => I);
   T.seed(3); T.startMatch({ mode: 'bot', diff: 0, map: 0 }); T.skipLoad(); let M = T.M, P = T.me(), F = T.foe(); P.op = 'vex';
-  ok((P.ab.q | 0) === 0 && P.ab.e === 1 && (P.ult | 0) === 0, 'a match starts with no bought charges, the signature, and no ultimate points', JSON.stringify({ ab: P.ab, ult: P.ult }));
+  ok((P.ab.q | 0) === 0 && P.ab.e === (T.OPS[P.op].e.max || 1) && (P.ult | 0) === 0, 'a match starts with no bought charges, the signature, and no ultimate points', JSON.stringify({ ab: P.ab, ult: P.ult }));
   const Q = T.OPS.vex.q, c0 = P.credits; T.buy(P, 'abq'); T.buy(P, 'abq'); const c2 = P.credits, n2 = P.ab.q; T.buy(P, 'abq'); const c3 = P.credits;
   ok(n2 === Q.max && P.ab.q === Q.max - 1 && c0 - c2 === Q.cost * Q.max && c3 === c2 + Q.cost, `Q is bought by the charge (◈ ${Q.cost}, up to ${Q.max}); pressing again at the most sells one back`, `credits ${c0} -> ${c2} -> ${c3}, charges ${P.ab.q}`);
   T.buy(P, 'abq'); M.phase = 'live'; M.t = 60; T.ability(P, 'e'); T.ability(P, 'q'); const used = { q: P.ab.q, e: P.ab.e };
-  T.startRound(2); ok(P.ab.q === used.q && P.ab.e === 1, 'unused charges carry into the next round, the signature comes back', JSON.stringify({ before: used, after: P.ab }));
+  T.startRound(2); ok(P.ab.q === used.q && P.ab.e === (T.OPS[P.op].e.max || 1), 'unused charges carry into the next round, the signature comes back', JSON.stringify({ before: used, after: P.ab }));
+  { const M2 = T.M, V = M2.fs[0]; V.op = 'vex'; T.startRound(3); const two = V.ab.e; V.ab.e = 0; V.eT = 0; M2.phase = 'live'; M2.t = 80; for (let i = 0; i < 31 * 60; i++) T.tick(DT); const one = V.ab.e; for (let i = 0; i < 31 * 60; i++) T.tick(DT);
+    ok(two === 2 && one === 1 && V.ab.e === 2, 'Vex starts a round with two Veils, and spent ones come back one at a time (30 s each)', JSON.stringify({ start: two, after30: one, after60: V.ab.e })); }
   T.startRound(5); ok((P.ab.q | 0) === 0, 'bought charges are cleared when sides swap', JSON.stringify(P.ab));
   // ultimate points: a death, a kill, a plant, an orb; capped at the cost
   T.startRound(6); M.phase = 'live'; M.t = 60; P.ult = 0; F.ult = 0; Object.assign(F, { x: P.x + 4, z: P.z, alive: true, hp: 100 }); T.applyDamage(F, 200, P, false, 'quill');

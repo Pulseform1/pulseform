@@ -644,7 +644,7 @@
       if (!f.net && n === HALF() + 1) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; if (n === HALF() + 1 || ot === 1) f.lossRun = 0;   // the loss bonus starts again with the new half
       f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, surge: 0, cloak: 0, daze: 0, snare: 0, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
-      f.ab.e = 1; if (n === 1 || n === HALF() + 1 || ot === 1) { f.ab.q = 0; f.ab.c = 0; } if (n === 1) f.ult = 0;
+      f.ab.e = OPS[f.op].e.max || 1; if (n === 1 || n === HALF() + 1 || ot === 1) { f.ab.q = 0; f.ab.c = 0; } if (n === 1) f.ult = 0;
       Object.assign(f, { rdy: null, noFire: false, murk: 0, exposed: 0, ward: 0, over: 0, duel: null, tether: null, eT: 0, eK: 0 });
       Object.assign(f, { guard: 0, od: 0, phase: 0, lock: 0, chan: null, volley: null, orbT: 0 });
       for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
@@ -781,7 +781,7 @@
       { const G = gun(f); f.wind = G.wind ? cl((f.wind || 0) + ((I.fire || I.spin) && f.alive && f.reloadT <= 0 ? dt / G.wind : -dt / (G.wind * 1.6)), 0, 1) : 0; }   // a rotary gun spins up before it fires
       if (I.fire && f.alive && (M.phase !== 'buy' || M.mode === 'range') && !(gun(f).wind && f.wind < 1)) { const G = gun(f); if (G.auto || !f.semiHeld || I.press || (I.rapid && f.fireT < -.07)) fire(f); }
       f.semiHeld = !!I.fire;
-      if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) { f.ab = { c: OPS[f.op].c.max, q: OPS[f.op].q.max, e: 1 }; f.ult = ultCost(f); } if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }
+      if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) { f.ab = { c: OPS[f.op].c.max, q: OPS[f.op].q.max, e: OPS[f.op].e.max || 1 }; f.ult = ultCost(f); } if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }
     }
     stepNades(dt); stepKits(dt); for (const f of M.fs) if (f.throwT > 0) f.throwT -= dt;
     for (const s of M.smokes) { s.t -= dt; s.r = s.t > s.T - .6 ? lp(0, s.R, (s.T - s.t) / .6) : s.t < 1 ? s.R * Math.max(0, s.t) : s.R; } M.smokes = M.smokes.filter(s => s.t > 0);

@@ -347,7 +347,7 @@ const GAME = {
   // the armory's tabs, in order
   const CLASSES = [['Sidearm', 'Sidearms'], ['SMG', 'SMGs'], ['Shotgun', 'Shotguns'], ['Rifle', 'Rifles'], ['Sniper', 'Snipers'], ['Heavy', 'Heavy'], ['Shield', 'Shields']];
   const OPS = {
-    vex: { n: 'VEX', role: 'Shade', col: '#8f6bff', bio: 'Smoke and a sudden step: Vex fights where you cannot see.', q: { n: 'Blink', d: 'Dash 6 m the way you are moving.' }, e: { n: 'Veil', d: 'Throw a smoke cloud that blocks sight for 12 s.' } },
+    vex: { n: 'VEX', role: 'Shade', col: '#8f6bff', bio: 'Smoke and a sudden step: Vex fights where you cannot see.', q: { n: 'Blink', d: 'Dash 6 m the way you are moving.' }, e: { n: 'Veil', d: 'Throw a smoke cloud that blocks sight for 12 s. Two each round; a used one slowly comes back (30 s each).' } },
     iris: { n: 'IRIS', role: 'Seer', col: '#35e0c8', bio: 'Iris sees through walls. Then she makes you look away.', q: { n: 'Ping', d: 'See rivals through walls for 2 s.' }, e: { n: 'Flare', d: 'A flash that blinds whoever is looking at it.' } },
     bastion: { n: 'BASTION', role: 'Warden', col: '#ffb347', bio: 'A wall, a patch, and a refusal to move.', q: { n: 'Rampart', d: 'Raise a wall in front of you for 20 s. It has 500 health; press Q again near it to reinforce it, once.' }, e: { n: 'Patch', d: 'Heal 60 health over 3 s.' } },
     nova: { n: 'NOVA', role: 'Striker', col: '#ffe14d', bio: 'A courier who outran everything once. She still does.', q: { n: 'Surge', d: '3.5 s of speed, and your sprays settle twice as fast.' }, e: { n: 'Shockwave', d: 'A blast where you aim: rivals caught are slowed, shaky and stung for 15.' } },
@@ -374,6 +374,7 @@ const GAME = {
   for (const k in ABC_KIT) { const [c, cost, max] = ABC_KIT[k]; OPS[k].c = Object.assign({}, c, { cost, max }); }
   // signatures (E) that come back during a round: after some seconds, or after some kills
   OPS.iris.e.rech = 40; OPS.wraith.e.rech = 35; OPS.vanta.e.kills = 2; OPS.tessel.e.rech = 40;
+  OPS.vex.e.max = 2; OPS.vex.e.rech = 30;   // (Vex: two Veils a round, and a spent one comes back every 30 s, one at a time)
   /* Abilities the way the genre does them: C and Q are bought in the armory (a price a charge, up to its most), E is the signature that
      comes free every round, X is the ultimate, which charges a point at a time: a kill, a death, planting or defusing the
      charge, and the two orbs that sit on the map each round (hold F over one). Bought charges you don't use carry into the
@@ -1702,7 +1703,7 @@ const GAME = {
       if (!f.net && n === HALF() + 1) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; if (n === HALF() + 1 || ot === 1) f.lossRun = 0;   // the loss bonus starts again with the new half
       f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, surge: 0, cloak: 0, daze: 0, snare: 0, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
-      f.ab.e = 1; if (n === 1 || n === HALF() + 1 || ot === 1) { f.ab.q = 0; f.ab.c = 0; } if (n === 1) f.ult = 0;
+      f.ab.e = OPS[f.op].e.max || 1; if (n === 1 || n === HALF() + 1 || ot === 1) { f.ab.q = 0; f.ab.c = 0; } if (n === 1) f.ult = 0;
       Object.assign(f, { rdy: null, noFire: false, murk: 0, exposed: 0, ward: 0, over: 0, duel: null, tether: null, eT: 0, eK: 0 });
       Object.assign(f, { guard: 0, od: 0, phase: 0, lock: 0, chan: null, volley: null, orbT: 0 });
       for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
@@ -1839,7 +1840,7 @@ const GAME = {
       { const G = gun(f); f.wind = G.wind ? cl((f.wind || 0) + ((I.fire || I.spin) && f.alive && f.reloadT <= 0 ? dt / G.wind : -dt / (G.wind * 1.6)), 0, 1) : 0; }   // a rotary gun spins up before it fires
       if (I.fire && f.alive && (M.phase !== 'buy' || M.mode === 'range') && !(gun(f).wind && f.wind < 1)) { const G = gun(f); if (G.auto || !f.semiHeld || I.press || (I.rapid && f.fireT < -.07)) fire(f); }
       f.semiHeld = !!I.fire;
-      if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) { f.ab = { c: OPS[f.op].c.max, q: OPS[f.op].q.max, e: 1 }; f.ult = ultCost(f); } if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }
+      if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) { f.ab = { c: OPS[f.op].c.max, q: OPS[f.op].q.max, e: OPS[f.op].e.max || 1 }; f.ult = ultCost(f); } if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }
     }
     stepNades(dt); stepKits(dt); for (const f of M.fs) if (f.throwT > 0) f.throwT -= dt;
     for (const s of M.smokes) { s.t -= dt; s.r = s.t > s.T - .6 ? lp(0, s.R, (s.T - s.t) / .6) : s.t < 1 ? s.R * Math.max(0, s.t) : s.R; } M.smokes = M.smokes.filter(s => s.t > 0);
@@ -2124,8 +2125,8 @@ const GAME = {
     for (const f of M.fs) {
       for (const k of ['murk', 'exposed', 'ward', 'over', 'slowF']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
       // signatures that come back with time
-      const E = OPS[f.op] && OPS[f.op].e; if (E && E.rech && (f.ab.e | 0) < 1 && M.phase === 'live' && !f.net && !(f.op === 'tessel' && tesselDorm(f, 'e'))) {   // (a Lightline set and not yet fired is still in use)
-        f.eT = (f.eT || 0) + dt; if (f.eT >= E.rech) { f.ab.e = 1; f.eT = 0; emit('abBack', f, 'e'); } }
+      const E = OPS[f.op] && OPS[f.op].e; if (E && E.rech && (f.ab.e | 0) < (E.max || 1) && M.phase === 'live' && !f.net && !(f.op === 'tessel' && tesselDorm(f, 'e'))) {   // (a Lightline set and not yet fired is still in use)
+        f.eT = (f.eT || 0) + dt; if (f.eT >= E.rech) { f.ab.e = (f.ab.e | 0) + 1; f.eT = 0; emit('abBack', f, 'e'); } }   // (one charge at a time, up to the most it holds)
     }
     // the lobbed ones: Gloom, Shock Bolt (one bounce), Slow Field
     for (const B of K2.lobs) {
@@ -11839,7 +11840,7 @@ const GAME = {
      mode (one site or two), the team size, whether bots fill empty seats and how good they are, moves players between
      teams, and starts once everyone is ready. Lobby messages ride the room relay: 'lprof' (my operative, rating, ready),
      'lteam' (the host's teams and settings), 'lswap' (please move me). */
-  const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null, qs: null };   // qs: the host's world search, as the rest of the party sees it   // want: who asked to switch sides; pick: the host's first pick of a trade
+  const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, bd: 1, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null, qs: null };   // qs: the host's world search, as the rest of the party sees it   // want: who asked to switch sides; pick: the host's first pick of a trade
   const myId = () => MP.id;
   // view: 'join' opens straight on the join screen (just a code to type); anything else, the create-or-join choice
   function openParty(view) { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; PARTY.view = view === 'join' ? 'join' : view === 'creating' ? 'creating' : 'create'; PARTY.focused = false; if (view === 'creating') { if (!MP.name || MP.name === 'You') { let n = ''; try { n = (JSON.parse(localStorage.getItem('pbx-profile') || '{}').name || ''); } catch (e) {} MP.setName(n || 'Player' + Math.floor(1000 + Math.random() * 9000)); } MP.create(); } }   // (no name yet: your Pulsebox name, or a placeholder you can change)
@@ -11911,6 +11912,7 @@ const GAME = {
   const baseConfig = MP.opts.config;
   MP.opts.config = () => { const c = baseConfig(); c.map = pick(mapPool(PARTY.set.sites)); c.sites = PARTY.set.sites; c.teams = Object.assign({}, PARTY.teams); c.size = PARTY.set.size; c.fill = PARTY.set.fill; c.win = PARTY.set.ranked ? 5 : winOf(PARTY.set.win); c.ranked = !!PARTY.set.ranked; if (UI.noSel) c.noSel = 1;   // (a test that is not about agent select goes straight in)
     c.rks = {}; c.rkps = {}; for (const [id, p] of PARTY.prof) { c.rks[id] = (p.rk || {})[String(PARTY.set.size)] || 0; c.rkps[id] = (p.rkp || '')[PARTY.set.size - 1] === '1' ? 1 : 0; } c.rks[myId()] = Math.round(rankStrength(PARTY.set.size)); c.rkps[myId()] = placed(rankedOf(PARTY.set.size)) ? 1 : 0;
+    if (PARTY.set.bd != null) c.botDiff = cl(PARTY.set.bd | 0, 0, DIFF.length - 1);   // the host's pick for the bots
     if (c.ranked) { const v = Object.values(c.rks); c.botDiff = botLevelFor(v.reduce((s, x) => s + x, 0) / Math.max(1, v.length)); }
     c.hops = {}; c.rts = {}; for (const [id, p] of PARTY.prof) { c.hops[id] = p.op; c.rts[id] = p.rt; } c.hops[myId()] = CFG.op; c.rts[myId()] = STATS.rating; return c; };
 
@@ -12039,9 +12041,10 @@ const GAME = {
     const sy = V.y1 - 92 * u;
     if (host) {
       const sx = 640 - 543 * u, cs = (opts, val, fn, w) => { choice(g, sx2, sy, w, tapH(34), opts, val, v => { fn(v); MP.send({ t: 'lteam', teams: PARTY.teams, set: S2, want: [...PARTY.want] }); hostTeams(); }); sx2 += w + 10 * u; }; let sx2 = sx;
-      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 200 * u); cs([[1, '1V1'], [2, '2V2'], [3, '3V3'], [4, '4V4'], [5, '5V5']], S2.size, v => { S2.size = Math.max(v, teamSize(Math.ceil(ps.length / 2))); }, 236 * u); cs([[true, 'BOTS FILL'], [false, 'NO BOTS']], S2.fill, v => { S2.fill = v; }, 170 * u); if (S2.ranked) { rr(g, sx2, sy, 230 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED · FIRST TO 5', sx2 + 115 * u, sy + tapH(34) / 2, 12 * u, GOLD, 'center', 900); sx2 += 240 * u; } else cs(MATCH_LENS.map(w => [w, 'TO ' + w]), winOf(S2.win), v => { S2.win = v; }, 300 * u);
+      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 200 * u); cs([[1, '1V1'], [2, '2V2'], [3, '3V3'], [4, '4V4'], [5, '5V5']], S2.size, v => { S2.size = Math.max(v, teamSize(Math.ceil(ps.length / 2))); }, 236 * u); { const bd = S2.bd == null ? 1 : S2.bd, lab = !S2.fill ? 'NO BOTS' : 'BOTS: ' + (S2.ranked ? 'BY RANK' : DIFF[bd].n.toUpperCase());   // one button: no bots, or which level the bots play at
+        btn(g, sx2, sy, 170 * u, tapH(34), lab, () => { if (!S2.fill) { S2.fill = true; S2.bd = 0; } else if (S2.ranked || bd >= DIFF.length - 1) S2.fill = false; else S2.bd = bd + 1; MP.send({ t: 'lteam', teams: PARTY.teams, set: S2, want: [...PARTY.want] }); hostTeams(); click(); }, { on: S2.fill, fill: YOU, px: 11 * u, sub: 'tap to change' }); sx2 += 180 * u; } if (S2.ranked) { rr(g, sx2, sy, 230 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED · FIRST TO 5', sx2 + 115 * u, sy + tapH(34) / 2, 12 * u, GOLD, 'center', 900); sx2 += 240 * u; } else cs(MATCH_LENS.map(w => [w, 'TO ' + w]), winOf(S2.win), v => { S2.win = v; }, 300 * u);
       const ok = readyAll(); btn(g, sx2, sy - 6 * u, 200 * u, 48 * u, 'START MATCH', startParty, { on: ok, fill: FOE, solid: ok, col: ok ? INK : DIM, px: 17 * u, sub: ok ? '' : 'waiting for ready' });
-    } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S2.size)}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS' : 'NO BOTS'}  ·  ${S2.ranked ? 'RANKED  ·  FIRST TO 5' : 'FIRST TO ' + winOf(S2.win)}  ·  SIDES SWAP AT THE HALF  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
+    } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S2.size)}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS (' + (S2.ranked ? 'BY RANK' : DIFF[S2.bd == null ? 1 : S2.bd].n.toUpperCase()) + ')' : 'NO BOTS'}  ·  ${S2.ranked ? 'RANKED  ·  FIRST TO 5' : 'FIRST TO ' + winOf(S2.win)}  ·  SIDES SWAP AT THE HALF  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
     const waiting = ps.filter(p => p.id !== MP.hostId && !(p.id === me2 ? PARTY.ready : (PARTY.prof.get(p.id) || {}).rd)).length;
     tx(g, ps.length < 2 ? 'Share the code, or start with bots.' : waiting ? `Waiting for ${waiting} to ready up` : 'Everyone is ready', 640, by - 22 * u, 13 * u, waiting ? DIM : YOU, 'center', 800);
   }
