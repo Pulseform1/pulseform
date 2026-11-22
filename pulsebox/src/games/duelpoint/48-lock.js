@@ -10,7 +10,7 @@
                bullet into either anchor breaks it. The E key again beside it picks it up.
              C Slow Field: the canister waits where it lands. Armed after 1 s, a rival within 3.5 m opens the 5 m field
                (half speed, 6 s). It blinks; rivals see it within 12 m, and one bullet breaks it.
-     BASTION Q Rampart: 500 health and 20 s. Rivals' bullets wear it down (body damage), and a bar on top shows what is
+     BASTION Q Rampart: 500 health and 20 s. Rivals' bullets wear it down (body damage), and the wall shows it on its faces (cracks, dead panels, holes): what is
                left. The Q key again within 4.5 m reinforces it, once: full health and 8 s more.
              C Ward Beacon: it stays (20 s of the live round) and pulses: +15 shield at once to teammates within 6 m, then
                +5 every 2 s, up to 50. A tall amber light anyone can see; 60 health.

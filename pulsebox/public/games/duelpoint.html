@@ -2398,7 +2398,7 @@ const GAME = {
                bullet into either anchor breaks it. The E key again beside it picks it up.
              C Slow Field: the canister waits where it lands. Armed after 1 s, a rival within 3.5 m opens the 5 m field
                (half speed, 6 s). It blinks; rivals see it within 12 m, and one bullet breaks it.
-     BASTION Q Rampart: 500 health and 20 s. Rivals' bullets wear it down (body damage), and a bar on top shows what is
+     BASTION Q Rampart: 500 health and 20 s. Rivals' bullets wear it down (body damage), and the wall shows it on its faces (cracks, dead panels, holes): what is
                left. The Q key again within 4.5 m reinforces it, once: full health and 8 s more.
              C Ward Beacon: it stays (20 s of the live round) and pulses: +15 shield at once to teammates within 6 m, then
                +5 every 2 s, up to 50. A tall amber light anyone can see; 60 health.
@@ -8665,7 +8665,7 @@ const GAME = {
      SENTRY: the arc it guards lies faint on the floor for everyone (blue sweeping, amber locking on, red firing; 79-kitfx
      colours its eye the same). TRIPWIRE: two anchors and a hot wire at shin height; rivals see it within 10 m. SLOW FIELD
      canister: a squat can with a blinking light (rivals see it within 12 m; its own side also sees the ring it watches).
-     RAMPART: a health bar along its top. WARD BEACON: a tall amber light anyone can see, and its reach on the floor for
+     RAMPART: it shows its own damage: cracks, then dead panels, then holes, on both faces. WARD BEACON: a tall amber light anyone can see, and its reach on the floor for
      its own side. SNARE, sprung: the leash from the trap to whoever it holds.
      Everything is pooled and made once (buildKitFx4, from buildKitFx3) so nothing compiles mid-round; nothing is made in a
      frame. */
@@ -8690,9 +8690,21 @@ const GAME = {
     K4.beacons = []; for (let i = 0; i < 3; i++) { const g = new THREE.Group(), base = new THREE.Mesh(new THREE.CylinderGeometry(.16, .2, .18, 10), lit('#3c3428')), core = new THREE.Mesh(new THREE.SphereGeometry(.11, 10, 8), basic('#ffe2b0', { blending: THREE.NormalBlending, transparent: false })),
       beam = new THREE.Mesh(new THREE.CylinderGeometry(.05, .12, 2.6, 10, 1, true), basic(bs, { opacity: .45 })), halo = sprite(bs, 1.1), reach = flat(new THREE.RingGeometry(.97, 1, 48), basic(bs, { opacity: .3 }));
       base.position.y = .09; core.position.y = .3; beam.position.y = 1.6; halo.position.y = .35; reach.position.y = .03; reach.scale.setScalar(BEACON.r); g.add(base, core, beam, halo, reach); g.userData = { beam, halo, reach, core }; K4.beacons.push(add(g)); }
-    // a Rampart's health: a dark bar along its top, filled in amber from one end
-    K4.bars = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), back = new THREE.Mesh(new THREE.BoxGeometry(1, .16, .1), new THREE.MeshBasicMaterial({ color: '#14100a', transparent: true, opacity: .75, depthWrite: false, toneMapped: false })), fill = new THREE.Mesh(new THREE.BoxGeometry(1, .18, .12), basic(bs, { opacity: .95, blending: THREE.NormalBlending }));
-      fill.geometry.translate(.5, 0, 0); g.add(back, fill); g.userData = { back, fill }; K4.bars.push(add(g)); }
+    // a Rampart's damage, drawn on the wall itself (both faces): three stages of cracks, dead panels and holes, made once
+    { let sd = 7; const rr = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      const crack = (g, x, y, len, a, wd, depth) => { g.lineWidth = wd; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < len; k++) { a += (rr() - .5) * .9; x += Math.cos(a) * 14; y += Math.sin(a) * 14; g.lineTo(x, y); if (depth > 0 && rr() < .12) { g.stroke(); crack(g, x, y, len * .5 | 0, a + (rr() < .5 ? 1 : -1) * (.6 + rr() * .6), wd * .6, depth - 1); g.beginPath(); g.moveTo(x, y); } } g.stroke(); };
+      const stage = n => canvasTex(512, 256, (g, w, h) => { g.clearRect(0, 0, w, h); sd = 7;   // (the same cracks every stage, each adding to the last)
+        for (let st = 1; st <= n; st++) {
+          // panels gone dark (stage 2), then knocked clean out (stage 3): a black hole with a jagged, hot rim
+          if (st >= 2) for (let k = 0; k < (st === 2 ? 14 : 10); k++) { const cx = rr() * w, cy = rr() * h, r = st === 3 ? 22 + rr() * 30 : 16 + rr() * 22, hole = st === 3;
+            g.beginPath(); for (let a = 0; a < (hole ? 11 : 6); a++) { const t = a * TAU / (hole ? 11 : 6) + Math.PI / 6, rj = hole ? r * (.6 + rr() * .55) : r; g.lineTo(cx + Math.cos(t) * rj, cy + Math.sin(t) * rj); } g.closePath();
+            g.fillStyle = hole ? 'rgba(2,2,2,.98)' : 'rgba(14,8,2,.82)'; g.fill(); if (hole) { g.lineWidth = 3.5; g.strokeStyle = 'rgba(255,170,60,.9)'; g.stroke(); } }
+          g.strokeStyle = 'rgba(6,4,2,.95)'; for (let k = 0; k < 4 + st * 4; k++) crack(g, rr() * w, rr() * h, 7 + st * 4, rr() * Math.PI * 2, 4 + st * 1.6, 2);
+          g.strokeStyle = 'rgba(255,200,110,.75)'; for (let k = 0; k < 2 + st * 3; k++) crack(g, rr() * w, rr() * h, 5 + st * 2, rr() * Math.PI * 2, 1.8, 1);   // hot edges glowing in the cracks
+        } });
+      K4.cracks = [null, stage(1), stage(2), stage(3)];
+      K4.dmg = []; for (let i = 0; i < 4; i++) { const g = new THREE.Group(), mk = () => new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: K4.cracks[3], transparent: true, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+        const a = mk(), b = mk(); b.rotation.y = Math.PI; g.add(a, b); g.userData = { a, b }; K4.dmg.push(add(g)); } }
     // a sprung Snare's leash
     K4.leashes = []; for (let i = 0; i < 2; i++) { const m = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, 1, 6, 1, true), basic(OPS.talon.col, { opacity: .85 })); m.geometry.translate(0, .5, 0); K4.leashes.push(add(m)); }
   }
@@ -8716,15 +8728,17 @@ const GAME = {
     n = 0; for (const B of K2.beacons) { if (n >= K4.beacons.length) break; const g = K4.beacons[n++], u = g.userData, live = M.phase === 'live', k = live ? Math.min(1, B.t / 1) : .6;
       g.visible = true; g.position.set(B.x, B.y, B.z); u.beam.material.opacity = (.3 + .15 * Math.sin(X.t * 3)) * k + (B.flash > 0 ? .4 : 0); u.halo.material.opacity = (.6 + .3 * Math.sin(X.t * 5)) * k; u.reach.visible = B.by.team === P.team; u.reach.material.opacity = .15 + .2 * Math.max(0, 1 - (B.tick || 0) / BEACON.every * 4); }
     for (; n < K4.beacons.length; n++) K4.beacons[n].visible = false;
-    n = 0; for (const w of M.walls) { if (w.hp == null || n >= K4.bars.length) continue; const g = K4.bars[n++], u = g.userData, along = w.x1 - w.x0 < 1, L = along ? w.z1 - w.z0 : w.x1 - w.x0, q = Math.max(0, w.hp / w.max);
-      g.visible = w.grow > .2; g.position.set((w.x0 + w.x1) / 2, 3 * w.grow + .3, (w.z0 + w.z1) / 2); g.rotation.y = along ? Math.PI / 2 : 0; u.back.scale.x = L; u.fill.position.x = -L / 2; u.fill.scale.x = Math.max(.001, L * q);
-      u.fill.material.color.copy(w.re ? C.mended : q < .3 ? C.low : C.bar); u.fill.material.opacity = w.hitT > 0 ? 1 : .85; }
-    for (; n < K4.bars.length; n++) K4.bars[n].visible = false;
+    // a Rampart's damage on its faces: none, cracked (75%), dead panels (50%), holed (25%); a hit makes it flicker
+    n = 0; for (const w of M.walls) { if (w.hp == null || n >= K4.dmg.length) continue; const q = Math.max(0, w.hp / w.max), st = q > .75 ? 0 : q > .5 ? 1 : q > .25 ? 2 : 3; if (!st || w.grow < .2) continue;
+      const g = K4.dmg[n++], u = g.userData, along = w.x1 - w.x0 < 1, L = along ? w.z1 - w.z0 : w.x1 - w.x0, T = along ? w.x1 - w.x0 : w.z1 - w.z0, H = 3 * w.grow, op = w.hitT > 0 ? 1 : .9;
+      g.visible = true; g.position.set((w.x0 + w.x1) / 2, H / 2, (w.z0 + w.z1) / 2); g.rotation.y = along ? Math.PI / 2 : 0;
+      for (const m of [u.a, u.b]) { if (m.material.map !== K4.cracks[st]) { m.material.map = K4.cracks[st]; } m.scale.set(L, H, 1); m.position.z = (m === u.a ? 1 : -1) * (T / 2 + .006); m.material.opacity = op; } }
+    for (; n < K4.dmg.length; n++) K4.dmg[n].visible = false;
     n = 0; for (const s of K2.snares) { if (!s.sprung || n >= K4.leashes.length) continue; const v = M.byKey[s.sprung]; if (!v || !v.alive) continue; const m = K4.leashes[n++], vx = ipos(v, 'x') - s.x, vy = ipos(v, 'y') + .9 - s.y - .12, vz = ipos(v, 'z') - s.z, L = Math.hypot(vx, vy, vz) || 1;
       m.visible = true; m.position.set(s.x, s.y + .12, s.z); K4.v.set(vx / L, vy / L, vz / L); m.quaternion.setFromUnitVectors(K4.up, K4.v); m.scale.set(1, L, 1); m.material.opacity = .6 + .3 * Math.sin(X.t * 12); }
     for (; n < K4.leashes.length; n++) K4.leashes[n].visible = false;
   }
-  function hideKitFx4() { const K4 = X && X.kf4; if (!K4) return; for (const k of ['arcs', 'wires', 'cans', 'beacons', 'bars', 'leashes']) for (const m of K4[k]) m.visible = false; }
+  function hideKitFx4() { const K4 = X && X.kf4; if (!K4) return; for (const k of ['arcs', 'wires', 'cans', 'beacons', 'dmg', 'leashes']) for (const m of K4[k]) m.visible = false; }
   // the moments
   const fx4 = () => X && ready && X.kf4 && M;
   on('beaconPulse', B => { if (fx4()) { burst('ring', B.x, B.y, B.z, OPS.bastion.col, BEACON.r, .6); B.flash = .3; } });
