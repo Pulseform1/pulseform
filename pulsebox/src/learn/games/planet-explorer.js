@@ -94,7 +94,7 @@
         const opts = shuffle(q.slice(3)), note = h('div', { class: 'sub' }), box = h('div', { class: 'pe-q' }, h('h3', { text: '🛰️ Arrived: ' + (b.name === 'Sun' || b.name === 'Moon' ? 'the ' : '') + b.name }), h('div', { class: 'q', text: q[2] }));
         c.el.append(box); c.qbox = box; c.q = q; c.opts = opts;
         const lc = /^(Mercury|Venus|Earth|Mars|Jupiter|Saturn|Uranus|Neptune|Phobos|Titan|Ganymede|Triton|Neil|Red Planet|\d)/.test(q[3]) ? q[3] : q[3][0].toLowerCase() + q[3].slice(1);
-        const fact = (/…|___/.test(q[2]) ? q[2].replace('___', lc).replace('…', lc) : q[2] + ' ' + q[3]).replace(/\.+$/, '') + '.';
+        const fact = (/…|___/.test(q[2]) ? q[2].replace('___', lc).replace(/\s*…/, ' ' + lc) : q[2] + ' ' + q[3]).replace(/\.+$/, '') + '.';
         c.ch = c.choices(box, opts, i => { c.ch.lock(); const ri = opts.indexOf(q[3]), r = c.ch.btns[i].getBoundingClientRect(), s = c.el.getBoundingClientRect(), x = r.left - s.left + r.width / 2, y = r.top - s.top;
           c.learnt.push(fact);
           if (i === ri) { c.ch.mark(i, true); c.right(15 + c.level * 5, x, y); c.fuel = Math.min(100, c.fuel + 25); c.pop('+25% fuel', x, y - 26, '#29e0ff'); c.k++; c.after(650, next); }

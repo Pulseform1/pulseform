@@ -13,7 +13,7 @@ const Edu = (() => {
   function h(tag, props, ...kids) {
     const e = document.createElement(tag);
     for (const k in props || {}) { const v = props[k]; if (v == null || v === false) continue;
-      if (k === 'class') e.className = v; else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+      if (k === 'class') e.className = v; else if (k === 'style' && typeof v === 'object') { for (const q in v) q.startsWith('--') ? e.style.setProperty(q, v[q]) : (e.style[q] = v[q]); }
       else if (k === 'text') e.textContent = v; else if (k === 'html') e.innerHTML = v;
       else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
       else if (k.startsWith('--')) e.style.setProperty(k, v); else e.setAttribute(k, v === true ? '' : v); }
