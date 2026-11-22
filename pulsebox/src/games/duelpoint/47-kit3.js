@@ -52,9 +52,10 @@
   // a Lightline runs through walls; only its two posts must stand in the open (on the map, not inside a wall), so each end is
   // drawn back along the line to the nearest open floor
   function openEnds(o) {
-    if (!o) return o; const open = (x, z) => x > .3 && z > .3 && x < MW - .3 && z < MH - .3 && hAt(x, z) < o.y + 1.2;
-    for (const [e, s] of [['b', 'a'], ['a', 'b']]) { const x0 = o[e + 'x'], z0 = o[e + 'z'], sx = o[s + 'x'], sz = o[s + 'z'], n = Math.max(1, Math.ceil(Math.hypot(x0 - sx, z0 - sz) / .25)); let x = x0, z = z0;
-      for (let i = 1; i <= n && !open(x, z); i++) { x = lp(x0, sx, i / n); z = lp(z0, sz, i / n); } o[e + 'x'] = r2(x); o[e + 'z'] = r2(z); }
+    if (!o) return o; const flat = (x, z) => x > .3 && z > .3 && x < MW - .3 && z < MH - .3 && hAt(x, z) < o.y + .3;   // (no higher than the line's own floor: not in a wall, not up on a ledge)
+    for (const [e, s] of [['b', 'a'], ['a', 'b']]) { const x0 = o[e + 'x'], z0 = o[e + 'z'], sx = o[s + 'x'], sz = o[s + 'z'], L = Math.hypot(x0 - sx, z0 - sz) || 1, ux = (x0 - sx) / L, uz = (z0 - sz) / L, n = Math.max(1, Math.ceil(L / .25));
+      const open = (x, z) => flat(x, z) && flat(x + ux * .2, z + uz * .2);   // (and a little clear of any wall face beyond it)
+      let x = x0, z = z0; for (let i = 1; i <= n && !open(x, z); i++) { x = lp(x0, sx, i / n); z = lp(z0, sz, i / n); } o[e + 'x'] = r2(x); o[e + 'z'] = r2(z); }
     return Math.hypot(o.bx - o.ax, o.bz - o.az) < 1.2 ? null : o;
   }
   // in the buy phase a line keeps to your side of the barrier: it stops where the barrier starts (none at all if it starts past it)
