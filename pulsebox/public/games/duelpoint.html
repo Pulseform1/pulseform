@@ -4516,7 +4516,7 @@ const GAME = {
       const hold = gunHold.position, Rt = gd.dead ? gd.dead[0] : [hold.x + gd.grip[0] * s, hold.y + gd.grip[1] * s, hold.z + gd.grip[2] * s];   // (dead: the hands wherever the body left them)
       let Lt = gd.dead ? gd.dead[1] : knife ? [-.2, -.34, -.2] : gd.pistolHold ? [Rt[0] - .05, Rt[1] - .015, Rt[2] + .005] : [hold.x + gd.sup[0] * s - .01, hold.y + gd.sup[1] * s, hold.z + gd.sup[2] * s];
       // the hand cups the handguard from below (not inside it); on a vertical foregrip it closes round the post itself
-      if (!knife && !gd.pistolHold && !gd.dead && !gd.vgrip) Lt[1] -= .035;
+      if (!knife && !gd.pistolHold && !gd.dead && !gd.vgrip && !gd.angled) Lt[1] -= .012;
       // a long handguard: the support arm stretches a little (up to 28%) to keep the hand out on it, then the hand slides back if it must
       const kL = knife || gd.pistolHold || gd.dead ? 1 : Math.min(1.28, Math.max(1, Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) / (a + b - .02)));
       const lt0 = Lt[2]; while (Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) > (a + b) * kL - .02 && Lt[2] < -.2) Lt[2] += .02; gunHold.userData.slide = Lt[2] - lt0;   // a long handguard: slide the hand back to where the arm reaches
@@ -5076,7 +5076,7 @@ const GAME = {
   function gunModel(k, opts = {}) {
     const sk = skinOfId(opts.skin), line = sk && sk.k === k ? sk.line : null;
     const W = GUNS[k], m = gmats(k, line), G = new THREE.Group(), cast = !!opts.cast, parts = {};
-    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null, ACC = 0, vgrip = false;
+    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null, ACC = 0, vgrip = false, angled = false;
     // where the body is (a top line's form is fitted to it), and which parts are fittings rather than body: sights, rails,
     // grips, lights and bipods, which a form leaves standing where they are
     const A = { by: .03 }, accy = f => { ACC = 1; f(); ACC = 0; };
@@ -5217,7 +5217,7 @@ const GAME = {
       // what the support hand holds
       ACC = 1;
       if (o.fore === 'vgrip') { const z = lp(hz, rf, .42); vtube(.0155, hb - .09, hb + .004, m.poly, 0, z, .019); vtube(.0195, hb - .098, hb - .084, m.acc, 0, z); for (let i = 0; i < 3; i++) ring(.0172, .0016, z, m.rubber, hb - .03 - i * .018).rotation.x = Math.PI / 2; sup = [0, hb - .05, z]; vgrip = true; }
-      else if (o.fore === 'angled') { const z = lp(hz, rf, .45); side([[z - .05, hb + .004], [z + .04, hb + .004], [z + .01, hb - .034], [z - .022, hb - .034]], .03, m.poly, 0, .006); sup = [0, hb - .028, z - .005]; }
+      else if (o.fore === 'angled') { const z = lp(hz, rf, .45); side([[z - .05, hb + .004], [z + .04, hb + .004], [z + .01, hb - .034], [z - .022, hb - .034]], .03, m.poly, 0, .006); sup = [0, hb - .028, z - .005]; angled = true; }
       else sup = [0, hb - .012, lp(hz, rf, .45)];
       // sight
       if (o.sight === 'scope') scope(-.26, .13, .112, .023, .034);
@@ -5429,7 +5429,7 @@ const GAME = {
     bake(G, cast);
     if (parts.mag) { G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(parts.mag); parts.mag.userData.bot = bb.min.y - parts.mag.position.y; parts.mag.userData.hw = (bb.max.x - bb.min.x) / 2; }
     if (parts.bolt && A.fam === 'long' && !parts.boltL) parts.bolt.userData.grab = A.sideHandle ? [-(A.hw || .022) - .012, .032, -.006, .058] : [0, (A.top || .06) + .003, (A.rb || .1), (A.hw || .022) + .054];
-    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.vgrip = vgrip; G.userData.line = line; G.userData.bore = bore;
+    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.vgrip = vgrip; G.userData.angled = angled; G.userData.line = line; G.userData.bore = bore;
     if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, bore ? bore.y : .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
     return G;
   }
@@ -10299,7 +10299,7 @@ const GAME = {
         // what to do
         let by2 = y0 + frH - 14 * u - btnH;
         if (on) btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'OPEN YOUR PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: `${ps.length} IN  ·  ${PARTY.set.sites === 1 ? 'ONE SITE' : 'TWO SITES'}  ·  ${vsLabel(PARTY.set.size)}` });
-        else { btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'CREATE A PARTY', () => { openParty(); if (MP.name && MP.name !== 'You') MP.create(); }, { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: 'invite with a code or a link' }); by2 += bh1 + 8 * u;
+        else { btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'CREATE A PARTY', () => openParty('creating'), { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: 'invite with a code or a link' }); by2 += bh1 + 8 * u;
           btn(g, fx + 14 * u, by2, fp - 28 * u, bh2, 'JOIN WITH A CODE', () => openParty('join'), { px: Math.min(13 * u, fp * .05), edge: 'rgba(53,224,200,.6)' }); } }
       // your rank at this size
       { const ry = y0 + frH + gp, S = rankedOf(CFG.size), pl = placed(S), hr = zone(fx, ry, fp, rkH, () => { UI.rankScale = teamSize(CFG.size); click(); });
@@ -11216,7 +11216,7 @@ const GAME = {
   const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null, qs: null };   // qs: the host's world search, as the rest of the party sees it   // want: who asked to switch sides; pick: the host's first pick of a trade
   const myId = () => MP.id;
   // view: 'join' opens straight on the join screen (just a code to type); anything else, the create-or-join choice
-  function openParty(view) { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; PARTY.view = view === 'join' ? 'join' : 'create'; PARTY.focused = false; }
+  function openParty(view) { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; PARTY.view = view === 'join' ? 'join' : view === 'creating' ? 'creating' : 'create'; PARTY.focused = false; if (view === 'creating') { if (!MP.name || MP.name === 'You') { let n = ''; try { n = (JSON.parse(localStorage.getItem('pbx-profile') || '{}').name || ''); } catch (e) {} MP.setName(n || 'Player' + Math.floor(1000 + Math.random() * 9000)); } MP.create(); } }   // (no name yet: your Pulsebox name, or a placeholder you can change)
   function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join(''), cd: cardCode(), qt: QUE.found ? QUE.tok : undefined }; }
   function sendProfile(force) { if (!MP.online()) return; const p = partyProfile(), key = JSON.stringify(p); if (!force && key === PARTY.sent) return; PARTY.sent = key; PARTY.prof.set(myId(), p); MP.send(Object.assign({ t: 'lprof' }, p)); }
   // the host keeps everyone on a team: newcomers go to the shorter side, and nobody stays on a team that has no room
@@ -11326,7 +11326,7 @@ const GAME = {
     btn(g, 640 - 150 * u, jy, 300 * u, tapH(52), ready ? 'JOIN PARTY' : 'ENTER THE CODE', join, { on: ready, fill: YOU, solid: ready, col: ready ? INK : DIM, px: 18 * u });
     if (PARTY.status) tx(g, PARTY.status, 640, jy + tapH(52) + 26 * u, 14 * u, PARTY.status.startsWith('Connect') ? DIM : PARTY.status.startsWith('Code accepted') ? GOLD : WARN, 'center', 800);
     // no code? make your own instead
-    const ly = top + ch + 30 * u; g.font = `800 ${fitPx(g, 13 * u)}px ${FONT}`; const lw = g.measureText('No code? Create your own party').width + 24 * u, hot = zone(640 - lw / 2, ly - 16 * u, lw, 32 * u, () => { MP.setName(domIn.jname.value); PARTY.view = 'create'; MP.create(); });
+    const ly = top + ch + 30 * u; g.font = `800 ${fitPx(g, 13 * u)}px ${FONT}`; const lw = g.measureText('No code? Create your own party').width + 24 * u, hot = zone(640 - lw / 2, ly - 16 * u, lw, 32 * u, () => { MP.setName(domIn.jname.value); PARTY.view = 'creating'; MP.create(); });
     tx(g, 'No code? Create your own party', 640, ly, 13 * u, hot ? YOU : '#9fd8cf', 'center', 800); g.fillStyle = hot ? YOU : 'rgba(159,216,207,.4)'; g.fillRect(640 - lw / 2 + 12 * u, ly + 11 * u, lw - 24 * u, 1.5);
     hideBoxes();
   }
@@ -11335,6 +11335,12 @@ const GAME = {
     g.fillStyle = 'rgba(8,10,14,.8)'; g.fillRect(V0.x0, V0.y0, W, H);
     const nh = on && !QUE.found ? drawTopBar(g, V0, u) : 0, V = Object.assign({}, V0, { y0: V0.y0 + nh });
     if (!on && PARTY.view === 'join' && !QUE.found) return drawJoin(g, V, u, x0);
+    // CREATE A PARTY goes straight in: a moment while the room opens, then the party itself (a failure falls back to the choice)
+    if (!on && PARTY.view === 'creating' && !QUE.found) {
+      const st = PARTY.status || '', bad = st && !/^connect/i.test(st), t = performance.now() / 1000; if (bad) PARTY.view = 'create'; else { hideBoxes();
+        tx(g, 'PLAY WITH FRIENDS', x0, V.y0 + 46 * u, 34 * u, BONE, 'left', 900); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'BACK', () => { MP.leave(); PARTY.status = ''; screen = 'menu'; UI.panel = 'home'; }, { px: 13 * u });
+        const cy = V.y0 + (V.y1 - V.y0) / 2; g.lineWidth = 5 * u; g.strokeStyle = 'rgba(53,224,200,.2)'; g.beginPath(); g.arc(640, cy - 30 * u, 26 * u, 0, TAU); g.stroke(); g.strokeStyle = YOU; g.beginPath(); g.arc(640, cy - 30 * u, 26 * u, t * 5, t * 5 + 1.6); g.stroke();
+        tx(g, 'CREATING YOUR PARTY', 640, cy + 30 * u, 22 * u, BONE, 'center', 900); tx(g, 'Getting a code for your friends...', 640, cy + 56 * u, 13 * u, '#9fd8cf', 'center', 700); return; } }
     tx(g, 'PLAY WITH FRIENDS', x0, V.y0 + 46 * u, 34 * u, BONE, 'left', 900); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, on ? 'LEAVE' : 'BACK', () => { if (on) MP.leave(); PARTY.status = ''; if (!on) { screen = 'menu'; UI.panel = 'home'; } MP.opts.onRoster(); }, { px: 13 * u });
     if (QUE.found) {   // a match from the queue: say so, and who is in yet
       const F = QUE.found, n = on ? F.toks.filter(tok => MP.players().some(p => (p.id === myId() ? QUE.tok : (PARTY.prof.get(p.id) || {}).qt) === tok)).length : 0, pulse = .75 + .25 * Math.sin(performance.now() / 160);

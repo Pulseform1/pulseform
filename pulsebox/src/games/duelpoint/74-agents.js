@@ -258,7 +258,7 @@
       const hold = gunHold.position, Rt = gd.dead ? gd.dead[0] : [hold.x + gd.grip[0] * s, hold.y + gd.grip[1] * s, hold.z + gd.grip[2] * s];   // (dead: the hands wherever the body left them)
       let Lt = gd.dead ? gd.dead[1] : knife ? [-.2, -.34, -.2] : gd.pistolHold ? [Rt[0] - .05, Rt[1] - .015, Rt[2] + .005] : [hold.x + gd.sup[0] * s - .01, hold.y + gd.sup[1] * s, hold.z + gd.sup[2] * s];
       // the hand cups the handguard from below (not inside it); on a vertical foregrip it closes round the post itself
-      if (!knife && !gd.pistolHold && !gd.dead && !gd.vgrip) Lt[1] -= .035;
+      if (!knife && !gd.pistolHold && !gd.dead && !gd.vgrip && !gd.angled) Lt[1] -= .012;
       // a long handguard: the support arm stretches a little (up to 28%) to keep the hand out on it, then the hand slides back if it must
       const kL = knife || gd.pistolHold || gd.dead ? 1 : Math.min(1.28, Math.max(1, Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) / (a + b - .02)));
       const lt0 = Lt[2]; while (Math.hypot(Lt[0] - SL[0], Lt[1] - SL[1], Lt[2] - SL[2]) > (a + b) * kL - .02 && Lt[2] < -.2) Lt[2] += .02; gunHold.userData.slide = Lt[2] - lt0;   // a long handguard: slide the hand back to where the arm reaches

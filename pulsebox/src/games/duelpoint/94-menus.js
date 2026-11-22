@@ -288,7 +288,7 @@
         // what to do
         let by2 = y0 + frH - 14 * u - btnH;
         if (on) btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'OPEN YOUR PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: `${ps.length} IN  ·  ${PARTY.set.sites === 1 ? 'ONE SITE' : 'TWO SITES'}  ·  ${vsLabel(PARTY.set.size)}` });
-        else { btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'CREATE A PARTY', () => { openParty(); if (MP.name && MP.name !== 'You') MP.create(); }, { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: 'invite with a code or a link' }); by2 += bh1 + 8 * u;
+        else { btn(g, fx + 14 * u, by2, fp - 28 * u, bh1, 'CREATE A PARTY', () => openParty('creating'), { on: true, fill: YOU, solid: true, col: INK, px: Math.min(16 * u, fp * .06), sub: 'invite with a code or a link' }); by2 += bh1 + 8 * u;
           btn(g, fx + 14 * u, by2, fp - 28 * u, bh2, 'JOIN WITH A CODE', () => openParty('join'), { px: Math.min(13 * u, fp * .05), edge: 'rgba(53,224,200,.6)' }); } }
       // your rank at this size
       { const ry = y0 + frH + gp, S = rankedOf(CFG.size), pl = placed(S), hr = zone(fx, ry, fp, rkH, () => { UI.rankScale = teamSize(CFG.size); click(); });

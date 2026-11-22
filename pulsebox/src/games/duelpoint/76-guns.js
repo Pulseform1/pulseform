@@ -203,7 +203,7 @@
   function gunModel(k, opts = {}) {
     const sk = skinOfId(opts.skin), line = sk && sk.k === k ? sk.line : null;
     const W = GUNS[k], m = gmats(k, line), G = new THREE.Group(), cast = !!opts.cast, parts = {};
-    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null, ACC = 0, vgrip = false;
+    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null, ACC = 0, vgrip = false, angled = false;
     // where the body is (a top line's form is fitted to it), and which parts are fittings rather than body: sights, rails,
     // grips, lights and bipods, which a form leaves standing where they are
     const A = { by: .03 }, accy = f => { ACC = 1; f(); ACC = 0; };
@@ -344,7 +344,7 @@
       // what the support hand holds
       ACC = 1;
       if (o.fore === 'vgrip') { const z = lp(hz, rf, .42); vtube(.0155, hb - .09, hb + .004, m.poly, 0, z, .019); vtube(.0195, hb - .098, hb - .084, m.acc, 0, z); for (let i = 0; i < 3; i++) ring(.0172, .0016, z, m.rubber, hb - .03 - i * .018).rotation.x = Math.PI / 2; sup = [0, hb - .05, z]; vgrip = true; }
-      else if (o.fore === 'angled') { const z = lp(hz, rf, .45); side([[z - .05, hb + .004], [z + .04, hb + .004], [z + .01, hb - .034], [z - .022, hb - .034]], .03, m.poly, 0, .006); sup = [0, hb - .028, z - .005]; }
+      else if (o.fore === 'angled') { const z = lp(hz, rf, .45); side([[z - .05, hb + .004], [z + .04, hb + .004], [z + .01, hb - .034], [z - .022, hb - .034]], .03, m.poly, 0, .006); sup = [0, hb - .028, z - .005]; angled = true; }
       else sup = [0, hb - .012, lp(hz, rf, .45)];
       // sight
       if (o.sight === 'scope') scope(-.26, .13, .112, .023, .034);
@@ -556,7 +556,7 @@
     bake(G, cast);
     if (parts.mag) { G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(parts.mag); parts.mag.userData.bot = bb.min.y - parts.mag.position.y; parts.mag.userData.hw = (bb.max.x - bb.min.x) / 2; }
     if (parts.bolt && A.fam === 'long' && !parts.boltL) parts.bolt.userData.grab = A.sideHandle ? [-(A.hw || .022) - .012, .032, -.006, .058] : [0, (A.top || .06) + .003, (A.rb || .1), (A.hw || .022) + .054];
-    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.vgrip = vgrip; G.userData.line = line; G.userData.bore = bore;
+    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.vgrip = vgrip; G.userData.angled = angled; G.userData.line = line; G.userData.bore = bore;
     if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, bore ? bore.y : .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
     return G;
   }

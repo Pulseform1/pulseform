@@ -7,7 +7,7 @@
   const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null, qs: null };   // qs: the host's world search, as the rest of the party sees it   // want: who asked to switch sides; pick: the host's first pick of a trade
   const myId = () => MP.id;
   // view: 'join' opens straight on the join screen (just a code to type); anything else, the create-or-join choice
-  function openParty(view) { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; PARTY.view = view === 'join' ? 'join' : 'create'; PARTY.focused = false; }
+  function openParty(view) { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; PARTY.view = view === 'join' ? 'join' : view === 'creating' ? 'creating' : 'create'; PARTY.focused = false; if (view === 'creating') { if (!MP.name || MP.name === 'You') { let n = ''; try { n = (JSON.parse(localStorage.getItem('pbx-profile') || '{}').name || ''); } catch (e) {} MP.setName(n || 'Player' + Math.floor(1000 + Math.random() * 9000)); } MP.create(); } }   // (no name yet: your Pulsebox name, or a placeholder you can change)
   function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join(''), cd: cardCode(), qt: QUE.found ? QUE.tok : undefined }; }
   function sendProfile(force) { if (!MP.online()) return; const p = partyProfile(), key = JSON.stringify(p); if (!force && key === PARTY.sent) return; PARTY.sent = key; PARTY.prof.set(myId(), p); MP.send(Object.assign({ t: 'lprof' }, p)); }
   // the host keeps everyone on a team: newcomers go to the shorter side, and nobody stays on a team that has no room
@@ -117,7 +117,7 @@
     btn(g, 640 - 150 * u, jy, 300 * u, tapH(52), ready ? 'JOIN PARTY' : 'ENTER THE CODE', join, { on: ready, fill: YOU, solid: ready, col: ready ? INK : DIM, px: 18 * u });
     if (PARTY.status) tx(g, PARTY.status, 640, jy + tapH(52) + 26 * u, 14 * u, PARTY.status.startsWith('Connect') ? DIM : PARTY.status.startsWith('Code accepted') ? GOLD : WARN, 'center', 800);
     // no code? make your own instead
-    const ly = top + ch + 30 * u; g.font = `800 ${fitPx(g, 13 * u)}px ${FONT}`; const lw = g.measureText('No code? Create your own party').width + 24 * u, hot = zone(640 - lw / 2, ly - 16 * u, lw, 32 * u, () => { MP.setName(domIn.jname.value); PARTY.view = 'create'; MP.create(); });
+    const ly = top + ch + 30 * u; g.font = `800 ${fitPx(g, 13 * u)}px ${FONT}`; const lw = g.measureText('No code? Create your own party').width + 24 * u, hot = zone(640 - lw / 2, ly - 16 * u, lw, 32 * u, () => { MP.setName(domIn.jname.value); PARTY.view = 'creating'; MP.create(); });
     tx(g, 'No code? Create your own party', 640, ly, 13 * u, hot ? YOU : '#9fd8cf', 'center', 800); g.fillStyle = hot ? YOU : 'rgba(159,216,207,.4)'; g.fillRect(640 - lw / 2 + 12 * u, ly + 11 * u, lw - 24 * u, 1.5);
     hideBoxes();
   }
@@ -126,6 +126,12 @@
     g.fillStyle = 'rgba(8,10,14,.8)'; g.fillRect(V0.x0, V0.y0, W, H);
     const nh = on && !QUE.found ? drawTopBar(g, V0, u) : 0, V = Object.assign({}, V0, { y0: V0.y0 + nh });
     if (!on && PARTY.view === 'join' && !QUE.found) return drawJoin(g, V, u, x0);
+    // CREATE A PARTY goes straight in: a moment while the room opens, then the party itself (a failure falls back to the choice)
+    if (!on && PARTY.view === 'creating' && !QUE.found) {
+      const st = PARTY.status || '', bad = st && !/^connect/i.test(st), t = performance.now() / 1000; if (bad) PARTY.view = 'create'; else { hideBoxes();
+        tx(g, 'PLAY WITH FRIENDS', x0, V.y0 + 46 * u, 34 * u, BONE, 'left', 900); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'BACK', () => { MP.leave(); PARTY.status = ''; screen = 'menu'; UI.panel = 'home'; }, { px: 13 * u });
+        const cy = V.y0 + (V.y1 - V.y0) / 2; g.lineWidth = 5 * u; g.strokeStyle = 'rgba(53,224,200,.2)'; g.beginPath(); g.arc(640, cy - 30 * u, 26 * u, 0, TAU); g.stroke(); g.strokeStyle = YOU; g.beginPath(); g.arc(640, cy - 30 * u, 26 * u, t * 5, t * 5 + 1.6); g.stroke();
+        tx(g, 'CREATING YOUR PARTY', 640, cy + 30 * u, 22 * u, BONE, 'center', 900); tx(g, 'Getting a code for your friends...', 640, cy + 56 * u, 13 * u, '#9fd8cf', 'center', 700); return; } }
     tx(g, 'PLAY WITH FRIENDS', x0, V.y0 + 46 * u, 34 * u, BONE, 'left', 900); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, on ? 'LEAVE' : 'BACK', () => { if (on) MP.leave(); PARTY.status = ''; if (!on) { screen = 'menu'; UI.panel = 'home'; } MP.opts.onRoster(); }, { px: 13 * u });
     if (QUE.found) {   // a match from the queue: say so, and who is in yet
       const F = QUE.found, n = on ? F.toks.filter(tok => MP.players().some(p => (p.id === myId() ? QUE.tok : (PARTY.prof.get(p.id) || {}).qt) === tok)).length : 0, pulse = .75 + .25 * Math.sin(performance.now() / 160);
