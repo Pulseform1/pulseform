@@ -26,7 +26,7 @@
   }
   const ev = (e, b) => e.op === 'or' ? ev(e.a, b) || ev(e.b, b) : e.op === 'and' ? ev(e.a, b) && ev(e.b, b) : e.op === 'not' ? !ev(e.a, b) : !!(b >> e.v & 1);
   const txt = (e, top = true) => { if (e.v != null) return 'ABC'[e.v]; const t = e.op === 'not' ? 'NOT ' + txt(e.a, false) : txt(e.a, false) + (e.op === 'and' ? ' AND ' : ' OR ') + txt(e.b, false); return top ? t : '(' + t + ')'; };
-  const vars = e => e.v != null ? [e.v] : [...vars(e.a), ...(e.b ? vars(e.b) : [])];
+  const vars = e => e.v != null ? [e.v] : [...vars(e.a), ...(e.b ? vars(e.b) : [])], pos = (e, n) => e.v != null ? (n ? [] : [e.v]) : e.op === 'not' ? pos(e.a, !n) : [...pos(e.a, n), ...pos(e.b, n)];
   function carve(W) {
     const op = new Array(W * W).fill(0), seen = new Uint8Array(W * W), st = [rnd(0, W * W - 1)]; seen[st[0]] = 1;
     while (st.length) {
@@ -68,10 +68,10 @@
         for (const p of pools) if (p.length) { const c = pick(p); used.add(c); return c; } return -1;
       };
       let ok = true;
-      for (let v = 0; v < tpl.sw && ok; v++) { const j = items.findIndex(o => o.t === 'gate' && vars(o.c).includes(v)), c = spot(Math.max(0, j), lv === 2 && Math.random() < .3); if (c < 0) ok = false; else M.O[c] = { t: 'sw', v }; }
+      for (let v = 0; v < tpl.sw && ok; v++) { let j = items.findIndex(o => o.t === 'gate' && pos(o.c).includes(v)); if (j < 0) j = items.findIndex(o => o.t === 'gate' && vars(o.c).includes(v)); const c = spot(Math.max(0, j), lv === 2 && Math.random() < .3); if (c < 0) ok = false; else M.O[c] = { t: 'sw', v }; }
       items.forEach((o, j) => { if (ok && o.t === 'door') { const c = spot(j); if (c < 0) ok = false; else M.O[c] = { t: 'key', k: o.k }; } });
       if (!ok) continue;
-      const best = plan(M, M.s, 0); if (!best || plan(M, M.s, 0, true)) continue;
+      const best = plan(M, M.s, 0); if (!best || best.dist > [50, 80, 110][lv] || plan(M, M.s, 0, true)) continue;
       M.par = best.dist; return M;
     }
     return null;
@@ -137,7 +137,7 @@
       const say = (t, cls) => { msg.textContent = t; msg.className = 'll-msg' + (cls ? ' ' + cls : ''); };
       const xy = i => [(i % G.M.W) * 10 + 5, Math.floor(i / G.M.W) * 10 + 5];
       function loadMaze() {
-        const tpl = TPL[lv][G.m]; let M = null; while (!M) M = build(lv, tpl);
+        const tpl = TPL[lv][G.m]; let M = null; for (let i = 0; !M && i < 30; i++) M = build(lv, tpl); if (!M) M = build(0, TPL[0][0]);
         G.M = M; G.time = Math.round(25 + M.par * 1.3 + (tpl.lock ? 12 : 0)); G.gates = Object.keys(M.O).map(Number).filter(i => M.O[i].t === 'gate').sort((a, b) => M.O[a].id - M.O[b].id);
         G.sws = Array.from({ length: tpl.sw }, (_, v) => v); G.hasKey = !!tpl.k;
         const W = M.W; let walls = '';

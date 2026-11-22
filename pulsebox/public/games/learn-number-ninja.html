@@ -491,7 +491,7 @@ if (S.hit) { g.fillStyle = `rgba(255,40,60,${S.hit * .25})`; g.fillRect(0, 0, W,
 const bw = Math.min(W - 20, 520), bx = (W - bw) / 2, sc = 1 + S.flash * .08;
 g.save(); g.translate(W / 2, 40); g.scale(sc, sc); g.translate(-W / 2, -40);
 rr(bx, 8, bw, 62, 16); g.fillStyle = S.flash ? `rgba(255,${120 + 100 * S.flash},60,.95)` : 'rgba(12,8,20,.82)'; g.fill(); g.lineWidth = 2; g.strokeStyle = '#ff5a3a'; g.stroke();
-g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffb347'; g.font = `700 12px ${FONT}`; g.fillText('SLICE  ' + '●'.repeat(Math.max(0, L.quota - S.q)) + '○'.repeat(Math.min(S.q, L.quota)), W / 2, 22);
+g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = S.flash ? '#fff' : '#ffb347'; g.font = `700 12px ${FONT}`; g.fillText((S.flash > .4 ? 'NEW RULE!  ' : 'SLICE  ') + '●'.repeat(Math.min(S.q, L.quota)) + '○'.repeat(Math.max(0, L.quota - S.q)), W / 2, 22);
 g.fillStyle = '#fff'; let fs = 26; g.font = `700 ${fs}px ${FONT}`; while (g.measureText(S.rule.t).width > bw - 20 && fs > 14) g.font = `700 ${--fs}px ${FONT}`;
 g.fillText(S.rule.t, W / 2, 48); g.restore();
 if (c.streak >= 3) { const p = 1 + .08 * Math.sin(t * 10); g.save(); g.translate(16, 92); g.scale(p, p); g.textAlign = 'left'; g.font = `700 22px ${FONT}`;

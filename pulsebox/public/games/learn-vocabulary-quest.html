@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vocabulary Quest · Educational Games · Pulsebox</title>
+<meta name="description" content="Vocabulary Quest, a free educational game on Pulsebox. Learn word meanings, synonyms and antonyms on an adventure.">
+<meta name="theme-color" content="#0a0c12">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23c6ff3d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle'%3E%F0%9F%8E%93%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow:wght@500;600;700;800&display=swap">
+<style>
+:root { color-scheme: dark; --bg: #0a0c12; --bg2: #11141d; --panel: #161a26; --panel2: #1d2231; --edge: #2a3144; --text: #eef1f8; --muted: #9aa3b8;
+--ok: #3ddc84; --no: #ff4d5e; --gold: #ffd23f; --c: #29e0ff; --c2: #c6ff3d;
+--display: 'Chakra Petch', 'Arial Narrow', system-ui, sans-serif; --body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 600 16px/1.35 var(--body); -webkit-tap-highlight-color: transparent; }
+body { background: radial-gradient(1200px 600px at 80% -10%, color-mix(in srgb, var(--c) 14%, transparent), transparent 60%), radial-gradient(900px 500px at -10% 110%, color-mix(in srgb, var(--c2) 10%, transparent), transparent 60%), var(--bg); background-attachment: fixed; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; }
+a { color: inherit; }
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.1; letter-spacing: .01em; }
+:focus-visible { outline: 3px solid var(--c); outline-offset: 2px; }
+.top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px; padding: 10px clamp(10px, 3vw, 24px); background: rgba(10,12,18,.82); backdrop-filter: blur(10px); border-bottom: 1px solid var(--edge); }
+.top .t { flex: 1; min-width: 0; font: 700 clamp(15px, 2.4vw, 19px) var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.top .t small { color: var(--muted); font: 700 12px var(--body); letter-spacing: .12em; text-transform: uppercase; margin-left: 8px; }
+.nav { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--edge); font: 700 14px var(--body); text-decoration: none; white-space: nowrap; transition: background .15s, transform .15s; }
+.nav:hover { background: var(--panel2); transform: translateY(-1px); }
+.nav.logo b { color: #c6ff3d; }
+@media (max-width: 560px) { .nav .lt { display: none; } .top .t small { display: none; } }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 10px 20px; border-radius: 14px; background: var(--panel2); border: 1px solid var(--edge); font: 800 16px var(--body); transition: transform .12s, background .15s, box-shadow .15s; user-select: none; }
+.btn:hover { transform: translateY(-2px); background: #262c3e; }
+.btn:active { transform: translateY(1px) scale(.98); }
+.btn.go { background: linear-gradient(135deg, var(--c), var(--c2)); color: #07090e; border: 0; box-shadow: 0 6px 24px color-mix(in srgb, var(--c) 35%, transparent); }
+.btn.go:hover { box-shadow: 0 10px 34px color-mix(in srgb, var(--c) 50%, transparent); }
+.btn.sm { min-height: 38px; padding: 6px 12px; font-size: 14px; border-radius: 11px; }
+.btn:disabled { opacity: .45; pointer-events: none; }
+.screen { max-width: 980px; margin: 0 auto; padding: clamp(14px, 3vw, 28px) clamp(12px, 3vw, 24px) 40px; animation: rise .35s ease both; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+.hero { display: grid; grid-template-columns: auto 1fr; gap: clamp(14px, 3vw, 28px); align-items: center; }
+.hero .art { width: clamp(110px, 22vw, 180px); aspect-ratio: 1; border-radius: 26px; overflow: hidden; box-shadow: 0 14px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06) inset; animation: bob 4s ease-in-out infinite; }
+.hero .art svg { width: 100%; height: 100%; display: block; }
+@keyframes bob { 50% { transform: translateY(-6px) rotate(-1deg); } }
+.hero h1 { font-size: clamp(30px, 6vw, 54px); }
+.hero p { color: var(--muted); margin: 8px 0 0; font-size: clamp(15px, 2vw, 18px); }
+.tag { display: inline-block; padding: 4px 10px; border-radius: 999px; font: 800 12px var(--body); letter-spacing: .1em; text-transform: uppercase; background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); margin-bottom: 8px; }
+.learn { margin-top: 18px; padding: 14px 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--edge); }
+.learn b { font-family: var(--display); color: var(--c2); letter-spacing: .04em; }
+.learn ul { margin: 8px 0 0; padding-left: 20px; color: #d5dae6; }
+.learn li { margin: 3px 0; }
+.levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 18px; }
+.lvl { position: relative; text-align: left; padding: 16px 16px 14px; border-radius: 18px; background: var(--panel); border: 2px solid var(--edge); transition: transform .15s, border-color .15s, background .15s; overflow: hidden; }
+.lvl:hover, .lvl:focus-visible { transform: translateY(-3px); border-color: var(--c); background: var(--panel2); }
+.lvl .n { font: 700 22px var(--display); display: flex; align-items: center; gap: 8px; }
+.lvl .d { color: var(--muted); font-size: 14px; margin-top: 4px; }
+.lvl .b { margin-top: 10px; font-size: 13px; color: var(--gold); font-weight: 800; }
+.lvl .k { position: absolute; top: 12px; right: 14px; font: 700 12px var(--display); color: var(--muted); border: 1px solid var(--edge); border-radius: 6px; padding: 1px 6px; }
+.lvl .stars { color: var(--gold); letter-spacing: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.row.c { justify-content: center; }
+.play { display: flex; flex-direction: column; height: calc(100dvh - 61px); max-width: 1100px; margin: 0 auto; padding: 10px clamp(8px, 2vw, 18px) 12px; }
+.hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.hud .sp { flex: 1; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 12px; background: var(--panel); border: 1px solid var(--edge); font: 700 15px var(--display); white-space: nowrap; }
+.chip i { font-style: normal; color: var(--muted); font: 700 11px var(--body); letter-spacing: .1em; text-transform: uppercase; }
+.chip.hot { border-color: var(--gold); color: var(--gold); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 18px rgba(255,210,63,.45); } }
+.tbar { height: 8px; border-radius: 8px; background: var(--panel); overflow: hidden; margin-top: 8px; border: 1px solid var(--edge); }
+.tbar > div { height: 100%; width: 100%; background: linear-gradient(90deg, var(--c2), var(--c)); transform-origin: left; transition: transform .25s linear, background .3s; }
+.tbar.low > div { background: linear-gradient(90deg, var(--no), #ff9f1c); }
+.stage { position: relative; flex: 1; min-height: 0; margin-top: 10px; border-radius: 22px; background: linear-gradient(180deg, var(--panel), var(--bg2)); border: 1px solid var(--edge); overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(10px, 2.5vw, 24px); transition: box-shadow .2s; }
+.stage.flash-ok { box-shadow: 0 0 0 3px var(--ok) inset, 0 0 40px rgba(61,220,132,.25) inset; }
+.stage.flash-no { box-shadow: 0 0 0 3px var(--no) inset, 0 0 40px rgba(255,77,94,.25) inset; animation: shake .3s; }
+@keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.stage.cv { padding: 0; }
+.q { font: 700 clamp(26px, 6vw, 56px) var(--display); text-align: center; margin: 4px 0 6px; animation: pop .3s ease both; }
+.q.sm { font-size: clamp(20px, 4vw, 34px); }
+.sub { color: var(--muted); text-align: center; font-size: clamp(14px, 2vw, 17px); }
+@keyframes pop { from { opacity: 0; transform: scale(.85); } }
+.opts { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: clamp(8px, 1.6vw, 14px); width: min(100%, 720px); margin-top: clamp(12px, 3vh, 26px); }
+.opt { position: relative; min-height: clamp(54px, 9vh, 84px); padding: 10px 14px; border-radius: 18px; background: var(--panel2); border: 2px solid var(--edge); font: 700 clamp(17px, 3vw, 26px) var(--display); display: flex; align-items: center; justify-content: center; text-align: center; gap: 8px; transition: transform .12s, border-color .15s, background .15s; animation: pop .3s ease both; }
+.opt:hover { transform: translateY(-2px); border-color: var(--c); }
+.opt .k { position: absolute; top: 6px; left: 9px; font: 700 11px var(--display); color: var(--muted); }
+.opt.ok { background: color-mix(in srgb, var(--ok) 25%, var(--panel2)); border-color: var(--ok); }
+.opt.no { background: color-mix(in srgb, var(--no) 25%, var(--panel2)); border-color: var(--no); animation: shake .3s; }
+.opt.dim { opacity: .45; }
+.opts.locked .opt { pointer-events: none; }
+@media (max-width: 560px) { .opts.wide { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.inp { width: min(100%, 420px); padding: 14px 16px; border-radius: 16px; border: 2px solid var(--edge); background: var(--bg2); font: 700 clamp(20px, 4vw, 30px) var(--display); text-align: center; outline: none; }
+.inp:focus { border-color: var(--c); }
+.key-pad { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 8px; width: min(100%, 360px); margin-top: 12px; }
+.key-pad button { min-height: 52px; border-radius: 14px; background: var(--panel2); border: 1px solid var(--edge); font: 700 22px var(--display); }
+.key-pad button:active { background: var(--c); color: #07090e; }
+.popt { position: absolute; pointer-events: none; font: 800 22px var(--display); text-shadow: 0 2px 8px rgba(0,0,0,.6); animation: up .9s ease-out forwards; z-index: 5; white-space: nowrap; }
+@keyframes up { to { opacity: 0; transform: translateY(-60px) scale(1.15); } }
+.conf { position: fixed; top: -10px; width: 10px; height: 14px; z-index: 60; pointer-events: none; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+.over { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(5,7,11,.72); backdrop-filter: blur(6px); animation: fade .25s both; }
+@keyframes fade { from { opacity: 0; } }
+.card { width: min(100%, 460px); padding: clamp(18px, 4vw, 30px); border-radius: 26px; background: var(--panel); border: 1px solid var(--edge); box-shadow: 0 30px 80px rgba(0,0,0,.55); text-align: center; animation: rise .35s ease both; max-height: 100%; overflow: auto; }
+.card h2 { font-size: clamp(28px, 6vw, 40px); }
+.card .big { font: 700 clamp(52px, 13vw, 84px) var(--display); background: linear-gradient(135deg, var(--c), var(--c2)); -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1; margin: 10px 0 2px; }
+.card .best { color: var(--gold); font-weight: 800; min-height: 22px; }
+.card .msg { color: var(--muted); margin: 8px 0 0; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 16px 0; }
+.stats div { padding: 10px; border-radius: 14px; background: var(--bg2); border: 1px solid var(--edge); }
+.stats b { display: block; font: 700 22px var(--display); }
+.stats i { font-style: normal; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.card .row { justify-content: center; margin-top: 6px; }
+.badge-new { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--gold); color: #1a1200; font: 800 12px var(--body); letter-spacing: .1em; animation: pulse 1s infinite; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; } }
+</style>
+<body>
+<div id="app"></div>
+<noscript><p style="padding:20px">These educational games need JavaScript turned on.</p></noscript>
+<script>
+const SUBJECTS = { Math: ['🔢', '#ff9f1c'], Language: ['📖', '#ff5fa2'], 'Geography & Science': ['🌍', '#29e0ff'], Logic: ['🧠', '#a98bff'] };
+const CATALOG = [
+{ id: 'math-rush', title: 'Math Rush', subject: 'Math', icon: '➕', c: '#ff9f1c', c2: '#ffd23f', ages: '6+',
+teaches: 'Fast, accurate mental arithmetic.', learn: ['Addition and subtraction facts', 'Times tables and division', 'Working quickly without losing accuracy'] },
+{ id: 'number-ninja', title: 'Number Ninja', subject: 'Math', icon: '🥷', c: '#ff5a3a', c2: '#ffb347', ages: '7+',
+teaches: 'Slice the flying numbers that answer the problem.', learn: ['Recognising answers at a glance', 'Even and odd numbers, multiples and factors', 'Mental maths under pressure'] },
+{ id: 'fraction-frenzy', title: 'Fraction Frenzy', subject: 'Math', icon: '🍕', c: '#ffcc33', c2: '#ff7a59', ages: '8+',
+teaches: 'Fractions, decimals and percentages are the same numbers.', learn: ['Reading fractions from pictures', 'Converting fractions to decimals and percentages', 'Equivalent fractions'] },
+{ id: 'equation-escape', title: 'Equation Escape', subject: 'Math', icon: '🚪', c: '#3ddc84', c2: '#29e0ff', ages: '10+',
+teaches: 'Solve for x to unlock each door.', learn: ['One-step and two-step equations', 'Inverse operations', 'Equations with x on both sides'] },
+{ id: 'geometry-challenge', title: 'Geometry Challenge', subject: 'Math', icon: '📐', c: '#5ab0ff', c2: '#7af0d0', ages: '8+',
+teaches: 'Shapes, angles, area and perimeter.', learn: ['Naming 2D shapes by their sides', 'Acute, right, obtuse and straight angles', 'Area and perimeter of rectangles and triangles'] },
+{ id: 'typing-turbo', title: 'Typing Turbo', subject: 'Language', icon: '🏎️', c: '#ff2e88', c2: '#ff9f1c', ages: '7+',
+teaches: 'Touch typing speed and accuracy.', learn: ['Typing whole words accurately', 'Building words-per-minute speed', 'Keeping your eyes on the words, not the keys'] },
+{ id: 'word-scramble', title: 'Word Scramble', subject: 'Language', icon: '🔤', c: '#c06bff', c2: '#ff7ad9', ages: '7+',
+teaches: 'Spot the word hidden in the jumbled letters.', learn: ['Spelling patterns and letter order', 'Vocabulary from short words to long ones', 'Using clues to work out a word'] },
+{ id: 'spelling-sprint', title: 'Spelling Sprint', subject: 'Language', icon: '✏️', c: '#3ddc84', c2: '#c6ff3d', ages: '7+',
+teaches: 'Fill in the missing letters of commonly misspelled words.', learn: ['Tricky spellings (double letters, silent letters)', 'Common spelling rules like i before e', 'Words people often get wrong'] },
+{ id: 'grammar-guardian', title: 'Grammar Guardian', subject: 'Language', icon: '🏰', c: '#ffb347', c2: '#ff5a3a', ages: '8+',
+teaches: 'Fix grammar mistakes to defend the castle.', learn: ['Their, there and they\'re; your and you\'re', 'Subject and verb agreement', 'Verb tenses, plurals and apostrophes'] },
+{ id: 'vocabulary-quest', title: 'Vocabulary Quest', subject: 'Language', icon: '🗺️', c: '#29e0ff', c2: '#a98bff', ages: '8+',
+teaches: 'Learn word meanings, synonyms and antonyms on an adventure.', learn: ['What words mean', 'Synonyms and antonyms', 'Choosing the right word for a sentence'] },
+{ id: 'flag-master', title: 'Flag Master', subject: 'Geography & Science', icon: '🏁', c: '#ff4d5e', c2: '#5ab0ff', ages: '7+',
+teaches: 'Recognise the flags of countries around the world.', learn: ['Flags of countries on every continent', 'Telling look-alike flags apart', 'Where each country is'] },
+{ id: 'capital-city', title: 'Capital City Challenge', subject: 'Geography & Science', icon: '🏛️', c: '#ffd23f', c2: '#3ddc84', ages: '8+',
+teaches: 'Match countries with their capital cities.', learn: ['Capital cities of the world', 'Which continent each country is on', 'Capitals that are not the biggest city'] },
+{ id: 'science-lab', title: 'Science Lab', subject: 'Geography & Science', icon: '🧪', c: '#7af0d0', c2: '#29e0ff', ages: '8+',
+teaches: 'Science quizzes and hands-on experiments.', learn: ['States of matter and how they change', 'Mixing colours of light and paint', 'Forces, the body, plants and energy'] },
+{ id: 'planet-explorer', title: 'Planet Explorer', subject: 'Geography & Science', icon: '🪐', c: '#a98bff', c2: '#29e0ff', ages: '8+',
+teaches: 'Fly through the solar system and learn about each world.', learn: ['The order of the planets', 'Facts about planets, moons and the Sun', 'Size, distance and what each world is made of'] },
+{ id: 'periodic-puzzle', title: 'Periodic Table Puzzle', subject: 'Geography & Science', icon: '⚛️', c: '#3ddc84', c2: '#5ab0ff', ages: '11+',
+teaches: 'Match elements to their names, symbols and properties.', learn: ['Chemical symbols of common elements', 'Atomic numbers', 'Metals, non-metals and noble gases'] },
+{ id: 'memory-matrix', title: 'Memory Matrix', subject: 'Logic', icon: '🟪', c: '#ff7ad9', c2: '#a98bff', ages: '6+',
+teaches: 'Remember the lit tiles and their order.', learn: ['Short-term (working) memory', 'Visual pattern recall', 'Concentration that grows round by round'] },
+{ id: 'logic-labyrinth', title: 'Logic Labyrinth', subject: 'Logic', icon: '🌀', c: '#29e0ff', c2: '#3ddc84', ages: '8+',
+teaches: 'Find your way through mazes guarded by logic gates.', learn: ['Planning a route', 'AND, OR and NOT logic', 'Spotting the rule in a pattern'] },
+{ id: 'pattern-pro', title: 'Pattern Pro', subject: 'Logic', icon: '🔷', c: '#5ab0ff', c2: '#ff7ad9', ages: '6+',
+teaches: 'Work out what comes next in a sequence.', learn: ['Number sequences (adding, doubling, squares)', 'Shape and colour patterns', 'Finding a rule and testing it'] },
+{ id: 'sudoku-mini', title: 'Sudoku Mini', subject: 'Logic', icon: '🔢', c: '#ffd23f', c2: '#ff9f1c', ages: '7+',
+teaches: 'Fill 4×4 and 6×6 grids so no row, column or box repeats.', learn: ['Logical deduction', 'Process of elimination', 'Checking your work'] },
+{ id: 'code-breaker', title: 'Code Breaker', subject: 'Logic', icon: '🤖', c: '#c6ff3d', c2: '#29e0ff', ages: '7+',
+teaches: 'Program a robot with commands and loops.', learn: ['Sequences of instructions', 'Loops that repeat commands', 'Debugging a program that goes wrong'] }
+];
+const Edu = (() => {
+const $ = (s, r = document) => r.querySelector(s);
+function h(tag, props, ...kids) {
+const e = document.createElement(tag);
+for (const k in props || {}) { const v = props[k]; if (v == null || v === false) continue;
+if (k === 'class') e.className = v; else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+else if (k === 'text') e.textContent = v; else if (k === 'html') e.innerHTML = v;
+else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+else if (k.startsWith('--')) e.style.setProperty(k, v); else e.setAttribute(k, v === true ? '' : v); }
+for (const c of kids.flat(9)) if (c != null && c !== false) e.append(c.nodeType ? c : String(c));
+return e;
+}
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sample = (a, n) => shuffle(a).slice(0, n);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a || 1; };
+function near(ans, n, spread, ok = v => true) {
+const out = new Set(), tries = []; spread = spread || Math.max(3, Math.ceil(Math.abs(ans) * .25));
+for (let i = 0; i < 400 && out.size < n; i++) { const v = ans + rnd(-spread, spread); if (v !== ans && ok(v)) out.add(v); }
+for (let d = 1; out.size < n; d++) { if (ok(ans + d)) out.add(ans + d); if (out.size < n && ok(ans - d)) out.add(ans - d); if (d > 999) break; }
+return [...out].slice(0, n);
+}
+const store = {
+get(k, d) { try { const v = localStorage.getItem('pbx-learn-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+set(k, v) { try { localStorage.setItem('pbx-learn-' + k, JSON.stringify(v)); } catch (e) {} }
+};
+let ac = null, muted = store.get('muted', false);
+function tone(f, d, type = 'sine', v = .12, slide = 0, delay = 0) {
+if (muted) return; try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume();
+const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
+if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d + .02); } catch (e) {}
+}
+const sfx = {
+good: () => { tone(660, .1, 'triangle', .12); tone(990, .14, 'triangle', .1, 0, .07); },
+bad: () => tone(200, .25, 'sawtooth', .07, -80),
+click: () => tone(520, .04, 'square', .04),
+tick: () => tone(880, .05, 'sine', .05),
+pop: () => tone(400, .08, 'sine', .1, 400),
+combo: n => tone(500 + Math.min(n, 12) * 60, .12, 'triangle', .1),
+win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', .11, 0, i * .1)),
+lose: () => [392, 330, 262].forEach((f, i) => tone(f, .3, 'triangle', .1, 0, i * .14))
+};
+function thumb(g, big) {
+const s = SUBJECTS[g.subject] || ['', '#888'], id = 'g' + g.id.replace(/\W/g, ''), deco = {
+Math: '<g opacity=".16" fill="#fff" font-family="Arial" font-weight="700" font-size="26"><text x="14" y="34">+</text><text x="270" y="40">×</text><text x="40" y="170">÷</text><text x="262" y="168">=</text><text x="150" y="24">7</text></g>',
+Language: '<g opacity=".16" fill="#fff" font-family="Georgia" font-weight="700" font-size="28"><text x="14" y="38">A</text><text x="268" y="40">b</text><text x="36" y="172">c</text><text x="258" y="170">Z</text><text x="150" y="26">e</text></g>',
+'Geography & Science': '<g opacity=".18" fill="none" stroke="#fff" stroke-width="2"><circle cx="40" cy="40" r="22"/><path d="M18 40h44M40 18c-10 12-10 32 0 44M40 18c10 12 10 32 0 44"/><ellipse cx="270" cy="150" rx="30" ry="9" transform="rotate(-20 270 150)"/><circle cx="270" cy="150" r="10"/></g>',
+Logic: '<g opacity=".16" fill="none" stroke="#fff" stroke-width="2"><rect x="14" y="14" width="34" height="34" rx="6"/><rect x="54" y="14" width="34" height="34" rx="6"/><path d="M250 150h40v-30h-40zM270 120v-20"/><circle cx="40" cy="160" r="12"/></g>'
+}[g.subject] || '';
+return `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${g.title}"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${g.c}"/><stop offset="1" stop-color="${g.c2}"/></linearGradient>`
++ `<radialGradient id="${id}r" cx=".5" cy=".55" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`
++ `<rect width="320" height="200" fill="#0d1018"/><rect width="320" height="200" fill="url(#${id})" opacity=".92"/>`
++ `<path d="M0 150 Q80 120 160 150 T320 140 V200 H0Z" fill="#000" opacity=".16"/>${deco}<circle cx="160" cy="98" r="62" fill="url(#${id}r)"/>`
++ `<text x="160" y="${big ? 126 : 124}" text-anchor="middle" font-size="76" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">${g.icon}</text>`
++ `<text x="306" y="190" text-anchor="end" font-family="Arial" font-weight="700" font-size="13" fill="#fff" opacity=".7">${s[0]} ${g.subject.toUpperCase()}</text></svg>`;
+}
+function confetti(n = 60) {
+const cols = ['#ffd23f', '#29e0ff', '#ff2e88', '#c6ff3d', '#a98bff', '#ff9f1c'];
+for (let i = 0; i < n; i++) { const d = h('div', { class: 'conf', style: { left: Math.random() * 100 + 'vw', background: pick(cols), animationDuration: (1.6 + Math.random() * 1.6) + 's', animationDelay: Math.random() * .4 + 's', borderRadius: Math.random() < .5 ? '50%' : '2px' } });
+document.body.append(d); setTimeout(() => d.remove(), 3800); }
+}
+let G = null, META = null, ctx = null, app = null, screenName = 'menu', endData = null;
+const SPEED = Math.max(1, Math.min(50, +(new URLSearchParams(location.search).get('speed')) || 1));
+function topBar() {
+const snd = h('button', { class: 'nav', type: 'button', 'aria-label': 'Sound on or off', text: muted ? '🔇' : '🔊', onclick: () => { muted = !muted; store.set('muted', muted); snd.textContent = muted ? '🔇' : '🔊'; } });
+return h('header', { class: 'top' },
+h('a', { class: 'nav', href: 'learn.html', title: 'All educational games' }, '‹ ', h('span', { class: 'lt' }, 'All learning games')),
+h('div', { class: 't' }, META ? META.title : '', h('small', { text: 'Educational Games' })),
+snd,
+h('a', { class: 'nav logo', href: '/', title: 'Back to Pulsebox' }, h('b', { text: 'Pulse' }), 'box'));
+}
+function best(level) { return (store.get(G.id, {}).best || [])[level] || 0; }
+function menu() {
+stop(); screenName = 'menu'; endData = null; app.innerHTML = ''; app.append(topBar());
+const levels = G.levels.map((L, i) => h('button', { class: 'lvl', type: 'button', onclick: () => start(i) },
+h('span', { class: 'k', text: String(i + 1) }),
+h('div', { class: 'n' }, h('span', { class: 'stars', text: '★'.repeat(i + 1) }), L.name),
+h('div', { class: 'd', text: L.desc || '' }),
+h('div', { class: 'b', text: best(i) ? 'Best: ' + best(i) : 'Not played yet' })));
+const howBox = h('div', { class: 'learn', hidden: true }, h('b', { text: 'HOW TO PLAY' }), h('ul', {}, (G.how || []).map(t => h('li', { text: t }))));
+app.append(h('main', { class: 'screen' },
+h('div', { class: 'hero' }, h('div', { class: 'art', html: thumb(META, true) }),
+h('div', {}, h('span', { class: 'tag', text: META.subject + ' · Ages ' + META.ages }), h('h1', { text: META.title }), h('p', { text: META.teaches }))),
+h('div', { class: 'learn' }, h('b', { text: 'WHAT YOU WILL LEARN' }), h('ul', {}, META.learn.map(t => h('li', { text: t })))),
+h('div', { class: 'row', style: { marginTop: '16px' } }, h('button', { class: 'btn', type: 'button', onclick: () => { howBox.hidden = !howBox.hidden; } }, '❓ How to play'),
+h('span', { class: 'sub', style: { textAlign: 'left' }, text: 'Pick a level to start. Keys 1 to ' + G.levels.length + ' work too.' })),
+howBox,
+h('h2', { class: 'sect', text: 'Choose a level' }),
+h('div', { class: 'levels' }, levels)));
+const l0 = app.querySelector('.lvl'); if (l0 && !matchMedia('(hover: none)').matches) l0.focus({ preventScroll: true });
+}
+function stop() {
+if (!ctx) return; ctx.alive = false;
+for (const t of ctx._t) clearTimeout(t); for (const t of ctx._i) clearInterval(t); cancelAnimationFrame(ctx._raf);
+for (const [el, ev, fn, o] of ctx._l) el.removeEventListener(ev, fn, o);
+try { G.stop && G.stop(ctx); } catch (e) { console.error(e); }
+document.querySelectorAll('.over').forEach(o => o.remove());
+ctx = null;
+}
+function chip(label, val, cls) { return h('span', { class: 'chip' + (cls ? ' ' + cls : '') }, h('i', { text: label }), h('b', { text: String(val) })); }
+function start(level) {
+stop(); level = clamp(level | 0, 0, G.levels.length - 1); screenName = 'play'; endData = null; app.innerHTML = ''; app.append(topBar());
+const hud = h('div', { class: 'hud' }), bar = h('div', { class: 'tbar', hidden: true }, h('div')), stage = h('div', { class: 'stage' });
+const btns = h('div', { class: 'row' },
+h('button', { class: 'btn sm', type: 'button', title: 'Restart (R)', onclick: () => start(level) }, '↻ ', h('span', { class: 'lt', text: 'Restart' })),
+h('button', { class: 'btn sm', type: 'button', title: 'Menu (Esc)', onclick: menu }, '☰ ', h('span', { class: 'lt', text: 'Menu' })));
+app.append(h('main', { class: 'play' }, h('div', { class: 'hud' }, hud, h('span', { class: 'sp' }), btns), bar, stage));
+const c = ctx = {
+level, L: G.levels[level], el: stage, alive: true, score: 0, streak: 0, bestStreak: 0, right_: 0, wrong_: 0, lives_: null, _t: [], _i: [], _l: [], _raf: 0, _hud: {},
+after(ms, fn) { const t = setTimeout(() => { if (c.alive) fn(); }, ms); c._t.push(t); return t; },
+every(ms, fn) { const t = setInterval(() => { if (c.alive) fn(); }, ms); c._i.push(t); return t; },
+loop(fn) { let last = performance.now(); const f = now => { if (!c.alive) return; const dt = Math.min(.05, (now - last) / 1000); last = now; fn(dt, now / 1000); c._raf = requestAnimationFrame(f); }; c._raf = requestAnimationFrame(f); },
+on(el, ev, fn, o, always) { const w = always ? fn : e => { if (c.alive) fn(e); }; el.addEventListener(ev, w, o); c._l.push([el, ev, w, o]); },
+key(fn) { c.on(document, 'keydown', e => { if (e.target && e.target.tagName === 'INPUT' && e.target.dataset.own !== '1') return; fn(e); }); },
+hud(o) { Object.assign(c._hud, o); drawHud(); },
+add(n, x, y, col) { n = Math.round(n); c.score = Math.max(0, c.score + n); if (n && x != null) c.pop((n > 0 ? '+' : '') + n, x, y, col || (n > 0 ? '#c6ff3d' : '#ff4d5e')); drawHud(); },
+right(base = 10, x, y) { c.streak++; c.right_++; c.bestStreak = Math.max(c.bestStreak, c.streak); const mult = 1 + Math.floor(c.streak / 3) * .5, pts = Math.round(base * mult);
+c.add(pts, x, y); c.flash(true); c.streak >= 3 && c.streak % 3 === 0 ? sfx.combo(c.streak) : sfx.good(); return pts; },
+wrong(x, y, msg) { c.streak = 0; c.wrong_++; c.flash(false); sfx.bad(); if (msg && x != null) c.pop(msg, x, y, '#ff4d5e'); drawHud(); },
+lives(n) { c.lives_ = n; drawHud(); },
+lose(n = 1) { c.lives_ = Math.max(0, (c.lives_ || 0) - n); drawHud(); return c.lives_; },
+flash(ok) { stage.classList.remove('flash-ok', 'flash-no'); void stage.offsetWidth; stage.classList.add(ok ? 'flash-ok' : 'flash-no'); c.after(350, () => stage.classList.remove('flash-ok', 'flash-no')); },
+pop(text, x, y, col) { const r = stage.getBoundingClientRect(); if (x == null) { x = r.width / 2; y = r.height * .3; } const p = h('div', { class: 'popt', text, style: { left: x + 'px', top: y + 'px', color: col || '#fff', transform: 'translateX(-50%)' } }); stage.append(p); setTimeout(() => p.remove(), 950); },
+timer(sec, onEnd) { let left = sec, total = sec; bar.hidden = false; const fill = bar.firstChild;
+const T = { left: () => left, add(s) { left = Math.min(total, left + s); }, set(s) { left = total = s; }, paused: false };
+const show = () => { fill.style.transform = `scaleX(${clamp(left / total, 0, 1)})`; bar.classList.toggle('low', left / total < .25); c.hud({ time: Math.ceil(left) + 's' }); };
+show(); c.every(100, () => { if (T.paused) return; left -= .1 * SPEED; if (left <= 5 && Math.abs(left - Math.round(left)) < .05 && left > 0) sfx.tick(); if (left <= 0) { left = 0; show(); onEnd && onEnd(); } else show(); });
+return T; },
+canvas() { stage.classList.add('cv'); const cv = h('canvas'); stage.append(cv); const g = cv.getContext('2d'), o = { cv, g, w: 1, h: 1 };
+const fit = () => { const r = stage.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1); o.w = Math.max(1, r.width); o.h = Math.max(1, r.height); cv.width = Math.round(o.w * d); cv.height = Math.round(o.h * d); g.setTransform(d, 0, 0, d, 0, 0); o.onfit && o.onfit(); };
+fit(); c.on(window, 'resize', fit); o.fit = fit;
+o.xy = e => { const r = cv.getBoundingClientRect(), p = e.touches ? e.touches[0] || e.changedTouches[0] : e; return [p.clientX - r.left, p.clientY - r.top]; };
+return o; },
+choices(parent, items, onPick, o = {}) {
+const cols = o.cols || (items.length > 4 ? 3 : 2), el = h('div', { class: 'opts' + (cols >= 4 ? ' wide' : ''), '--cols': cols }); let locked = false;
+const btns = items.map((it, i) => h('button', { class: 'opt', type: 'button', style: { animationDelay: i * 40 + 'ms' }, onclick: () => { if (!locked) onPick(i, btns[i]); } }, h('span', { class: 'k', text: String(i + 1) }), it && it.nodeType ? it : String(it)));
+el.append(...btns); parent.append(el);
+const kf = e => { const n = +e.key; if (!locked && n >= 1 && n <= btns.length && c.alive && el.isConnected) { e.preventDefault(); onPick(n - 1, btns[n - 1]); } };
+c.on(document, 'keydown', kf);
+return { el, btns, lock() { locked = true; el.classList.add('locked'); }, unlock() { locked = false; el.classList.remove('locked'); }, mark(i, ok) { btns[i].classList.add(ok ? 'ok' : 'no'); } };
+},
+end(o = {}) { if (!c.alive) return; finish(c, o); }
+};
+function drawHud() {
+if (!c.alive && c !== ctx) return; const H = c._hud; hud.innerHTML = '';
+hud.append(chip('Score', c.score));
+if (c.streak >= 2) hud.append(chip('Streak', c.streak + (c.streak >= 3 ? ' ×' + (1 + Math.floor(c.streak / 3) * .5) : ''), c.streak >= 3 ? 'hot' : ''));
+if (c.lives_ != null) hud.append(chip('Lives', c.lives_ > 0 ? '❤️'.repeat(Math.min(c.lives_, 6)) : '💔'));
+for (const k in H) if (H[k] != null && H[k] !== '') hud.append(chip(k, H[k]));
+}
+drawHud();
+c.on(document, 'keydown', e => { if (e.key === 'Escape') menu(); else if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey && !(e.target && e.target.tagName === 'INPUT')) start(level); }, undefined, true);
+sfx.click();
+try { G.start(c); } catch (e) { console.error(e); }
+}
+function finish(c, o) {
+c.alive = false; for (const t of c._t) clearTimeout(t); for (const t of c._i) clearInterval(t); cancelAnimationFrame(c._raf);
+const sv = store.get(G.id, {}); sv.best = sv.best || []; sv.plays = (sv.plays || 0) + 1; const prev = sv.best[c.level] || 0, isBest = c.score > prev;
+if (isBest) sv.best[c.level] = c.score; store.set(G.id, sv);
+const won = !!o.won, acc = c.right_ + c.wrong_ ? Math.round(c.right_ / (c.right_ + c.wrong_) * 100) + '%' : null;
+const stats = Object.assign({}, c.right_ + c.wrong_ ? { Correct: c.right_ + ' / ' + (c.right_ + c.wrong_), Accuracy: acc } : {}, c.bestStreak >= 2 ? { 'Best streak': c.bestStreak } : {}, o.stats || {});
+endData = { score: c.score, won, best: isBest, level: c.level, stats };
+screenName = 'end'; (won || isBest) ? sfx.win() : sfx.lose(); if (won) confetti();
+const next = won && c.level < G.levels.length - 1;
+const card = h('div', { class: 'card' },
+h('div', { style: { fontSize: '46px' }, text: o.emoji || (won ? '🏆' : isBest ? '⭐' : '🎯') }),
+h('h2', { text: o.title || (won ? 'Level complete!' : 'Game over') }),
+h('div', { class: 'big', text: String(c.score) }),
+h('div', { class: 'best' }, isBest && c.score > 0 ? h('span', { class: 'badge-new', text: 'NEW BEST' }) : 'Best on ' + G.levels[c.level].name + ': ' + Math.max(prev, c.score)),
+o.msg ? h('p', { class: 'msg', text: o.msg }) : null,
+Object.keys(stats).length ? h('div', { class: 'stats' }, Object.entries(stats).map(([k, v]) => h('div', {}, h('b', { text: String(v) }), h('i', { text: k })))) : null,
+o.learnt ? h('div', { class: 'learn', style: { textAlign: 'left', marginTop: '4px' } }, h('b', { text: 'REMEMBER' }), h('ul', {}, o.learnt.map(t => h('li', { text: t })))) : null,
+h('div', { class: 'row' },
+next ? h('button', { class: 'btn go', type: 'button', onclick: () => start(c.level + 1) }, 'Next level ›') : null,
+h('button', { class: 'btn' + (next ? '' : ' go'), type: 'button', onclick: () => start(c.level) }, '↻ Play again'),
+h('button', { class: 'btn', type: 'button', onclick: menu }, '☰ Menu')));
+const ov = h('div', { class: 'over' }, card); document.body.append(ov);
+const b0 = card.querySelector('.btn.go'); if (b0) setTimeout(() => b0.focus({ preventScroll: true }), 50);
+}
+function game(def) {
+G = def; META = CATALOG.find(x => x.id === def.id) || { id: def.id, title: def.id, subject: 'Logic', icon: '🎮', c: '#29e0ff', c2: '#c6ff3d', teaches: '', learn: [], ages: '' };
+document.documentElement.style.setProperty('--c', META.c); document.documentElement.style.setProperty('--c2', META.c2);
+app = $('#app') || document.body.appendChild(h('div', { id: 'app' }));
+document.addEventListener('keydown', e => { if (screenName === 'menu' && /^[1-9]$/.test(e.key) && +e.key <= G.levels.length && !(e.target && e.target.tagName === 'INPUT')) start(+e.key - 1); });
+window.EDU = { start, menu, restart: () => ctx && start(ctx.level), bot: () => ctx && ctx.alive && G.bot && G.bot(ctx), miss: () => ctx && ctx.alive && G.miss && G.miss(ctx),
+state: () => ({ screen: screenName, score: ctx ? ctx.score : endData ? endData.score : 0, alive: !!(ctx && ctx.alive), level: ctx ? ctx.level : null, end: endData, levels: G.levels.length, hasMiss: !!G.miss }) };
+menu();
+}
+return { game, SPEED, h, $, rnd, pick, shuffle, sample, clamp, gcd, near, store, sfx, tone, thumb, confetti };
+})();
+const VOCAB = [
+['happy|feeling glad and pleased|glad|sad|Grandpa smiled all day because he was so ___ to see us.|feel',
+'angry|very upset with someone or something|mad|calm|Dad was ___ when the puppy chewed up his new shoes.|feel',
+'huge|very, very big|giant|tiny|The ___ whale was as long as a bus.|size',
+'fast|moving with great speed|quick|slow|A cheetah is so ___ that it can catch a running gazelle.|speed',
+'quiet|making little or no noise|silent|loud|Please be ___ in the library so others can read.|sound',
+'shout|to call out very loudly|yell|whisper|You have to ___ so your friend can hear you across the noisy field.|sound',
+'begin|to start doing something|start|finish|Take your seats; the show is about to ___.|start',
+'cold|having a low temperature|chilly|hot|Wear a warm coat; it is very ___ outside today.|weather',
+'wet|covered with water|soaked|dry|Use a towel to dry off when you are ___.|weather',
+'easy|not hard to do|simple|difficult|The puzzle was so ___ that I finished it in one minute.|diff',
+'clean|free from dirt|spotless|dirty|Wash your hands so they are ___ before you eat.|clean',
+'hungry|wanting or needing food|starving|full|After the long hike, we were so ___ that we ate everything.|food',
+'brave|ready to face danger without fear|fearless|scared|The ___ firefighter was not afraid to run into the burning house.|brave',
+'shiny|bright and reflecting light|gleaming|dull|She polished the old coin until it was ___.|clean',
+'rich|having a lot of money|wealthy|poor|She was so ___ that she bought a mansion and three sports cars.|money',
+'build|to make something by putting parts together|construct|destroy|The birds gather twigs to ___ a nest.|make',
+'giggle|to laugh in a light, silly way|chuckle||The baby began to ___ when I tickled her feet.|sound',
+'gift|something you give to someone|present||I wrapped a ___ for my sister\'s birthday.|gift',
+'choose|to pick one thing from a group|pick||You can ___ any toy you like from the box.|make'],
+['ancient|very old; from long ago|age-old|modern|The museum shows ___ pots that were made thousands of years ago.|time',
+'cautious|careful to avoid danger or mistakes|careful|reckless|Be ___ when you cross a busy street.|care',
+'generous|happy to give or share with others|unselfish|selfish|It was ___ of Leo to share his lunch with the new student.|kind',
+'humble|not proud; not acting better than others|modest|arrogant|Even though he was the best player, he was ___ and never bragged.|kind',
+'fragile|easily broken or damaged|delicate|sturdy|The glass vase is so ___ that it could shatter if you drop it.|time',
+'reluctant|not wanting to do something|unwilling|eager|The cat was ___ to step into the cold bath.|want',
+'famous|known by very many people|well-known|unknown|The ___ singer was surrounded by fans asking for photos.|fame',
+'abundant|existing in large amounts; more than enough|plentiful|scarce|Fresh water is ___ in this valley, so the farms grow well.|amount',
+'transparent|clear enough to see through|see-through|opaque|The fish tank is made of ___ glass, so we can watch the fish.|see',
+'predict|to say what will happen before it happens|forecast||Scientists use computers to ___ tomorrow\'s weather.|future',
+'vanish|to go out of sight suddenly|disappear|appear|The magician made the rabbit ___ in a puff of smoke.|vanish',
+'courage|the strength to face danger or fear|bravery|cowardice|It took great ___ to climb the steep, icy cliff.|brave',
+'exhausted|extremely tired|worn-out|energetic|After running the marathon, she was completely ___.|tired',
+'furious|extremely angry|enraged|calm|He was ___ when someone broke his new bike on purpose.|anger',
+'curious|eager to know or learn about something|inquisitive||Maya was ___ about how rockets work, so she read three books about them.|know',
+'rapid|very quick|swift|slow|The train was so ___ that it reached the city in under an hour.|speed',
+'expand|to grow larger|enlarge|shrink|A balloon will ___ as you blow air into it.|grow',
+'peculiar|strange or unusual|odd|ordinary|We heard a ___ noise coming from the empty attic.|odd'],
+['benevolent|kind and eager to help others|charitable|malevolent|The ___ queen spent her fortune building hospitals for the poor.|kind',
+'meticulous|giving careful attention to every small detail|precise|careless|The ___ artist spent hours painting each tiny feather on the bird.|work',
+'diligent|working hard and carefully|industrious|lazy|The ___ student studied every evening and never missed her homework.|work',
+'tenacious|refusing to give up|persistent||The ___ climber kept going despite the wind and snow.|work',
+'resilient|able to recover quickly from difficulty|tough|fragile|The ___ team lost the first game but bounced back to win the series.|work',
+'ambiguous|having more than one possible meaning|unclear|clear|The message was ___, so we could not tell what it really meant.|meaning',
+'ephemeral|lasting for only a very short time|fleeting|permanent|The rainbow was ___, fading after just a few minutes.|time',
+'gregarious|enjoying the company of other people|sociable|reclusive|My ___ brother loves big parties and talks to everyone.|social',
+'lethargic|slow and lacking energy|sluggish|energetic|The heat made everyone feel ___, so we napped all afternoon.|energy',
+'eloquent|speaking or writing clearly and powerfully|articulate|inarticulate|Her ___ speech moved the whole audience to tears.|speech',
+'frugal|careful not to waste money|thrifty|wasteful|Being ___, Grandma saved every coin and never bought what she did not need.|money',
+'pragmatic|sensible and realistic about what can be done|practical|idealistic|Instead of dreaming, the ___ builder used the materials she already had.|money work',
+'scrutinize|to examine very closely|inspect||The detective began to ___ the footprints for clues.|look',
+'obsolete|no longer used because something newer exists|outdated|modern|Typewriters became ___ once people started using computers.|old',
+'ominous|suggesting that something bad is going to happen|threatening|reassuring|Dark, ___ clouds gathered before the storm.|bad',
+'elated|extremely happy|overjoyed|miserable|She was ___ when she found out she had won first prize.|feel',
+'ubiquitous|found everywhere|widespread|rare|In the city, pigeons are ___: they sit on every roof and in every park.|where']
+].map(lv => lv.map(s => { const [w, def, syn, ant, sen, g] = s.split('|'); return { w, def, syn, ant, sen, g }; }));
+(() => {
+const { h, shuffle, sample, pick, sfx } = Edu, STOPS = 8;
+const LV = [
+{ name: 'Easy', desc: 'Everyday words. The dragon has 3 HP.', boss: 3 },
+{ name: 'Medium', desc: 'Middle-school words. The dragon has 4 HP.', boss: 4 },
+{ name: 'Hard', desc: 'Advanced words. The dragon has 5 HP.', boss: 5 }
+];
+const PATH = 'M18 158 C60 160 70 118 110 122 S160 162 200 146 S228 92 262 98 S320 150 342 118 S334 56 372 44';
+const MAP = `<svg viewBox="0 0 400 180" aria-hidden="true"><defs><linearGradient id="vqg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fd0ff"/><stop offset=".42" stop-color="#bde9ff"/><stop offset=".43" stop-color="#7ed36b"/><stop offset="1" stop-color="#4fae57"/></linearGradient></defs>`
++ `<rect width="400" height="180" fill="url(#vqg)"/><circle cx="46" cy="28" r="15" fill="#ffd23f"/><circle cx="46" cy="28" r="22" fill="#ffd23f" opacity=".25"/>`
++ `<path d="M150 78 L190 22 L230 78Z" fill="#8c93a8"/><path d="M178 39 L190 22 L202 39 L195 35 L190 41 L184 35Z" fill="#fff"/><path d="M205 78 L250 30 L296 78Z" fill="#a1a8bb"/><path d="M238 43 L250 30 L262 43 L256 40 L250 46 L244 40Z" fill="#fff"/>`
++ `<path d="M300 78 L340 40 L380 78Z" fill="#7a5aa8"/><rect x="352" y="22" width="34" height="30" fill="#5b3f86"/><path d="M352 22h6v-6h5v6h6v-6h5v6h6v-6h6v6" fill="#5b3f86"/>`
++ `<path d="M0 104 C60 96 90 112 130 100 S220 88 260 112 S330 128 400 120" stroke="#3aa0e8" stroke-width="9" fill="none" opacity=".9"/><path d="M0 104 C60 96 90 112 130 100 S220 88 260 112 S330 128 400 120" stroke="#9fe0ff" stroke-width="2" fill="none" stroke-dasharray="6 10" class="vq-flow"/>`
++ `<g fill="#2f8a3e"><circle cx="30" cy="124" r="9"/><circle cx="80" cy="96" r="8"/><circle cx="150" cy="174" r="9"/><circle cx="240" cy="168" r="8"/><circle cx="300" cy="80" r="7"/><circle cx="388" cy="150" r="10"/><circle cx="130" cy="142" r="6"/></g>`
++ `<g><circle cx="60" cy="140" r="2.5" fill="#ff5fa2"/><circle cx="176" cy="122" r="2.5" fill="#ffd23f"/><circle cx="290" cy="136" r="2.5" fill="#fff"/><circle cx="226" cy="122" r="2.5" fill="#ff5fa2"/><circle cx="320" cy="170" r="2.5" fill="#ffd23f"/><circle cx="96" cy="166" r="2.5" fill="#a98bff"/></g>`
++ `<path d="${PATH}" stroke="#8a6234" stroke-width="9" fill="none" stroke-linecap="round"/><path d="${PATH}" stroke="#e8c27c" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="1 9" id="vqpath"/></svg>`;
+const CSS = `
+.vq-map{position:relative;width:min(100%,680px);aspect-ratio:400/180;max-height:34vh;flex:none;border-radius:18px;overflow:hidden;border:2px solid rgba(255,255,255,.18);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.vq-map>svg{width:100%;height:100%;display:block}
+.vq-flow{animation:vqflow 1.6s linear infinite}@keyframes vqflow{to{stroke-dashoffset:-32}}
+.vq-stop{animation:none}.vq-stop.now{animation:vqpulse 1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes vqpulse{50%{transform:scale(1.35)}}
+.vq-boss{transform-box:fill-box;transform-origin:center bottom;animation:vqboss 1.2s ease-in-out infinite}
+@keyframes vqboss{50%{transform:translateY(-3px) rotate(-4deg)}}
+.vq-boss.hit{animation:vqhit .4s}@keyframes vqhit{30%{transform:translateX(6px);filter:brightness(2)}60%{transform:translateX(-6px)}}
+.vq-q{width:min(100%,760px);display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;min-height:0}
+.vq-kind{display:inline-block;padding:4px 12px;border-radius:999px;font:800 12px var(--body);letter-spacing:.12em;text-transform:uppercase;background:color-mix(in srgb,var(--c2) 22%,transparent);color:var(--c2);border:1px solid color-mix(in srgb,var(--c2) 50%,transparent);margin-bottom:8px}
+.vq-text{font:700 clamp(19px,4.2vw,30px) var(--display);text-align:center;line-height:1.25;animation:pop .3s both;max-width:700px}
+.vq-text em{font-style:normal;color:var(--c)}
+.vq-text u{text-decoration:none;display:inline-block;min-width:3.5em;border-bottom:3px solid var(--c)}
+.vq-q .opts{margin-top:clamp(10px,2.5vh,20px)}
+.vq-q.long .opt{font:700 clamp(15px,2.1vw,19px) var(--body);min-height:clamp(50px,8vh,70px)}
+.vq-note{min-height:1.4em;margin-top:8px;color:var(--muted);font-weight:700;text-align:center;font-size:clamp(13px,3vw,16px)}
+.vq-note b{color:var(--gold)}
+`;
+const SVGNS = 'http://www.w3.org/2000/svg', el = (t, a) => { const e = document.createElementNS(SVGNS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+function question(lv, it, kind) {
+const all = VOCAB[lv], gs = it.g.split(' '), others = shuffle(all.filter(o => o !== it && !o.g.split(' ').some(g => gs.includes(g))));
+const fill = (right, pool) => { const out = [right]; for (const v of pool) if (v && !out.includes(v) && out.length < 4) out.push(v); return shuffle(out); };
+if (kind === 'def') return { kind: 'Meaning', html: `What does <em>${it.w}</em> mean?`, right: it.def, opts: fill(it.def, others.map(o => o.def)), long: true };
+if (kind === 'word') return { kind: 'Which word?', html: `Which word means <em>“${it.def}”</em>?`, right: it.w, opts: fill(it.w, others.map(o => o.w)) };
+if (kind === 'syn') return { kind: 'Synonym', html: `Which word means the same as <em>${it.w}</em>?`, right: it.syn, opts: fill(it.syn, [it.ant, ...others.map(o => o.syn)]) };
+if (kind === 'ant') return { kind: 'Opposite', html: `Which word means the opposite of <em>${it.w}</em>?`, right: it.ant, opts: fill(it.ant, [it.syn, ...others.map(o => o.ant)]) };
+return { kind: 'Fill the gap', html: it.sen.replace('___', '<u>&nbsp;</u>'), right: it.w, opts: fill(it.w, others.map(o => o.w)) };
+}
+Edu.game({
+id: 'vocabulary-quest', levels: LV,
+how: ['Your hero walks the map. At every stop, answer a word question: tap an answer or press 1 to 4.', 'Questions ask what a word means, a synonym (same meaning), an antonym (opposite), or which word fits a sentence.',
+'A right answer earns a gem and moves you on. A wrong answer costs a heart, and you get a new question.', 'Reach the dragon and hit it with right answers until its HP runs out. Lose all 3 hearts and the quest ends.'],
+start(c) {
+const L = c.L, words = shuffle(VOCAB[c.level]);
+c.el.style.justifyContent = 'flex-start';
+c.el.append(h('style', { text: CSS }));
+const map = h('div', { class: 'vq-map', html: MAP }), svg = map.firstChild, path = svg.querySelector('#vqpath'), len = path.getTotalLength();
+const qBox = h('div', { class: 'vq-q' }), note = h('div', { class: 'vq-note' });
+c.el.append(map, qBox, note);
+const stops = [...Array(STOPS)].map((_, i) => { const p = path.getPointAtLength(len * (i + 1) / (STOPS + 1)); const g = el('g'); const ci = el('circle', { cx: p.x, cy: p.y, r: 6.5, fill: '#fff', stroke: '#c06bff', 'stroke-width': 3, class: 'vq-stop' }); g.append(ci); svg.append(g); return { p, g, ci }; });
+const end = path.getPointAtLength(len);
+const boss = el('text', { x: end.x - 8, y: end.y + 6, 'font-size': 30, 'text-anchor': 'middle', class: 'vq-boss' }); boss.textContent = '🐉'; svg.append(boss);
+const bossBar = el('g', { opacity: 0 }); bossBar.append(el('rect', { x: end.x - 36, y: end.y - 34, width: 44, height: 7, rx: 3.5, fill: '#2a0d12', stroke: '#fff', 'stroke-width': 1 }), el('rect', { x: end.x - 35, y: end.y - 33, width: 42, height: 5, rx: 2.5, fill: '#ff4d5e', class: 'vq-hp' })); svg.append(bossBar);
+const hero = el('g'); hero.append(el('ellipse', { cx: 0, cy: 3, rx: 9, ry: 3, fill: 'rgba(0,0,0,.25)' })); const ht = el('text', { x: 0, y: 0, 'font-size': 22, 'text-anchor': 'middle' }); ht.textContent = '🧝'; hero.append(ht); svg.append(hero);
+c.lives(3); c.gems = 0; c.missed = []; c.seen = [];
+const S = c.S = { stop: 0, at: 0, to: 0, walking: false, busy: true, wi: 0, bossHp: L.boss, inBoss: false, over: false };
+c.hud({ gems: '💎 0', stop: '1 / ' + STOPS });
+const putHero = (d, bob) => { const p = path.getPointAtLength(Math.min(len, Math.max(0, d))); hero.setAttribute('transform', `translate(${p.x} ${p.y - 2 - bob})`); };
+putHero(0, 0);
+c.loop((dt, t) => {
+if (S.walking) { S.at += (S.to - S.at) * Math.min(1, dt * 6) + Math.sign(S.to - S.at) * dt * 40; if (Math.abs(S.to - S.at) < 1.5 || (S.to - S.at) * S.dir < 0) { S.at = S.to; S.walking = false; S.onArrive && S.onArrive(); } }
+putHero(S.at, S.walking ? Math.abs(Math.sin(t * 14)) * 4 : Math.sin(t * 3) * 1);
+});
+const walkTo = (d, fn) => { S.to = d; S.dir = Math.sign(d - S.at) || 1; S.walking = true; S.onArrive = fn; };
+stops[0].ci.classList.add('now');
+walkTo(len / (STOPS + 1), ask);
+function ask() {
+if (S.over) return; S.busy = false;
+const it = words[S.wi++ % words.length], kinds = ['def', 'word', 'syn', 'fill', 'fill'].concat(it.ant ? ['ant', 'ant'] : []);
+const q = S.q = question(c.level, it, pick(kinds)); S.it = it; if (!c.seen.includes(it)) c.seen.push(it);
+qBox.innerHTML = ''; qBox.className = 'vq-q' + (q.long ? ' long' : '');
+qBox.append(h('span', { class: 'vq-kind', text: (S.inBoss ? '🐉 Dragon · ' : 'Stop ' + (S.stop + 1) + ' · ') + q.kind }), h('div', { class: 'vq-text', html: q.html }));
+const narrow = c.el.clientWidth < 560;
+S.ch = c.choices(qBox, q.opts, (i, b) => answer(i, b), { cols: q.long && narrow ? 1 : 2 });
+}
+const rel = b => { const r = b.getBoundingClientRect(), s = c.el.getBoundingClientRect(); return [r.left - s.left + r.width / 2, r.top - s.top]; };
+function answer(i, b) {
+if (S.busy || S.over) return; S.busy = true; S.ch.lock(); const q = S.q, ok = q.opts[i] === q.right, [x, y] = rel(b);
+S.ch.mark(i, ok); if (!ok) S.ch.mark(q.opts.indexOf(q.right), true);
+note.innerHTML = ''; note.append(h('b', { text: S.it.w }), ': ' + S.it.def + (S.it.syn ? ' (like ' + S.it.syn + ')' : ''));
+if (!ok) {
+c.wrong(x, y, '−1 ❤️'); if (!c.missed.includes(S.it)) c.missed.push(S.it);
+if (S.inBoss && S.bossHp < L.boss) { S.bossHp++; hp(); c.pop('Dragon heals!', null, null, '#ff9f1c'); }
+if (c.lose() <= 0) { S.over = true; return c.after(700, () => finish(false)); }
+return c.after(800, ask);
+}
+if (S.inBoss) {
+c.right(15 + c.level * 5, x, y); S.bossHp--; hp(); boss.classList.remove('hit'); void boss.getBBox(); boss.classList.add('hit'); Edu.tone(180, .25, 'square', .07, -100);
+if (S.bossHp <= 0) { S.over = true; boss.textContent = '💥'; c.after(650, () => finish(true)); return; }
+return c.after(550, ask);
+}
+c.right(10 + c.level * 5, x, y); c.gems++;
+const s = stops[S.stop]; s.ci.classList.remove('now'); s.ci.setAttribute('fill', '#ffd23f'); s.ci.setAttribute('stroke', '#fff');
+const gem = el('text', { x: s.p.x, y: s.p.y - 9, 'font-size': 12, 'text-anchor': 'middle' }); gem.textContent = '💎'; s.g.append(gem);
+S.stop++; c.hud({ gems: '💎 ' + c.gems, stop: Math.min(S.stop + 1, STOPS) + ' / ' + STOPS });
+if (S.stop < STOPS) { stops[S.stop].ci.classList.add('now'); c.after(250, () => walkTo(len * (S.stop + 1) / (STOPS + 1), ask)); }
+else c.after(250, () => walkTo(len - 26, () => { S.inBoss = true; bossBar.setAttribute('opacity', 1); hp(); c.hud({ stop: 'Dragon!' }); c.pop('The dragon attacks!', null, null, '#ff4d5e'); sfx.combo(6); ask(); }));
+}
+function hp() { svg.querySelector('.vq-hp').setAttribute('width', Math.max(0, 42 * S.bossHp / L.boss)); }
+function finish(won) {
+const list = (c.missed.length ? c.missed : c.seen.slice(0, 3)).slice(0, 5).map(it => it.w + ': ' + it.def + (it.ant ? ' (opposite: ' + it.ant + ')' : ''));
+c.end({ won, title: won ? 'Dragon defeated!' : 'Out of hearts', emoji: won ? '🐉' : '💔',
+msg: won ? `You crossed the map and beat the dragon with ${c.lives_} heart${c.lives_ === 1 ? '' : 's'} left.` : 'Lose all three hearts and the quest is over. Try again!',
+stats: { Gems: c.gems + ' / ' + STOPS }, learnt: list });
+}
+},
+bot(c) { const S = c.S; if (S && !S.busy && !S.over && S.ch) S.ch.btns[S.q.opts.indexOf(S.q.right)].click(); },
+miss(c) { const S = c.S; if (S && !S.busy && !S.over && S.ch) S.ch.btns[S.q.opts.findIndex(o => o !== S.q.right)].click(); }
+});
+})();
+</script>
+</body>
+</html>

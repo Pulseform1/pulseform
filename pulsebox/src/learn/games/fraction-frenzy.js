@@ -32,7 +32,7 @@
 .ff-t.bad{border-color:var(--no);animation:shake .35s}.ff-t.gone{animation:ffgo .4s ease forwards;pointer-events:none}
 @keyframes ffgo{40%{transform:scale(1.18);border-color:var(--ok);box-shadow:0 0 30px var(--ok)}to{transform:scale(.2) rotate(12deg);opacity:0}}
 .ff-t .kk{position:absolute;top:5px;left:8px;font:700 11px var(--display);color:var(--muted)}
-.ff-t svg{width:auto;height:min(78%,84px);max-width:92%}.ff-t svg.bar{height:auto;width:92%;max-height:60%}
+.ff-t>span:last-child{display:flex;align-items:center;justify-content:center;width:100%;height:100%}.ff-t svg{width:min(88px,72%);height:auto;max-height:100%}.ff-t svg.bar{width:94%}
 .ff-t path,.ff-t rect{fill:#262d40;stroke:#0b0d14;stroke-width:2.5}.ff-t .on{fill:var(--c)}
 .ff-fr{display:inline-flex;flex-direction:column;align-items:center;line-height:1}.ff-fr i{display:block;width:120%;height:3px;border-radius:2px;background:currentColor;margin:3px 0}
 .ff-p{position:absolute;width:10px;height:10px;border-radius:3px;pointer-events:none;animation:ffp .6s ease-out forwards;z-index:4}
@@ -44,9 +44,10 @@
       s += `<path d="M0 0L${p(a0)}A48 48 0 0 1 ${p(a1)}Z"${i < n ? ' class="on"' : ''}/>`; }
     return `<svg viewBox="-52 -52 104 104" aria-label="${n} of ${d} parts shaded">${s}</svg>`;
   }
-  function bar(n, d) {
-    let s = ''; const w = 116 / d; for (let i = 0; i < d; i++) s += `<rect x="${2 + i * w}" y="2" width="${w}" height="36"${i < n ? ' class="on"' : ''}/>`;
-    return `<svg class="bar" viewBox="0 0 120 40" aria-label="${n} of ${d} parts shaded">${s}</svg>`;
+  function bar(n, d) {   // a strip of d equal parts (two rows when there are many)
+    const cols = d > 6 && d % 2 === 0 ? d / 2 : d, rows = d / cols, w = 116 / cols, H = rows * 34; let s = '';
+    for (let i = 0; i < d; i++) s += `<rect x="${2 + (i % cols) * w}" y="${2 + Math.floor(i / cols) * 34}" width="${w}" height="34"${i < n ? ' class="on"' : ''}/>`;
+    return `<svg class="bar" viewBox="0 0 120 ${H + 4}" aria-label="${n} of ${d} parts shaded">${s}</svg>`;
   }
   const show = t => t.k === 'frac' ? `<span class="ff-fr"><b>${t.n}</b><i></i><b>${t.d}</b></span>` : t.k === 'dec' ? dec(t.n, t.d) : t.k === 'pct' ? pct(t.n, t.d) : t.k === 'pie' ? pie(t.n, t.d) : bar(t.n, t.d);
   const say = t => t.k === 'frac' ? `${t.n}/${t.d}` : t.k === 'dec' ? dec(t.n, t.d) : t.k === 'pct' ? pct(t.n, t.d) : `a picture of ${t.n}/${t.d}`;

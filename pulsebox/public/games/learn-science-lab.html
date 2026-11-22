@@ -430,6 +430,10 @@ light: 'Colored light adds up: red + green = yellow, red + blue = magenta, green
 magnet: 'Magnets attract iron and steel. Aluminum, copper, gold, plastic, wood and glass are not attracted.',
 chain: 'In a food chain the arrow means "is eaten by". Chains start with a producer, usually a green plant.' };
 const CSS = `.sl-st{display:flex;align-items:center;gap:8px;margin-bottom:6px;font:800 13px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--c)}
+.sl-lab{background-image:linear-gradient(rgba(122,240,208,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(122,240,208,.05) 1px,transparent 1px);background-size:26px 26px}
+.sl-lab:after{content:'';position:absolute;left:0;right:0;bottom:0;height:16px;background:linear-gradient(#5b4632,#2f241a);border-top:2px solid #7a5f43}
+.sl-track{display:flex;gap:5px;align-items:center;margin-bottom:8px}.sl-track i{width:16px;height:16px;border-radius:50%;background:var(--panel2);border:2px solid var(--edge);transition:background .3s}
+.sl-track i.x{border-radius:4px 4px 8px 8px}.sl-track i.d{background:var(--ok);border-color:var(--ok)}.sl-track i.c{border-color:var(--c);animation:pulse 1s infinite;box-shadow:0 0 10px var(--c)}
 .sl-bench{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:rise .35s ease both}
 .sl-task{font:700 clamp(17px,3.2vw,26px) var(--display);text-align:center;max-width:680px;margin-bottom:8px}
 .sl-note{min-height:40px;color:var(--muted);text-align:center;font-weight:700;max-width:620px;margin-top:8px;font-size:clamp(13px,2vw,16px)}
@@ -462,7 +466,7 @@ const CSS = `.sl-st{display:flex;align-items:center;gap:8px;margin-bottom:6px;fo
 .sl-beam.on{opacity:1;transform:none}
 .sl-lamp{width:64px;height:64px;border-radius:50%;border:3px solid var(--edge);background:var(--panel2);font:800 13px var(--body);transition:box-shadow .2s,background .2s}
 .sl-lamp.on{background:var(--k);color:#000;box-shadow:0 0 22px var(--k)}
-.sl-magnet{position:absolute;top:0;width:54px;height:46px;border:14px solid #e53935;border-top:0;border-radius:0 0 30px 30px;transition:transform .35s ease-in-out;z-index:2}
+.sl-magnet{position:absolute;top:0;width:64px;height:54px;border:16px solid #e53935;border-top:0;border-radius:0 0 30px 30px;transition:transform .35s ease-in-out;z-index:2}
 .sl-magnet:before,.sl-magnet:after{content:'';position:absolute;bottom:-14px;width:14px;height:10px;background:#cfd6e3}.sl-magnet:before{left:-14px}.sl-magnet:after{right:-14px}
 .sl-chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;min-height:58px;padding:8px;border-radius:14px;border:2px dashed var(--edge);width:min(100%,700px)}
 .sl-chain span{padding:8px 10px;border-radius:12px;background:color-mix(in srgb,var(--ok) 22%,var(--panel2));border:2px solid var(--ok);font:700 15px var(--display);animation:pop .3s both}
@@ -472,7 +476,7 @@ function circuit(kind, lit, w = 150) {
 const wire = '#cfd6e3', bulb = lit ? '#ffe066' : '#3a4256', parts = [];
 const L = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${wire}" stroke-width="3" stroke-linecap="round"/>`;
 parts.push(L(20, 20, 51, 20), L(69, 20, 100, 20), L(100, 20, 100, 38));
-parts.push(kind === 'open' ? L(100, 40, 112, 54) + `<circle cx="100" cy="40" r="2.5" fill="${wire}"/><circle cx="100" cy="58" r="2.5" fill="${wire}"/>` : L(100, 38, 100, 58));
+parts.push((kind === 'open' ? L(100, 40, 113, 53) : L(100, 40, 100, 58)) + `<circle cx="100" cy="40" r="3" fill="${wire}"/><circle cx="100" cy="58" r="3" fill="${wire}"/>`);
 parts.push(L(100, 58, 100, 72), kind === 'gap' ? L(100, 72, 72, 72) + L(52, 72, 20, 72) : L(100, 72, 20, 72));
 parts.push(kind === 'nobat' ? L(20, 72, 20, 20) : L(20, 72, 20, 50) + L(20, 42, 20, 20) + `<line x1="10" y1="42" x2="30" y2="42" stroke="#ff9f1c" stroke-width="3"/><line x1="14" y1="50" x2="26" y2="50" stroke="#ff9f1c" stroke-width="6"/><text x="34" y="40" font-size="9" fill="#ff9f1c" font-family="Arial">+</text>`);
 parts.push(`<g class="${lit ? 'sl-glow' : ''}"><circle cx="60" cy="18" r="9" fill="${bulb}" stroke="${wire}" stroke-width="2"/><path d="M55 20q2.5-6 5 0q2.5-6 5 0" fill="none" stroke="${lit ? '#b8860b' : '#9aa3b8'}" stroke-width="1.5"/></g>`);
@@ -492,8 +496,8 @@ for (let i = 0; i < L.n; i++) stations.push('quiz', exps[i]);
 const qpool = shuffle(Q.filter(q => c.level === 0 ? q[0] === 0 : c.level === 1 ? q[0] <= 1 : q[0] >= 1).sort((a, b) => (b[0] === c.level) - (a[0] === c.level)).slice(0, 12));
 c.lives(3); c.k = 0; c.learn = []; c.missed = [];
 c.key(e => c.stKey && c.stKey(e)); c.loop(dt => c.tick && c.tick(dt));
-const head = h('div', { class: 'sl-st' }), bench = h('div', { class: 'sl-bench' });
-c.el.append(head, bench);
+const head = h('div', { class: 'sl-st' }), bench = h('div', { class: 'sl-bench' }), track = h('div', { class: 'sl-track', 'aria-hidden': 'true' }, stations.map(k => h('i', { class: k === 'quiz' ? '' : 'x' })));
+c.el.classList.add('sl-lab'); c.el.append(track, head, bench);
 const at = el => { const r = el.getBoundingClientRect(), s = c.el.getBoundingClientRect(); return [r.left - s.left + r.width / 2, r.top - s.top]; };
 const good = (el, pts = 10) => { c.right(pts + c.level * 5, ...at(el)); };
 const bad = (el, msg, fact) => { c.wrong(...at(el), 'Not quite'); if (fact) c.missed.push(fact); if (msg) note.textContent = msg; return c.lose() > 0; };
@@ -505,7 +509,7 @@ const dead = () => { c.botMove = c.missMove = null; c.after(900, over); };
 function next() {
 if (c.k >= total) return over();
 const kind = stations[c.k]; bench.innerHTML = ''; bench.style.animation = 'none'; void bench.offsetWidth; bench.style.animation = '';
-head.textContent = (kind === 'quiz' ? '🔬 Quick quiz' : '🧪 Experiment') + ` · station ${c.k + 1} of ${total}`; c.hud({ station: (c.k + 1) + ' / ' + total });
+head.textContent = (kind === 'quiz' ? '🔬 Quick quiz' : '🧪 Experiment') + ` · station ${c.k + 1} of ${total}`; c.hud({ station: (c.k + 1) + ' / ' + total }); [...track.children].forEach((d, i) => d.className = (stations[i] === 'quiz' ? '' : 'x ') + (i < c.k ? 'd' : i === c.k ? 'c' : ''));
 note = h('div', { class: 'sl-note', 'aria-live': 'polite' }); c.botMove = c.missMove = c.stKey = c.tick = null;
 if (kind !== 'quiz') c.learn.push(FACT[kind]);
 EXP[kind](); bench.append(note);
@@ -567,7 +571,7 @@ task(need > 1 ? 'Find BOTH things that let electricity flow and light the bulb. 
 const holder = h('div'), gap = h('div', { style: { minHeight: '22px', font: '700 14px var(--body)', color: 'var(--muted)', textAlign: 'center' }, text: 'gap: (empty)' });
 const draw = lit => { holder.innerHTML = ''; holder.append(circuit('gap', lit, 210)); }; draw(false);
 const tray = h('div', { class: 'sl-row' }); bench.append(holder, gap, tray);
-const btns = items.map(name => h('button', { class: 'sl-pick', type: 'button', onclick: () => tryIt(name, b(name)) }, obj(name), name)), b = n => btns[items.indexOf(n)];
+const btns = items.map(name => h('button', { class: 'sl-pick', type: 'button', onclick: () => tryIt(name, b(name)) }, obj(name, true), name)), b = n => btns[items.indexOf(n)];
 tray.append(...btns); let busy = false;
 function tryIt(name, el) { if (busy || el.classList.contains('ok')) return; busy = true; const ok = !!OB[name][5]; gap.textContent = 'gap: ' + name; draw(ok);
 c.after(450, () => { busy = false;
@@ -614,8 +618,8 @@ c.missMove = () => { for (const k of 'RGB') if (mix.includes(k) === on.has(k)) {
 magnet() {
 const need = c.level === 2 ? pick([2, 3]) : 2, items = shuffle([...sample(MAG, need), ...sample(NONMAG, 5 - need)]); let found = 0, busy = false;
 task(`Which objects will the magnet pick up? Find all ${need}.`);
-const zone = h('div', { style: { position: 'relative', width: 'min(100%,560px)', height: '64px' } }), mag = h('div', { class: 'sl-magnet', style: { left: 'calc(50% - 27px)' } }); zone.append(mag);
-const tray = h('div', { class: 'sl-row' }), btns = items.map(n => h('button', { class: 'sl-pick', type: 'button', onclick: () => grab(n) }, obj(n), n)); tray.append(...btns); bench.append(zone, tray);
+const zone = h('div', { style: { position: 'relative', width: 'min(100%,560px)', height: '74px' } }), mag = h('div', { class: 'sl-magnet', style: { left: 'calc(50% - 32px)' } }); zone.append(mag);
+const tray = h('div', { class: 'sl-row' }), btns = items.map(n => h('button', { class: 'sl-pick', type: 'button', onclick: () => grab(n) }, obj(n, true), n)); tray.append(...btns); bench.append(zone, tray);
 function grab(n) { const el = btns[items.indexOf(n)]; if (busy || el.classList.contains('ok')) return; busy = true;
 const zr = zone.getBoundingClientRect(), r = el.getBoundingClientRect(), dx = r.left + r.width / 2 - (zr.left + zr.width / 2), dy = r.top - zr.top - 40;
 mag.style.transform = `translate(${dx}px, ${Math.max(0, dy)}px)`;
