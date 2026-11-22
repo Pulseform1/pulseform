@@ -106,7 +106,7 @@
       if (f.op === 'nova') { add(rb(.18, .22, .08, .03), M.plate, 0, .38, .17); add(rb(.04, .18, .02, .01), M.glow, 0, .38, .215); for (const sx of [-1, 1]) add(cyl(.025, .025, .2, 8), M.dark, sx * .07, .38, .2); }
       else if (f.op === 'wraith') { add(rb(.34, .58, .014, .03), M.cloth, 0, .24, .17, -.06); add(rb(.36, .05, .04, .015), M.plate, 0, .52, .16); }
       else if (f.op === 'talon') { const q = add(cyl(.055, .05, .42, 10), M.cloth, .08, .36, .19, 0, 0, -.45); for (let k = 0; k < 3; k++) add(new THREE.ConeGeometry(.018, .07, 6), M.glow, .16 + k * .022, .58 - k * .012, .19 + (k - 1) * .025, 0, 0, -.45); add(rb(.05, .3, .015, .01), M.dark, 0, .36, .16, 0, 0, .6); }
-      else if (f.op === 'ember') { for (const sx of [-1, 1]) { add(cyl(.065, .065, .34, 12), M.plate, sx * .075, .37, .2); add(sph(.065, 12, 8), M.plate, sx * .075, .54, .2); } add(new THREE.TorusGeometry(.12, .015, 6, 16, Math.PI), M.dark, 0, .55, .25, 0, 0, 0); add(rb(.05, .04, .02, .01), M.glow, 0, .3, .27); }
+      else if (f.op === 'ember') { for (const sx of [-1, 1]) { add(cyl(.065, .065, .34, 12), M.plate, sx * .075, .37, .2); add(sph(.065, 12, 8), M.plate, sx * .075, .54, .2); } add(new THREE.TorusGeometry(.075, .015, 6, 16, Math.PI), M.dark, 0, .6, .2, 0, 0, 0); add(rb(.05, .04, .02, .01), M.glow, 0, .3, .27); }
       else if (f.op === 'vanta') { add(cyl(.12, .12, .045, 6), M.plate, 0, .4, .19, Math.PI / 2); add(cyl(.062, .062, .05, 6), M.glow, 0, .4, .2, Math.PI / 2); add(rb(.05, .62, .014, .02), M.cloth, .06, .25, .17, 0, 0, .38);   // a hex emitter on the back, a sash across it
         add(cyl(.13, .11, .06, 6), M.plate, -.29 * w, .6, 0, 0, 0, .55); add(cyl(.135, .135, .012, 6, 1, true), M.glow, -.29 * w, .6, 0, 0, 0, .55); }   // one heavy hex plate on the left shoulder
       else if (f.op === 'tessel') { add(rb(.2, .32, .1, .03), M.plate, 0, .37, .2); add(rb(.022, .26, .012, .006), M.glow, 0, .37, .256); add(rb(.16, .02, .012, .006), M.glow, 0, .5, .256);   // a slim projector on the back, a line of light down it
@@ -135,7 +135,7 @@
     // hood: a cowl open at the face (whole down to the brow at tb, then round the sides and back down to t1, the front `half` wide left open)
     const hood = (r, tb, t1, half, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { add(dome(r, tb), mat, x, y, z).scale.set(sx, sy, sz); add(new THREE.SphereGeometry(r, 20, 8, FRONT + half, TAU - half * 2, Math.PI * tb, Math.PI * (t1 - tb)), mat, x, y, z).scale.set(sx, sy, sz); };
     if (f.op === 'vex') {   // THE SHADE: a deep hood over an angular mask, two slanted eyes of light, a tail of cloth behind
-      hood(.164, .34, .64, .8, M.cloth, 0, .014, .02, 1, 1.03, 1.08); add(new THREE.ConeGeometry(.085, .17, 10), M.cloth, 0, .05, .175, 1.95);
+      hood(.164, .34, .64, .8, M.cloth, 0, .014, .02, 1, 1.03, 1.08);
       add(slice(.174, .85, .2, .36), M.cloth, 0, .006, .012);   // the hood's peak, out over the brow
       { const g = new THREE.TorusGeometry(.124, .016, 8, 24); add(g, M.cloth, 0, .0, -.092, .1).scale.set(1, 1.08, 1); }   // the rim of the hood round the face
       add(slice(.141, 1.05, .34, .8), M.plate).scale.set(.96, 1.05, 1);   // the mask
@@ -147,7 +147,7 @@
       add(dome(.153, .55), M.plate, 0, .012, .008).scale.set(1, .97, 1.08);
       add(slice(.156, .5, .5, .8, BACK), M.plate, 0, .012, .008).scale.set(1, .97, 1.08);   // the neck guard
       add(spine(.157, .009, .25, 2.6), M.acc, 0, .012, .008).scale.set(1, .97, 1.08);   // a ridge over the top
-      add(band(.143, .062, 1.2), M.dark, 0, .0, 0); add(rim(.145, .0045, 1.2), M.glow, 0, -.03, 0); add(rim(.156, .008, 1.35), M.plate, 0, .034, .004);   // the glass, the line of light under it, the brow
+      add(band(.143, .062, 1.2), M.dark, 0, .0, 0); add(rim(.145, .0045, 1.2), M.glow, 0, -.03, 0); add(rim(.1505, .008, 1.15), M.plate, 0, .034, .008).scale.set(1, 1, 1.08);   // the glass, the line of light under it, the brow
       { const ey = [.058, .012, -.133]; add(cyl(.043, .043, .03, 18), M.metal, ey[0], ey[1], ey[2], Q, 0, 0); add(cyl(.034, .034, .034, 18), M.glow, ey[0], ey[1], ey[2] - .002, Q, 0, 0); add(cyl(.018, .018, .038, 14), M.dark, ey[0], ey[1], ey[2] - .003, Q, 0, 0); add(sph(.006, 6, 5), M.glow, ey[0] + .008, ey[1] + .008, ey[2] - .022); }   // the eye: a ring, the lit iris, the pupil, a glint
       for (let i = 0; i < 3; i++) add(sph(.0065, 6, 5), M.glow, -.035 - i * .024, .05 - i * .003, -.146 + i * .012);   // three small sensors on the other brow
       for (const sx of [-1, 1]) { add(cyl(.044, .044, .03, 16), M.plate, sx * .15, -.004, .01, 0, 0, Q); add(cyl(.026, .026, .034, 14), M.acc, sx * .152, -.004, .01, 0, 0, Q); }
@@ -156,12 +156,12 @@
     } else if (f.op === 'bastion') {   // THE BULWARK: a siege helm, flat-topped and thick, a T of light sunk in the faceplate, cheek armour with vents
       add(turn([[0, .19], [.1, .186], [.16, .145], [.177, .04], [.181, -.08], [.158, -.086]], 20), M.plate, 0, 0, .004);
       add(cyl(.1, .112, .014, 18), M.trim, 0, .192, .004); add(cyl(.03, .034, .02, 8), M.metal, 0, .2, .004);   // a plate bolted on the crown
-      add(band(.19, .05, 1.08, .193), M.trim, 0, .056, .004); add(rim(.192, .007, 1.08), M.metal, 0, .03, .004);   // the brow plate and its edge
+      add(band(.19, .05, 1.08, .193), M.trim, 0, .056, .004); add(rim(.1915, .007, 1.0), M.metal, 0, .033, .004);   // the brow plate and its edge
       add(band(.1835, .12, .56), M.dark, 0, -.02, .004);   // the faceplate the T sits in
       add(band(.1855, .028, .5), M.glow, 0, .004, .004); add(rb(.03, .08, .012, .006), M.glow, 0, -.04, -.1805);
       for (const sx of [-1, 1]) { add(slice(.189, .3, .5, .76, FRONT + sx * .66, 6, 6), M.trim, 0, .0, .004); for (let i = 0; i < 3; i++) add(rb(.034, .007, .012, .002), M.dark, sx * (.118 + i * .003), -.035 - i * .02, -.146 + i * .002, 0, sx * -.68, 0);   // cheek plates, vents
         add(cyl(.05, .05, .022, 14), M.acc, sx * .181, .0, -.02, 0, 0, Q); add(cyl(.016, .016, .03, 8), M.metal, sx * .183, .0, -.02, 0, 0, Q);
-        for (const bz of [-.09, .06]) add(sph(.011, 6, 5), M.metal, sx * .176, .075, bz); }   // side plates and bolts
+        for (const ph of [-.55, .4]) add(sph(.011, 6, 5), M.metal, sx * .171 * Math.cos(ph), .08, .004 + .171 * Math.sin(ph)); }   // side plates and bolts
       add(ring(.166, .02), M.trim, 0, -.086, .004);
     } else if (f.op === 'nova') {   // THE COMET: a sleek half helmet, a crest that rises to the back, a gold visor, a swept wing at each temple
       add(dome(.147, .5), M.plate, 0, .012, .012);
@@ -183,44 +183,45 @@
       for (const sx of [-1, 1]) add(band(.1445, .011, .2), M.glow, 0, .01, 0, 0, sx * -.36, 0);
       add(new THREE.OctahedronGeometry(.011), M.acc, 0, .062, -.132).scale.set(1, 1.5, .5);   // a mark on the brow
       add(new THREE.CylinderGeometry(.154, .128, .15, 18, 1, true), M.cloth, 0, -.12, 0); add(ring(.154, .007), M.plate, 0, -.047, 0);   // the high collar and its edge
-      for (const sx of [-1, 1]) add(cyl(.018, .018, .014, 10), M.acc, sx * .118, -.07, -.09, 0, 0, Q);
     } else if (f.op === 'talon') {   // THE TRACKER: a scout's helmet with a short peak, goggles down, a scarf over the face, a feather in the band
       add(dome(.152, .5), M.plate, 0, .016, .004).scale.set(1, .98, 1.06);
-      add(new THREE.CylinderGeometry(.205, .205, .012, 22, 1, false, Math.PI - .95, 1.9), M.plate, 0, .02, -.004, .1);   // the peak
-      add(new THREE.CylinderGeometry(.156, .156, .032, 24, 1, true), M.cloth, 0, .04, .004).scale.set(1, 1, 1.06);   // the band round the helmet
+      add(new THREE.CylinderGeometry(.2, .2, .012, 22, 1, false, Math.PI - .78, 1.56), M.plate, 0, .02, -.004, .1);   // the peak
+      add(new THREE.CylinderGeometry(.1485, .1545, .032, 28, 1, true), M.cloth, 0, .04, .004).scale.set(1, 1, 1.06);   // the band round the helmet
       add(new THREE.CylinderGeometry(.136, .136, .024, 22, 1, true), M.dark, 0, .004, 0);   // the goggle strap
       for (const sx of [-1, 1]) { add(cyl(.038, .038, .032, 16), M.dark, sx * .05, .004, -.117, Q, 0, sx * .0).rotation.set(Q, 0, 0); add(cyl(.029, .029, .036, 16), M.glow, sx * .05, .004, -.119, Q, 0, 0); add(sph(.006, 6, 5), M.plate, sx * .058, .013, -.139); }
       add(rb(.03, .014, .02, .004), M.dark, 0, .006, -.128);   // the bridge
       add(slice(.14, 1.25, .55, .9, FRONT, 16, 8), M.cloth).scale.set(.96, 1.05, 1); add(ring(.118, .026), M.cloth, 0, -.118, .0); add(rb(.05, .11, .02, .01), M.cloth, -.03, -.16, .11, -.35, 0, .2);   // the scarf, wound round the neck, an end hanging behind
-      add(fin([[.03, -.01], [.01, .012], [-.06, .03], [-.17, .022], [-.2, .0], [-.15, -.012], [-.05, -.02]], .006), M.acc, .158, .066, .01, .0, Q + .2, -.35);   // the feather
-      add(rb(.012, .05, .006, .003), M.dark, .16, .046, -.01, 0, Q, 0);
+      add(fin([[.03, -.01], [.01, .012], [-.06, .03], [-.17, .022], [-.2, .0], [-.15, -.012], [-.05, -.02]], .006), M.acc, .152, .05, .016, .0, Q + .2, -.35);   // the feather, tucked in the band
     } else if (f.op === 'ember') {   // THE FURNACE: a fire helmet with a long brim behind, a crest of flame, a wide lens and a respirator with two filters
       add(dome(.151, .5), M.plate, 0, .012, .006).scale.set(1, 1, 1.07);
       add(new THREE.CylinderGeometry(.225, .225, .012, 22, 1, false, -1.05, 2.1), M.plate, 0, .008, .012, .22);   // the long brim over the neck
       add(new THREE.CylinderGeometry(.176, .176, .012, 22, 1, false, Math.PI - 1.1, 2.2), M.plate, 0, .016, .002, -.06);   // and a short one in front
-      add(ring(.153, .008), M.metal, 0, .018, .006).scale.set(1, 1, 1.07);
-      add(fin([[.115, 0], [.09, .035], [.07, .012], [.045, .07], [.02, .022], [-.012, .1], [-.035, .03], [-.07, .085], [-.085, .022], [-.12, .05], [-.13, 0]], .014), M.glow, 0, .153, .006, 0, Q, 0);   // the flame
-      add(fin([[0, .034], [.028, .024], [.026, -.008], [0, -.034], [-.026, -.008], [-.028, .024]], .008), M.acc, 0, .09, -.137, -.52, 0, 0);   // the shield on the brow
+      add(ring(.1515, .007), M.metal, 0, .016, .006).scale.set(1, 1, 1.07);
+      { const fs = new THREE.Shape(), a0 = Math.PI * .2, a1 = Math.PI * .86, N = 60, R0 = .138, tongues = 5;   // the flame: rooted in the dome along its curve, five tongues leaning back
+        for (let i = 0; i <= N; i++) { const t = i / N, uu = (t * tongues) % 1, f = i === N ? 0 : uu < .72 ? Math.pow(uu / .72, 1.6) : (1 - uu) / .28, env = .45 + .55 * Math.sin(Math.PI * Math.min(1, t * 1.15)), r = .151 + .006 + .062 * f * env, a = a0 + (a1 - a0) * t; i ? fs.lineTo(r * Math.cos(a), r * Math.sin(a)) : fs.moveTo(r * Math.cos(a), r * Math.sin(a)); }
+        for (let i = 12; i >= 0; i--) { const a = a0 + (a1 - a0) * i / 12; fs.lineTo(R0 * Math.cos(a), R0 * Math.sin(a)); }
+        const cg = new THREE.ExtrudeGeometry(fs, { depth: .016, bevelEnabled: true, bevelThickness: .003, bevelSize: .003, bevelSegments: 1, curveSegments: 2 }); cg.translate(0, 0, -.008);
+        add(cg, M.glow, 0, .012, .006, 0, Q, 0).scale.set(1.07, 1, 1); }
+      add(fin([[0, .034], [.028, .024], [.026, -.008], [0, -.034], [-.026, -.008], [-.028, .024]], .008), M.acc, 0, .09, -.131, -.54, 0, 0);   // the shield on the brow
       add(band(.1425, .058, 1.05), M.dark, 0, .0, 0); add(rim(.144, .0042, 1.05), M.glow, 0, .029, 0); add(rim(.144, .0042, 1.05), M.glow, 0, -.029, 0);   // the lens, a line of light above and below
       add(rb(.15, .08, .07, .03), M.dark, 0, -.074, -.098); add(rb(.05, .03, .02, .008), M.plate, 0, -.074, -.136);
       for (const sx of [-1, 1]) { add(cyl(.034, .038, .05, 12), M.plate, sx * .08, -.08, -.126).rotation.set(Q, 0, sx * -.5); add(cyl(.026, .026, .012, 12), M.acc, sx * .092, -.08, -.148).rotation.set(Q, 0, sx * -.5); }
-      { const g = new THREE.TorusGeometry(.12, .013, 6, 14, Math.PI * .55); add(g, M.dark, .0, -.085, .0, Q, 0, -.25); }   // the air hose, round to the back
     } else if (f.op === 'tessel') {   // THE ARCHITECT: a smooth porcelain helm sealed all round, a dark band at the eyes, a line of light down its face, a diamond frame of light behind
       add(sph(.158, 24, 16), M.plate, 0, .012, .004).scale.set(.98, 1.06, 1.05);
       add(new THREE.CylinderGeometry(.163, .163, .036, 24, 1, true, Math.PI - .85, 1.7), M.dark, 0, .012, .004).scale.set(.98, 1, 1.05);
-      { const vg = new THREE.TorusGeometry(.163, .009, 6, 20, 1.25); vg.rotateZ(-.7); vg.rotateY(Q); add(vg, M.glow, 0, .012, .004).scale.set(.98, 1.06, 1.05); }   // (bent to the helm: from the chin up over the brow)
+      { const vg = new THREE.TorusGeometry(.1585, .008, 6, 20, 1.05); vg.rotateZ(-.5); vg.rotateY(Q); add(vg, M.glow, 0, .012, .004).scale.set(.98, 1.06, 1.05); }   // (bent to the helm: from the chin up over the brow)
       add(ring(.1385, .0035), M.acc, 0, -.07, .004).scale.set(.98, 1, 1.05); add(ring(.1095, .0035), M.acc, 0, .132, .004).scale.set(.98, 1, 1.05);   // fine seams of colour: at the jaw, round the crown
       for (const sx of [-1, 1]) { add(cyl(.034, .034, .014, 18), M.plate, sx * .157, .004, .02, 0, 0, Q); add(cyl(.02, .02, .018, 14), M.glow, sx * .158, .004, .02, 0, 0, Q); }
       const dR = .12; for (const [mx, my, rz] of [[1, 1, -1], [-1, 1, 1], [1, -1, 1], [-1, -1, -1]]) add(new THREE.BoxGeometry(dR * Math.SQRT2, .012, .012), M.glow, mx * dR / 2, .07 + my * dR / 2, .215, 0, 0, rz * Math.PI / 4);
-      add(new THREE.OctahedronGeometry(.022), M.glow, 0, .07, .215);
+      add(new THREE.OctahedronGeometry(.022), M.glow, 0, .07, .215); add(cyl(.011, .014, .06, 8), M.plate, 0, .07, .188, Q, 0, 0);   // the diamond's stem, from the back of the helm
     } else if (f.op === 'axiom') {   // THE ENGINEER: a ribbed hard hat with a lamp, a face shield of blue light, ear defenders and a boom mic
       add(turn([[0, .178], [.1, .17], [.152, .112], [.165, .04], [.168, .02], [.206, .006], [.206, -.007], [0, -.007]], 22), M.plate, 0, .018, 0);
-      for (const tz of [0, -.5, .5]) add(spine(.172, tz ? .009 : .012, .5, 2.64), tz ? M.plate : M.acc, 0, .02, 0, 0, 0, tz).scale.set(1, 1.08, 1);   // three ribs over the crown, the middle one in his colour
+      { const prof = [[.163, .03], [.157, .09], [.135, .14], [.1, .175], [.05, .19], [0, .194]], pts = [...prof.map(([r, y]) => [-r, y]), ...prof.slice(0, -1).reverse().map(([r, y]) => [r, y])];   // three ribs over the crown, following its curve; the middle one in his colour
+        for (const ry of [0, -.55, .55]) { const curve = new THREE.CatmullRomCurve3(pts.map(([zz, y]) => new THREE.Vector3(0, y + .018, zz))), tg = new THREE.TubeGeometry(curve, 24, ry ? .008 : .011, 6, false); add(tg, ry ? M.plate : M.acc, 0, 0, 0, 0, ry, 0); } }
       add(cyl(.03, .034, .04, 14), M.dark, 0, .128, -.142, Q - .45, 0, 0); add(cyl(.023, .023, .044, 14), M.glow, 0, .127, -.144, Q - .45, 0, 0); add(rb(.07, .012, .02, .004), M.dark, 0, .1, -.158, -.45);   // the lamp on its strap
       add(band(.1445, .078, 1.2), M.dark, 0, -.02, 0); add(band(.147, .05, 1.1, .1455), M.glow, 0, -.018, 0); add(rim(.148, .005, 1.2), M.plate, 0, -.06, 0);   // the shield: its frame, the light, its lower edge
       for (const sx of [-1, 1]) { add(cyl(.052, .046, .046, 16), M.plate, sx * .148, -.012, .014, 0, 0, sx * -Q); { const g = new THREE.TorusGeometry(.034, .006, 6, 16); g.rotateY(Q); add(g, M.acc, sx * .173, -.012, .014); } add(sph(.012, 8, 6), M.dark, sx * .172, -.012, .014); }
       { const g = new THREE.TorusGeometry(.125, .0045, 5, 12, 1.0); g.rotateX(Q); add(g, M.dark, -.02, -.07, -.004, 0, -.25, 0); add(rb(.026, .018, .02, .005), M.dark, -.03, -.07, -.128); }   // the boom mic, from the left cup round to the mouth
-      add(cyl(.004, .0035, .15, 6), M.dark, .16, .08, .03); add(sph(.009, 8, 6), M.glow, .16, .158, .03);
       add(slice(.141, .42, .7, .86), M.plate);
     } else if (f.op === 'vanta') {   // THE FACET: a cut-gem helm, a six-sided visor in a dark frame, angled jaw plates, blades of light swept back on one side
       add(new THREE.SphereGeometry(.153, 6, 10, 0, TAU, 0, Math.PI * .56), M.plate, 0, .014, .01).scale.set(1, 1.02, 1.06);
