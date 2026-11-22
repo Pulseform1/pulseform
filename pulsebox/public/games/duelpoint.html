@@ -4406,7 +4406,7 @@ const GAME = {
       add(slice(.156, .5, .5, .8, BACK), M.plate, 0, .012, .008).scale.set(1, .97, 1.08);   // the neck guard
       add(spine(.157, .009, .25, 2.6), M.acc, 0, .012, .008).scale.set(1, .97, 1.08);   // a ridge over the top
       add(band(.143, .062, 1.2), M.dark, 0, .0, 0); add(rim(.145, .0045, 1.2), M.glow, 0, -.03, 0); add(rim(.1505, .008, 1.15), M.plate, 0, .034, .008).scale.set(1, 1, 1.08);   // the glass, the line of light under it, the brow
-      { const ey = [.058, .012, -.133]; add(cyl(.043, .043, .03, 18), M.metal, ey[0], ey[1], ey[2], Q, 0, 0); add(cyl(.034, .034, .034, 18), M.glow, ey[0], ey[1], ey[2] - .002, Q, 0, 0); add(cyl(.018, .018, .038, 14), M.dark, ey[0], ey[1], ey[2] - .003, Q, 0, 0); add(sph(.006, 6, 5), M.glow, ey[0] + .008, ey[1] + .008, ey[2] - .022); }   // the eye: a ring, the lit iris, the pupil, a glint
+      { const ey = [.058, .012, -.152]; add(cyl(.045, .045, .062, 20), M.metal, ey[0], ey[1], ey[2] + .012, Q, 0, 0); add(cyl(.035, .035, .066, 20), M.glow, ey[0], ey[1], ey[2] + .012, Q, 0, 0); add(cyl(.018, .018, .07, 14), M.dark, ey[0], ey[1], ey[2] + .012, Q, 0, 0); add(sph(.006, 6, 5), M.glow, ey[0] + .009, ey[1] + .009, ey[2] - .024); }   // the eye: a ring, the lit iris, the pupil, a glint
       for (let i = 0; i < 3; i++) add(sph(.0065, 6, 5), M.glow, -.035 - i * .024, .05 - i * .003, -.146 + i * .012);   // three small sensors on the other brow
       for (const sx of [-1, 1]) { add(cyl(.044, .044, .03, 16), M.plate, sx * .15, -.004, .01, 0, 0, Q); add(cyl(.026, .026, .034, 14), M.acc, sx * .152, -.004, .01, 0, 0, Q); }
       add(cyl(.005, .004, .21, 6), M.dark, -.158, .11, .03); add(sph(.011, 8, 6), M.glow, -.158, .22, .03);
@@ -6985,6 +6985,13 @@ const GAME = {
     if (!X.smokes.length) addSmoke(); if (!X.walls.length) addWall(); if (!X.nadeObjs.length) { const o = X.nadeMk(); o.visible = false; X.scene.add(o); X.nadeObjs.push(o); }
     try { X.renderer.compile(X.scene, X.camera); X.renderer.compile(X.vscene, X.camera); } catch (e) { console.warn(e); }
   }
+  function warmRound() {
+    if (!X || !X.renderer) return; const t0 = performance.now();
+    if (!X.warmHold) { X.warmHold = new THREE.Group(); X.warmHold.visible = false; X.scene.add(X.warmHold); }
+    for (const pr of X.lootProto.values()) if (!pr.parent) X.warmHold.add(pr);   // (a hidden holder: compiled with the scene, never drawn)
+    try { X.renderer.compile(X.scene, X.camera); X.renderer.compile(X.vscene, X.camera); } catch (e) { console.warn(e); }
+    X.warmMs = performance.now() - t0;
+  }
   function buildFx() {
     const add = o => { X.scene.add(o); return o; }, fm = o => new THREE.MeshBasicMaterial(Object.assign({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }, o));
     // muzzle flash: a spiky star facing you and two crossed flames along the barrel
@@ -7361,6 +7368,10 @@ const GAME = {
   function lootFx(dt) {
     const L = (M && M.loot) || [], seen = new Set();
     // in the buy phase, get a floor copy of each gun people are carrying ready, one a frame, so a gun dropped mid-fight costs nothing to show
+    // and warm every shader the round can need while nobody is fighting: early in the buy phase (the agents, their guns, the
+    // floor copies are built by then) and again just before it goes live (after the last buys). A material seen for the first
+    // time mid-fight (a gun or skin someone switched to, a floor gun, a sprite) would otherwise compile on the spot and hitch.
+    if (M && M.phase === 'buy' && M.mode !== 'range') { const el = BUY_T - M.t, st = M.t < 3 ? 2 : el > 1.5 ? 1 : 0, wk = M.round + ':' + st; if (st && X.warmK !== wk) { X.warmK = wk; warmRound(); } }
     if (M && M.phase === 'buy') for (const f of M.fs) { const k = f.guns[1] || (f.guns[2] !== 'pip' && f.guns[2]); const sk = (k && skinFor(f, k)) || '', pk = k + '|' + sk; if (k && GUNS[k] && !X.lootProto.has(pk)) { X.lootProto.set(pk, gunModel(k, { skin: sk })); break; } }
     for (const d of L) {
       seen.add(d.id); let o = X.lootObjs.get(d.id);

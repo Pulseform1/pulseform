@@ -148,7 +148,7 @@
       add(slice(.156, .5, .5, .8, BACK), M.plate, 0, .012, .008).scale.set(1, .97, 1.08);   // the neck guard
       add(spine(.157, .009, .25, 2.6), M.acc, 0, .012, .008).scale.set(1, .97, 1.08);   // a ridge over the top
       add(band(.143, .062, 1.2), M.dark, 0, .0, 0); add(rim(.145, .0045, 1.2), M.glow, 0, -.03, 0); add(rim(.1505, .008, 1.15), M.plate, 0, .034, .008).scale.set(1, 1, 1.08);   // the glass, the line of light under it, the brow
-      { const ey = [.058, .012, -.133]; add(cyl(.043, .043, .03, 18), M.metal, ey[0], ey[1], ey[2], Q, 0, 0); add(cyl(.034, .034, .034, 18), M.glow, ey[0], ey[1], ey[2] - .002, Q, 0, 0); add(cyl(.018, .018, .038, 14), M.dark, ey[0], ey[1], ey[2] - .003, Q, 0, 0); add(sph(.006, 6, 5), M.glow, ey[0] + .008, ey[1] + .008, ey[2] - .022); }   // the eye: a ring, the lit iris, the pupil, a glint
+      { const ey = [.058, .012, -.152]; add(cyl(.045, .045, .062, 20), M.metal, ey[0], ey[1], ey[2] + .012, Q, 0, 0); add(cyl(.035, .035, .066, 20), M.glow, ey[0], ey[1], ey[2] + .012, Q, 0, 0); add(cyl(.018, .018, .07, 14), M.dark, ey[0], ey[1], ey[2] + .012, Q, 0, 0); add(sph(.006, 6, 5), M.glow, ey[0] + .009, ey[1] + .009, ey[2] - .024); }   // the eye: a ring, the lit iris, the pupil, a glint
       for (let i = 0; i < 3; i++) add(sph(.0065, 6, 5), M.glow, -.035 - i * .024, .05 - i * .003, -.146 + i * .012);   // three small sensors on the other brow
       for (const sx of [-1, 1]) { add(cyl(.044, .044, .03, 16), M.plate, sx * .15, -.004, .01, 0, 0, Q); add(cyl(.026, .026, .034, 14), M.acc, sx * .152, -.004, .01, 0, 0, Q); }
       add(cyl(.005, .004, .21, 6), M.dark, -.158, .11, .03); add(sph(.011, 8, 6), M.glow, -.158, .22, .03);
