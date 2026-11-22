@@ -755,17 +755,18 @@ function lockChecks() {
   if (D) { Object.assign(D, { x: 61.5, z: 3, y: T.hAt(61.5, 3) }); aimAt(P, pt(D)); T.tick(DT);
     ok(T.tesselState(P) === 'far' && !T.tesselTrigger(P) && M.kit.devs.length === 1, 'more than 20 m away: refused (TOO FAR), and it stays set', Math.hypot(D.x - P.x, D.z - P.z).toFixed(1) + ' m');
     Object.assign(D, { x: 50, z: 3, y: T.hAt(50, 3) }); M.walls.push({ x0: 44.7, x1: 45.3, z0: 0, z1: 8, t: 99, grow: 1 }); aimAt(P, pt(D)); T.tick(DT);
-    ok(T.tesselState(P) === 'hidden' && !T.tesselTrigger(P) && M.kit.devs.length === 1, 'out of sight behind a wall: refused, and it stays set', 'state ' + T.tesselState(P));
-    M.walls.length = 0; T.tick(DT); T.tick(DT); aimAt(P, pt(D)); T.tick(DT); ok(T.tesselTrigger(P), 'the wall gone, it fires'); }
+    ok(T.tesselState(P) === 'ok' && T.tesselTrigger(P) && !M.kit.devs.length && M.kit.lenses.length === 1, 'behind a wall, in reach: it still fires', 'state ' + T.tesselState(P)); M.walls.length = 0; }
   // a rival shoots a dormant one out
   [M, P, F] = setup('tessel'); P.pitch = -.3; T.ability(P, 'q', false); lobbed(M, 3); D = M.kit.devs[0];
   if (D) { pin(F, D.x + 6, D.z); const S0 = (() => { const o = [P.x, T.eyeY(P), P.z], p = pt(D), dx = p[0] - o[0], dy = p[1] - o[1], dz = p[2] - o[2], L = Math.hypot(dx, dy, dz); return { o, d: [dx / L, dy / L, dz / L], dist: 99 }; })();
     ok(!T.trapShot(P, S0, T.GUNS.lancer) && M.kit.devs.length === 1, 'her own shot does not break it');
     shootAt(F, pt(D)); ok(!M.kit.devs.length && !M.kit.lenses.length, 'one bullet from a rival breaks a dormant Lull'); }
   [M, P, F] = setup('tessel'); T.ability(P, 'e', true); D = M.kit.devs[0]; if (D) { pin(F, 56, 3); shootAt(F, pt(D, 1)); ok(!M.kit.devs.length, 'one bullet into either post breaks a dormant Lightline'); }
-  // one of a kind: a new one replaces the old; the Lightline's wait starts once it is fired
+  // two Lulls at once, the third replaces the oldest; the Lightline's wait starts once it is fired
   [M, P, F] = setup('tessel'); P.pitch = -.3; T.ability(P, 'q', false); lobbed(M, 3); const id1 = M.kit.devs[0] && M.kit.devs[0].id; for (let i = 0; i < 10; i++) T.tick(DT); P.pitch = -.4; T.ability(P, 'q', false); lobbed(M, 3);
-  ok(M.kit.devs.length === 1 && M.kit.devs[0].id !== id1 && P.ab.q === 0, 'a second Lull replaces the dormant one');
+  ok(M.kit.devs.length === 2 && M.kit.devs.some(d => d.id === id1) && P.ab.q === 0, 'a second Lull waits beside the first (both set at once)');
+  { const D1 = M.kit.devs.find(d => d.id === id1), D2 = M.kit.devs.find(d => d.id !== id1); P.ab.q = 1; P.pitch = -.2; T.ability(P, 'q', false); lobbed(M, 3);
+    ok(M.kit.devs.filter(d => d.k === 'q').length === 2 && !M.kit.devs.includes(D1) && M.kit.devs.includes(D2), 'a third replaces the oldest'); }
   [M, P, F] = setup('tessel'); T.ability(P, 'e', true); runPinned(5, null); ok(!P.ab.e && !(P.eT > 0) && M.kit.devs.length === 1, 'a Lightline set and not fired does not count toward its 40 s', 'eT ' + (P.eT || 0).toFixed(1));
   { const D2 = M.kit.devs[0]; aimAt(P, pt(D2, 0)); T.tick(DT); T.tesselTrigger(P); runPinned(2, null); ok(P.eT > 1.5, 'fired, it does', 'eT ' + (P.eT || 0).toFixed(1)); }
   // the buy phase: set both behind your barrier; the Trigger waits for the live round

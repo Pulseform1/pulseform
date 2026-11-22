@@ -356,7 +356,7 @@ const GAME = {
     ember: { n: 'EMBER', role: 'Pyre', col: '#ff7a2f', bio: 'Foundry-born. Thinks every problem is a fuel problem.', q: { n: 'Ignite', d: 'Lob a firebomb: its pool burns rivals for 30 a second, 5 s.' }, e: { n: 'Heat Haze', d: 'A wall of amber haze across your view that blocks sight for 10 s.' } },
     axiom: { n: 'AXIOM', role: 'Engineer', col: '#5aa0ff', bio: 'Builds the thing that holds the angle, then goes for coffee.', q: { n: 'Sentry', d: 'A turret that guards a 90° arc. A rival it sees is revealed, then fired on after a short lock. Q again beside it picks it up.' }, e: { n: 'Tripwire', d: 'A wire across the doorway you aim at. A rival who walks across is revealed, then caught in a burst (up to 60). Jumping clears it.' } },
     vanta: { n: 'VANTA', role: 'Duelist', col: '#e25cff', bio: 'A fixer who settles things one on one. Nobody asks for a second meeting.', q: { n: 'Sunder', d: 'A bolt that strikes instantly down your aim: a headshot kills, any hit Exposes (25% more damage for 4 s). It goes on through walls, Exposing rivals behind them.' }, e: { n: 'Overcharge', d: 'For 12 s, a rival you kill leaves a charge: shoot it for a ward that stops the next hit. Back after 2 kills.' } },
-    tessel: { n: 'TESSEL', role: 'Architect', col: '#ff9ec7', bio: 'She built stage sets until the stages got smaller and the crowds came armed. Now she builds the room first, then lets you walk in.', q: { n: 'Lull', d: 'Lob a glass lens that waits where it lands. Look at it within 20 m and press Trigger (4): for 7 s, rivals within 4.5 m move at half speed. One rival bullet breaks it.' }, e: { n: 'Lightline', d: 'Set a line of light from your feet along your aim, or across your view with the other click. It goes straight through walls. Trigger it and a curtain rises for 14 s: it blocks sight, not bullets, and shows rivals who cross it.' } },
+    tessel: { n: 'TESSEL', role: 'Architect', col: '#ff9ec7', bio: 'She built stage sets until the stages got smaller and the crowds came armed. Now she builds the room first, then lets you walk in.', q: { n: 'Lull', d: 'Lob a glass lens that waits where it lands; you can have both set at once. Look at one within 20 m, even through walls or smoke, and press F or Trigger (4): for 7 s, rivals within 4.5 m move at half speed. One rival bullet breaks it.' }, e: { n: 'Lightline', d: 'Set a line of light from your feet along your aim, or across your view with the other click. It goes straight through walls. Trigger it and a curtain rises for 14 s: it blocks sight, not bullets, and shows rivals who cross it.' } },
   };
   /* C: the second bought ability (cheaper, a smaller trick), one per operative */
   const ABC_KIT = {
@@ -2181,9 +2181,9 @@ const GAME = {
          is Lit (shown through walls to Tessel's side) for 2.5 s. It comes back 40 s after it is fired. One bullet from a
          rival into either post breaks a dormant one.
        TRIGGER (its own key, 4 by default): look at one of your dormant devices (the crosshair on it, within a small
-         radius) from within 20 m with a clear line of sight, and press it (or F, the use key): the device fires. Only in the live round;
+         radius) from within 20 m (through walls and smoke too), and press it (or F, the use key): the device fires. Only in the live round;
          both can be set in the buy phase, on your side of the barrier. Dormant devices last until fired, broken or the
-         round ends, and a new one of a kind replaces the old. Tessel's side always sees them (faint, with a marker);
+         round ends. Two Lulls can wait at once (a third replaces the oldest); a new Lightline replaces the old. Tessel's side always sees them (faint, with a marker);
          a rival sees only a faint glint within 6 m.
        X Glasshouse: a 10 m square of Lightlines rises round the spot you point at (up to 30 m away) for 10 s, and rivals
          inside it move at half speed. Its walls are solid to feet: no one walks in or out until it falls.
@@ -2285,8 +2285,11 @@ const GAME = {
     const O = OPS[B.by.op], mx = (O && O[k] && O[k].max) || 1; B.by.ab[k] = Math.min(mx, (B.by.ab[k] | 0) + 1); if (B.by === me()) say('NOT PAST THE BARRIER', WARN); emit('abNo', B.by, k); return false;
   }
   /* ---- dormant devices: set, looked at, fired, broken ---- */
-  // a new one of a kind replaces Tessel's old one
-  function setDev(D) { const K2 = M.kit; for (let i = K2.devs.length - 1; i >= 0; i--) { const o = K2.devs[i]; if (o.by === D.by && o.k === D.k) { K2.devs.splice(i, 1); emit('devGone', o); } } K2.devs.push(D); emit('devSet', D); }
+  // Tessel keeps up to two Lulls and one Lightline set at once: past that, the oldest of the kind goes
+  const DEV_MAX = { q: 2, e: 1 };
+  function setDev(D) { const K2 = M.kit, mine = K2.devs.filter(o => o.by === D.by && o.k === D.k);
+    for (let n = mine.length - (DEV_MAX[D.k] || 1) + 1; n > 0; n--) { const o = mine.shift(); K2.devs.splice(K2.devs.indexOf(o), 1); emit('devGone', o); }
+    K2.devs.push(D); emit('devSet', D); }
   const tesselDorm = (f, k) => { const Ds = M && M.kit && M.kit.devs; if (Ds) for (let i = 0; i < Ds.length; i++) if (Ds[i].by === f && Ds[i].k === k) return Ds[i]; return null; };
   // the points of a device you can look at (and shoot): a Lull's lens; a Lightline's two posts and the middle of its line
   const devN = D => D.k === 'q' ? 1 : 3;
@@ -2306,11 +2309,9 @@ const GAME = {
         const a = Math.acos(cl((vx * dx + vy * dy + vz * dz) / L, -1, 1)); if (a > Math.max(TRIG.ang, Math.atan2(TRIG.rad, L)) || a >= ba) continue; ba = a; f.tlD = D; f.tlI = i; f.tlDist = L; } }
     return f.tlD;
   }
-  // 'ok' (in reach and in sight: it can be fired), 'far', 'hidden' (something in the way), or null (not looking at one)
+  // 'ok' (in reach: it can be fired, through walls and smoke too), 'far', or null (not looking at one)
   function tesselState(f) {
-    const D = tesselLook(f); if (!D) return null; if (f.tlDist > TRIG.r) return 'far';
-    if (f.tlLosD !== D || f.tlLosI !== f.tlI || !(M.time - f.tlLosT <= TRIG.losEvery) || f.tlLosT > M.time) { f.tlLosD = D; f.tlLosI = f.tlI; f.tlLosT = M.time; devPt(D, f.tlI, TLP); f.tlLos = los(f.x, eyeY(f), f.z, TLP[0], TLP[1], TLP[2]) >= f.tlDist - .35; }
-    return f.tlLos ? 'ok' : 'hidden';
+    const D = tesselLook(f); if (!D) return null; return f.tlDist > TRIG.r ? 'far' : 'ok';
   }
   // the Trigger key
   function tesselTrigger(f) {
@@ -2319,7 +2320,7 @@ const GAME = {
     if (f.lock > 0 || f.chan || f.plant > 0 || f.defuse > 0) { emit('abNo', f, 't'); return false; }
     if (!D) { emit('abNo', f, 't'); if (mine) say(tesselDorm(f, 'q') || tesselDorm(f, 'e') ? 'LOOK AT A DEVICE TO TRIGGER IT' : 'NOTHING SET TO TRIGGER', DIM); return false; }
     f.tlLosT = -9; const st = tesselState(f);
-    if (st !== 'ok') { emit('abNo', f, 't'); if (mine) say(st === 'far' ? 'TOO FAR: WITHIN 20 m' : 'NO CLEAR SIGHT OF IT', WARN); return false; }
+    if (st !== 'ok') { emit('abNo', f, 't'); if (mine) say('TOO FAR: WITHIN 20 m', WARN); return false; }
     fireDev(D, false); return true;
   }
   // a dormant device goes off: the same on every device (online it comes as a message)
@@ -2332,11 +2333,11 @@ const GAME = {
   }
   // how near a fighter stands to the nearest of a device's points (the network check on a trigger)
   function devReach(D, f) { let b = 1e9; for (let i = 0; i < devN(D); i++) { devPt(D, i, TLP); b = Math.min(b, Math.hypot(TLP[0] - f.x, TLP[1] - eyeY(f), TLP[2] - f.z)); } return b; }
-  // a bot fires one when it is in reach and in sight of a point of it (the nearest)
+  // a bot fires one when it is in reach of a point of it
   function botFireDev(f, D) {
     if (M.phase !== 'live' || f.lock > 0 || f.chan) return false; let bi = -1, bd = TRIG.r; const ey = eyeY(f);
     for (let i = 0; i < devN(D); i++) { devPt(D, i, TLP); const d = Math.hypot(TLP[0] - f.x, TLP[1] - ey, TLP[2] - f.z); if (d < bd) { bd = d; bi = i; } }
-    if (bi < 0) return false; devPt(D, bi, TLP); if (los(f.x, ey, f.z, TLP[0], TLP[1], TLP[2]) < bd - .35) return false; return fireDev(D, false);
+    if (bi < 0) return false; return fireDev(D, false);   // (in reach is enough: walls and smoke don't stop the trigger)
   }
   /* sight against Lightlines: how far along the ray (o, d, both 3D, d of length 1) it first crosses one, or tmax. Each line
      is a sheet over the segment a-b on the floor plan, from y0 to y1 */
