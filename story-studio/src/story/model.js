@@ -1,5 +1,6 @@
 // The story document: everything the editor changes and the renderer draws.
 import { newId } from "../engine/util.js";
+import { NEW_SCENES } from "../engine/scenes2.js";
 
 export const GENRES = [
   { id: "horror", label: "Horror", blurb: "Creepy messages, strangers, things in the dark", color: "#7c5cff" },
@@ -52,6 +53,12 @@ export const EFFECTS = [
 export const MESSAGE_TYPES = [
   { id: "text", label: "Text" }, { id: "image", label: "Image" }, { id: "system", label: "System note" },
   { id: "deleted", label: "Deleted message" }, { id: "missed-call", label: "Missed call" }, { id: "scene", label: "Scene + narrator" },
+  { id: "voice", label: "Said out loud (no bubble)" },
+];
+// how a line is delivered: the voice changes speed, and the mixer adds breaths, shaking, filters
+export const MOODS = [
+  { id: "", label: "Normal voice" }, { id: "panic", label: "😰 Panicked" }, { id: "whisper", label: "🤫 Whisper" }, { id: "scream", label: "😱 Scream" },
+  { id: "muffled", label: "🚪 Through a door" }, { id: "phone", label: "📞 Phone call" }, { id: "radio", label: "📻 Radio" },
 ];
 
 // Full-screen places the story cuts away to (the phone slides away, the narrator speaks over the scene).
@@ -62,6 +69,7 @@ export const SCENES = [
   { id: "endless-halls", label: "The Endless Halls: yellow halls (figure: the Hollow Man)" }, { id: "endless-crawler", label: "The Endless Halls: the Crawler" },
   { id: "endless-watcher", label: "The Endless Halls: the Watcher" }, { id: "endless-grin", label: "The Endless Halls: lights out, the Grin" },
   { id: "endless-fusebox", label: "The Endless Halls: fuse box (3 fuses)" }, { id: "endless-exit", label: "The Endless Halls: EXIT door, sunrise" },
+  ...NEW_SCENES,
 ];
 
 // Kokoro voices (free, run locally by the Studio server).
@@ -118,20 +126,22 @@ export function normalizeStory(s = {}) {
   if (!characters.some((c) => c.id === "me")) characters[0].id = "me";
   const ids = new Set(characters.map((c) => c.id));
   const messages = (s.messages || []).map((m) => {
-    const type = ["text", "image", "system", "deleted", "missed-call", "scene"].includes(m.type) ? m.type : m.from === "narrator" ? "scene" : "text";
+    const type = ["text", "image", "system", "deleted", "missed-call", "scene", "voice"].includes(m.type) ? m.type : m.from === "narrator" ? "scene" : "text";
     return {
       id: m.id || newId(), type,
       from: type === "scene" ? "narrator" : m.from === "system" || ids.has(m.from) ? m.from : type === "system" ? "system" : characters[1]?.id || "me",
       text: String(m.text ?? ""), image: m.image || "", pause: Number(m.pause) || 0, effect: m.effect || "", reaction: m.reaction || "", typing: m.typing !== false,
       scene: type === "scene" ? m.scene || "hallway" : "", figure: type === "scene" && !!m.figure,
       say: m.say ? String(m.say) : "",
-      label: type === "scene" && m.label ? String(m.label) : "",   // on-screen stamp in the scene, e.g. "FLOOR 13 · FUSES 0/3"   // optional: how the voice should say it (e.g. "box dot pulseform dot org"), captions keep the text
+      label: type === "scene" && m.label ? String(m.label) : "",
+      mood: ["panic", "whisper", "scream", "muffled", "phone", "radio"].includes(m.mood) ? m.mood : "",
+      figureAt: type === "scene" && Number(m.figureAt) > 0 ? Math.min(1.98, Number(m.figureAt)) : 0,   // when the scare lands: 0 = automatic; 0..1 through the narration, 1..2 through the spoken lines after it   // on-screen stamp in the scene, e.g. "FLOOR 13 · FUSES 0/3"   // optional: how the voice should say it (e.g. "box dot pulseform dot org"), captions keep the text
     };
   });
   return {
     version: 1, id: s.id || newId(), title: s.title || "Untitled story", genre, duration: [15, 30, 45, 60, 90, 120, 180].includes(+s.duration) ? +s.duration : 60,
     hook: s.hook ?? "", outro: s.outro ?? "", chatTitle: s.chatTitle || "", chatStatus: s.chatStatus || "", clock: s.clock || "11:42",
-    group: !!s.group || characters.length > 2, characters, messages,
+    group: s.group != null ? !!s.group : characters.length > 2, characters, messages,
     look: { background: s.look?.background || genre, chatTheme: s.look?.chatTheme || "violet", skin: s.look?.skin || SKINS[1], hookStyle: s.look?.hookStyle || "banner", ...(s.look || {}) },
     captions: { style: "pop", font: genre === "horror" ? "Creepster" : "Luckiest Guy", size: 1, position: 0.79, highlight: genre === "horror" ? "#ff3d6e" : "#c6ff3d", ...(s.captions || {}) },
     narration: { enabled: true, speed: 1, includeImages: false, narrator: genre === "horror" ? "am_onyx" : "bm_george", narratorSpeed: 0.92, narratorFx: genre === "horror" ? "creepy" : "none", systemNotes: false, ...(s.narration || {}) },

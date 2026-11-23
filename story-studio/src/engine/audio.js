@@ -1,6 +1,7 @@
 // Music, sound effects and the narration mix, rendered with an OfflineAudioContext.
 // Every sound is synthesized here (oscillators, filtered noise), so the audio is original and needs no licences.
 import { rng } from "./util.js";
+import { EVENTS } from "./scenes2.js";
 
 export const SAMPLE_RATE = 48000;
 const GENRE_MUSIC = { horror: "horror", mystery: "mystery", comedy: "comedy", drama: "drama", twist: "mystery", suspense: "suspense", school: "lofi", scifi: "scifi", adventure: "adventure" };
@@ -107,6 +108,7 @@ function sfx(ctx, bus, cue, r) {
     case "fx-heartbeat": for (let k = 0; k < 3; k++) { tone(ctx, bus, { t: t + k * 0.62, dur: 0.18, freq: 60, glideTo: 40, gain: 0.5 }); tone(ctx, bus, { t: t + k * 0.62 + 0.2, dur: 0.16, freq: 55, glideTo: 38, gain: 0.35 }); } break;
     // ---- scene cutaways
     case "scene-in": hiss(ctx, bus, { t, dur: 0.7, gain: 0.2, type: "lowpass", freq: 2600, freqTo: 180, attack: 0.25 }); tone(ctx, bus, { t: t + 0.45, dur: 1.4, freq: 72, glideTo: 34, gain: 0.4, release: 1.2 }); break;
+    case "scene-cut": tone(ctx, bus, { t: t + 0.2, dur: 1.1, freq: 64, glideTo: 34, gain: 0.32, release: 0.9 }); hiss(ctx, bus, { t, dur: 0.35, gain: 0.1, type: "lowpass", freq: 1600, freqTo: 200, attack: 0.1 }); break;
     case "figure":   // a dissonant sting with a swell into it
       hiss(ctx, bus, { t: t - 0.7, dur: 0.75, gain: 0.16, type: "bandpass", freq: 400, freqTo: 5000, q: 1.5, attack: 0.65 });
       [277, 392, 415, 554].forEach((f, i) => tone(ctx, bus, { t, dur: 2.2, freq: f, type: "sawtooth", gain: 0.05, cutoff: 1800, release: 1.8, detune: (i - 1.5) * 9 }));
@@ -148,6 +150,66 @@ function sfx(ctx, bus, cue, r) {
       tone(ctx, bus, { t: t + 0.6, dur: 0.5, freq: 120, glideTo: 50, gain: 0.6 }); hiss(ctx, bus, { t: t + 0.6, dur: 0.3, gain: 0.25, type: "lowpass", freq: 1500 });
       hiss(ctx, bus, { t: t + 0.7, dur: cue.dur - 0.7, gain: 0.08, type: "bandpass", freq: 700, freqTo: 2500, q: 0.5, attack: 1 });
       [262, 330, 392, 523, 659].forEach((f) => tone(ctx, bus, { t: t + 1, dur: cue.dur - 0.8, freq: f, type: "triangle", gain: 0.035, attack: 1.4, release: 1.2 })); break;
+    // ---- Night Shift, One More Night, Nightwatch (times come from the scenes' EVENTS, relative to cue.t0)
+    case "amb-ns-exterior": case "amb-ns-pump": case "amb-ns-dawn": {
+      hiss(ctx, bus, { t, dur: cue.dur, gain: 0.05, type: "lowpass", freq: 420, attack: 0.5 });
+      tone(ctx, bus, { t, dur: cue.dur, freq: 120, type: "square", gain: 0.01, cutoff: 400, attack: 0.3 });
+      if (cue.type === "amb-ns-pump") { tone(ctx, bus, { t, dur: cue.dur, freq: 38, type: "sawtooth", gain: 0.1, cutoff: 140, attack: 0.4 }); if (cue.figT) { [0, 0.16].forEach((k) => tone(ctx, bus, { t: cue.figT + k, dur: 0.1, freq: 1900, type: "square", gain: 0.04, cutoff: 3000 })); tone(ctx, bus, { t: cue.figT + 0.3, dur: cue.dur, freq: 95, glideTo: 140, type: "sawtooth", gain: 0.05, cutoff: 500, attack: 0.4 }); } }
+      if (cue.type === "amb-ns-dawn") for (let x = t + 0.5; x < t + cue.dur; x += 0.7 + r() * 0.9) tone(ctx, bus, { t: x, dur: 0.12, freq: 3200 + r() * 1500, glideTo: 4800, gain: 0.025 });
+      break;
+    }
+    case "amb-ns-clipboard": case "amb-ns-phone": case "amb-ns-customer": case "amb-ns-lookdown": case "amb-ns-flicker": {
+      const e = EVENTS[cue.type.slice(4)] || {}, t0 = cue.t0 ?? t;
+      tone(ctx, bus, { t, dur: cue.dur, freq: 120, type: "sawtooth", gain: 0.016, cutoff: 480, attack: 0.3 });
+      hiss(ctx, bus, { t, dur: cue.dur, gain: 0.012, type: "highpass", freq: 6500, attack: 0.3 });
+      if (cue.type === "amb-ns-clipboard") hiss(ctx, bus, { t: t0 + 0.7, dur: 0.25, gain: 0.08, type: "bandpass", freq: 2500, q: 0.6 });
+      (e.rings || []).forEach((r0) => { for (let x = 0; x < 1.25; x += 0.05) tone(ctx, bus, { t: t0 + r0 + x, dur: 0.045, freq: Math.round(x / 0.05) % 2 ? 1180 : 1420, type: "triangle", gain: 0.085, release: 0.03 }); });
+      (e.chime || []).forEach((c0) => { tone(ctx, bus, { t: t0 + c0, dur: 1, freq: 659, gain: 0.11, release: 0.9 }); tone(ctx, bus, { t: t0 + c0 + 0.32, dur: 1.2, freq: 523, gain: 0.11, release: 1 }); hiss(ctx, bus, { t, dur: cue.dur, gain: 0.03, type: "bandpass", freq: 5000, q: 0.4, attack: 0.5 }); });
+      (e.taps || []).forEach((x) => { tone(ctx, bus, { t: t0 + x, dur: 0.035, freq: 950, gain: 0.25 }); hiss(ctx, bus, { t: t0 + x, dur: 0.03, gain: 0.15, type: "highpass", freq: 2500 }); });
+      (e.off || []).forEach((x) => { hiss(ctx, bus, { t: t0 + x, dur: 0.06, gain: 0.25, type: "highpass", freq: 2000 }); tone(ctx, bus, { t: t0 + x, dur: 0.2, freq: 60, type: "square", gain: 0.06, cutoff: 300 }); });
+      if (cue.type === "amb-ns-flicker" && cue.figT) { tone(ctx, bus, { t: cue.figT, dur: 0.6, freq: 95, glideTo: 40, gain: 0.8 }); hiss(ctx, bus, { t: cue.figT, dur: 0.5, gain: 0.3, type: "bandpass", freq: 3800, q: 0.7 }); tone(ctx, bus, { t: cue.figT + 0.4, dur: 0.05, freq: 2200, gain: 0.1 }); }
+      break;
+    }
+    case "amb-omn-run": { hiss(ctx, bus, { t, dur: cue.dur, gain: 0.06, type: "lowpass", freq: 500, attack: 0.4 });
+      for (let x = t; x < t + cue.dur - 0.2; x += 0.19) { tone(ctx, bus, { t: x, dur: 0.08, freq: 80, glideTo: 45, gain: 0.32 }); hiss(ctx, bus, { t: x, dur: 0.05, gain: 0.07, type: "lowpass", freq: 1400 }); }
+      for (let x = t + 0.1; x < t + cue.dur - 0.3; x += 0.38) breath(ctx, bus, x, 0.22, 0.09, x % 0.76 < 0.38 ? 1200 : 900); break; }
+    case "amb-omn-board": case "amb-omn-watchers": case "amb-omn-door": case "amb-omn-window": case "amb-omn-radio": {
+      const e = EVENTS[cue.type.slice(4)] || {}, t0 = cue.t0 ?? t;
+      for (let x = t + 0.2; x < t + cue.dur; x += 0.11 + r() * 0.1) tone(ctx, bus, { t: x, dur: 0.03, freq: 4200 + r() * 600, gain: 0.012 });   // crickets
+      hiss(ctx, bus, { t, dur: cue.dur, gain: 0.04, type: "lowpass", freq: 380, attack: 0.5 });
+      (e.hits || []).forEach((x) => { tone(ctx, bus, { t: t0 + x, dur: 0.14, freq: 240, glideTo: 90, gain: 0.6 }); hiss(ctx, bus, { t: t0 + x, dur: 0.07, gain: 0.25, type: "bandpass", freq: 1800, q: 0.8 }); });
+      if (cue.type === "amb-omn-board") for (let x = t; x < t + cue.dur; x += 0.125) tone(ctx, bus, { t: x, dur: 0.08, freq: 48, type: "square", gain: 0.03, cutoff: 160 });
+      (e.knocks || []).forEach((x) => { tone(ctx, bus, { t: t0 + x, dur: 0.14, freq: 170, glideTo: 80, gain: 0.75 }); hiss(ctx, bus, { t: t0 + x, dur: 0.07, gain: 0.3, type: "lowpass", freq: 1000 }); });
+      (e.boards || []).forEach((x) => { hiss(ctx, bus, { t: t0 + x, dur: 0.18, gain: 0.5, type: "bandpass", freq: 1100, q: 0.5 }); tone(ctx, bus, { t: t0 + x, dur: 0.25, freq: 170, glideTo: 55, gain: 0.55 }); });
+      if (cue.type === "amb-omn-window" && cue.figT) tone(ctx, bus, { t: cue.figT, dur: 1.4, freq: 70, glideTo: 46, type: "sawtooth", gain: 0.2, cutoff: 420, release: 1 });
+      if (cue.type === "amb-omn-watchers" && cue.figT) for (let x = cue.figT; x < t + cue.dur; x += 1.4) tone(ctx, bus, { t: x, dur: 0.6, freq: 75, glideTo: 36, gain: 0.45, release: 0.5 });
+      if (cue.type === "amb-omn-radio") { hiss(ctx, bus, { t, dur: Math.max(0.5, t0 + 3.3 - t), gain: 0.09, type: "bandpass", freq: 2500, q: 0.4, attack: 0.1 }); tone(ctx, bus, { t: t0 + 0.9, dur: 2.4, freq: 600, glideTo: 1500, gain: 0.025 }); tone(ctx, bus, { t: t0 + 3.3, dur: 0.05, freq: 1800, gain: 0.1 }); }
+      break;
+    }
+    case "amb-omn-dawn": { for (let x = t; x < t + cue.dur; x += 0.09) hiss(ctx, bus, { t: x, dur: 0.07, gain: 0.07, type: "lowpass", freq: 500 }); for (let x = t + 0.6; x < t + cue.dur; x += 0.8 + r() * 0.8) tone(ctx, bus, { t: x, dur: 0.12, freq: 3300 + r() * 1400, glideTo: 4800, gain: 0.025 }); break; }
+    case "amb-nw-desk": case "amb-nw-cam-office": case "amb-nw-elevator": case "amb-nw-hall": case "amb-nw-locker": case "amb-nw-tape": case "amb-nw-cam13": {
+      const e = EVENTS[cue.type.slice(4)] || {}, t0 = cue.t0 ?? t;
+      tone(ctx, bus, { t, dur: cue.dur, freq: 60, type: "square", gain: 0.012, cutoff: 250, attack: 0.3 });
+      hiss(ctx, bus, { t, dur: cue.dur, gain: cue.type === "amb-nw-tape" ? 0.05 : 0.02, type: "highpass", freq: 3500, attack: 0.2 });
+      if (cue.type === "amb-nw-cam-office") hiss(ctx, bus, { t: t0 + 1, dur: Math.max(1, cue.dur - 1.5), gain: 0.07, type: "lowpass", freq: 260, attack: 0.3 });
+      (e.ding || []).forEach((x) => { tone(ctx, bus, { t: t0 + x, dur: 1.4, freq: 1318, gain: 0.1, release: 1.2 }); tone(ctx, bus, { t: t0 + x + 0.25, dur: 1.4, freq: 1046, gain: 0.1, release: 1.2 }); });
+      (e.open || []).forEach((x) => hiss(ctx, bus, { t: t0 + x, dur: 0.9, gain: 0.12, type: "bandpass", freq: 600, freqTo: 1600, q: 0.6, attack: 0.3 }));
+      (e.steps || []).forEach((x) => { tone(ctx, bus, { t: t0 + x, dur: 0.22, freq: 75, glideTo: 38, gain: 0.7 }); hiss(ctx, bus, { t: t0 + x, dur: 0.1, gain: 0.15, type: "lowpass", freq: 600 }); });
+      if (cue.type === "amb-nw-hall") for (let x = t + 0.8; x < t + Math.min(cue.dur, 5); x += 2) for (let y = 0; y < 1; y += 0.05) tone(ctx, bus, { t: x + y, dur: 0.045, freq: Math.round(y / 0.05) % 2 ? 1180 : 1420, type: "triangle", gain: 0.02, release: 0.03 });
+      if (cue.type === "amb-nw-tape") tone(ctx, bus, { t, dur: cue.dur, freq: 7800, gain: 0.004, attack: 0.2 });
+      if (cue.type === "amb-nw-cam13" || cue.type === "amb-nw-locker") tone(ctx, bus, { t, dur: cue.dur, freq: 44, gain: 0.14, attack: 1 });
+      break;
+    }
+    case "amb-nw-lobby": { for (let x = t; x < t + cue.dur - 0.3; x += 0.18) { tone(ctx, bus, { t: x, dur: 0.05, freq: 300, glideTo: 120, gain: 0.25 }); hiss(ctx, bus, { t: x, dur: 0.03, gain: 0.1, type: "highpass", freq: 2500 }); }
+      for (let x = t + 0.1; x < t + cue.dur - 0.3; x += 0.36) breath(ctx, bus, x, 0.2, 0.08, 1100);
+      [262, 330, 392, 523].forEach((f) => tone(ctx, bus, { t: t + 1, dur: cue.dur - 0.8, freq: f, type: "triangle", gain: 0.03, attack: 1.4, release: 1 })); break; }
+    case "amb-bedroom-call": case "amb-bedroom-knock": {
+      const e = EVENTS[cue.type.slice(4)] || {}, t0 = cue.t0 ?? t;
+      hiss(ctx, bus, { t, dur: cue.dur, gain: 0.035, type: "lowpass", freq: 380, attack: 0.5 });
+      (e.rings || []).forEach((x) => { for (let k = 0; k < 6; k++) tone(ctx, bus, { t: t0 + x + k * 0.17, dur: 0.16, freq: [880, 1108, 1318, 1108, 880, 1318][k], type: "triangle", gain: 0.07, release: 0.12 }); tone(ctx, bus, { t: t0 + x, dur: 1.1, freq: 160, type: "square", gain: 0.05, cutoff: 260 }); });
+      (e.knocks || []).forEach((x) => { tone(ctx, bus, { t: t0 + x, dur: 0.16, freq: 150, glideTo: 70, gain: 0.7 }); hiss(ctx, bus, { t: t0 + x, dur: 0.08, gain: 0.35, type: "lowpass", freq: 1100 }); });
+      break;
+    }
     case "amb-computer": tone(ctx, bus, { t, dur: cue.dur, freq: 110, gain: 0.025, attack: 0.4 }); hiss(ctx, bus, { t, dur: cue.dur, gain: 0.025, type: "lowpass", freq: 600, attack: 0.4 }); break;
     default: break;
   }
@@ -160,6 +222,32 @@ function reverb(ctx, seconds = 2.6) {
   const conv = ctx.createConvolver(); conv.buffer = ir; return conv;
 }
 
+// ---------------------------------------------------------------- how a line is delivered
+function softClip(k) { const n = 2048, c = new Float32Array(n); for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); } return c; }
+function filt(ctx, type, freq, q = 0.7, gain = 0) { const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; f.gain.value = gain; return f; }
+// a breath: an inhale before a panicked line, a gasp after it
+function breath(ctx, bus, t, dur, gain, freq) { if (t < 0) return; hiss(ctx, bus, { t, dur, gain, type: "bandpass", freq, q: 0.6, attack: dur * 0.5 }); hiss(ctx, bus, { t, dur: dur * 0.8, gain: gain * 0.5, type: "highpass", freq: 3500, attack: dur * 0.4 }); }
+function moodChain(ctx, src, mood, t, dur, dest) {
+  let node = src;
+  const chain = (n) => { node.connect(n); node = n; };
+  const lfo = (rate, depth, param) => { const o = ctx.createOscillator(); o.frequency.value = rate; const g = ctx.createGain(); g.gain.value = depth; o.connect(g); g.connect(param); o.start(Math.max(0, t)); o.stop(t + dur + 0.2); };
+  if (mood === "panic" || mood === "scream") {
+    lfo(mood === "scream" ? 9.5 : 7.3, mood === "scream" ? 48 : 34, src.detune);          // a shaking voice
+    lfo(3.1, 18, src.detune);                                                              // and an unsteady one
+    const trem = ctx.createGain(); lfo(5.4, 0.14, trem.gain); chain(trem);
+    breath(ctx, dest, t - 0.44, 0.38, mood === "scream" ? 0.2 : 0.16, 1300);
+    breath(ctx, dest, t + dur + 0.03, 0.32, 0.13, 900);
+  }
+  if (mood === "scream") { const ws = ctx.createWaveShaper(); ws.curve = softClip(2.4); chain(ws); chain(filt(ctx, "highshelf", 2500, 0.7, 5)); const g = ctx.createGain(); g.gain.value = 1.1; chain(g); }
+  if (mood === "whisper") { chain(filt(ctx, "highpass", 380)); chain(filt(ctx, "lowshelf", 320, 0.7, -9)); chain(filt(ctx, "peaking", 4200, 0.8, 5)); hiss(ctx, dest, { t: Math.max(0, t), dur: dur + 0.1, gain: 0.03, type: "bandpass", freq: 4500, q: 0.6, attack: 0.05 }); }
+  if (mood === "muffled") { chain(filt(ctx, "lowpass", 620, 0.9)); const g = ctx.createGain(); g.gain.value = 1.25; chain(g); }
+  if (mood === "phone" || mood === "radio") {
+    chain(filt(ctx, "highpass", 380)); chain(filt(ctx, "lowpass", mood === "radio" ? 2600 : 3200)); const ws = ctx.createWaveShaper(); ws.curve = softClip(1.8); chain(ws);
+    hiss(ctx, dest, { t: Math.max(0, t - 0.1), dur: dur + 0.3, gain: mood === "radio" ? 0.07 : 0.025, type: "bandpass", freq: 2400, q: 0.5, attack: 0.05 });
+  }
+  node.connect(dest);
+}
+
 // narration: { buffers: Map(messageId -> AudioBuffer) }
 export async function renderMix(compiled, narration, opts = {}) {
   const { story } = compiled;
@@ -167,8 +255,9 @@ export async function renderMix(compiled, narration, opts = {}) {
   const ctx = new OfflineAudioContext(2, Math.ceil(dur * SAMPLE_RATE), SAMPLE_RATE);
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 3; comp.attack.value = 0.005; comp.release.value = 0.2;
   const out = ctx.createGain(); out.gain.value = 0.95; comp.connect(out); out.connect(ctx.destination);
-  const musicBus = ctx.createGain(), sfxBus = ctx.createGain(), voiceBus = ctx.createGain(), narratorBus = ctx.createGain();
-  [musicBus, sfxBus, voiceBus, narratorBus].forEach((b) => b.connect(comp));
+  const musicBus = ctx.createGain(), sfxBus = ctx.createGain(), voiceBus = ctx.createGain(), narratorBus = ctx.createGain(), roomBus = ctx.createGain();
+  [musicBus, sfxBus, voiceBus, narratorBus, roomBus].forEach((b) => b.connect(comp));
+  { const rv = reverb(ctx, 1.1), wet = ctx.createGain(); wet.gain.value = 0.22; roomBus.connect(rv); rv.connect(wet); wet.connect(comp); roomBus.gain.value = 1.15; }   // lines said out loud sit in the room
   narratorBus.gain.value = 1.2;
   if (story.narration.narratorFx === "creepy") {   // low, roomy, a little too close
     const low = ctx.createBiquadFilter(); low.type = "lowshelf"; low.frequency.value = 220; low.gain.value = 5;
@@ -189,7 +278,9 @@ export async function renderMix(compiled, narration, opts = {}) {
     const b = it.narration && buffers.get(it.msg.id);
     if (!b) continue;
     const narrator = it.side === "scene" || it.side === "center";
-    const s = ctx.createBufferSource(); s.buffer = b; s.connect(narrator ? narratorBus : voiceBus); s.start(it.narration.start);
+    const s = ctx.createBufferSource(); s.buffer = b;
+    moodChain(ctx, s, it.msg.mood, it.narration.start, b.duration, narrator ? narratorBus : it.side === "voice" ? roomBus : voiceBus);
+    s.start(it.narration.start);
     musicBus.gain.setTargetAtTime(mv * (narrator ? 0.3 : 0.42), Math.max(0, it.narration.start - 0.05), 0.06);
     musicBus.gain.setTargetAtTime(mv, it.narration.start + b.duration, 0.25);
   }

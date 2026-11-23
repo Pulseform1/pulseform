@@ -2,7 +2,8 @@
 import { clamp, lerp, prog, easeOut, easeInOut, easeBack, roundRect, wrapText, stripMarkup, rng } from "./util.js";
 import { drawBackground, drawHandsBack, drawHandsFront, drawAvatar, drawAttachment } from "./art.js";
 import { drawScene } from "./scenes.js";
-import { SCENE_IN, SCENE_OUT } from "./timeline.js";
+import "./scenes2.js";   // registers the game-world scenes
+import { SCENE_IN, SCENE_OUT } from "./timeline.js";   // fallback durations
 import { CHAT_THEMES } from "../story/model.js";
 
 export const W = 1080, H = 1920;
@@ -31,7 +32,7 @@ export function layoutStory(compiled) {
   y += 44 + 18;
   let prevFrom = null;
   for (const it of items) {
-    if (it.side === "scene") continue;   // scenes are full-screen cutaways, not chat rows
+    if (it.side === "scene" || it.side === "voice") continue;   // scenes are full-screen cutaways and spoken lines have no bubble
     const m = it.msg;
     const gap = prevFrom === null ? 0 : prevFrom === m.from ? 8 : 22;
     y += gap;
@@ -133,9 +134,10 @@ function drawFrame(ctx, compiled, t, layout, track, imgCache) {
 
   // scene cutaways: dip to black, the phone drops away, the scene plays, and back
   const sc = sceneAt(compiled, t);
+  if (sc && sc.q < 0.5 && sc.toBlack) { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); drawOverlays(ctx, compiled, t, fx, fxk); return; }
   if (sc && sc.q >= 0.5) {
     const it = sc.it, base = it.tStart;
-    drawScene(ctx, it.msg.scene, t - base, it.sceneEnd - base, { figT: it.figureT != null ? it.figureT - base : null, label: it.msg.label });
+    drawScene(ctx, it.msg.scene, t - base, it.sceneEnd - base, { figT: it.figureT != null ? it.figureT - base : null, label: it.msg.label, nEnd: (it.nEnd ?? it.sceneEnd) - base });
     if (dark) { ctx.fillStyle = `rgba(0,0,0,${0.55 * dark})`; ctx.fillRect(0, 0, W, H); }
     if (sc.q < 1) { ctx.fillStyle = `rgba(0,0,0,${(1 - sc.q) * 2})`; ctx.fillRect(0, 0, W, H); }
     drawOverlays(ctx, compiled, t, fx, fxk);
@@ -173,8 +175,10 @@ function drawFrame(ctx, compiled, t, layout, track, imgCache) {
 function sceneAt(compiled, t) {
   for (const it of compiled.items) {
     if (it.side !== "scene" || (t < it.tStart && it.i !== 0) || t >= it.sceneEnd) continue;   // a story that opens on a scene shows it from frame one
-    const qIn = it.i === 0 ? 1 : clamp((t - it.tStart) / SCENE_IN), qOut = clamp((it.sceneEnd - t) / SCENE_OUT);
-    return { it, q: Math.min(qIn, qOut) };
+    const qIn = it.i === 0 ? 1 : clamp((t - it.tStart) / (it.inDur || SCENE_IN)), qOut = clamp((it.sceneEnd - t) / (it.outDur || SCENE_OUT));
+    // between two scenes the cut goes through black instead of back to the phone
+    const toBlack = qIn < qOut ? it.chainIn : it.chainOut;
+    return { it, q: Math.min(qIn, qOut), toBlack };
   }
   return null;
 }

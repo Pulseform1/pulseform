@@ -45,7 +45,7 @@ export default function App() {
   // ---- narration: reuse what's cached, build what's missing in the background
   const [narr, setNarr] = useState({ buffers: new Map(), durations: {} });
   const [voiceJob, setVoiceJob] = useState(null);   // { done, total } | { error }
-  const voiceKey = useMemo(() => JSON.stringify([story.narration, story.characters.map((c) => [c.id, c.voice]), story.messages.map((m) => [m.id, m.from, m.type, m.text, m.say])]), [story]);
+  const voiceKey = useMemo(() => JSON.stringify([story.narration, story.characters.map((c) => [c.id, c.voice]), story.messages.map((m) => [m.id, m.from, m.type, m.text, m.say, m.mood])]), [story]);
   const buildRef = useRef(null);
   const buildVoices = useCallback(async (s) => {
     buildRef.current?.abort();

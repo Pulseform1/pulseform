@@ -1,0 +1,178 @@
+{
+  "title": "Don't Open the Door",
+  "genre": "horror",
+  "duration": 90,
+  "hook": "I got trapped in a Pulsebox game. Something outside knows my friend's voice",
+  "outro": "Who's at the door?",
+  "clock": "3:07",
+  "group": false,
+  "characters": [
+    {
+      "id": "me",
+      "name": "Jay",
+      "avatar": "initials",
+      "color": "#ff8a3d",
+      "voice": "am_fenrir"
+    },
+    {
+      "id": "milo",
+      "name": "Milo",
+      "avatar": "initials",
+      "color": "#7c5cff",
+      "voice": "am_puck"
+    },
+    {
+      "id": "rescue",
+      "name": "Rescue One",
+      "avatar": "unknown",
+      "color": "#3a3f55",
+      "voice": "am_eric"
+    }
+  ],
+  "messages": [
+    {
+      "type": "scene",
+      "scene": "omn-run",
+      "text": "Jay clicked play on One More Night... and woke up in a forest. The sun was going down. Fast.",
+      "effect": "glitch",
+      "label": "ONE MORE NIGHT · NIGHT 1"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "panic",
+      "text": "Okay. Okay okay okay. There's a cabin. Run. Just run!"
+    },
+    {
+      "type": "scene",
+      "scene": "omn-board",
+      "text": "He boarded every window. He started the generator. Then... the whole forest went silent."
+    },
+    {
+      "from": "me",
+      "text": "milo i'm IN one more night. it's getting dark"
+    },
+    {
+      "from": "milo",
+      "text": "watchers freeze in your flashlight. and jay... whatever happens, DON'T open the door"
+    },
+    {
+      "type": "scene",
+      "scene": "omn-watchers",
+      "text": "Between the trees, tall pale things stood perfectly still. Every time his flashlight moved... they got closer.",
+      "figure": true,
+      "figureAt": 0.3,
+      "label": "11:58 PM"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "whisper",
+      "text": "Don't move the light... don't move the light..."
+    },
+    {
+      "type": "scene",
+      "scene": "omn-door",
+      "text": "Then... three knocks on the cabin door.",
+      "label": "1:13 AM"
+    },
+    {
+      "type": "voice",
+      "from": "milo",
+      "mood": "muffled",
+      "text": "Jay? Jay, it's me, Milo! Open the door, it's freezing out here!"
+    },
+    {
+      "from": "milo",
+      "text": "jay I'M HOME IN BED. that is *NOT* me",
+      "effect": "glitch"
+    },
+    {
+      "type": "scene",
+      "scene": "omn-window",
+      "text": "The knocking stopped. Then the boards on the window started coming off. One... by one.",
+      "figure": true,
+      "figureAt": 1.25,
+      "effect": "shake"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "scream",
+      "text": "Milo! What do I do?! WHAT DO I DO?!"
+    },
+    {
+      "from": "milo",
+      "text": "THE RADIO. 107. call for rescue"
+    },
+    {
+      "type": "scene",
+      "scene": "omn-radio",
+      "text": "Jay spun the dial to one-oh-seven. Static... and then a voice."
+    },
+    {
+      "type": "voice",
+      "from": "rescue",
+      "mood": "radio",
+      "text": "This is Rescue One. We see your cabin. Hold on, we're coming in."
+    },
+    {
+      "type": "scene",
+      "scene": "omn-dawn",
+      "text": "Rotor blades. A searchlight. The sun came up... and Jay woke up at his desk.",
+      "label": "6:02 AM"
+    },
+    {
+      "type": "scene",
+      "scene": "bedroom-knock",
+      "text": "Then someone knocked on his bedroom door."
+    },
+    {
+      "type": "voice",
+      "from": "milo",
+      "mood": "muffled",
+      "text": "Jay? It's me. Let me in."
+    },
+    {
+      "from": "milo",
+      "text": "yo you up? i just woke up lol",
+      "effect": "zoom"
+    },
+    {
+      "type": "scene",
+      "scene": "computer",
+      "text": "One More Night and eight more horror games, free on Pulsebox. box.pulseform.org. It's a computer game site, so play it on a computer. And if something knocks... don't answer it.",
+      "say": "One More Night, and eight more horror games, free on Pulsebox. Box dot pulseform dot org. It's a computer game site, so play it on a computer. And if something knocks... don't answer it."
+    }
+  ],
+  "look": {
+    "background": "horror",
+    "chatTheme": "violet",
+    "hookStyle": "banner"
+  },
+  "captions": {
+    "style": "pop",
+    "font": "Creepster",
+    "size": 1,
+    "position": 0.79,
+    "highlight": "#ff3d6e"
+  },
+  "narration": {
+    "enabled": true,
+    "speed": 1.12,
+    "includeImages": true,
+    "narrator": "am_onyx",
+    "narratorSpeed": 1.02,
+    "narratorFx": "creepy",
+    "systemNotes": false
+  },
+  "audio": {
+    "music": "suspense",
+    "musicVolume": 0.5,
+    "sfxVolume": 0.9
+  },
+  "pacing": {
+    "fit": true,
+    "speed": 1
+  }
+}

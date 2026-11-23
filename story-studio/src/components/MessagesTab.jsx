@@ -8,7 +8,7 @@ async function toPhotoDataURL(file) {
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
   return c.toDataURL("image/jpeg", 0.82);
 }
-import { IMAGES, REACTIONS, EFFECTS, MESSAGE_TYPES, SCENES } from "../story/model.js";
+import { IMAGES, REACTIONS, EFFECTS, MESSAGE_TYPES, SCENES, MOODS } from "../story/model.js";
 import { newId } from "../engine/util.js";
 import { Icon, AutoText, Field } from "./ui.jsx";
 
@@ -68,9 +68,10 @@ export function MessagesTab({ story, setStory, activeId, onSelect }) {
                   <option value="__upload">⬆ Upload a picture…</option>
                 </select>}
                 <select value={m.effect} onChange={(e) => update(m.id, { effect: e.target.value })} title="Effect when it arrives">{EFFECTS.map((x) => <option key={x.id} value={x.id}>{x.id ? "✨ " + x.label : "No effect"}</option>)}</select>
-                {m.from !== "system" && m.type !== "scene" && <select value={m.reaction} onChange={(e) => update(m.id, { reaction: e.target.value })} title="Reaction">{REACTIONS.map((x) => <option key={x} value={x}>{x || "No reaction"}</option>)}</select>}
+                {m.from !== "system" && m.type !== "scene" && <select value={m.mood} onChange={(e) => update(m.id, { mood: e.target.value })} title="How it's said">{MOODS.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}</select>}
+                {m.from !== "system" && m.type !== "scene" && m.type !== "voice" && <select value={m.reaction} onChange={(e) => update(m.id, { reaction: e.target.value })} title="Reaction">{REACTIONS.map((x) => <option key={x} value={x}>{x || "No reaction"}</option>)}</select>}
                 <label className="pause" title="Extra pause after this message (seconds)">pause<input type="number" min={0} max={5} step={0.1} value={m.pause} onChange={(e) => update(m.id, { pause: Number(e.target.value) })} />s</label>
-                {m.from !== "system" && m.type !== "scene" && <label className="chk" title="Show 'typing…' first"><input type="checkbox" checked={m.typing} onChange={(e) => update(m.id, { typing: e.target.checked })} />typing</label>}
+                {m.from !== "system" && m.type !== "scene" && m.type !== "voice" && <label className="chk" title="Show 'typing…' first"><input type="checkbox" checked={m.typing} onChange={(e) => update(m.id, { typing: e.target.checked })} />typing</label>}
               </div>
               <button className="insert" title="Insert a message below" onClick={() => insertAt(i + 1, { from: m.from === "me" ? chars.find((x) => x.id !== "me")?.id || "me" : "me" })}><Icon name="plus" size={12} /></button>
             </li>

@@ -7,25 +7,25 @@ const W = 1080, H = 1920, TAU = Math.PI * 2;
 const INK = "#0b0d1a", LIME = "#c6ff3d";
 
 // ---------------------------------------------------------------- helpers
-function poly(ctx, pts, fill) { ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); }
-function lin(ctx, x0, y0, x1, y1, stops) { const g = ctx.createLinearGradient(x0, y0, x1, y1); stops.forEach(([o, c]) => g.addColorStop(o, c)); return g; }
-function light(ctx, x, y, r, color, a = 1) {
+export function poly(ctx, pts, fill) { ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); }
+export function lin(ctx, x0, y0, x1, y1, stops) { const g = ctx.createLinearGradient(x0, y0, x1, y1); stops.forEach(([o, c]) => g.addColorStop(o, c)); return g; }
+export function light(ctx, x, y, r, color, a = 1) {
   if (a <= 0) return;
   const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, color); g.addColorStop(1, "rgba(0,0,0,0)");
   ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = a; ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2); ctx.restore();
 }
-function shade(ctx, x, y, r, a) {   // darkness everywhere except around (x, y)
+export function shade(ctx, x, y, r, a) {   // darkness everywhere except around (x, y)
   const g = ctx.createRadialGradient(x, y, r * 0.08, x, y, r);
   g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(0.5, `rgba(1,1,6,${a * 0.38})`); g.addColorStop(1, `rgba(1,1,6,${a})`);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
-function flicker(t, seed = 1, rate = 9) {   // 1 = on; drops out in short random bursts
+export function flicker(t, seed = 1, rate = 9) {   // 1 = on; drops out in short random bursts
   const r = rng(Math.floor(t * rate) * 7 + seed)();
   return r < 0.12 ? 0.15 : r < 0.2 ? 0.6 : 1;
 }
 
 // a room seen from inside: back wall rectangle + floor, ceiling and side walls running to the frame edges
-function room(vx, vy, bw, bh) {
+export function room(vx, vy, bw, bh) {
   const x0 = vx - bw / 2, x1 = vx + bw / 2, y0 = vy - bh / 2, y1 = vy + bh / 2;
   // a point on a side wall: d = depth (0 at the camera, 1 at the back wall), v = height (0 ceiling, 1 floor)
   const wall = (side, d, v) => { const x = side < 0 ? d * x0 : W + d * (x1 - W); const yt = d * y0, yb = H + d * (y1 - H); return [x, yt + v * (yb - yt)]; };
@@ -33,16 +33,16 @@ function room(vx, vy, bw, bh) {
   const ceil = (u, d) => { const xl = d * x0, xr = W + d * (x1 - W); return [lerp(xl, xr, u), d * y0]; };
   return { x0, x1, y0, y1, vx, vy, wall, floor, ceil };
 }
-const persp = (z, c = 1.6) => z / (z + c);   // evenly spaced real distances -> 0..1 depth
+export const persp = (z, c = 1.6) => z / (z + c);   // evenly spaced real distances -> 0..1 depth
 
-function drawRoom(ctx, R, c) {
+export function drawRoom(ctx, R, c) {
   poly(ctx, [[0, 0], [W, 0], [R.x1, R.y0], [R.x0, R.y0]], c.ceil);
   poly(ctx, [[0, H], [W, H], [R.x1, R.y1], [R.x0, R.y1]], c.floor);
   poly(ctx, [[0, 0], [R.x0, R.y0], [R.x0, R.y1], [0, H]], c.left);
   poly(ctx, [[W, 0], [R.x1, R.y0], [R.x1, R.y1], [W, H]], c.right);
   ctx.fillStyle = c.back; ctx.fillRect(R.x0, R.y0, R.x1 - R.x0, R.y1 - R.y0);
 }
-function quadOnWall(R, side, d0, d1, v0, v1) { return [R.wall(side, d0, v0), R.wall(side, d1, v0), R.wall(side, d1, v1), R.wall(side, d0, v1)]; }
+export function quadOnWall(R, side, d0, d1, v0, v1) { return [R.wall(side, d0, v0), R.wall(side, d1, v0), R.wall(side, d1, v1), R.wall(side, d0, v1)]; }
 
 // a tall thin silhouette with pale eyes. a = visibility 0..1
 export function shadowFigure(ctx, x, footY, h, a, t, eyes = true, body = "#010103") {
@@ -73,19 +73,19 @@ export function figureVis(t, figT) {
   return 1;
 }
 
-function grain(ctx, t, a = 0.05) {
+export function grain(ctx, t, a = 0.05) {
   const r = rng(Math.floor(t * 24) + 3);
   ctx.fillStyle = `rgba(255,255,255,${a})`;
   for (let i = 0; i < 260; i++) ctx.fillRect(r() * W, r() * H, 2, 2);
   ctx.fillStyle = `rgba(0,0,0,${a * 2})`;
   for (let i = 0; i < 260; i++) ctx.fillRect(r() * W, r() * H, 3, 3);
 }
-function vignette(ctx, a = 0.75) {
+export function vignette(ctx, a = 0.75) {
   const g = ctx.createRadialGradient(W / 2, H * 0.46, H * 0.22, W / 2, H * 0.5, H * 0.72);
   g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, `rgba(0,0,4,${a})`);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
-function dust(ctx, t, n, cx, cy, rad, seed = 5) {
+export function dust(ctx, t, n, cx, cy, rad, seed = 5) {
   const r = rng(seed);
   ctx.fillStyle = "#fff";
   for (let i = 0; i < n; i++) {
@@ -99,7 +99,7 @@ function dust(ctx, t, n, cx, cy, rad, seed = 5) {
 
 // ---------------------------------------------------------------- Pulsebox in a browser (used on the bedroom monitor and the computer close-up)
 const LOGO = typeof Path2D !== "undefined" ? new Path2D("M7 7h10v4h-4v2h4v4H7v-4h2v-2H7z") : null;
-function logoMark(ctx, x, y, s) {
+export function logoMark(ctx, x, y, s) {
   ctx.save(); ctx.translate(x, y); ctx.scale(s / 24, s / 24);
   ctx.fillStyle = LIME; roundRect(ctx, 0, 0, 24, 24, 6); ctx.fill();
   if (LOGO) { ctx.fillStyle = INK; ctx.fill(LOGO); }
@@ -543,26 +543,35 @@ Object.assign(SCENES, {
   },
 });
 
+// Other modules add scenes (and how each is graded) here.
+const STYLE = {};
+export function registerScenes(map, styles = {}) { Object.assign(SCENES, map); Object.assign(STYLE, styles); }
+export const getScene = (id) => SCENES[id];
+
+const GRADES = { purple: "rgba(70,40,160,.35)", yellow: "rgba(120,130,20,.3)", warm: "rgba(255,140,60,.22)", green: "rgba(40,140,90,.3)" };
 export function drawScene(ctx, id, lt, dur, o = {}) {
   const fn = SCENES[id] || SCENES.hallway;
-  ctx.save();
-  // handheld camera: slow push in, a little drift
-  const push = 1.03 + 0.07 * clamp(lt / Math.max(1, dur)), ox = Math.sin(lt * 0.9) * 9, oy = Math.sin(lt * 1.3 + 1) * 7;
-  ctx.translate(W / 2 + ox, H / 2 + oy); ctx.scale(push, push); ctx.translate(-W / 2, -H / 2);
-  fn(ctx, lt, o);
-  ctx.restore();
   const game = id.startsWith("endless-");
-  // colour grade: cold blue-purple in the house, sickly yellow-green in the game
-  ctx.save(); ctx.globalCompositeOperation = "soft-light"; ctx.fillStyle = game ? "rgba(120,130,20,.3)" : "rgba(70,40,160,.35)"; ctx.fillRect(0, 0, W, H); ctx.restore();
-  grain(ctx, lt, game ? 0.045 : 0.035);
-  vignette(ctx, 0.55);
-  if (game) endlessHud(ctx, lt, BATTERY[id] ?? 0.5);
+  const st = STYLE[id] || (game ? { grade: "yellow", hud: true } : {});
+  ctx.save();
+  if (st.drift !== false) {   // handheld camera: slow push in, a little drift
+    const push = 1.03 + 0.07 * clamp(lt / Math.max(1, dur)), ox = Math.sin(lt * 0.9) * 9, oy = Math.sin(lt * 1.3 + 1) * 7;
+    ctx.translate(W / 2 + ox, H / 2 + oy); ctx.scale(push, push); ctx.translate(-W / 2, -H / 2);
+  }
+  fn(ctx, lt, { ...o, dur });
+  ctx.restore();
+  const grade = GRADES[st.grade || "purple"];
+  if (grade) { ctx.save(); ctx.globalCompositeOperation = "soft-light"; ctx.fillStyle = grade; ctx.fillRect(0, 0, W, H); ctx.restore(); }
+  if (st.grain !== false) grain(ctx, lt, game ? 0.045 : 0.035);
+  if (st.vignette !== false) vignette(ctx, 0.55);
+  if (st.hud) endlessHud(ctx, lt, BATTERY[id] ?? 0.5);
   if (o.label) {   // a location stamp / game HUD label, top left
     ctx.save(); ctx.font = "700 34px 'Chakra Petch', Inter, sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "left";
     const tw = ctx.measureText(o.label).width;
-    ctx.fillStyle = "rgba(5,5,10,.62)"; roundRect(ctx, 44, 224, tw + 48, 62, 12); ctx.fill();
-    ctx.strokeStyle = game ? "rgba(255,226,122,.5)" : "rgba(255,255,255,.18)"; ctx.lineWidth = 2; roundRect(ctx, 44, 224, tw + 48, 62, 12); ctx.stroke();
-    ctx.fillStyle = game ? "#ffe27a" : "#e8e6ff"; ctx.fillText(o.label, 68, 256);
+    const ly = 270;   // below a two-line hook headline
+    ctx.fillStyle = "rgba(5,5,10,.62)"; roundRect(ctx, 44, ly, tw + 48, 62, 12); ctx.fill();
+    ctx.strokeStyle = game ? "rgba(255,226,122,.5)" : "rgba(255,255,255,.18)"; ctx.lineWidth = 2; roundRect(ctx, 44, ly, tw + 48, 62, 12); ctx.stroke();
+    ctx.fillStyle = game ? "#ffe27a" : "#e8e6ff"; ctx.fillText(o.label, 68, ly + 32);
     ctx.restore();
   }
 }

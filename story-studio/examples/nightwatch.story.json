@@ -1,0 +1,151 @@
+{
+  "title": "Camera 13",
+  "genre": "horror",
+  "duration": 90,
+  "hook": "I got trapped in a Pulsebox game. One of the cameras was watching ME",
+  "outro": "Camera 13",
+  "clock": "3:07",
+  "group": false,
+  "characters": [
+    {
+      "id": "me",
+      "name": "Jay",
+      "avatar": "initials",
+      "color": "#ff8a3d",
+      "voice": "am_fenrir"
+    },
+    {
+      "id": "milo",
+      "name": "Milo",
+      "avatar": "initials",
+      "color": "#7c5cff",
+      "voice": "am_puck"
+    }
+  ],
+  "messages": [
+    {
+      "type": "scene",
+      "scene": "nw-desk",
+      "text": "Jay clicked play on Nightwatch... and woke up at a security desk. Twelve cameras. And one of them... was pointed at him.",
+      "effect": "glitch",
+      "label": "CASTELLAN BUILDING · 3:10 AM"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "whisper",
+      "text": "That's me. That camera... is right behind me."
+    },
+    {
+      "type": "scene",
+      "scene": "nw-cam-office",
+      "text": "On camera seven, in an empty office, a chair rolled across the floor. By itself."
+    },
+    {
+      "from": "me",
+      "text": "milo i'm the security guard in NIGHTWATCH"
+    },
+    {
+      "from": "milo",
+      "text": "after 4am something tall starts hunting you. black bar over its face. if you see it, HIDE. and hold your breath"
+    },
+    {
+      "type": "scene",
+      "scene": "nw-elevator",
+      "text": "Jay took the elevator down to the lobby. It stopped on floor three. The Castellan Building... doesn't have a floor three."
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "panic",
+      "text": "No no no, close! Close the doors! CLOSE THE DOORS!"
+    },
+    {
+      "type": "scene",
+      "scene": "nw-hall",
+      "text": "Four AM. At the end of the hall, something stood up. Too tall. With a black bar where its face should be.",
+      "figure": true,
+      "figureAt": 0.55,
+      "label": "4:00 AM"
+    },
+    {
+      "type": "scene",
+      "scene": "nw-locker",
+      "text": "Jay dove into a locker and held his breath. The footsteps stopped. Right outside.",
+      "effect": "heartbeat",
+      "figure": true,
+      "figureAt": 1.85
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "whisper",
+      "text": "Don't breathe. Don't breathe. Don't breathe."
+    },
+    {
+      "type": "scene",
+      "scene": "nw-tape",
+      "text": "When it was gone, Jay checked the tapes. One showed him in a hallway he'd never seen... at 5:12 AM. It was only 4:30.",
+      "figure": true,
+      "figureAt": 0.75
+    },
+    {
+      "type": "scene",
+      "scene": "nw-lobby",
+      "text": "Jay ran. Down the stairs, across the lobby, out the front doors... and woke up at his desk.",
+      "label": "5:00 AM"
+    },
+    {
+      "from": "milo",
+      "text": "you made it out!!"
+    },
+    {
+      "from": "me",
+      "text": "milo... there were only 12 cameras right?"
+    },
+    {
+      "type": "scene",
+      "scene": "nw-cam13",
+      "text": "Then a new window opened on his computer. Camera thirteen. Jay's room.",
+      "figure": true,
+      "figureAt": 0.65,
+      "effect": "glitch"
+    },
+    {
+      "type": "scene",
+      "scene": "computer",
+      "text": "Nightwatch and eight more horror games, free on Pulsebox. box.pulseform.org. It's a computer game site, so play it on a computer. And check your cameras.",
+      "say": "Nightwatch, and eight more horror games, free on Pulsebox. Box dot pulseform dot org. It's a computer game site, so play it on a computer. And check your cameras."
+    }
+  ],
+  "look": {
+    "background": "horror",
+    "chatTheme": "violet",
+    "hookStyle": "banner"
+  },
+  "captions": {
+    "style": "pop",
+    "font": "Creepster",
+    "size": 1,
+    "position": 0.79,
+    "highlight": "#ff3d6e"
+  },
+  "narration": {
+    "enabled": true,
+    "speed": 1.12,
+    "includeImages": true,
+    "narrator": "am_onyx",
+    "narratorSpeed": 1.02,
+    "narratorFx": "creepy",
+    "systemNotes": false
+  },
+  "audio": {
+    "music": "horror",
+    "musicVolume": 0.5,
+    "sfxVolume": 0.9
+  },
+  "pacing": {
+    "fit": true,
+    "speed": 1
+  }
+}

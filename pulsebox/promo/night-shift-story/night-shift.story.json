@@ -1,0 +1,176 @@
+{
+  "title": "Don't Answer the Phone",
+  "genre": "horror",
+  "duration": 90,
+  "hook": "I got trapped in a Pulsebox game. Rule 4: never answer the phone at 2 AM",
+  "outro": "Don't answer it",
+  "clock": "3:07",
+  "group": false,
+  "characters": [
+    {
+      "id": "me",
+      "name": "Jay",
+      "avatar": "initials",
+      "color": "#ff8a3d",
+      "voice": "am_fenrir"
+    },
+    {
+      "id": "milo",
+      "name": "Milo",
+      "avatar": "initials",
+      "color": "#7c5cff",
+      "voice": "am_puck"
+    },
+    {
+      "id": "danny",
+      "name": "Danny",
+      "avatar": "unknown",
+      "color": "#3a3f55",
+      "voice": "am_liam"
+    }
+  ],
+  "messages": [
+    {
+      "type": "scene",
+      "scene": "ns-exterior",
+      "text": "Jay clicked play on Night Shift... and woke up behind the counter of the Starlite. Wearing the uniform.",
+      "effect": "glitch",
+      "label": "STARLITE · ROUTE 9 · 11:04 PM"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "panic",
+      "text": "No. No no no no. I'm in the game... I'm actually inside the game!"
+    },
+    {
+      "type": "scene",
+      "scene": "ns-clipboard",
+      "text": "Taped to the register: the manager's clipboard. Four rules. Signed... D."
+    },
+    {
+      "from": "me",
+      "text": "milo i'm the cashier in NIGHT SHIFT 😭"
+    },
+    {
+      "from": "milo",
+      "text": "follow EVERY rule on that clipboard. the last clerk didn't. his name was *danny*"
+    },
+    {
+      "type": "scene",
+      "scene": "ns-phone",
+      "text": "At exactly two in the morning, the store phone rang. And rang. Then the answering machine picked up.",
+      "label": "2:00 AM"
+    },
+    {
+      "type": "voice",
+      "from": "danny",
+      "mood": "phone",
+      "text": "Hey... it's Danny. I'm still here. Pick up. Please... pick up."
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "whisper",
+      "text": "Don't pick up. Don't pick up. Don't pick up..."
+    },
+    {
+      "type": "scene",
+      "scene": "ns-pump",
+      "text": "At 3:33, a car rolled up to pump four. Headlights on. Nobody inside. Then pump four... turned on by itself.",
+      "figure": true,
+      "figureAt": 0.85,
+      "label": "3:33 AM"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "panic",
+      "text": "I didn't touch it! I swear I didn't touch it!"
+    },
+    {
+      "type": "scene",
+      "scene": "ns-customer",
+      "text": "Then the door chimed. A customer. Jay glanced at the glass door. He had a reflection. The customer... didn't.",
+      "label": "3:41 AM"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "whisper",
+      "text": "Look down. Look at the floor. Don't look at it."
+    },
+    {
+      "type": "scene",
+      "scene": "ns-lookdown",
+      "text": "Long grey fingers tapped on the counter. Tap. Tap. Tap. Jay didn't look up. Not once.",
+      "effect": "heartbeat",
+      "figure": true,
+      "figureAt": 0.95
+    },
+    {
+      "type": "scene",
+      "scene": "ns-flicker",
+      "text": "Then the lights flickered. Once. Twice. Three times.",
+      "figure": true,
+      "figureAt": 1.75,
+      "effect": "shake",
+      "label": "4:12 AM"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "scream",
+      "text": "The door! Lock the door! LOCK THE DOOR!"
+    },
+    {
+      "type": "scene",
+      "scene": "ns-dawn",
+      "text": "Jay held that lock until the sky turned pink. Five AM. Shift over... and he woke up at his desk.",
+      "label": "5:00 AM"
+    },
+    {
+      "type": "scene",
+      "scene": "bedroom-call",
+      "text": "Then his phone rang. Two AM. Caller ID... Danny.",
+      "effect": "glitch",
+      "label": "2:00 AM"
+    },
+    {
+      "type": "scene",
+      "scene": "computer",
+      "text": "Night Shift and eight more horror games, free on Pulsebox. box.pulseform.org. It's a computer game site, so play it on a computer. And at two AM... don't answer the phone.",
+      "say": "Night Shift, and eight more horror games, free on Pulsebox. Box dot pulseform dot org. It's a computer game site, so play it on a computer. And at two AM... don't answer the phone."
+    }
+  ],
+  "look": {
+    "background": "horror",
+    "chatTheme": "violet",
+    "hookStyle": "banner"
+  },
+  "captions": {
+    "style": "pop",
+    "font": "Creepster",
+    "size": 1,
+    "position": 0.79,
+    "highlight": "#ff3d6e"
+  },
+  "narration": {
+    "enabled": true,
+    "speed": 1.12,
+    "includeImages": true,
+    "narrator": "am_onyx",
+    "narratorSpeed": 1.02,
+    "narratorFx": "creepy",
+    "systemNotes": false
+  },
+  "audio": {
+    "music": "horror",
+    "musicVolume": 0.5,
+    "sfxVolume": 0.9
+  },
+  "pacing": {
+    "fit": true,
+    "speed": 1
+  }
+}
