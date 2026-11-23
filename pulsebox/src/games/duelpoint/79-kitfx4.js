@@ -97,7 +97,7 @@
   on('beaconHit', B => { if (fx4()) for (let i = 0; i < 5; i++) spark([B.x, B.y + .4, B.z], [rnd(-2, 2), rnd(0, 3), rnd(-2, 2)], OPS.bastion.col, .3); });
   on('beaconDown', B => { if (fx4()) for (let i = 0; i < 16; i++) spark([B.x, B.y + .5, B.z], [rnd(-3, 3), rnd(0, 4), rnd(-3, 3)], OPS.bastion.col, .5); });
   on('sentryLock', s => { if (fx4()) burst('ring', s.x, s.y + .02, s.z, '#ffb347', 1.2, .35); });
-  on('wallHit', w => { if (!fx4()) return; const cx = (w.x0 + w.x1) / 2, cz = (w.z0 + w.z1) / 2; spark([cx + rnd(-1, 1) * (w.x1 - w.x0) / 2, rnd(.5, 2.5), cz + rnd(-1, 1) * (w.z1 - w.z0) / 2], [rnd(-2, 2), rnd(0, 2), rnd(-2, 2)], OPS.bastion.col, .3); });
+  on('kitWallHit', w => { if (!fx4()) return; const cx = (w.x0 + w.x1) / 2, cz = (w.z0 + w.z1) / 2; spark([cx + rnd(-1, 1) * (w.x1 - w.x0) / 2, rnd(.5, 2.5), cz + rnd(-1, 1) * (w.z1 - w.z0) / 2], [rnd(-2, 2), rnd(0, 2), rnd(-2, 2)], OPS.bastion.col, .3); });
   on('wallBreak', w => { if (!fx4()) return; const cx = (w.x0 + w.x1) / 2, cz = (w.z0 + w.z1) / 2; for (let i = 0; i < 26; i++) spark([cx + rnd(-1, 1) * (w.x1 - w.x0) / 2, rnd(.2, 2.8), cz + rnd(-1, 1) * (w.z1 - w.z0) / 2], [rnd(-3, 3), rnd(0, 4), rnd(-3, 3)], i % 2 ? OPS.bastion.col : '#c8b8a0', .6); X.shake = Math.max(X.shake || 0, .15); });
   on('wallMend', w => { if (fx4()) burst('shell', (w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2, OPS.bastion.col, 3.2, .5); });
   on('kitBreak', (o, kind) => { if (!fx4()) return; const x = kind === 'wire' ? o.ax : o.x, z = kind === 'wire' ? o.az : o.z, y = (o.y || 0) + (kind === 'wire' ? WIRE.h : .3), c = kind === 'dev' ? OPS.tessel.col : kind === 'snare' ? OPS.talon.col : OPS.axiom.col;

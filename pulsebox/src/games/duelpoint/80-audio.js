@@ -316,7 +316,7 @@
   cue('devFire', D => { const o = outFor(at(D.x, D.y + .5, D.z)); tone(o, 1320, .25, 'triangle', .06, 400); tone(o, 1980, .3, 'sine', .03, 0, .05); });
   cue('kitBreak', o => { const q = outFor(at(o.x != null ? o.x : o.ax, (o.y || 0) + .4, o.z != null ? o.z : o.az)); hiss(q, .18, .14, 'highpass', 5000); tone(q, 2600, .08, 'square', .03, -1200); });
   cue('kitPick', (f, D) => { if (f === me()) tone(outFor(null), 900, .08, 'triangle', .05, 300); });
-  cue('wallHit', w => tone(outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2)), 140, .06, 'square', .05, -40));
+  cue('kitWallHit', w => tone(outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2)), 140, .06, 'square', .05, -40));
   cue('wallBreak', w => { const o = outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2), 1.3); hiss(o, .5, .4, 'lowpass', 900); tone(o, 70, .4, 'sine', .3, -30); });
   cue('wallMend', w => { const o = outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2)); tone(o, 330, .35, 'triangle', .08, 200); });
   cue('beaconPulse', B => { if (M && B.by.team === me().team) tone(outFor(at(B.x, B.y + 1, B.z)), 780, .18, 'sine', .025, 120); });

@@ -187,6 +187,12 @@ function knifeWallChecks() {
   ok(hp0 - B.hp >= 60, 'one knife swing takes a real chunk out of the wall', `${hp0} → ${B.hp}`);
   let n = 1; while (B.hp > 0 && n < 30) { P.fireT = -1; T.fire(P); n++; }
   ok(B.hp <= 0 && n <= 8, 'keep swinging and the wall gives way', n + ' swings');
+  ok(T.hAt((B.cells[0] % T.GW + .5) * T.CS, (Math.floor(B.cells[0] / T.GW) + .5) * T.CS) === 0, 'and once down it is open floor you can walk through');
+  // a sound or an effect that throws on the wall's hit must not leave it standing (a listener on 'wallHit' once crashed
+  // every hit before the wall could fall, and walls stayed solid at no health)
+  { T.setWall(0, true); let threw = 0; T.on('wallHit', () => { threw++; throw new Error('test: a listener that fails'); }); const ce = console.error; console.error = () => {};
+    let m = 0; while (B.hp > 0 && m < 30) { P.fireT = -1; T.fire(P); m++; } console.error = ce;
+    ok(threw > 0 && B.hp <= 0 && T.hAt((B.cells[0] % T.GW + .5) * T.CS, (Math.floor(B.cells[0] / T.GW) + .5) * T.CS) === 0, 'a failing wall-hit listener does not stop the wall falling', `${threw} failed hits, hp ${B.hp}`); T.setWall(0, true); }
   // looking a little down (as you do walking up to it), or a little up: the swing still lands on the wall, not the floor
   for (const pitch of [-.35, .3]) { T.setWall(0, true); const h0 = B.hp; P.pitch = pitch; P.fireT = -1; T.fire(P); ok(h0 - B.hp >= 60, `a swing looking ${pitch < 0 ? 'down' : 'up'} at it (${pitch} rad) still cuts the wall`, `${h0} → ${B.hp}`); }
   P.pitch = 0;

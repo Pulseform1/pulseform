@@ -142,7 +142,7 @@
     return true;
   }
   function hurtWall(w, dmg, fromNet) {
-    if (!w || !(w.hp > 0) || !(dmg > 0) || !M.walls.includes(w)) return; w.hp -= dmg; w.hitT = .15; emit('wallHit', w);
+    if (!w || !(w.hp > 0) || !(dmg > 0) || !M.walls.includes(w)) return; w.hp -= dmg; w.hitT = .15; emit('kitWallHit', w);   // (its own event: 'wallHit' is a map's breakable wall, by number)
     if (w.hp <= 0) { w.hp = 0; w.t = 0; emit('wallBreak', w); if (w.by === me()) say('RAMPART DOWN', WARN); }
     if (!fromNet) net({ t: 'wd', id: w.id, d: dmg });
   }

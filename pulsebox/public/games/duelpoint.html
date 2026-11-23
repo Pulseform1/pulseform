@@ -270,7 +270,10 @@ const GAME = {
 
   const BUS = {};
   const on = (name, fn) => { (BUS[name] || (BUS[name] = [])).push(fn); };
-  const emit = (name, a, b, c, d) => { const l = BUS[name]; if (l) for (let i = 0; i < l.length; i++) l[i](a, b, c, d); };
+  let busErrs = 0;
+  // each listener on its own: one that throws (a sound, an effect) is logged and skipped, and the rest still run; game logic
+  // must never stop half way because a picture or a noise failed (a breakable wall once stayed up for good that way)
+  const emit = (name, a, b, c, d) => { const l = BUS[name]; if (l) for (let i = 0; i < l.length; i++) { try { l[i](a, b, c, d); } catch (e) { if (busErrs++ < 5) console.error('[' + name + ']', e); } } };
 
   // colours used by every drawing part
   const INK = '#0c1016', BONE = '#efe9dc', YOU = '#35e0c8', FOE = '#f43f3f', GOLD = '#ffd23f', DIM = '#8d97a6', WARN = '#ff5a4d', COIN = '#ffc94a';
@@ -1555,9 +1558,9 @@ const GAME = {
   }
   // a breakable wall takes the damage of every bullet that hits it; when it falls, it is open ground for the round
   function hitWall(b, dmg, by, remote) {
-    const B = BRKS[b]; if (!B || B.hp <= 0) return; B.hp -= dmg; emit('wallHit', b, dmg);
+    const B = BRKS[b]; if (!B || B.hp <= 0) return; B.hp -= dmg; const down = B.hp <= 0; if (down) setWall(b, false);   // (open first: nothing a listener does can leave it standing at no health)
     if (!remote && by && !by.net) net({ t: 'brk', b, d: Math.round(dmg), f: by.key });
-    if (B.hp <= 0) { setWall(b, false); emit('wallDown', b); }
+    emit('wallHit', b, dmg); if (down) emit('wallDown', b);
   }
   // the map's clock (from the start of the live phase): steam vents puff in turn, a sandstorm blows through now and then
   function stepMapClock(dt) {
@@ -2568,7 +2571,7 @@ const GAME = {
     return true;
   }
   function hurtWall(w, dmg, fromNet) {
-    if (!w || !(w.hp > 0) || !(dmg > 0) || !M.walls.includes(w)) return; w.hp -= dmg; w.hitT = .15; emit('wallHit', w);
+    if (!w || !(w.hp > 0) || !(dmg > 0) || !M.walls.includes(w)) return; w.hp -= dmg; w.hitT = .15; emit('kitWallHit', w);   // (its own event: 'wallHit' is a map's breakable wall, by number)
     if (w.hp <= 0) { w.hp = 0; w.t = 0; emit('wallBreak', w); if (w.by === me()) say('RAMPART DOWN', WARN); }
     if (!fromNet) net({ t: 'wd', id: w.id, d: dmg });
   }
@@ -9099,7 +9102,7 @@ const GAME = {
   on('beaconHit', B => { if (fx4()) for (let i = 0; i < 5; i++) spark([B.x, B.y + .4, B.z], [rnd(-2, 2), rnd(0, 3), rnd(-2, 2)], OPS.bastion.col, .3); });
   on('beaconDown', B => { if (fx4()) for (let i = 0; i < 16; i++) spark([B.x, B.y + .5, B.z], [rnd(-3, 3), rnd(0, 4), rnd(-3, 3)], OPS.bastion.col, .5); });
   on('sentryLock', s => { if (fx4()) burst('ring', s.x, s.y + .02, s.z, '#ffb347', 1.2, .35); });
-  on('wallHit', w => { if (!fx4()) return; const cx = (w.x0 + w.x1) / 2, cz = (w.z0 + w.z1) / 2; spark([cx + rnd(-1, 1) * (w.x1 - w.x0) / 2, rnd(.5, 2.5), cz + rnd(-1, 1) * (w.z1 - w.z0) / 2], [rnd(-2, 2), rnd(0, 2), rnd(-2, 2)], OPS.bastion.col, .3); });
+  on('kitWallHit', w => { if (!fx4()) return; const cx = (w.x0 + w.x1) / 2, cz = (w.z0 + w.z1) / 2; spark([cx + rnd(-1, 1) * (w.x1 - w.x0) / 2, rnd(.5, 2.5), cz + rnd(-1, 1) * (w.z1 - w.z0) / 2], [rnd(-2, 2), rnd(0, 2), rnd(-2, 2)], OPS.bastion.col, .3); });
   on('wallBreak', w => { if (!fx4()) return; const cx = (w.x0 + w.x1) / 2, cz = (w.z0 + w.z1) / 2; for (let i = 0; i < 26; i++) spark([cx + rnd(-1, 1) * (w.x1 - w.x0) / 2, rnd(.2, 2.8), cz + rnd(-1, 1) * (w.z1 - w.z0) / 2], [rnd(-3, 3), rnd(0, 4), rnd(-3, 3)], i % 2 ? OPS.bastion.col : '#c8b8a0', .6); X.shake = Math.max(X.shake || 0, .15); });
   on('wallMend', w => { if (fx4()) burst('shell', (w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2, OPS.bastion.col, 3.2, .5); });
   on('kitBreak', (o, kind) => { if (!fx4()) return; const x = kind === 'wire' ? o.ax : o.x, z = kind === 'wire' ? o.az : o.z, y = (o.y || 0) + (kind === 'wire' ? WIRE.h : .3), c = kind === 'dev' ? OPS.tessel.col : kind === 'snare' ? OPS.talon.col : OPS.axiom.col;
@@ -9424,7 +9427,7 @@ const GAME = {
   cue('devFire', D => { const o = outFor(at(D.x, D.y + .5, D.z)); tone(o, 1320, .25, 'triangle', .06, 400); tone(o, 1980, .3, 'sine', .03, 0, .05); });
   cue('kitBreak', o => { const q = outFor(at(o.x != null ? o.x : o.ax, (o.y || 0) + .4, o.z != null ? o.z : o.az)); hiss(q, .18, .14, 'highpass', 5000); tone(q, 2600, .08, 'square', .03, -1200); });
   cue('kitPick', (f, D) => { if (f === me()) tone(outFor(null), 900, .08, 'triangle', .05, 300); });
-  cue('wallHit', w => tone(outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2)), 140, .06, 'square', .05, -40));
+  cue('kitWallHit', w => tone(outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2)), 140, .06, 'square', .05, -40));
   cue('wallBreak', w => { const o = outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2), 1.3); hiss(o, .5, .4, 'lowpass', 900); tone(o, 70, .4, 'sine', .3, -30); });
   cue('wallMend', w => { const o = outFor(at((w.x0 + w.x1) / 2, 1.5, (w.z0 + w.z1) / 2)); tone(o, 330, .35, 'triangle', .08, 200); });
   cue('beaconPulse', B => { if (M && B.by.team === me().team) tone(outFor(at(B.x, B.y + 1, B.z)), 780, .18, 'sine', .025, 120); });

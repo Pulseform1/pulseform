@@ -17,7 +17,10 @@
 
   const BUS = {};
   const on = (name, fn) => { (BUS[name] || (BUS[name] = [])).push(fn); };
-  const emit = (name, a, b, c, d) => { const l = BUS[name]; if (l) for (let i = 0; i < l.length; i++) l[i](a, b, c, d); };
+  let busErrs = 0;
+  // each listener on its own: one that throws (a sound, an effect) is logged and skipped, and the rest still run; game logic
+  // must never stop half way because a picture or a noise failed (a breakable wall once stayed up for good that way)
+  const emit = (name, a, b, c, d) => { const l = BUS[name]; if (l) for (let i = 0; i < l.length; i++) { try { l[i](a, b, c, d); } catch (e) { if (busErrs++ < 5) console.error('[' + name + ']', e); } } };
 
   // colours used by every drawing part
   const INK = '#0c1016', BONE = '#efe9dc', YOU = '#35e0c8', FOE = '#f43f3f', GOLD = '#ffd23f', DIM = '#8d97a6', WARN = '#ff5a4d', COIN = '#ffc94a';

@@ -490,9 +490,9 @@
   }
   // a breakable wall takes the damage of every bullet that hits it; when it falls, it is open ground for the round
   function hitWall(b, dmg, by, remote) {
-    const B = BRKS[b]; if (!B || B.hp <= 0) return; B.hp -= dmg; emit('wallHit', b, dmg);
+    const B = BRKS[b]; if (!B || B.hp <= 0) return; B.hp -= dmg; const down = B.hp <= 0; if (down) setWall(b, false);   // (open first: nothing a listener does can leave it standing at no health)
     if (!remote && by && !by.net) net({ t: 'brk', b, d: Math.round(dmg), f: by.key });
-    if (B.hp <= 0) { setWall(b, false); emit('wallDown', b); }
+    emit('wallHit', b, dmg); if (down) emit('wallDown', b);
   }
   // the map's clock (from the start of the live phase): steam vents puff in turn, a sandstorm blows through now and then
   function stepMapClock(dt) {
