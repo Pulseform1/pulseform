@@ -7,7 +7,7 @@ import { createRenderer } from "/src/engine/renderer.js";
 import { normalizeStory } from "/src/story/model.js";
 const r = createRenderer(), ctx = document.getElementById("c").getContext("2d");
 window.renderStory = async (story, t) => {
-  await document.fonts.load("400 40px 'Luckiest Guy'"); await document.fonts.load("400 40px Inter"); await document.fonts.load("400 40px Creepster");
+  await document.fonts.load("400 40px 'Luckiest Guy'"); await document.fonts.load("400 40px Inter"); await document.fonts.load("400 40px Creepster"); await document.fonts.load("700 40px 'Chakra Petch'");
   const s = normalizeStory(story); if (!window.__c || window.__s !== JSON.stringify(s)) { window.__c = compileTimeline(s); window.__s = JSON.stringify(s); }
   r.draw(ctx, window.__c, t); return window.__c.duration;
 };

@@ -1,4 +1,6 @@
-import { MUSIC } from "../story/model.js";
+import { useState } from "react";
+import { MUSIC, VOICES } from "../story/model.js";
+import { sampleVoice } from "../engine/voices.js";
 import { Field, Slider, Toggle, Select } from "./ui.jsx";
 import { Icon } from "./ui.jsx";
 
@@ -8,6 +10,15 @@ export function AudioTab({ story, setStory, health, voiceJob, onRebuild }) {
   const pacing = (patch) => setStory((s) => ({ ...s, pacing: { ...s.pacing, ...patch } }));
   const N = story.narration, A = story.audio, P = story.pacing;
   const pct = (v) => `${Math.round(v * 100)}%`;
+  const [hearing, setHearing] = useState(false);
+  const hear = async () => {
+    setHearing(true);
+    try {
+      const line = story.messages.find((m) => m.type === "scene" && m.text)?.text.replace(/\*/g, "").slice(0, 160) || "It was three in the morning. And the house was not empty.";
+      const buf = await sampleVoice(N.narrator, line, N.narratorSpeed);
+      const ac = new AudioContext(); const src = ac.createBufferSource(); src.buffer = buf; src.connect(ac.destination); src.start(); src.onended = () => { setHearing(false); ac.close(); };
+    } catch { setHearing(false); }
+  };
 
   return (
     <div className="audio-tab">
@@ -24,6 +35,16 @@ export function AudioTab({ story, setStory, health, voiceJob, onRebuild }) {
         <Field label="Narration speed" hint="also changes the video's pacing"><Slider value={N.speed} min={0.7} max={1.4} step={0.05} onChange={(v) => narr({ speed: v })} format={(v) => `${v.toFixed(2)}×`} /></Field>
         <Toggle value={N.includeImages} onChange={(v) => narr({ includeImages: v })} label='Say "sent a photo" for pictures' />
         <button className="btn small ghost" disabled={!health.online} onClick={onRebuild}><Icon name="refresh" size={13} />Regenerate voices</button>
+
+        <h3>Narrator</h3>
+        <p className="hint">The narrator reads 🎬 scene messages: full-screen cutaways where the phone slides away. Add one from the Messages tab.</p>
+        <div className="char-row">
+          <select value={N.narrator} onChange={(e) => narr({ narrator: e.target.value })}>{VOICES.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}</select>
+          <button className="btn small" disabled={!health.online || hearing} onClick={hear}>{hearing ? <><span className="spinner" />Playing</> : <><Icon name="play" size={12} />Hear</>}</button>
+        </div>
+        <Field label="Narrator speed"><Slider value={N.narratorSpeed} min={0.7} max={1.3} step={0.02} onChange={(v) => narr({ narratorSpeed: v })} format={(v) => `${v.toFixed(2)}×`} /></Field>
+        <Toggle value={N.narratorFx === "creepy"} onChange={(v) => narr({ narratorFx: v ? "creepy" : "none" })} label="Creepy narrator (deep, echoing)" />
+        <Toggle value={N.systemNotes} onChange={(v) => narr({ systemNotes: v })} label="Narrator also reads system notes" />
       </>}
 
       <h3>Music & sound</h3>

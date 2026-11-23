@@ -79,7 +79,8 @@ The top bar then shows **AI writer on**, and **Write with AI (Claude)** in the C
   - change a message's sender, type (text, image, deleted, missed call, system note), effect (shake, zoom, glitch, flash, lights out, heartbeat), reaction, extra pause and typing indicator;
   - reorder, duplicate, insert or delete messages; clicking a message jumps the preview to it;
   - wrap a word in `*asterisks*` to highlight it in the captions;
-  - picture messages can use one of 32 built-in illustrations, or a picture you upload.
+  - picture messages can use one of 32 built-in illustrations, or a picture you upload;
+  - **🎬 Scene + narrator** messages cut away from the phone to a full-screen illustrated place while the narrator speaks: bedroom (with Pulsebox on the computer), hallway, kitchen, basement stairs, living room, front door, or Pulsebox on a computer screen. The phone dips to black and drops away, the scene plays (flickering lights, a swaying flashlight or bulb, door knocks), then the chat comes back. Tick **shadow figure** to have something appear partway through. **Say it as…** changes how the narrator pronounces a line without changing the captions (for example, "box dot pulseform dot org").
 - **Cast:**
   - rename characters and set their pictures (17 built-in avatars, or upload a photo), bubble colours and voices (**Hear** plays a sample);
   - add characters to turn the story into a group chat;
@@ -91,6 +92,7 @@ The top bar then shows **AI writer on**, and **Write with AI (Claude)** in the C
   - caption style (pop, karaoke, clean subtitle, off), font, size, height and highlight colour.
 - **Audio:**
   - narration on or off, narration speed, and regenerating the voices;
+  - the narrator's voice (with a Hear button), speed, the **creepy narrator** effect (deeper, with a dark room echo), and whether the narrator also reads system notes;
   - music style and volume, and sound-effects volume;
   - pacing: fit to the chosen length, plus extra speed.
 - **Export:** renders the MP4 with a progress bar, time remaining and a cancel button, then shows the result with a download button.
@@ -110,7 +112,8 @@ Undo and redo use Ctrl+Z and Ctrl+Y (⌘ on Mac).
 - **AI writing hasn't been tested against the live API here.** This build environment had no Anthropic key. The server code follows the official SDK, uses structured JSON output, and handles errors (bad key, rate limit, refusal), but the first real test will be yours. If it fails, the error appears in the Create panel and the built-in writer still works.
 - **Built-in stories have a natural length.** For 15 seconds to 2 minutes they fit the target closely (15s stories land at about 15–23s, 30s at about 27–31s). For **3 minutes**, some plots run out of material at about 2:20–3:00. Add messages or use AI writing for full-length stories. The preview shows target and actual length, so nothing is hidden.
 - **The voices are good, but not actors.** Kokoro sounds natural, but it doesn't act out emotions like shouting or whispering on command. Changing a voice, the speed or the text regenerates that line in about a second.
-- **System notes are not read aloud.** They're on-screen stage directions, like "The hallway light flickers". Image captions are read only if you turn that on in the Audio tab.
+- **System notes are not read aloud by default.** They're on-screen stage directions, like "The hallway light flickers". Turn on "Narrator also reads system notes" in the Audio tab to have the narrator say them. Image captions are read only if you turn that on too.
+- **Scenes are a fixed set of places.** The 7 scenes are drawn in code and can't be swapped for your own pictures yet.
 - **Uploaded pictures are stored in your browser.** They're shrunk to save space, but browser storage is limited (about 5 MB). If it fills up, the top bar shows **Not autosaved**; download the story with the My stories download button to keep it.
 - **Narration needs the Studio server.** Opening only the Vite page, or the server being offline, means preview and export have music, sound effects and captions but no voices. The app shows this clearly.
 
@@ -149,6 +152,7 @@ src/
   engine/
     timeline.js            turns a story into timed events (typing, messages, captions, effects, sounds)
     renderer.js, art.js    draws a frame: background, hands, phone, chat UI, captions, effects
+    scenes.js              the full-screen scene cutaways (rooms of a house, Pulsebox on a computer)
     audio.js               music + sound effects synthesis, narration mix, loudness
     voices.js              talks to the Studio server for Kokoro voices (cached)
     exporter.js            WebCodecs encoding + MP4/WebM muxing

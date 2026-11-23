@@ -1,6 +1,8 @@
 // Draws one 1080 x 1920 frame of a compiled story at time t. Used for the live preview and for export.
 import { clamp, lerp, prog, easeOut, easeInOut, easeBack, roundRect, wrapText, stripMarkup, rng } from "./util.js";
 import { drawBackground, drawHandsBack, drawHandsFront, drawAvatar, drawAttachment } from "./art.js";
+import { drawScene } from "./scenes.js";
+import { SCENE_IN, SCENE_OUT } from "./timeline.js";
 import { CHAT_THEMES } from "../story/model.js";
 
 export const W = 1080, H = 1920;
@@ -29,6 +31,7 @@ export function layoutStory(compiled) {
   y += 44 + 18;
   let prevFrom = null;
   for (const it of items) {
+    if (it.side === "scene") continue;   // scenes are full-screen cutaways, not chat rows
     const m = it.msg;
     const gap = prevFrom === null ? 0 : prevFrom === m.from ? 8 : 22;
     y += gap;
@@ -75,6 +78,7 @@ function scrollTrack(compiled, layout) {
   const changes = [{ t: 0, s: 0 }];
   const target = (bottom) => Math.max(0, bottom + 150 - VIEW.h);
   for (const it of compiled.items) {
+    if (!it.row) continue;
     if (it.typingDur > 0) changes.push({ t: it.tStart, s: target(it.row.y + (it.row.nameH || 0) + 96) });
     changes.push({ t: it.tAppear, s: target(it.row.bottom) });
   }
@@ -127,6 +131,17 @@ function drawFrame(ctx, compiled, t, layout, track, imgCache) {
   const fxk = (type) => { const e = fx.find((f) => f.type === type); if (!e) return 0; const inK = clamp((t - e.start) / 0.25), outK = 1 - clamp((t - e.end) / 0.35); return Math.min(inK, outK); };
   const dark = fxk("darken");
 
+  // scene cutaways: dip to black, the phone drops away, the scene plays, and back
+  const sc = sceneAt(compiled, t);
+  if (sc && sc.q >= 0.5) {
+    const it = sc.it, base = it.tStart;
+    drawScene(ctx, it.msg.scene, t - base, it.sceneEnd - base, { figT: it.figureT != null ? it.figureT - base : null });
+    if (dark) { ctx.fillStyle = `rgba(0,0,0,${0.55 * dark})`; ctx.fillRect(0, 0, W, H); }
+    if (sc.q < 1) { ctx.fillStyle = `rgba(0,0,0,${(1 - sc.q) * 2})`; ctx.fillRect(0, 0, W, H); }
+    drawOverlays(ctx, compiled, t, fx, fxk);
+    return;
+  }
+
   ctx.save();
   ctx.clearRect(0, 0, W, H);
   drawBackground(ctx, story.look.background, t, dark);
@@ -135,11 +150,12 @@ function drawFrame(ctx, compiled, t, layout, track, imgCache) {
   // camera: slow drift, zoom on dramatic moments, shake on surprises, heartbeat pulse
   let zoom = 1 + Math.sin(t * 0.25) * 0.006, ox = 0, oy = 0, focusY = PHONE.y + PHONE.h / 2;
   const zk = fxk("zoom");
-  if (zk) { const e = fx.find((f) => f.type === "zoom"); zoom += 0.16 * easeInOut(zk); const row = e.item.row; const scr = scrollAt(track, t); focusY = clamp(VIEW.y + row.y - scr + row.h / 2, PHONE.y + 300, PHONE.y + PHONE.h - 300); }
+  if (zk && fx.find((f) => f.type === "zoom").item.row) { const e = fx.find((f) => f.type === "zoom"); zoom += 0.16 * easeInOut(zk); const row = e.item.row; const scr = scrollAt(track, t); focusY = clamp(VIEW.y + row.y - scr + row.h / 2, PHONE.y + 300, PHONE.y + PHONE.h - 300); }
   const hb = fxk("heartbeat");
   if (hb) { const ph = (t * 1.6) % 1; zoom += hb * (ph < 0.15 ? Math.sin((ph / 0.15) * Math.PI) * 0.035 : ph > 0.3 && ph < 0.42 ? Math.sin(((ph - 0.3) / 0.12) * Math.PI) * 0.025 : 0); }
   const sk = fxk("shake");
   if (sk) { const r = rng(Math.floor(t * 60)); ox = (r() - 0.5) * 46 * sk; oy = (r() - 0.5) * 46 * sk; }
+  if (sc) oy += Math.pow(sc.q * 2, 2) * 900;   // the phone drops out of frame
   ctx.translate(540 + ox, focusY + oy); ctx.scale(zoom, zoom); ctx.translate(-540, -focusY);
 
   // hands, phone, screen
@@ -149,7 +165,22 @@ function drawFrame(ctx, compiled, t, layout, track, imgCache) {
   drawPhone(ctx, compiled, t, layout, track, theme, imgCache, typingMe);
   drawHandsFront(ctx, PHONE, story.look.skin, tap);
   ctx.restore();
+  if (sc) { ctx.fillStyle = `rgba(0,0,0,${sc.q * 2})`; ctx.fillRect(0, 0, W, H); }
+  drawOverlays(ctx, compiled, t, fx, fxk);
+}
 
+// q: 0 = the chat, 1 = the scene fully on screen
+function sceneAt(compiled, t) {
+  for (const it of compiled.items) {
+    if (it.side !== "scene" || (t < it.tStart && it.i !== 0) || t >= it.sceneEnd) continue;   // a story that opens on a scene shows it from frame one
+    const qIn = it.i === 0 ? 1 : clamp((t - it.tStart) / SCENE_IN), qOut = clamp((it.sceneEnd - t) / SCENE_OUT);
+    return { it, q: Math.min(qIn, qOut) };
+  }
+  return null;
+}
+
+function drawOverlays(ctx, compiled, t, fx, fxk) {
+  const hb = fxk("heartbeat");
   // full-frame effects
   const gk = fxk("glitch");
   if (gk > 0.02) glitch(ctx, t, gk);

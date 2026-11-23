@@ -16,8 +16,9 @@ const STORY_SCHEMA = {
     clock: { type: "string" }, chatTitle: { type: "string" },
     characters: { type: "array", items: { type: "object", additionalProperties: false, required: ["id", "name", "avatar", "voice"],
       properties: { id: { type: "string" }, name: { type: "string" }, avatar: { type: "string", enum: AVATARS }, voice: { type: "string", enum: VOICES } } } },
-    messages: { type: "array", items: { type: "object", additionalProperties: false, required: ["from", "type", "text", "image", "effect", "reaction", "pause"],
-      properties: { from: { type: "string" }, type: { type: "string", enum: ["text", "image", "system", "deleted", "missed-call"] }, text: { type: "string" },
+    messages: { type: "array", items: { type: "object", additionalProperties: false, required: ["from", "type", "text", "image", "effect", "reaction", "pause", "scene", "figure"],
+      properties: { from: { type: "string" }, type: { type: "string", enum: ["text", "image", "system", "deleted", "missed-call", "scene"] }, text: { type: "string" },
+        scene: { type: "string", enum: ["", "bedroom", "hallway", "kitchen", "basement", "living", "frontdoor"] }, figure: { type: "boolean" },
         image: { type: "string", enum: ["", ...IMAGES] }, effect: { type: "string", enum: EFFECTS }, reaction: { type: "string", enum: ["", "❤️", "😂", "😮", "😢", "😡", "👍", "‼️", "❓"] }, pause: { type: "number" } } } },
   },
 };
@@ -38,6 +39,7 @@ What makes them work:
 Format rules:
 - characters: the phone owner has id "me" and name "You". Other ids are short lowercase words ("x", "mom", "sam"). Use 2 characters for a private chat, 3-5 for a group chat (then set chatTitle to the group's name, otherwise "").
 - messages: from = a character id or "system". type "text" for normal messages; "image" with an image id from the list (text = optional caption); "system" (from "system") for events like "The hallway light flickers." or "1 hour later"; "missed-call"; "deleted".
+- scene: an optional full-screen cutaway with a narrator (type "scene", from "narrator", text = what the narrator says, third person, past tense, 1-2 sentences; scene = where it happens; figure = true if a shadow figure should appear). Use 0-5 of them, mostly in horror/suspense, to show the characters doing things and moving around between bursts of texts. For every other message, scene is "" and figure is false.
 - effect: use rarely, only on big moments: shake (surprise), zoom (a reveal), glitch (something impossible), flash, darken (lights out), heartbeat (dread). Most messages use "".
 - Wrap at most one or two important words per message in *asterisks* to highlight them in captions. Use this sparingly.
 - pause: extra seconds of silence before the next message (0 for most, 0.5-1.2 for dramatic beats).

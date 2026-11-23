@@ -105,8 +105,36 @@ function sfx(ctx, bus, cue, r) {
     case "fx-glitch": for (let k = 0; k < 7; k++) tone(ctx, bus, { t: t + k * 0.07, dur: 0.06, freq: 200 + r() * 2400, type: "square", gain: 0.06 }); hiss(ctx, bus, { t, dur: 0.5, gain: 0.1, freq: 4000, q: 0.5 }); break;
     case "fx-darken": tone(ctx, bus, { t, dur: 0.8, freq: 420, glideTo: 40, type: "sawtooth", gain: 0.12, cutoff: 900, release: 0.6 }); break;
     case "fx-heartbeat": for (let k = 0; k < 3; k++) { tone(ctx, bus, { t: t + k * 0.62, dur: 0.18, freq: 60, glideTo: 40, gain: 0.5 }); tone(ctx, bus, { t: t + k * 0.62 + 0.2, dur: 0.16, freq: 55, glideTo: 38, gain: 0.35 }); } break;
+    // ---- scene cutaways
+    case "scene-in": hiss(ctx, bus, { t, dur: 0.7, gain: 0.2, type: "lowpass", freq: 2600, freqTo: 180, attack: 0.25 }); tone(ctx, bus, { t: t + 0.45, dur: 1.4, freq: 72, glideTo: 34, gain: 0.4, release: 1.2 }); break;
+    case "figure":   // a dissonant sting with a swell into it
+      hiss(ctx, bus, { t: t - 0.7, dur: 0.75, gain: 0.16, type: "bandpass", freq: 400, freqTo: 5000, q: 1.5, attack: 0.65 });
+      [277, 392, 415, 554].forEach((f, i) => tone(ctx, bus, { t, dur: 2.2, freq: f, type: "sawtooth", gain: 0.05, cutoff: 1800, release: 1.8, detune: (i - 1.5) * 9 }));
+      tone(ctx, bus, { t, dur: 1.6, freq: 65, glideTo: 30, gain: 0.55, release: 1.4 }); break;
+    case "amb-bedroom": hiss(ctx, bus, { t, dur: cue.dur, gain: 0.04, type: "lowpass", freq: 380, attack: 0.5 }); tone(ctx, bus, { t, dur: cue.dur, freq: 118, gain: 0.02, attack: 0.5, release: 0.5 });
+      for (let x = t + 0.8; x < t + cue.dur - 0.5; x += 1.6 + r() * 1.4) tone(ctx, bus, { t: x, dur: 0.5, freq: 260 + r() * 60, glideTo: 180, type: "sawtooth", gain: 0.018, cutoff: 700, release: 0.4 }); break;
+    case "amb-hallway":
+      for (let x = t + 0.15; x < t + cue.dur - 0.3; x += 0.66) { tone(ctx, bus, { t: x, dur: 0.14, freq: 95, glideTo: 50, gain: 0.3 }); hiss(ctx, bus, { t: x, dur: 0.09, gain: 0.1, type: "lowpass", freq: 700 }); }
+      tone(ctx, bus, { t: t + 1.2, dur: 0.9, freq: 330, glideTo: 210, type: "sawtooth", gain: 0.035, cutoff: 900, release: 0.6 });
+      tone(ctx, bus, { t, dur: cue.dur, freq: 120, type: "square", gain: 0.012, cutoff: 380, attack: 0.3 }); break;
+    case "amb-kitchen": tone(ctx, bus, { t, dur: cue.dur, freq: 60, gain: 0.07, attack: 0.4 }); tone(ctx, bus, { t, dur: cue.dur, freq: 120, gain: 0.025, attack: 0.4 });
+      for (let x = t + 0.6; x < t + cue.dur; x += 1.3 + r() * 0.5) tone(ctx, bus, { t: x, dur: 0.18, freq: 1900, glideTo: 900, gain: 0.05, release: 0.15 }); break;
+    case "amb-basement": tone(ctx, bus, { t, dur: cue.dur, freq: 41, gain: 0.18, attack: 0.8 });
+      for (let x = t + 0.3; x < t + cue.dur; x += 2.1) tone(ctx, bus, { t: x, dur: 0.7, freq: 520, glideTo: 430, type: "sawtooth", gain: 0.02, cutoff: 1200, release: 0.5 });
+      for (let x = t + 1; x < t + cue.dur; x += 1.7 + r()) { tone(ctx, bus, { t: x, dur: 0.12, freq: 1400, glideTo: 700, gain: 0.06 }); tone(ctx, bus, { t: x + 0.28, dur: 0.12, freq: 1400, glideTo: 700, gain: 0.02 }); } break;
+    case "amb-living": hiss(ctx, bus, { t, dur: cue.dur, gain: 0.07, type: "bandpass", freq: 3200, q: 0.6, attack: 0.1 }); break;
+    case "amb-frontdoor": [0.05, 0.6, 1.15].forEach((k) => { tone(ctx, bus, { t: t + k, dur: 0.16, freq: 150, glideTo: 70, gain: 0.7 }); hiss(ctx, bus, { t: t + k, dur: 0.08, gain: 0.35, type: "lowpass", freq: 1100 }); });
+      hiss(ctx, bus, { t, dur: cue.dur, gain: 0.04, type: "lowpass", freq: 500, attack: 0.6 }); break;
+    case "amb-computer": tone(ctx, bus, { t, dur: cue.dur, freq: 110, gain: 0.025, attack: 0.4 }); hiss(ctx, bus, { t, dur: cue.dur, gain: 0.025, type: "lowpass", freq: 600, attack: 0.4 }); break;
     default: break;
   }
+}
+
+// A dark room reverb (generated impulse response) for the creepy narrator.
+function reverb(ctx, seconds = 2.6) {
+  const len = Math.floor(ctx.sampleRate * seconds), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+  const conv = ctx.createConvolver(); conv.buffer = ir; return conv;
 }
 
 // narration: { buffers: Map(messageId -> AudioBuffer) }
@@ -116,8 +144,14 @@ export async function renderMix(compiled, narration, opts = {}) {
   const ctx = new OfflineAudioContext(2, Math.ceil(dur * SAMPLE_RATE), SAMPLE_RATE);
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 3; comp.attack.value = 0.005; comp.release.value = 0.2;
   const out = ctx.createGain(); out.gain.value = 0.95; comp.connect(out); out.connect(ctx.destination);
-  const musicBus = ctx.createGain(), sfxBus = ctx.createGain(), voiceBus = ctx.createGain();
-  [musicBus, sfxBus, voiceBus].forEach((b) => b.connect(comp));
+  const musicBus = ctx.createGain(), sfxBus = ctx.createGain(), voiceBus = ctx.createGain(), narratorBus = ctx.createGain();
+  [musicBus, sfxBus, voiceBus, narratorBus].forEach((b) => b.connect(comp));
+  narratorBus.gain.value = 1.2;
+  if (story.narration.narratorFx === "creepy") {   // low, roomy, a little too close
+    const low = ctx.createBiquadFilter(); low.type = "lowshelf"; low.frequency.value = 220; low.gain.value = 5;
+    const rv = reverb(ctx), wet = ctx.createGain(); wet.gain.value = 0.42;
+    narratorBus.disconnect(); narratorBus.connect(low); low.connect(comp); low.connect(rv); rv.connect(wet); wet.connect(comp);
+  }
   const mv = (story.audio.musicVolume ?? 0.55) * 0.9, sv = story.audio.sfxVolume ?? 0.8;
   musicBus.gain.value = mv; sfxBus.gain.value = sv; voiceBus.gain.value = 1.15;
 
@@ -131,8 +165,9 @@ export async function renderMix(compiled, narration, opts = {}) {
   if (buffers) for (const it of compiled.items) {
     const b = it.narration && buffers.get(it.msg.id);
     if (!b) continue;
-    const s = ctx.createBufferSource(); s.buffer = b; s.connect(voiceBus); s.start(it.narration.start);
-    musicBus.gain.setTargetAtTime(mv * 0.42, Math.max(0, it.narration.start - 0.05), 0.06);
+    const narrator = it.side === "scene" || it.side === "center";
+    const s = ctx.createBufferSource(); s.buffer = b; s.connect(narrator ? narratorBus : voiceBus); s.start(it.narration.start);
+    musicBus.gain.setTargetAtTime(mv * (narrator ? 0.3 : 0.42), Math.max(0, it.narration.start - 0.05), 0.06);
     musicBus.gain.setTargetAtTime(mv, it.narration.start + b.duration, 0.25);
   }
   // fade the music out at the end

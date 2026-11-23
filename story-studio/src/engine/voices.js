@@ -1,6 +1,6 @@
 // Narration: each message is spoken in its character's voice by the Studio server (Kokoro, free, local).
 import { decode } from "./audio.js";
-import { narrationText } from "./timeline.js";
+import { narrationText, voiceFor } from "./timeline.js";
 
 const cache = new Map();   // "voice|speed|text" -> AudioBuffer
 
@@ -24,15 +24,14 @@ async function line(text, voice, speed) {
 
 // Generates (or reuses) every narration line. onProgress(done, total)
 export async function buildNarration(story, onProgress = () => {}, signal) {
-  const chars = Object.fromEntries(story.characters.map((c) => [c.id, c]));
   const todo = story.messages.map((m) => ({ m, text: narrationText(m, story) })).filter((x) => x.text);
   const buffers = new Map(), durations = {};
   let done = 0;
   onProgress(0, todo.length);
   for (const { m, text } of todo) {
     if (signal?.aborted) throw new DOMException("cancelled", "AbortError");
-    const voice = chars[m.from]?.voice || "af_sky";
-    const b = await line(text, voice, story.narration.speed || 1);
+    const { voice, speed } = voiceFor(m, story);
+    const b = await line(text, voice, speed);
     buffers.set(m.id, b); durations[m.id] = b.duration;
     onProgress(++done, todo.length);
   }
@@ -41,17 +40,17 @@ export async function buildNarration(story, onProgress = () => {}, signal) {
 
 // What is already cached for this story (so the preview can use voices instantly after the first build).
 export function cachedNarration(story) {
-  const chars = Object.fromEntries(story.characters.map((c) => [c.id, c]));
   const buffers = new Map(), durations = {};
   let missing = 0;
   for (const m of story.messages) {
     const text = narrationText(m, story); if (!text) continue;
-    const b = cache.get(`${chars[m.from]?.voice || "af_sky"}|${story.narration.speed || 1}|${text}`);
+    const { voice, speed } = voiceFor(m, story);
+    const b = cache.get(`${voice}|${speed}|${text}`);
     if (b) { buffers.set(m.id, b); durations[m.id] = b.duration; } else missing++;
   }
   return { buffers, durations, missing };
 }
 
-export async function sampleVoice(voice, text = "Hey, it's me. Don't open the door.") {
-  return line(text, voice, 1);
+export async function sampleVoice(voice, text = "Hey, it's me. Don't open the door.", speed = 1) {
+  return line(text, voice, speed);
 }

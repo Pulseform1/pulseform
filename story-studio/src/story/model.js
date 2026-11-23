@@ -51,7 +51,14 @@ export const EFFECTS = [
 ];
 export const MESSAGE_TYPES = [
   { id: "text", label: "Text" }, { id: "image", label: "Image" }, { id: "system", label: "System note" },
-  { id: "deleted", label: "Deleted message" }, { id: "missed-call", label: "Missed call" },
+  { id: "deleted", label: "Deleted message" }, { id: "missed-call", label: "Missed call" }, { id: "scene", label: "Scene + narrator" },
+];
+
+// Full-screen places the story cuts away to (the phone slides away, the narrator speaks over the scene).
+export const SCENES = [
+  { id: "bedroom", label: "Bedroom at night (computer glowing)" }, { id: "hallway", label: "Dark hallway" }, { id: "kitchen", label: "Kitchen at night" },
+  { id: "basement", label: "Basement stairs" }, { id: "living", label: "Living room (TV static)" }, { id: "frontdoor", label: "Front door (someone knocking)" },
+  { id: "computer", label: "Pulsebox on a computer screen" },
 ];
 
 // Kokoro voices (free, run locally by the Studio server).
@@ -107,18 +114,23 @@ export function normalizeStory(s = {}) {
   }));
   if (!characters.some((c) => c.id === "me")) characters[0].id = "me";
   const ids = new Set(characters.map((c) => c.id));
-  const messages = (s.messages || []).map((m) => ({
-    id: m.id || newId(), from: m.from === "system" || ids.has(m.from) ? m.from : m.type === "system" ? "system" : characters[1]?.id || "me",
-    type: ["text", "image", "system", "deleted", "missed-call"].includes(m.type) ? m.type : "text",
-    text: String(m.text ?? ""), image: m.image || "", pause: Number(m.pause) || 0, effect: m.effect || "", reaction: m.reaction || "", typing: m.typing !== false,
-  }));
+  const messages = (s.messages || []).map((m) => {
+    const type = ["text", "image", "system", "deleted", "missed-call", "scene"].includes(m.type) ? m.type : m.from === "narrator" ? "scene" : "text";
+    return {
+      id: m.id || newId(), type,
+      from: type === "scene" ? "narrator" : m.from === "system" || ids.has(m.from) ? m.from : type === "system" ? "system" : characters[1]?.id || "me",
+      text: String(m.text ?? ""), image: m.image || "", pause: Number(m.pause) || 0, effect: m.effect || "", reaction: m.reaction || "", typing: m.typing !== false,
+      scene: type === "scene" ? m.scene || "hallway" : "", figure: type === "scene" && !!m.figure,
+      say: m.say ? String(m.say) : "",   // optional: how the voice should say it (e.g. "box dot pulseform dot org"), captions keep the text
+    };
+  });
   return {
     version: 1, id: s.id || newId(), title: s.title || "Untitled story", genre, duration: [15, 30, 45, 60, 90, 120, 180].includes(+s.duration) ? +s.duration : 60,
     hook: s.hook ?? "", outro: s.outro ?? "", chatTitle: s.chatTitle || "", chatStatus: s.chatStatus || "", clock: s.clock || "11:42",
     group: !!s.group || characters.length > 2, characters, messages,
     look: { background: s.look?.background || genre, chatTheme: s.look?.chatTheme || "violet", skin: s.look?.skin || SKINS[1], hookStyle: s.look?.hookStyle || "banner", ...(s.look || {}) },
     captions: { style: "pop", font: genre === "horror" ? "Creepster" : "Luckiest Guy", size: 1, position: 0.79, highlight: genre === "horror" ? "#ff3d6e" : "#c6ff3d", ...(s.captions || {}) },
-    narration: { enabled: true, speed: 1, includeImages: false, ...(s.narration || {}) },
+    narration: { enabled: true, speed: 1, includeImages: false, narrator: genre === "horror" ? "am_onyx" : "bm_george", narratorSpeed: 0.92, narratorFx: genre === "horror" ? "creepy" : "none", systemNotes: false, ...(s.narration || {}) },
     audio: { music: "auto", musicVolume: 0.55, sfxVolume: 0.8, ...(s.audio || {}) },
     pacing: { fit: true, speed: 1, ...(s.pacing || {}) },
   };
