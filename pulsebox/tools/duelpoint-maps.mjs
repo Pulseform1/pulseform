@@ -490,10 +490,34 @@ function check(def) {
 // arrives, chosen for how tucked away they are (in a corner, behind a half wall or a crate, at a window, up on a ledge, in
 // the dark under a roof), and up to two close ones just inside the entry that cannot be seen from the approach (the corner
 // you have to check as you come through). And one on each site.
+// every way in, walked from the attackers' spawn to its entry, as points about a metre apart (the entry itself and the last
+// metre or so before it left out). A hold should be seen only from the way in it watches, never from another one.
+function approaches(def) {
+  const out = {};
+  for (const [name, pts] of Object.entries(def.routes)) {
+    let a = T.SPAWN.att[0]; if (def.split) { const p0 = [pts[0][0] * 2, pts[0][1] * 2]; a = T.SPAWN.att.reduce((b, p) => Math.hypot(p[0] - p0[0], p[1] - p0[1]) < Math.hypot(b[0] - p0[0], b[1] - p0[1]) ? p : b); }
+    const brk = def.rbrk && def.rbrk[name]; if (brk != null) T.setWall(brk, false);
+    let x = a[0], z = a[1]; const path = [[x, z]];
+    for (const p of pts.map(q => [q[0] * 2, q[1] * 2])) { for (const w of T.findPath(x, z, p[0], p[1])) path.push(w); [x, z] = after(p); if (x !== p[0] || z !== p[1]) path.push(null); }
+    if (brk != null) T.resetMech();
+    const E = [pts[pts.length - 1][0] * 2, pts[pts.length - 1][1] * 2], dense = [];
+    for (let k = 0; k + 1 < path.length; k++) { const a2 = path[k], c2 = path[k + 1]; if (!a2 || !c2) continue; const n = Math.max(1, Math.ceil(Math.hypot(c2[0] - a2[0], c2[1] - a2[1]))); for (let q = 0; q < n; q++) { const pt = [lp(a2[0], c2[0], q / n), lp(a2[1], c2[1], q / n)]; if (Math.hypot(pt[0] - E[0], pt[1] - E[1]) > 1.8) dense.push(pt); } }
+    out[name] = { E, pts: dense };
+  }
+  return out;
+}
+// defender holds: the places a defender may be waiting. For each way in: up to three spots near the site that watch where it
+// arrives, chosen for how tucked away they are (in a corner, behind a half wall or a crate, at a window, up on a ledge, in
+// the dark under a roof), and up to two close ones just inside the entry that cannot be seen from anywhere on the approach
+// (the corner you have to check as you come through). None of them can be seen from another way in (a defender watching
+// one door, shot in the side from down another lane, was the strongest spot on two maps). And one on each site, as hidden
+// from every approach as the site allows.
 function holdsFor(def, seed) {
   load(def);
-  const R = rng(seed), out = [], [W, H] = T.size(), ch = (i, j) => (def.src[j] || '')[i] || '#';
+  const R = rng(seed), out = [], [W, H] = T.size(), ch = (i, j) => (def.src[j] || '')[i] || '#', AP = approaches(def);
   const dark = (i, j) => (def.roofs || []).some(r => i >= r.r[0] && i <= r.r[2] && j >= r.r[1] && j <= r.r[3]);
+  const seenFrom = (p, pts, skip = 0) => { for (let k = 0; k < pts.length; k++) { const q = pts[k]; if (Math.hypot(q[0] - p[0], q[1] - p[1]) > 4 && sees(q, p)) { if (skip-- <= 0) return true; } } return false; };
+  const others = lane => { const e = AP[lane].E; return Object.entries(AP).filter(([n, a]) => Math.hypot(a.E[0] - e[0], a.E[1] - e[1]) > 2).flatMap(([, a]) => a.pts.filter((q, k) => k % 2 === 0)); };
   const score = (i, j, E) => { let tuck = 0; for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) if ((a || b) && !T.NAV[T.idx(i + a, j + b)]) tuck++;
     const dx = E[0] / 2 - (i + .5), dz = E[1] / 2 - (j + .5), sx = Math.abs(dx) > .6 ? Math.sign(dx) : 0, sz = Math.abs(dz) > .6 ? Math.sign(dz) : 0;
     const front = [[sx, sz], [Math.abs(dx) >= Math.abs(dz) ? sx : 0, Math.abs(dx) >= Math.abs(dz) ? 0 : sz]].some(([a, b]) => (a || b) && 'hwc'.includes(ch(i + a, j + b)));
@@ -504,16 +528,23 @@ function holdsFor(def, seed) {
   for (const [lane, pts] of Object.entries(def.routes)) {
     const s = def.rsite ? def.rsite[lane] : 0, e = pts[pts.length - 1], E = [e[0] * 2, e[1] * 2], S = T.SITES[s].c, far = [], near = [];
     if (out.some(h => h.s === s && Math.hypot(h.look[0] - e[0], h.look[1] - e[1]) < 1)) continue;   // two ways that arrive at the same door share its holds
-    const b = pts.length > 1 ? pts[pts.length - 2] : null, B = b ? [b[0] * 2, b[1] * 2] : T.SPAWN.att[0];   // where the attackers come from
+    const mine = AP[lane].pts, other = others(lane);
     for (let j = 1; j < H - 1; j++) for (let i = 1; i < W - 1; i++) {
       const k = T.idx(i, j); if (!T.NAV[k] || 'AD'.includes(def.src[j][i]) || T.TPX[k] >= 0 || T.PADX[k] >= 0) continue;
-      const p = [i * 2 + 1, j * 2 + 1], dS = Math.hypot(p[0] - S[0], p[1] - S[1]), dE = Math.hypot(p[0] - E[0], p[1] - E[1]); if (!sees(p, E)) continue;
-      if (dS < 16 && dE > 7 && dE < 24) { const w = score(i, j, E); far.push({ p, w: w * w }); }
-      else if (dE > 2.4 && dE <= 7 && dS < Math.hypot(E[0] - S[0], E[1] - S[1]) + 1 && !sees(p, B)) { const w = score(i, j, E); near.push({ p, w: w * w }); }
+      const p = [i * 2 + 1, j * 2 + 1], dS = Math.hypot(p[0] - S[0], p[1] - S[1]), dE = Math.hypot(p[0] - E[0], p[1] - E[1]);
+      if (!sees(p, E) && !sees(p, [E[0] + (p[0] - E[0]) / dE * 1.2, E[1] + (p[1] - E[1]) / dE * 1.2])) continue;   // (or the near face of the entry: some sit in a doorway or a breakable wall)
+      if (dS < 16 && dE > 7 && dE < 24) { const w = score(i, j, E); far.push({ p, w: w * w, seen: other.reduce((n, q) => n + (Math.hypot(q[0] - p[0], q[1] - p[1]) > 4 && sees(q, p) ? 1 : 0), 0) }); }
+      else if (dE > 2.4 && dE <= 7 && dS < Math.hypot(E[0] - S[0], E[1] - S[1]) + 1 && !seenFrom(p, mine) && !seenFrom(p, other)) { const w = score(i, j, E); near.push({ p, w: w * w }); }
     }
-    take(far, 3, lane, s, e); take(near, 2, lane, s, e);
+    // hidden from every other way in if any spot is; failing that, the spots seen from the fewest points of them
+    const least = far.length ? Math.min(...far.map(q => q.seen)) : 0; if (least > 0) console.log(`  (${def.n} ${lane}: every hold is seen from another way in; using the least seen, ${least} points)`);
+    take(far.filter(q => q.seen === least), 3, lane, s, e); take(near, 2, lane, s, e);
   }
-  T.SITES.forEach((S, s) => { const lanes = Object.keys(def.routes).filter(l => (def.rsite ? def.rsite[l] : 0) === s), e = def.routes[lanes[0]].slice(-1)[0]; out.push({ p: [S.c[0] / 2, S.c[1] / 2], look: e, lane: 'any', s }); });
+  // on each site: the cell seen from the fewest approach points (ties: nearest the middle)
+  const all = Object.values(AP).flatMap(a => a.pts.filter((q, k) => k % 2 === 0));
+  T.SITES.forEach((S, s) => { const lanes = Object.keys(def.routes).filter(l => (def.rsite ? def.rsite[l] : 0) === s), e = def.routes[lanes[0]].slice(-1)[0];
+    let best = null, bv = 1e9; for (const c of S.cells) { const v = all.reduce((n, q) => n + (Math.hypot(q[0] - c[0], q[1] - c[1]) > 4 && sees(q, c) ? 1 : 0), 0) * 10 + Math.hypot(c[0] - S.c[0], c[1] - S.c[1]); if (v < bv) { bv = v; best = c; } }
+    out.push({ p: [best[0] / 2, best[1] / 2], look: e, lane: 'any', s }); });
   return out;
 }
 function show(def) {

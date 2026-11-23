@@ -64,6 +64,14 @@
     }
     goTo(P, f, h.p[0], h.p[1]); return P;
   }
+  // a defender's call: attackers seen at site s (by key, so one seen twice is still one); two in five seconds make the call
+  function teamSaw(team, s, key) {
+    if (s < 0) return; M.seenAt = M.seenAt || {}; const k = team + ':' + s, m = M.seenAt[k] = M.seenAt[k] || new Map(); m.set(key, M.time);
+    let n = 0; for (const t of m.values()) if (M.time - t < 5) n++; if (n >= 2) callSite(team, s);
+  }
+  function callSite(team, s) { M.calls = M.calls || {}; const C = M.calls[team]; if (C && C.s === s && M.time - C.t < 20) return; M.calls[team] = { s, t: M.time, id: (C ? C.id : 0) + 1 }; }
+  on('kill', v => { if (!M || M.planted || !twoSites() || !v || sideOf(v) !== 'def') return; const S = nearestSite(v.x, v.z); if (Math.hypot(S.c[0] - v.x, S.c[1] - v.z) < 18) callSite(v.team, SITES.indexOf(S)); });
+  on('round', () => { if (M) { M.calls = {}; M.seenAt = {}; } });
   // a big team does not all run to one noise: at most two watch a way in, and the last defender on a site stays on it
   function mayRotate(f, lane) {
     const mates = M.fs.filter(o => o !== f && o.team === f.team && o.alive); if (mates.length < 2) return true;   // two left (or one): as ever
@@ -182,7 +190,15 @@
 
     // --- the plan
     if (!B.plan) B.plan = side === 'att' ? planAttack(f) : planHold(f, null);
-    if (M.planted && side === 'def' && B.plan.k !== 'retake') { B.plan = { k: 'retake' }; goTo(B.plan, f, M.planted.x, M.planted.z); }
+    // the retake: from far off, first to a spot about 16 m out on the way in, and in together once a second defender is
+    // there too (or alone, if the clock says there is no time to wait). Running in one at a time, they were picked off at
+    // nearly three to one.
+    if (M.planted && side === 'def' && B.plan.k !== 'retake') { B.plan = { k: 'retake' }; goTo(B.plan, f, M.planted.x, M.planted.z);
+      const C = M.planted, far = Math.hypot(C.x - f.x, C.z - f.z), mates = M.fs.filter(o => o.team === f.team && o.alive).length;
+      if (far > 20 && mates > 1 && B.diff > 0) { const g = (B.plan.path || []).find(q => Math.hypot(q[0] - C.x, q[1] - C.z) < 17); if (g) { B.plan.wait = true; B.plan.gather = g; goTo(B.plan, f, g[0], g[1]); } } }
+    if (B.plan.k === 'retake' && B.plan.wait && M.planted) { const C = M.planted, Pw = B.plan, need = Math.hypot(C.x - f.x, C.z - f.z) / SPD + DEFUSE_T + 4;
+      const ready = M.fs.filter(o => o !== f && o.team === f.team && o.alive && Math.hypot(o.x - C.x, o.z - C.z) < 19).length;
+      if (ready >= 1 || C.t < need || sees) { Pw.wait = false; goTo(Pw, f, C.x, C.z); } }
     if (M.planted && side === 'att' && B.plan.k !== 'post') { const s = watchSpot(M.planted.x, M.planted.z, 5, 13); B.plan = { k: 'post', look: [M.planted.x, M.planted.z], crouch: R() < .5 }; goTo(B.plan, f, s[0], s[1]); }
     // the charge on the floor: the nearest attacker goes for it (unless a teammate is nearer: a bot, or a person almost on it)
     if (side === 'att' && !M.planted && M.charge && !M.charge.k && B.plan.k !== 'fetch' && B.plan.k !== 'cover') {
@@ -193,6 +209,21 @@
     let P = B.plan;
     if (P.k === 'hold' && B.diff > 0 && B.last && B.last.heard && M.time - B.last.t < .3 && !(P.until > M.time)) {   // turn to face the lane the noise came from
       const lane = laneOf(B.last.x, B.last.z); if (lane !== 'any' && lane !== P.lane && mayRotate(f, lane)) { P = B.plan = planHold(f, lane); P.until = M.time + 7; }
+    }
+    // team calls (two- and three-site maps): what one defender sees, the whole side knows. Two attackers seen at a site, or a
+    // defender killed there, is a call ("they're on B"); defenders holding another site go to help after a moment to react,
+    // all but one, who stays there as its anchor. (Without it they rotated only on a noise they heard themselves, so a
+    // full push met two defenders and the charge went down nine rounds in ten.)
+    if (side === 'def' && twoSites() && !M.planted) {
+      if (sees || (B.last && B.last.heard && B.last.t === M.time && e.alive && Math.hypot(e.x - B.last.x, e.z - B.last.z) < 2)) { const S = nearestSite(e.x, e.z); if (Math.hypot(S.c[0] - e.x, S.c[1] - e.z) < (sees ? 22 : 28)) teamSaw(f.team, SITES.indexOf(S), e.key); }   // (seen, or their footsteps heard on the way in)
+      const C = M.calls && M.calls[f.team];
+      if (C && P.k === 'hold' && f.bot.hs != null && f.bot.hs !== C.s && B.rotFor !== C.id && !sees) {
+        if (B.rotWait !== C.id) { B.rotWait = C.id; B.rotAt = M.time + (B.diff >= 2 ? .6 : B.diff === 1 ? 1.4 : 2.6) + R() * .8; }
+        else if (M.time >= B.rotAt) { B.rotFor = C.id;
+          const staying = M.fs.filter(o => o.team === f.team && o.alive && o.bot && o.bot.hs === f.bot.hs && o.bot.rotFor !== C.id && o.bot.plan && o.bot.plan.k === 'hold').length;
+          const lane = Object.keys(ROUTES).find(l => RSITE[l] === C.s);
+          if (staying >= 1 && lane) { B.rotFrom = f.bot.hs; P = B.plan = planHold(f, lane); P.until = M.time + 12; } }   // (staying counts the others still holding here: the last one stays)
+      }
     }
     if (P.k === 'hold' && !sees && B.last && !B.last.heard && B.lostT > 3.5 && B.lostT < 3.6 && R() < .25 + .15 * B.diff) { P = B.plan = { k: 'hunt' }; goTo(P, f, B.last.x, B.last.z); }
     if (P.k === 'push' && M.t < 28 && P.pts.length) P.pts.length = 0;   // out of time: straight to the site
@@ -322,7 +353,7 @@
       if (P.k === 'push') { if (P.pts.length) { const q = P.pts.shift(); goTo(P, f, q[0], q[1]); } else if (!P.toSite) { P.toSite = true; goTo(P, f, P.site[0], P.site[1]); } }
       if (P.k === 'hunt' && !P.urgent) B.plan = planHold(f, null);
       if (P.k === 'fetch' && M.charge && !M.charge.k && !engaged) goal = [M.charge.x, M.charge.z];   // the last step onto it
-      if (P.k === 'retake' && M.planted && !engaged) { const dp = Math.hypot(M.planted.x - f.x, M.planted.z - f.z); if (dp > 1.1) { goal = [M.planted.x, M.planted.z]; if (M.planted.y > f.y + .4 && dp < 2.6 && f.ground) I.jump = true; } }   // the last step onto the charge
+      if (P.k === 'retake' && M.planted && !engaged && !P.wait) { const dp = Math.hypot(M.planted.x - f.x, M.planted.z - f.z); if (dp > 1.1) { goal = [M.planted.x, M.planted.z]; if (M.planted.y > f.y + .4 && dp < 2.6 && f.ground) I.jump = true; } }   // the last step onto the charge
       if (P.k === 'cover' && !engaged) I.crouch = B.diff > 1;
       if ((P.k === 'hold' || P.k === 'post') && P.crouch && !engaged) I.crouch = true;
     }
