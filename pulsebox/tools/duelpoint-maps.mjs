@@ -509,7 +509,7 @@ function holdsFor(def, seed) {
       const k = T.idx(i, j); if (!T.NAV[k] || 'AD'.includes(def.src[j][i]) || T.TPX[k] >= 0 || T.PADX[k] >= 0) continue;
       const p = [i * 2 + 1, j * 2 + 1], dS = Math.hypot(p[0] - S[0], p[1] - S[1]), dE = Math.hypot(p[0] - E[0], p[1] - E[1]); if (!sees(p, E)) continue;
       if (dS < 16 && dE > 7 && dE < 24) { const w = score(i, j, E); far.push({ p, w: w * w }); }
-      else if (dE > 2.4 && dE <= 7 && dS < Math.hypot(B[0] - S[0], B[1] - S[1]) && !sees(p, B)) { const w = score(i, j, E); near.push({ p, w: w * w }); }
+      else if (dE > 2.4 && dE <= 7 && dS < Math.hypot(E[0] - S[0], E[1] - S[1]) + 1 && !sees(p, B)) { const w = score(i, j, E); near.push({ p, w: w * w }); }
     }
     take(far, 3, lane, s, e); take(near, 2, lane, s, e);
   }
