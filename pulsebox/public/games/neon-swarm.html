@@ -35,6 +35,7 @@
   .slot canvas { width: 100%; height: 100%; display: block; }
   .slot b { position: absolute; right: 1px; bottom: -1px; font-family: var(--display); font-size: 10px; text-shadow: 0 0 3px #000, 0 0 3px #000; }
   .slot.evo { border-color: var(--gold); box-shadow: 0 0 8px rgba(255,210,63,.6); }
+  .slot.fus { border-color: var(--pink); box-shadow: 0 0 8px rgba(255,46,136,.6), inset 0 0 0 1px rgba(41,224,255,.7); }
   .pbtn { pointer-events: auto; width: 40px; height: 40px; border-radius: 10px; background: rgba(10,12,20,.8); border: 1px solid var(--edge); font-family: var(--display); font-size: 16px; }
   .bossbar { position: absolute; left: 50%; top: 58px; transform: translateX(-50%); width: min(560px, 70vw); text-align: center; }
   .bossbar .nm { font-family: var(--display); font-weight: 700; letter-spacing: .2em; font-size: 14px; color: var(--red); text-shadow: 0 0 10px rgba(255,59,92,.8); }
@@ -151,6 +152,20 @@
   .banmode .card:hover::after { opacity: 1; }
   .chestlist { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
   .evobig { text-align: center; padding: 20px; border: 1px solid var(--gold); border-radius: 16px; background: radial-gradient(circle at 50% 0, rgba(255,210,63,.25), transparent 70%); }
+  .fusbig { text-align: center; padding: 18px 16px; border: 1px solid var(--f1); border-radius: 16px; background: radial-gradient(circle at 30% 0, color-mix(in srgb, var(--f1) 28%, transparent), transparent 65%), radial-gradient(circle at 70% 0, color-mix(in srgb, var(--f2) 22%, transparent), transparent 65%); box-shadow: 0 0 24px color-mix(in srgb, var(--f1) 30%, transparent); }
+  .fusbig .nm { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 5vw, 34px); letter-spacing: .06em; color: #fff; text-shadow: 0 0 18px var(--f1), 2px 0 var(--f1), -2px 0 var(--f2); }
+  .fusbig .fds { font-size: 16px; margin-top: 6px; }
+  .recipe { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 4px; }
+  .recipe canvas { border-radius: 9px; border: 1px solid var(--edge); }
+  .item .recipe { justify-content: flex-start; margin: 0; }
+  .item.fusi.seen { border-color: color-mix(in srgb, var(--f1) 60%, var(--edge)); background: linear-gradient(160deg, color-mix(in srgb, var(--f1) 12%, #0d1018), #0d1018 60%); }
+  .item.fusi.seen .nm { color: var(--f1); text-shadow: 0 0 10px color-mix(in srgb, var(--f1) 50%, transparent); }
+  .card .fh { font-size: 12px; font-weight: 700; color: var(--pink); }
+  .build { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0 0 10px; }
+  .build .bt { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 9px; border: 1px solid var(--edge); background: #0d1018; font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; }
+  .build .bt canvas { border-radius: 6px; }
+  .build .bt.evo { border-color: var(--gold); color: var(--gold); }
+  .build .bt.fus { border-color: var(--f1); color: #fff; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--f2) 40%, transparent); }
   .evobig .nm { font-family: var(--display); font-weight: 700; font-size: 34px; letter-spacing: .06em; color: var(--gold); text-shadow: 0 0 20px rgba(255,210,63,.7); }
 
   /* results */
@@ -207,6 +222,7 @@
   .how div { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; }
   .how b.k { font-family: var(--display); color: var(--lime); font-size: 22px; line-height: 1; }
   @media (max-height: 520px) { .panel { padding: 12px; } .lvl { min-height: 110px; padding: 10px; } .lvl .num { font-size: 26px; } .cards { margin: 10px 0; } .card { padding: 10px; } }
+  @media (max-height: 520px) { .chestlist { gap: 6px; margin: 8px 0; } .evobig, .fusbig { padding: 8px 12px; } .evobig .nm, .fusbig .nm { font-size: 24px; } .evobig > div:last-child, .fusbig .fds { font-size: 14px !important; margin-top: 2px !important; } .fusbig .recipe { margin: 3px 0 0; } .fusbig .recipe canvas { width: 30px !important; height: 30px !important; } #scrChest .lvtitle { font-size: 30px; } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }
 </style>
 
@@ -310,6 +326,7 @@
     <div class="bigstars" id="resStars"></div>
     <div class="starreq" id="resReq"></div>
     <div class="kv" id="resKv"></div>
+    <div class="build" id="resBuild" hidden></div>
     <div class="earn" id="resEarn"></div>
     <div class="row" style="justify-content:space-between">
       <div class="row"><button class="btn" id="resMap">Levels</button><button class="btn" id="resShop">Workshop</button></div>
@@ -343,7 +360,7 @@
       <div><b class="k">1</b><span><b>Move</b> with WASD or the arrow keys. On a phone, drag anywhere. That's it: your weapons fire on their own.</span></div>
       <div><b class="k">2</b><span><b>Grab the crystals</b> enemies drop. Fill the bar at the top to level up and pick a new weapon or upgrade.</span></div>
       <div><b class="k">3</b><span><b>Survive</b> until the timer runs out, then beat the boss to clear the level.</span></div>
-      <div><b class="k">4</b><span><b>Evolve!</b> Max out a weapon, own its matching upgrade, then open a treasure chest from an elite.</span></div>
+      <div><b class="k">4</b><span><b>Evolve and fuse!</b> Max out a weapon and own its matching upgrade, or get two weapons that fuse to level <span class="fuseLv">6</span>, then open a treasure chest from an elite. Recipes are in the Workshop.</span></div>
       <div><b class="k">5</b><span><b>Spend chips</b> in the Workshop on upgrades, robots, weapons and paint jobs.</span></div>
     </div>
     <div class="row" style="justify-content:center;margin-top:16px"><button class="btn go" id="howOk">Let's go</button></div>
@@ -476,6 +493,26 @@ const EVOLUTIONS = [
   { weapon: 'meteor', passive: 'core', name: 'Armageddon', desc: 'It rains meteors.' }
 ];
 
+/* ---------- fusions: two weapons at FUSE_LEVEL + a chest = a brand new attack (both weapons stay) ---------- */
+const FUSIONS = [
+  { id: 'flak', a: 'blaster', b: 'scatter', name: 'Flak Bloom', col: '#ff5fa2', col2: '#29e0ff', desc: 'Lobs shells into crowds that burst into a ring of shrapnel.' },
+  { id: 'lockon', a: 'blaster', b: 'missiles', name: 'Lock-On Volley', col: '#ffb52e', col2: '#29e0ff', desc: 'Locks onto the toughest enemy, then hits it with a volley of mini missiles.' },
+  { id: 'seeker', a: 'blades', b: 'missiles', name: 'Seeker Saws', col: '#c6ff3d', col2: '#ffb52e', desc: 'Saws fly off, latch onto enemies and grind them down.' },
+  { id: 'mirror', a: 'blades', b: 'disc', name: 'Mirror Shell', col: '#e8fbff', col2: '#3dffc6', desc: 'Spinning mirrors shove enemies away and bounce enemy shots back.' },
+  { id: 'gravity', a: 'nova', b: 'aura', name: 'Gravity Well', col: '#b45cff', col2: '#ff2e88', desc: 'Opens a vortex in the crowd that drags enemies in, then collapses.' },
+  { id: 'cryo', a: 'nova', b: 'scatter', name: 'Cryo Shatter', col: '#9fe8ff', col2: '#ffffff', desc: 'A frost wave freezes enemies. Frozen enemies burst into ice shards.' },
+  { id: 'skylance', a: 'laser', b: 'meteor', name: 'Sky Lance', col: '#ffd23f', col2: '#ff3b5c', desc: 'A beam from orbit lands and chases enemies, burning all in its path.' },
+  { id: 'tripwire', a: 'laser', b: 'mines', name: 'Tripwire Grid', col: '#ff3b5c', col2: '#ff7a1a', desc: 'Drops pylons around you that link up into a web of laser fences.' },
+  { id: 'magma', a: 'aura', b: 'meteor', name: 'Magma Wake', col: '#ff7a1a', col2: '#ffd23f', desc: 'You leave burning ground behind you, and the oldest patches erupt.' },
+  { id: 'ricochet', a: 'disc', b: 'chain', name: 'Ricochet Prism', col: '#3dffc6', col2: '#fff36b', desc: 'A prism that bounces from enemy to enemy, sparking on every hit.' },
+  { id: 'tether', a: 'drone', b: 'chain', name: 'Ion Tether', col: '#fff36b', col2: '#6bffea', desc: 'Orbs circle you, tied to you by lightning that cuts through enemies.' },
+  { id: 'sentry', a: 'drone', b: 'mines', name: 'Sentry Nest', col: '#6bb8ff', col2: '#ff7a1a', desc: 'Drops turrets that shoot nearby enemies, then blow up.' }
+];
+const fusionById = id => FUSIONS.find(f => f.id === id);
+// both weapons must reach this level. 6 (not max) so fusions show up in a fair share of normal levels;
+// at 8 they only appeared in Endless-length runs. Every text that states the level reads this value.
+const FUSE_LEVEL = 6;
+
 /* ---------- robots ---------- */
 const ROBOTS = [
   { id: 'volt', name: 'Volt', price: 0, weapon: 'blaster', perk: 'Balanced. A good first robot.', hp: 120, spd: 1, shape: 'round' },
@@ -576,6 +613,7 @@ const CHALLENGES = [
   { id: 'w2', text: 'Beat Toxic Sewers', stat: 'worlds', n: 2, pay: 700 },
   { id: 'stars15', text: 'Earn 15 stars', stat: 'stars', n: 15, pay: 500 },
   { id: 'evo3', text: 'Evolve 3 different weapons', stat: 'evoKinds', n: 3, pay: 800 },
+  { id: 'fuse1', text: 'Fuse two weapons', stat: 'fuses', n: 1, pay: 500 },
   { id: 'w3', text: 'Beat Frost Server', stat: 'worlds', n: 3, pay: 1000 },
   { id: 'nohit', text: 'Clear a level without dropping below half health', stat: 'healthy', n: 1, pay: 600 },
   { id: 'robot5', text: 'Unlock 5 robots', stat: 'robots', n: 5, pay: 900 },
@@ -583,7 +621,9 @@ const CHALLENGES = [
   { id: 'k3000', text: 'Destroy 3,000 enemies in one run', stat: 'killsRun', n: 3000, pay: 1200 },
   { id: 'stars45', text: 'Earn 45 stars', stat: 'stars', n: 45, pay: 1500 },
   { id: 'w5', text: 'Beat Void Arcade', stat: 'worlds', n: 5, pay: 2000 },
+  { id: 'fuse4', text: 'Discover 4 different fusions', stat: 'fuseKinds', n: 4, pay: 1500 },
   { id: 'endless10', text: 'Survive 10 minutes in any Endless mode', stat: 'endless', n: 600, pay: 2500 },
+  { id: 'fuse12', text: 'Discover all 12 fusions', stat: 'fuseKinds', n: 12, pay: 6000 },
   { id: 'w6', text: 'Beat the Glitch Throne', stat: 'worlds', n: 6, pay: 5000 },
   { id: 'stars90', text: 'Earn all 90 stars', stat: 'stars', n: 90, pay: 10000 }
 ];
@@ -593,14 +633,19 @@ const SAVE_KEY = 'neonswarm-save';
 const DEFAULT = {
   chips: 0, perm: {}, robot: 'volt', paint: 'cyan', fx: 'default',
   own: { robots: ['volt'], weapons: STARTER_WEAPONS.slice(), paints: ['cyan'], fx: ['default'] },
-  boost: {}, stars: {}, cleared: {}, best: {}, endless: {}, done: {}, stat: {}, evoSeen: {}, sound: true, music: true, runs: 0, tutorial: false
+  boost: {}, stars: {}, cleared: {}, best: {}, endless: {}, done: {}, stat: {}, evoSeen: {}, fuseSeen: {}, sound: true, music: true, runs: 0, tutorial: false
 };
 for (const p of PERMS) DEFAULT.perm[p.id] = 0;
 let S = load();
 function load() {
   try {
     const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
-    if (raw) { const d = JSON.parse(JSON.stringify(DEFAULT)); return Object.assign(d, raw, { perm: Object.assign(d.perm, raw.perm || {}), own: Object.assign(d.own, raw.own || {}) }); }
+    if (raw) {
+      const d = JSON.parse(JSON.stringify(DEFAULT)), s = Object.assign(d, raw, { perm: Object.assign(d.perm, raw.perm || {}), own: Object.assign(d.own, raw.own || {}) });
+      // saves from before fusions existed simply have no fusion log yet
+      if (!s.fuseSeen || typeof s.fuseSeen !== 'object') s.fuseSeen = {};
+      return s;
+    }
   } catch (e) {}
   return JSON.parse(JSON.stringify(DEFAULT));
 }
@@ -814,8 +859,35 @@ function drawIcon(g, id, col, S2) {
     case 'crown': g.beginPath(); g.moveTo(-r, r * 0.5); g.lineTo(-r, -r * 0.4); g.lineTo(-r * 0.5, 0); g.lineTo(0, -r * 0.7); g.lineTo(r * 0.5, 0); g.lineTo(r, -r * 0.4); g.lineTo(r, r * 0.5); g.closePath(); g.fill(); break;
     case 'heal': g.fillRect(-r * 0.2, -r * 0.8, r * 0.4, r * 1.6); g.fillRect(-r * 0.8, -r * 0.2, r * 1.6, r * 0.4); break;
     case 'chips': g.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; g.lineTo(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8); } g.closePath(); g.stroke(); g.font = 'bold ' + Math.round(r) + 'px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('$', 0, r * 0.05); break;
+    case 'unknown': g.font = 'bold ' + Math.round(r * 1.6) + 'px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('?', 0, r * 0.08); break;
+    default: if (id.startsWith('fu_')) drawFusionIcon(g, id.slice(3), col, r, S2, line);
   }
   g.restore();
+}
+/* fusion icons: main color plus the fusion's second color */
+function drawFusionIcon(g, id, col, r, S2, line) {
+  const f = fusionById(id), c2 = f ? f.col2 : '#ffffff';
+  const two = () => { g.strokeStyle = c2; g.fillStyle = c2; g.shadowColor = c2; };
+  const dot = (x, y, s) => { g.beginPath(); g.arc(x, y, s, 0, TAU); g.fill(); };
+  switch (id) {
+    case 'flak': g.beginPath(); for (let i = 0; i < 12; i++) { const a = i / 12 * TAU, q = i % 2 ? r * 0.22 : r * 0.42; g.lineTo(Math.cos(a) * q, Math.sin(a) * q); } g.closePath(); g.fill(); two(); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU + 0.2; dot(Math.cos(a) * r * 0.85, Math.sin(a) * r * 0.85, r * 0.1); } break;
+    case 'lockon': for (let i = 0; i < 4; i++) { g.save(); g.rotate(i * Math.PI / 2); g.beginPath(); g.moveTo(-r * 0.85, -r * 0.4); g.lineTo(-r * 0.85, -r * 0.85); g.lineTo(-r * 0.4, -r * 0.85); g.stroke(); g.restore(); } two(); dot(0, 0, r * 0.18); for (let i = 0; i < 3; i++) dot(-r * 0.5 + i * r * 0.5, r * 0.45, r * 0.08); break;
+    case 'seeker': g.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, q = i % 2 ? r * 0.36 : r * 0.52; g.lineTo(r * 0.3 + Math.cos(a) * q, -r * 0.3 + Math.sin(a) * q); } g.closePath(); g.fill(); g.fillStyle = '#0d1018'; dot(r * 0.3, -r * 0.3, r * 0.12); two(); g.setLineDash([S2 * 0.05, S2 * 0.05]); g.beginPath(); g.moveTo(-r, r); g.quadraticCurveTo(-r * 0.6, -r * 0.1, -r * 0.1, -r * 0.1); g.stroke(); g.setLineDash([]); break;
+    case 'mirror': for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + 0.4; g.beginPath(); g.arc(0, 0, r * 0.85, a - 0.45, a + 0.45); g.stroke(); } two(); dot(0, 0, r * 0.2); line(r * 0.25, -r * 0.25, r * 0.55, -r * 0.55); break;
+    case 'gravity': g.beginPath(); for (let i = 0; i <= 40; i++) { const a = i / 40 * TAU * 1.8, q = r * (0.08 + 0.9 * i / 40); g.lineTo(Math.cos(a) * q, Math.sin(a) * q); } g.stroke(); two(); g.lineWidth = S2 * 0.04; g.beginPath(); g.arc(0, 0, r * 0.25, 0, TAU); g.stroke(); break;
+    case 'cryo': for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI; line(-Math.cos(a) * r * 0.8, -Math.sin(a) * r * 0.8, Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8); } two(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + 0.5; dot(Math.cos(a) * r * 0.95, Math.sin(a) * r * 0.95, r * 0.08); } break;
+    case 'skylance': g.globalAlpha = 0.5; g.fillRect(-r * 0.3, -r, r * 0.6, r * 1.5); g.globalAlpha = 1; g.fillRect(-r * 0.1, -r, r * 0.2, r * 1.5); two(); g.beginPath(); g.ellipse(0, r * 0.55, r * 0.8, r * 0.25, 0, 0, TAU); g.stroke(); break;
+    case 'tripwire': { const P = [[-r * 0.8, r * 0.6], [0, -r * 0.7], [r * 0.8, r * 0.6]]; line(P[0][0], P[0][1], P[1][0], P[1][1]); line(P[1][0], P[1][1], P[2][0], P[2][1]); line(P[0][0], P[0][1], P[2][0], P[2][1]); two(); for (const [x, y] of P) { g.beginPath(); g.moveTo(x, y - r * 0.22); g.lineTo(x + r * 0.15, y); g.lineTo(x, y + r * 0.22); g.lineTo(x - r * 0.15, y); g.closePath(); g.fill(); } break; }
+    case 'magma': g.globalAlpha = 0.7; g.beginPath(); g.ellipse(-r * 0.35, r * 0.45, r * 0.5, r * 0.22, 0, 0, TAU); g.fill(); g.beginPath(); g.ellipse(r * 0.45, r * 0.1, r * 0.4, r * 0.18, 0, 0, TAU); g.fill(); g.globalAlpha = 1; two(); dot(r * 0.45, -r * 0.35, r * 0.13); dot(r * 0.2, -r * 0.7, r * 0.09); dot(r * 0.7, -r * 0.75, r * 0.07); break;
+    case 'ricochet': two(); g.beginPath(); g.moveTo(-r, r * 0.7); g.lineTo(-r * 0.4, -r * 0.5); g.lineTo(r * 0.1, r * 0.5); g.lineTo(r * 0.55, -r * 0.4); g.stroke(); g.strokeStyle = col; g.fillStyle = col; g.shadowColor = col; g.beginPath(); g.moveTo(r * 0.75, -r * 0.85); g.lineTo(r * 1.0, -r * 0.35); g.lineTo(r * 0.45, -r * 0.45); g.closePath(); g.fill(); break;
+    case 'tether': { const P = [[0, -r * 0.8], [r * 0.75, r * 0.55], [-r * 0.75, r * 0.55]]; for (let i = 0; i < 3; i++) { const [x1, y1] = P[i], [x2, y2] = P[(i + 1) % 3]; g.beginPath(); g.moveTo(x1, y1); g.lineTo((x1 + x2) / 2 + (y2 - y1) * 0.15, (y1 + y2) / 2 - (x2 - x1) * 0.15); g.lineTo(x2, y2); g.stroke(); } two(); for (const [x, y] of P) dot(x, y, r * 0.17); break; }
+    case 'sentry': g.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; g.lineTo(Math.cos(a) * r * 0.55, r * 0.2 + Math.sin(a) * r * 0.45); } g.closePath(); g.stroke(); two(); g.lineWidth = S2 * 0.1; line(0, r * 0.1, r * 0.75, -r * 0.6); dot(0, r * 0.1, r * 0.2); break;
+  }
+}
+/* "A + B = fusion" row used by the chest screen and the Workshop */
+function fusionRecipe(el, f, seen, size) {
+  const sign = t => { const b = document.createElement('b'); b.className = 'disp'; b.textContent = t; return b; };
+  el.append(iconCanvas(f.a, weaponById(f.a).col, size), sign('+'), iconCanvas(f.b, weaponById(f.b).col, size), sign('='), seen ? iconCanvas('fu_' + f.id, f.col, size) : iconCanvas('unknown', '#8d95ab', size));
 }
 function iconCanvas(id, col, size) { const c = document.createElement('canvas'); c.width = c.height = size * 2; c.style.width = c.style.height = size + 'px'; drawIcon(c.getContext('2d'), id, col, size * 2); return c; }
 
@@ -880,6 +952,28 @@ const sfx = {
   pick: () => { if (ok('pick', 0.1)) { tone(880, 0.1, 'triangle', 0.05); tone(1320, 0.15, 'triangle', 0.05, 0, 0.07); } },
   chest: () => { if (ok('chest', 0.3)) { [392, 523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.22, 'triangle', 0.05, 0, i * 0.08)); noise(0.8, 0.05, 6000, 'highpass', 0.3); } },
   evolve: () => { if (ok('evolve', 0.5)) { [262, 330, 392, 523, 659, 784, 1047].forEach((f, i) => tone(f, 0.4, 'sawtooth', 0.04, 0, i * 0.09)); noise(1.2, 0.08, 5000, 'highpass', 0.5); } },
+  // fusions: two rising arpeggios that meet, plus one voice per fusion attack
+  fuse: () => { if (ok('fuse', 0.5)) { [262, 392, 523, 784, 1047].forEach((f, i) => tone(f, 0.45, 'sawtooth', 0.035, 0, i * 0.1)); [330, 494, 659, 988, 1319].forEach((f, i) => tone(f, 0.45, 'square', 0.025, 0, 0.05 + i * 0.1)); noise(1.4, 0.07, 4000, 'highpass', 0.45); } },
+  ready: () => { if (ok('ready', 0.5)) { [392, 523, 784].forEach((f, i) => tone(f, 0.22, 'sawtooth', 0.03, 0, i * 0.08)); [494, 659, 988].forEach((f, i) => tone(f, 0.22, 'square', 0.02, 0, 0.04 + i * 0.08)); } },
+  flakOut: () => { if (ok('flakOut', 0.12)) tone(240, 0.12, 'square', 0.035, -120); },
+  flak: () => { if (ok('flak', 0.08)) { noise(0.18, 0.09, 2600, 'bandpass', 0, 1.5); tone(1100, 0.08, 'square', 0.018, -700); } },
+  lockOn: () => { if (ok('lockOn', 0.3)) [0, 0.14, 0.24, 0.31].forEach((w, i) => tone(1500 + i * 150, 0.05, 'square', 0.022, 0, w)); },
+  volley: () => { if (ok('volley', 0.3)) { noise(0.45, 0.06, 1400, 'bandpass', 0, 1.5); tone(380, 0.35, 'sawtooth', 0.02, 700); } },
+  sawOut: () => { if (ok('sawOut', 0.2)) tone(500, 0.18, 'sawtooth', 0.02, 900); },
+  grind: () => { if (ok('grind', 0.11)) noise(0.09, 0.035, 3200, 'bandpass', 0, 3); },
+  reflect: () => { if (ok('reflect', 0.06)) tone(1700, 0.09, 'triangle', 0.03, 900); },
+  wellOpen: () => { if (ok('wellOpen', 0.4)) { tone(320, 1.3, 'sine', 0.05, -250); noise(1.2, 0.04, 500, 'lowpass', 0.1); } },
+  wellBoom: () => { if (ok('wellBoom', 0.3)) { tone(60, 0.6, 'sine', 0.12, 90); noise(0.5, 0.12, 900); } },
+  frost: () => { if (ok('frost', 0.3)) { noise(0.5, 0.07, 6000, 'highpass'); tone(1300, 0.4, 'sine', 0.03, -900); } },
+  shatter: () => { if (ok('shatter', 0.05)) tone(2400 + Math.random() * 800, 0.05, 'triangle', 0.02, -1500); },
+  lanceIn: () => { if (ok('lanceIn', 0.3)) tone(1900, 0.45, 'sine', 0.03, -1500); },
+  lanceHit: () => { if (ok('lanceHit', 0.3)) { noise(0.7, 0.1, 700); tone(110, 0.6, 'sawtooth', 0.035, -40); } },
+  pylon: () => { if (ok('pylon', 0.1)) tone(900, 0.06, 'square', 0.018, 400); },
+  buzz: () => { if (ok('buzz', 0.14)) tone(140, 0.07, 'sawtooth', 0.025, 40); },
+  erupt: () => { if (ok('erupt', 0.15)) { tone(80, 0.3, 'sine', 0.07, -30); noise(0.25, 0.06, 900); } },
+  prism: n => { if (ok('prism', 0.05)) tone(1900 + (n || 0) * 140, 0.07, 'triangle', 0.025, 500); },
+  sentry: () => { if (ok('sentry', 0.2)) { tone(500, 0.08, 'square', 0.03, 300); tone(900, 0.1, 'square', 0.02, 0, 0.08); } },
+  tick: () => { if (ok('tick', 0.09)) tone(1500, 0.03, 'square', 0.01, -400); },
   win: () => { if (ok('win', 1)) [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, 0.3, 'square', 0.04, 0, i * 0.12)); },
   click: () => { if (ok('click', 0.03)) tone(600, 0.05, 'triangle', 0.05); },
   buy: () => { if (ok('buy', 0.05)) { tone(1320, 0.08, 'square', 0.035); tone(1760, 0.15, 'square', 0.035, 0, 0.07); } },
@@ -985,7 +1079,7 @@ function startRun(levelId, endless) {
   R = {
     L, world: L.world, endless: !!endless, t: 0, rob, boosts,
     p: { x: 0, y: 0, vx: 0, vy: 0, r: 16, hp: 100, face: 0, inv: 0, hurt: 0, shield: (boosts.shield ? 3 : 0) + S.perm.barrier },
-    weapons: [], passives: {}, evolved: {},
+    weapons: [], passives: {}, evolved: {}, fused: {}, fusedList: [],
     enemies: [], shots: [], eshots: [], gems: [], drops: [], fx: [], parts: [], texts: [], mines: [], timers: [],
     xp: 0, lvl: 1, xpNext: 4, pending: 0, kills: 0, chips: 0, chests: 0, bossKills: 0,
     rerolls: S.perm.reroll, banishes: S.perm.banish, banned: {}, revives: S.perm.revive + (boosts.life ? 1 : 0),
@@ -1206,6 +1300,487 @@ function beamHit(x, y, a, len, wd, dmg, cd, key, col) {
   }
 }
 function hitCD(e, key, cd) { e.cds = e.cds || {}; if ((e.cds[key] || 0) > R.t) return false; e.cds[key] = R.t + cd; return true; }
+/* ============================================================
+   FUSIONS: two weapons at FUSE_LEVEL + a chest = a new attack.
+   Each one keeps its own small, capped list of things on the field.
+   ============================================================ */
+const fusionReady = f => !R.fused[f.id] && wlv(f.a) >= FUSE_LEVEL && wlv(f.b) >= FUSE_LEVEL;
+function addFusion(id) {
+  const def = fusionById(id); if (!R || !def || R.fused[id]) return false;
+  R.fused[id] = { def, t: 0.6, a: 0 }; R.fusedList.push(id); return true;
+}
+// persistent fusion visuals follow the Effects skin but always stay a hex color (glow sprites need hex)
+const RAINBOW = ['#ff3b5c', '#ffb52e', '#fff36b', '#7dff4a', '#29e0ff', '#b45cff'];
+const FXPAL = { fire: '#ff7a1a', ice: '#9fe8ff', toxic: '#7dff4a', gold: '#ffd23f', void: '#b45cff' };
+function fxHex(c) {
+  if (FXPAL[S.fx]) return FXPAL[S.fx];
+  if (S.fx === 'plasma') return (performance.now() / 120 | 0) % 2 ? '#ff2e88' : '#29e0ff';
+  if (S.fx === 'rainbow') return RAINBOW[(performance.now() / 150 | 0) % 6];
+  return c;
+}
+function crowdAt(x, y) {
+  const cx = (x / CELL) | 0, cy = (y / CELL) | 0; let n = 0;
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const a = R.grid.get((cx + i) + ',' + (cy + j)); if (a) n += a.length; }
+  return n;
+}
+// a few random samples, keep the one standing in the thickest crowd
+function crowdTarget(x, y, maxD, tries) {
+  const E = R.enemies, n = E.length; let best = null, bn = -1;
+  for (let k = 0; k < tries && n; k++) {
+    const e = E[(Math.random() * n) | 0];
+    if (e.dead || Math.abs(e.x - x) > maxD || Math.abs(e.y - y) > maxD * 0.75) continue;
+    const c = crowdAt(e.x, e.y); if (c > bn) { bn = c; best = e; }
+  }
+  return best || nearestEnemy(x, y, maxD);
+}
+function toughestEnemy(x, y, maxD) {
+  let best = null, bh = 0; const m2 = maxD * maxD;
+  for (const e of R.enemies) { if (e.dead) continue; if ((e.x - x) ** 2 + (e.y - y) ** 2 < m2 && e.hp > bh) { bh = e.hp; best = e; } }
+  return best;
+}
+function segDist2(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1, L = dx * dx + dy * dy || 1, t = clamp(((px - x1) * dx + (py - y1) * dy) / L, 0, 1);
+  const qx = x1 + dx * t - px, qy = y1 + dy * t - py; return qx * qx + qy * qy;
+}
+// damage everything touching a line segment (one shared cooldown key, so crossing two lines doesn't double up)
+function segHit(x1, y1, x2, y2, wd, key, cd, dmg, col) {
+  let n = 0;
+  for (const e of query((x1 + x2) / 2, (y1 + y2) / 2, Math.hypot(x2 - x1, y2 - y1) / 2 + 30)) {
+    if (e.dead) continue; const rr = wd + e.r;
+    if (segDist2(e.x, e.y, x1, y1, x2, y2) < rr * rr && hitCD(e, key, cd)) { hurtEnemy(e, dmg, 0, 0, col, true); n++; }
+  }
+  return n;
+}
+function spark(x, y, col, n, spd) { for (let i = 0; i < n && R.parts.length < 600; i++) { const a = rnd(0, TAU), s = rnd(40, spd || 200); R.parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rnd(0.2, 0.4), max: 0.4, r: rnd(1.5, 3), col }); } }
+function freezeEnemy(e, d) { const dd = e.boss ? 0.35 : e.elite ? d * 0.5 : d; e.stun = Math.max(e.stun, dd); e.frz = R.t + dd; }
+function shatter(e) {
+  if (R.shots.length > 520) return;
+  const n = 6 + R.st.amount, c = fxCol('#e8fbff');
+  for (let i = 0; i < n; i++) shoot(e.x, e.y, i / n * TAU + rnd(-0.2, 0.2), rnd(420, 520), 11 * R.st.dmg, { life: 0.32, r: 4, col: c, pierce: 1 });
+  sfx.shatter(); spark(e.x, e.y, '#e8fbff', 5, 220);
+}
+// saws go for the toughest enemy close by that no other saw has claimed
+function sawTarget(x, y) {
+  let best = null, bs = 0, any = null, ad = 380 * 380;
+  for (const e of query(x, y, 380)) {
+    if (e.dead) continue; const d = (e.x - x) ** 2 + (e.y - y) ** 2; if (d > 380 * 380) continue;
+    if (d < ad) { ad = d; any = e; }
+    const sc = e.hp / (1 + Math.sqrt(d) / 120);
+    if (sc > bs && !(e.sawT > R.t)) { bs = sc; best = e; }
+  }
+  best = best || any; if (best && !best.elite && !best.boss) best.sawT = R.t + 1.2; // big targets can take several saws
+  return best;
+}
+function prismNext(s, x, y) {
+  let best = null, bd = 300 * 300;
+  for (const e of query(x, y, 300)) { if (e.dead || e === s.r1 || e === s.r2) continue; const d = (e.x - x) ** 2 + (e.y - y) ** 2; if (d < bd) { bd = d; best = e; } }
+  return best;
+}
+function onPlate(F, ang) { const seg = TAU / F.n; let rel = (ang - F.a) % seg; if (rel < 0) rel += seg; if (rel > seg / 2) rel -= seg; return Math.abs(rel) < F.half; }
+function sentryBoom(u, col) { explodeAt(u.x, u.y, 90 * R.st.area, 90 * R.st.dmg, col); spark(u.x, u.y, col, 8, 260); }
+
+function updateFusions(dt) {
+  const st = R.st, p = R.p;
+  for (const id of R.fusedList) {
+    const F = R.fused[id], col = F.def.col, col2 = F.def.col2;
+    F.t -= dt;
+    switch (id) {
+      case 'flak': { // shells lobbed into the crowd burst into a ring of pellets
+        const SH = F.shells || (F.shells = []);
+        if (F.t <= 0) {
+          const e = crowdTarget(p.x, p.y, 520, 8);
+          if (e) {
+            F.t = 1.3 * st.cd; const n = 1 + (st.amount >> 1);
+            for (let i = 0; i < n; i++) { const tx = e.x + (i ? rnd(-80, 80) : 0), ty = e.y + (i ? rnd(-80, 80) : 0), d = Math.hypot(tx - p.x, ty - p.y) || 1; SH.push({ x: p.x, y: p.y, vx: (tx - p.x) / d * 560, vy: (ty - p.y) / d * 560, left: d, d0: d, spin: 0 }); }
+            sfx.flakOut();
+          } else F.t = 0.2;
+        }
+        for (let i = SH.length - 1; i >= 0; i--) {
+          const s = SH[i]; s.x += s.vx * dt; s.y += s.vy * dt; s.left -= 560 * dt; s.spin += dt * 12;
+          if (s.left > 0) continue;
+          SH.splice(i, 1);
+          const n = 14 + 2 * st.amount, c = fxCol(col2);
+          if (R.shots.length < 560) for (let k = 0; k < n; k++) shoot(s.x, s.y, k / n * TAU + rnd(-0.06, 0.06), rnd(470, 560), 11 * st.dmg, { life: 0.3, r: 4.5, col: c, pierce: 2 });
+          explodeAt(s.x, s.y, 55 * st.area, 30 * st.dmg, fxHex(col));
+          R.fx.push({ kind: 'ring', x: s.x, y: s.y, r: 10, max: 120 * st.area, t: 0, dur: 0.25, col: fxHex(col2), dmg: 0, knock: 0, hit: null });
+          sfx.flak();
+        }
+        break;
+      }
+      case 'lockon': { // mark the toughest enemy, then a volley of mini missiles that only hit it
+        const L = F.lock;
+        if (L) {
+          L.t += dt;
+          if (L.e.dead) { F.lock = null; F.t = Math.min(F.t, 0.3); }
+          else if (L.t >= 0.6) {
+            F.lock = null; const e = L.e, n = 10 + 2 * st.amount, a0 = Math.atan2(e.y - p.y, e.x - p.x), c = fxCol(col);
+            for (let i = 0; i < n; i++) { const side = i % 2 ? 1 : -1, a = a0 + side * (0.8 + 0.7 * (i >> 1) / Math.max(1, n >> 1)) + rnd(-0.1, 0.1); shoot(p.x, p.y, a, rnd(240, 320), 40 * st.dmg, { kind: 'missile', homing: true, only: true, tgt: e, turn: 7.5, life: 2.6, r: 5, blast: 34 * st.area, col: c, smoke: 0.25 }); }
+            sfx.volley();
+          }
+        } else if (F.t <= 0) {
+          const e = toughestEnemy(p.x, p.y, 560);
+          if (e) { F.lock = { e, t: 0 }; F.t = 2.3 * st.cd; sfx.lockOn(); } else F.t = 0.25;
+        }
+        break;
+      }
+      case 'seeker': { // saws home in, latch on and grind, hop to new targets, then fly home
+        const SW = F.saws || (F.saws = []);
+        if (F.t <= 0) {
+          if (nearestEnemy(p.x, p.y, 420)) {
+            F.t = 2.4 * st.cd; const n = 3 + st.amount;
+            for (let i = 0; i < n; i++) { const a = i / n * TAU + rnd(-0.3, 0.3); SW.push({ x: p.x, y: p.y, vx: Math.cos(a) * 320, vy: Math.sin(a) * 320, tgt: null, latch: 0, tick: 0, bites: 0, back: false, spin: 0, ang: 0, life: 6 }); }
+            sfx.sawOut();
+          } else F.t = 0.25;
+        }
+        for (let i = SW.length - 1; i >= 0; i--) {
+          const s = SW[i]; s.spin += dt * 22; s.life -= dt;
+          if (s.life <= 0) s.back = true;
+          if (s.back) { const dx = p.x - s.x, dy = p.y - s.y, d = Math.hypot(dx, dy) || 1; if (d < 24) { SW.splice(i, 1); continue; } s.x += dx / d * 720 * dt; s.y += dy / d * 720 * dt; continue; }
+          const T = s.tgt;
+          if (s.latch > 0 && T && !T.dead) {
+            s.ang += dt * 3; s.x = T.x + Math.cos(s.ang) * T.r * 0.75; s.y = T.y + Math.sin(s.ang) * T.r * 0.75;
+            s.latch -= dt; s.tick -= dt;
+            if (s.tick <= 0) { s.tick = 0.1; hurtEnemy(T, 7 * st.dmg, 0, 0, col, true); T.slow = Math.max(T.slow, 0.15); if (Math.random() < 0.6) spark(s.x, s.y, fxHex(col2), 2, 260); sfx.grind(); }
+            if (s.latch <= 0 || T.dead) { s.latch = 0; s.tgt = null; if (++s.bites >= 4) s.back = true; }
+            continue;
+          }
+          if (!T || T.dead) { s.latch = 0; s.tgt = sawTarget(s.x, s.y); if (!s.tgt) { s.back = true; continue; } }
+          const t2 = s.tgt, dx = t2.x - s.x, dy = t2.y - s.y, d = Math.hypot(dx, dy) || 1, k = Math.min(1, dt * 7);
+          s.vx += (dx / d * 640 - s.vx) * k; s.vy += (dy / d * 640 - s.vy) * k;
+          s.x += s.vx * dt; s.y += s.vy * dt;
+          if (d < t2.r + 10) { s.latch = 1.0 * st.dur; s.tick = 0; s.ang = Math.atan2(s.y - t2.y, s.x - t2.x); }
+        }
+        break;
+      }
+      case 'mirror': { // spinning mirror plates: shove enemies out, turn enemy shots into yours
+        const n = 5 + st.amount, seg = TAU / n;
+        F.n = n; F.rad = (95 + 38 * Math.sin(R.t * 2.4)) * st.area; F.half = Math.min(0.34, seg * 0.36); F.a -= dt * 2.3 * st.dur;
+        const rad = F.rad, dmg = 18 * st.dmg;
+        for (const e of query(p.x, p.y, rad + 50)) {
+          if (e.dead) continue;
+          const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1;
+          if (Math.abs(d - rad) > 12 + e.r || !onPlate(F, Math.atan2(dy, dx))) continue;
+          if (hitCD(e, 'mr', 0.3)) { hurtEnemy(e, dmg, dx / d * 14, dy / d * 14, col); spark(e.x - dx / d * e.r, e.y - dy / d * e.r, fxHex(col), 2, 160); }
+        }
+        for (const b of R.eshots) {
+          if (b.life <= 0) continue;
+          const dx = b.x - p.x, dy = b.y - p.y, d = Math.hypot(dx, dy) || 1;
+          if (Math.abs(d - rad) > 16 || !onPlate(F, Math.atan2(dy, dx))) continue;
+          b.life = 0; shoot(b.x, b.y, Math.atan2(dy, dx), 640, 26 * st.dmg, { pierce: 3, r: 6, life: 1, col: fxCol(col2) });
+          sfx.reflect(); spark(b.x, b.y, fxHex(col), 3, 180);
+        }
+        break;
+      }
+      case 'gravity': { // a vortex drags the crowd together, then collapses
+        const WL = F.wells || (F.wells = []);
+        if (F.t <= 0) {
+          const e = crowdTarget(p.x, p.y, 420, 10);
+          if (e) { F.t = 4.6 * st.cd; WL.push({ x: e.x, y: e.y, t: 0, dur: 2.2 * st.dur, r: 150 * st.area, tick: 0.1 }); sfx.wellOpen(); } else F.t = 0.3;
+        }
+        for (let i = WL.length - 1; i >= 0; i--) {
+          const w = WL[i]; w.t += dt; w.tick -= dt;
+          const r = w.r * Math.min(1, w.t / 0.3), hurt = w.tick <= 0;
+          if (hurt) w.tick = 0.25;
+          for (const e of query(w.x, w.y, r + 20)) {
+            if (e.dead) continue;
+            const dx = w.x - e.x, dy = w.y - e.y, d = Math.hypot(dx, dy) || 1;
+            if (d > r + e.r) continue;
+            if (!e.boss && d > 8) { const k = Math.min(d, (e.elite ? 0.35 : 1) * (70 + 230 * (1 - d / w.r)) * dt); e.x += dx / d * k; e.y += dy / d * k; }
+            if (hurt) hurtEnemy(e, 5 * st.dmg, 0, 0, col, true);
+          }
+          if (R.parts.length < 600 && Math.random() < 0.7) { const a = rnd(0, TAU), q = r * rnd(0.75, 1), c = Math.cos(a), s2 = Math.sin(a); R.parts.push({ x: w.x + c * q, y: w.y + s2 * q, vx: -c * q * 3.4 - s2 * q * 1.4, vy: -s2 * q * 3.4 + c * q * 1.4, life: 0.4, max: 0.4, r: 2.5, col: fxHex(i % 2 ? col : col2) }); }
+          if (w.t >= w.dur) {
+            WL.splice(i, 1);
+            explodeAt(w.x, w.y, w.r * 0.8, 60 * st.dmg, fxHex(col2));
+            R.fx.push({ kind: 'ring', x: w.x, y: w.y, r: 10, max: w.r * 1.2, t: 0, dur: 0.35, col: fxHex(col), dmg: 0, knock: 0, hit: null });
+            R.shake = Math.max(R.shake, 8); sfx.wellBoom();
+          }
+        }
+        break;
+      }
+      case 'cryo': { // frost wave; anything frozen shatters into shards when it dies (see killEnemy)
+        if (F.t <= 0) {
+          if (nearestEnemy(p.x, p.y, 240)) { F.t = 3.4 * st.cd; R.fx.push({ kind: 'frost', x: p.x, y: p.y, r: 10, max: 210 * st.area, t: 0, dur: 0.45, col: fxHex(col), dmg: 20 * st.dmg, knock: 0, hit: new Set(), freeze: 1.6 * st.dur }); sfx.frost(); }
+          else F.t = 0.25;
+        }
+        break;
+      }
+      case 'skylance': { // an orbital beam lands on a crowd and drifts after enemies
+        const LN = F.lances || (F.lances = []);
+        if (F.t <= 0) {
+          const e = crowdTarget(p.x, p.y, 440, 8);
+          if (e) { F.t = 3.8 * st.cd; const n = 1 + (st.amount >> 1); for (let i = 0; i < n; i++) LN.push({ x: e.x + (i ? rnd(-140, 140) : 0), y: e.y + (i ? rnd(-100, 100) : 0), t: -0.5, dur: 3 * st.dur, r: 44 * st.area, tick: 0, tgt: null, hit: false }); sfx.lanceIn(); }
+          else F.t = 0.3;
+        }
+        for (let i = LN.length - 1; i >= 0; i--) {
+          const l = LN[i]; l.t += dt;
+          if (l.t < 0) continue;
+          if (!l.hit) { l.hit = true; sfx.lanceHit(); R.shake = Math.max(R.shake, 6); }
+          if (!l.tgt || l.tgt.dead || (R.frame + i * 7) % 30 === 0) l.tgt = nearestEnemy(l.x, l.y, 420);
+          if (l.tgt) { const dx = l.tgt.x - l.x, dy = l.tgt.y - l.y, d = Math.hypot(dx, dy); if (d > 4) { const sp = Math.min(d, 175 * st.dur * dt); l.x += dx / d * sp; l.y += dy / d * sp; } }
+          l.tick -= dt;
+          if (l.tick <= 0) { l.tick = 0.18; for (const e of query(l.x, l.y, l.r + 30)) if (!e.dead && (e.x - l.x) ** 2 + (e.y - l.y) ** 2 < (l.r + e.r) ** 2) hurtEnemy(e, 17 * st.dmg, 0, 0, col, true); }
+          if (Math.random() < 0.5) spark(l.x + rnd(-0.6, 0.6) * l.r, l.y + rnd(-0.3, 0.3) * l.r, fxHex(col), 1, 160);
+          if (l.t >= l.dur) { LN.splice(i, 1); R.fx.push({ kind: 'blast', x: l.x, y: l.y, r: l.r * 1.4, t: 0, dur: 0.3, col: fxHex(col2) }); }
+        }
+        break;
+      }
+      case 'tripwire': { // pylons dropped behind you, each linked to the next two by a laser fence
+        const PY = F.pylons || (F.pylons = []), LK = F.links || (F.links = []);
+        if (F.t <= 0) {
+          F.t = 0.7 * st.cd; F.a += 2.4; const rr = rnd(90, 150) * st.area;
+          PY.push({ x: p.x + Math.cos(F.a) * rr, y: p.y + Math.sin(F.a) * rr, life: 7 * st.dur, t: 0 });
+          if (PY.length > 7 + st.amount) PY.shift();
+          sfx.pylon();
+        }
+        for (let i = PY.length - 1; i >= 0; i--) { const q = PY[i]; q.life -= dt; q.t += dt; if (q.life <= 0) PY.splice(i, 1); }
+        const reach = 300 * st.area, dmg = 8 * st.dmg, zap = R.frame % 2 === 0; let hit = 0; LK.length = 0;
+        for (let i = 0; i < PY.length; i++) for (let j = i + 1; j <= i + 2 && j < PY.length; j++) {
+          const A = PY[i], B = PY[j]; if ((A.x - B.x) ** 2 + (A.y - B.y) ** 2 > reach * reach) continue;
+          LK.push(i, j);
+          if (zap) hit += segHit(A.x, A.y, B.x, B.y, 8, 'tw', 0.4, dmg, col);
+        }
+        if (hit) sfx.buzz();
+        break;
+      }
+      case 'magma': { // burning ground follows you; the oldest patches erupt
+        const PL = F.pools || (F.pools = []);
+        F.acc = (F.acc || 0) + Math.hypot(p.vx, p.vy) * dt; F.idle = (F.idle || 0) + dt;
+        if (F.acc >= 38 || F.idle >= 0.6) { F.acc = 0; F.idle = 0; PL.push({ x: p.x + rnd(-6, 6), y: p.y + 6 + rnd(-6, 6), t: 0, life: 2.8 * st.dur, r: 30 * st.area * rnd(0.9, 1.15), rot: rnd(0, 3) }); if (PL.length > 36) PL.shift(); }
+        for (let i = PL.length - 1; i >= 0; i--) { PL[i].t += dt; if (PL[i].t >= PL[i].life) PL.splice(i, 1); }
+        F.tick = (F.tick || 0) - dt;
+        if (F.tick <= 0) { F.tick = 0.3; const dmg = 8 * st.dmg; for (const q of PL) for (const e of query(q.x, q.y, q.r + 24)) if (!e.dead && (e.x - q.x) ** 2 + (e.y - q.y) ** 2 < (q.r + e.r) ** 2 && hitCD(e, 'mg', 0.28)) hurtEnemy(e, dmg, 0, 0, col, true); }
+        if (F.t <= 0 && PL.length > 2) {
+          F.t = 2.4 * st.cd;
+          const n = Math.min(PL.length - 2, 4 + st.amount), rr = 62 * st.area, dmg = 45 * st.dmg, c = fxHex(col2);
+          for (let k = 0; k < n; k++) { const q = PL[k], x = q.x, y = q.y; q.t = Math.max(q.t, q.life - 0.12 * k - 0.01); later(0.12 * k, () => { explodeAt(x, y, rr, dmg, c); spark(x, y, c, 6, 260); sfx.erupt(); }); }
+        }
+        break;
+      }
+      case 'ricochet': { // a prism that hops from enemy to enemy, arcing a spark at each hit
+        const PR = F.prisms || (F.prisms = []);
+        if (F.t <= 0) {
+          const e = nearestEnemy(p.x, p.y, 520);
+          if (e) {
+            F.t = 1.3 * st.cd; const n = 2 + (st.amount >> 1);
+            for (let i = 0; i < n; i++) PR.push({ x: p.x, y: p.y, tgt: i ? crowdTarget(p.x, p.y, 520, 6) : e, hops: 0, max: 8 + Math.round((st.dur - 1) * 10), life: 4, spin: rnd(0, 3), r1: null, r2: null, tr: new Float32Array(10).fill(NaN), ti: 0 });
+            sfx.prism(0);
+          } else F.t = 0.2;
+        }
+        for (let i = PR.length - 1; i >= 0; i--) {
+          const s = PR[i]; s.life -= dt; s.spin += dt * 9;
+          if (R.frame % 2 === 0) { s.tr[s.ti] = s.x; s.tr[s.ti + 1] = s.y; s.ti = (s.ti + 2) % 10; }
+          if (s.life <= 0) { PR.splice(i, 1); continue; }
+          if (!s.tgt || s.tgt.dead) { s.tgt = prismNext(s, s.x, s.y); if (!s.tgt) { PR.splice(i, 1); continue; } }
+          const T = s.tgt, dx = T.x - s.x, dy = T.y - s.y, d = Math.hypot(dx, dy) || 1, step = 780 * st.dur * dt;
+          if (d > T.r + 6 + step) { s.x += dx / d * step; s.y += dy / d * step; continue; }
+          s.x = T.x; s.y = T.y;
+          hurtEnemy(T, 44 * st.dmg, dx / d * 3, dy / d * 3, col);
+          let z = null, zd = 150 * 150;
+          for (const e of query(T.x, T.y, 150)) { if (e === T || e.dead) continue; const q = (e.x - T.x) ** 2 + (e.y - T.y) ** 2; if (q < zd) { zd = q; z = e; } }
+          if (z) { R.fx.push({ kind: 'bolt', pts: [[T.x, T.y], [z.x, z.y]], t: 0, dur: 0.18, col: fxHex(col2) }); hurtEnemy(z, 18 * st.dmg, 0, 0, col2, true); }
+          sfx.prism(s.hops); spark(T.x, T.y, fxHex(col), 3, 200);
+          s.r2 = s.r1; s.r1 = T;
+          if (++s.hops >= s.max) { PR.splice(i, 1); continue; }
+          s.tgt = prismNext(s, T.x, T.y);
+          if (!s.tgt) PR.splice(i, 1);
+        }
+        break;
+      }
+      case 'tether': { // orbs on a breathing orbit, lightning from you to them and between them
+        const n = 3 + (st.amount >> 1), N = F.nodes || (F.nodes = []);
+        N.length = n * 2; F.n = n; F.a += dt * 1.5 * st.dur;
+        const rad = (75 + 85 * (0.5 + 0.5 * Math.sin(R.t * 1.6))) * st.area;
+        for (let i = 0; i < n; i++) { const a = F.a + i / n * TAU; N[i * 2] = p.x + Math.cos(a) * rad; N[i * 2 + 1] = p.y + Math.sin(a) * rad; }
+        if (R.frame % 2 === 0) {
+          const dmg = 10 * st.dmg;
+          for (let i = 0; i < n; i++) { const x = N[i * 2], y = N[i * 2 + 1], j = (i + 1) % n; segHit(p.x, p.y, x, y, 10, 'it', 0.25, dmg, col); if (n > 2 || i === 0) segHit(x, y, N[j * 2], N[j * 2 + 1], 10, 'it', 0.25, dmg, col); }
+        }
+        if (F.t <= 0) {
+          F.t = 2.2 * st.cd; let any = false; const stamp = R.t, c = fxHex(col);
+          for (let i = 0; i < n; i++) for (let k = 0; k < 2; k++) {
+            const x = N[i * 2], y = N[i * 2 + 1]; let best = null, bd = 220 * 220;
+            for (const e of query(x, y, 220)) { if (e.dead || e.tz === stamp) continue; const d = (e.x - x) ** 2 + (e.y - y) ** 2; if (d < bd) { bd = d; best = e; } }
+            if (!best) continue;
+            best.tz = stamp; any = true;
+            R.fx.push({ kind: 'bolt', pts: [[x, y], [best.x, best.y]], t: 0, dur: 0.22, col: c }); hurtEnemy(best, 45 * st.dmg, 0, 0, col);
+          }
+          if (any) sfx.zap(); else F.t = 0.3;
+        }
+        break;
+      }
+      case 'sentry': { // turrets that shoot for a while, then blow up
+        const TU = F.turrets || (F.turrets = []);
+        if (F.t <= 0) {
+          F.t = 3.2 * st.cd;
+          if (TU.length >= 3 + Math.min(2, st.amount)) sentryBoom(TU.shift(), fxHex(col2));
+          const a = rnd(0, TAU); TU.push({ x: p.x + Math.cos(a) * 26, y: p.y + Math.sin(a) * 26, life: 9 * st.dur, max: 9 * st.dur, fire: 0.4, a, ta: a, t: 0 });
+          sfx.sentry();
+        }
+        for (let i = TU.length - 1; i >= 0; i--) {
+          const u = TU[i]; u.life -= dt; u.t += dt; u.fire -= dt;
+          let da = u.ta - u.a; da = Math.atan2(Math.sin(da), Math.cos(da)); u.a += da * Math.min(1, dt * 12);
+          if (u.fire <= 0 && u.t > 0.35) {
+            const e = nearestEnemy(u.x, u.y, 330);
+            if (e) { u.ta = Math.atan2(e.y - u.y, e.x - u.x); u.fire = 0.2 * st.cd; shoot(u.x + Math.cos(u.ta) * 14, u.y + Math.sin(u.ta) * 14, u.ta + rnd(-0.04, 0.04), 700, 24 * st.dmg, { r: 4, life: 0.55, col: fxCol(col), pierce: 3 }); sfx.tick(); }
+            else u.fire = 0.2;
+          }
+          if (u.life <= 0) { TU.splice(i, 1); sentryBoom(u, fxHex(col2)); }
+        }
+        break;
+      }
+    }
+  }
+}
+
+/* ---------- fusion drawing: ground layer (under enemies) and top layer ---------- */
+const LANCE = {}, WELL = {};
+function lanceSprite(col) {
+  return LANCE[col] || (LANCE[col] = mk(64, 256, g => {
+    const gr = g.createLinearGradient(0, 0, 64, 0); gr.addColorStop(0, hexA(col, 0)); gr.addColorStop(0.28, hexA(col, 0.5)); gr.addColorStop(0.5, '#ffffff'); gr.addColorStop(0.72, hexA(col, 0.5)); gr.addColorStop(1, hexA(col, 0));
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 256);
+    g.globalCompositeOperation = 'destination-in'; const v = g.createLinearGradient(0, 0, 0, 256); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(0.4, 'rgba(0,0,0,1)'); g.fillStyle = v; g.fillRect(0, 0, 64, 256);
+  }));
+}
+function wellSprite(col) {
+  return WELL[col] || (WELL[col] = mk(128, 128, g => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(2,0,6,.95)'); gr.addColorStop(0.55, 'rgba(8,2,18,.7)'); gr.addColorStop(0.86, hexA(col, 0.28)); gr.addColorStop(1, hexA(col, 0)); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }));
+}
+function zigLine(x1, y1, x2, y2, j) { ctx.moveTo(x1, y1); for (let i = 1; i < 5; i++) { const q = i / 5; ctx.lineTo(lerp(x1, x2, q) + rnd(-j, j), lerp(y1, y2, q) + rnd(-j, j)); } ctx.lineTo(x2, y2); }
+function drawFusionsGround(t, on) {
+  for (const id of R.fusedList) {
+    const F = R.fused[id], c1 = fxHex(F.def.col), c2 = fxHex(F.def.col2);
+    if (id === 'magma' && F.pools) {
+      const g1 = glow(c1, 64), g2 = glow(c2, 64); ctx.globalCompositeOperation = 'lighter';
+      for (const q of F.pools) { if (!on(q.x, q.y)) continue; const a = Math.min(1, q.t / 0.15) * Math.min(1, (q.life - q.t) / 0.7); ctx.globalAlpha = (0.55 + 0.2 * Math.sin(t * 7 + q.rot * 5)) * a; ctx.drawImage(q.rot > 1.5 ? g1 : g2, q.x - q.r * 1.5, q.y - q.r * 1.05, q.r * 3, q.r * 2.1); }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    } else if (id === 'gravity' && F.wells) {
+      for (const w of F.wells) {
+        const r = w.r * Math.min(1, w.t / 0.3), end = clamp((w.dur - w.t) / 0.2, 0, 1);
+        ctx.globalAlpha = end; ctx.drawImage(wellSprite(c1), w.x - r * 1.1, w.y - r * 1.1, r * 2.2, r * 2.2);
+        ctx.globalCompositeOperation = 'lighter'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        for (let k = 0; k < 4; k++) { const a0 = -t * 5 + k * TAU / 4; ctx.strokeStyle = k % 2 ? c1 : c2; ctx.globalAlpha = 0.75 * end; ctx.beginPath(); ctx.arc(w.x, w.y, r * (0.3 + 0.17 * k), a0, a0 + 1.7); ctx.stroke(); }
+        ctx.globalAlpha = 0.5 * end; ctx.strokeStyle = c2; ctx.setLineDash([10, 8]); ctx.lineDashOffset = t * 60; ctx.beginPath(); ctx.arc(w.x, w.y, r, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+        ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      }
+    } else if (id === 'skylance' && F.lances) {
+      ctx.globalCompositeOperation = 'lighter';
+      for (const l of F.lances) {
+        if (l.t < 0) { const q = -l.t / 0.5; ctx.globalAlpha = 0.8; ctx.strokeStyle = c2; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(l.x, l.y, l.r * (1 + q * 1.5), 0, TAU); ctx.stroke(); ctx.setLineDash([]); continue; }
+        ctx.globalAlpha = 0.7 * Math.min(1, (l.dur - l.t) / 0.3); ctx.drawImage(glow(c1, 64), l.x - l.r * 1.6, l.y - l.r * 0.9, l.r * 3.2, l.r * 1.8);
+      }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    } else if (id === 'sentry' && F.turrets) {
+      for (const u of F.turrets) {
+        if (!on(u.x, u.y)) continue;
+        ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5; ctx.drawImage(glow(c1, 32), u.x - 24, u.y - 24, 48, 48); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = '#0e1420'; ctx.strokeStyle = c1; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; ctx.lineTo(u.x + Math.cos(a) * 12, u.y + Math.sin(a) * 12); } ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(u.x, u.y); ctx.lineTo(u.x + Math.cos(u.a) * 17, u.y + Math.sin(u.a) * 17); ctx.stroke();
+        ctx.fillStyle = u.life < 1.5 && (t * 8) % 1 < 0.5 ? '#ff3b5c' : c2; ctx.beginPath(); ctx.arc(u.x, u.y, 4, 0, TAU); ctx.fill();
+        ctx.globalAlpha = 0.6; ctx.strokeStyle = c2; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(u.x, u.y, 17, -Math.PI / 2, -Math.PI / 2 + TAU * clamp(u.life / u.max, 0, 1)); ctx.stroke(); ctx.globalAlpha = 1;
+      }
+    }
+  }
+}
+function drawFusionsTop(t, on) { // called with 'lighter' compositing
+  const p = R.p;
+  for (const id of R.fusedList) {
+    const F = R.fused[id], c1 = fxHex(F.def.col), c2 = fxHex(F.def.col2);
+    switch (id) {
+      case 'tripwire': {
+        const PY = F.pylons, LK = F.links; if (!PY) break;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        for (let k = 0; k < LK.length; k += 2) { const A = PY[LK[k]], B = PY[LK[k + 1]]; if (A && B) { ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); } }
+        ctx.globalAlpha = 0.35 + 0.15 * Math.sin(t * 40); ctx.strokeStyle = c1; ctx.lineWidth = 7; ctx.stroke();
+        ctx.globalAlpha = 0.9; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.globalAlpha = 1;
+        for (const q of PY) { if (!on(q.x, q.y)) continue; ctx.drawImage(glow(c1, 32), q.x - 16, q.y - 16, 32, 32); ctx.fillStyle = q.life < 1.5 && (t * 8) % 1 < 0.5 ? '#ffffff' : c2; ctx.beginPath(); ctx.moveTo(q.x, q.y - 11); ctx.lineTo(q.x + 6, q.y); ctx.lineTo(q.x, q.y + 11); ctx.lineTo(q.x - 6, q.y); ctx.closePath(); ctx.fill(); }
+        break;
+      }
+      case 'mirror': {
+        if (!F.n) break;
+        const r = F.rad, seg = TAU / F.n;
+        ctx.globalAlpha = 0.14; ctx.strokeStyle = c2; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.stroke();
+        for (let k = 0; k < F.n; k++) {
+          const a = F.a + k * seg;
+          ctx.globalAlpha = 0.55; ctx.strokeStyle = c2; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(p.x, p.y, r, a - F.half, a + F.half); ctx.stroke();
+          ctx.globalAlpha = 1; ctx.strokeStyle = c1; ctx.lineWidth = 3; ctx.stroke();
+          ctx.globalAlpha = 0.5; ctx.drawImage(glow(c1, 32), p.x + Math.cos(a) * r - 12, p.y + Math.sin(a) * r - 12, 24, 24);
+        }
+        ctx.globalAlpha = 1;
+        break;
+      }
+      case 'tether': {
+        const N = F.nodes; if (!N || !F.n) break; const n = F.n;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) { const x = N[i * 2], y = N[i * 2 + 1], j = (i + 1) % n; zigLine(p.x, p.y, x, y, 7); if (n > 2 || i === 0) zigLine(x, y, N[j * 2], N[j * 2 + 1], 9); }
+        ctx.globalAlpha = 0.75; ctx.strokeStyle = c1; ctx.lineWidth = 3.5; ctx.stroke(); ctx.globalAlpha = 1; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.2; ctx.stroke();
+        for (let i = 0; i < n; i++) { const x = N[i * 2], y = N[i * 2 + 1]; ctx.drawImage(glow(c2, 32), x - 22, y - 22, 44, 44); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(x, y, 5, 0, TAU); ctx.fill(); ctx.strokeStyle = c1; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 10, t * 6, t * 6 + 4); ctx.stroke(); }
+        break;
+      }
+      case 'skylance': {
+        if (!F.lances) break;
+        for (const l of F.lances) {
+          if (l.t < 0) continue;
+          const a = Math.min(1, l.t / 0.12) * Math.min(1, (l.dur - l.t) / 0.3), w = l.r * (1.6 + 0.15 * Math.sin(t * 30));
+          ctx.globalAlpha = a; ctx.drawImage(lanceSprite(c1), l.x - w / 2, l.y - 900, w, 900);
+          ctx.globalAlpha = a * 0.8; ctx.drawImage(glow(c2, 64), l.x - l.r, l.y - l.r * 0.55, l.r * 2, l.r * 1.1);
+        }
+        ctx.globalAlpha = 1;
+        break;
+      }
+      case 'seeker': {
+        if (!F.saws) break;
+        for (const s of F.saws) {
+          if (!on(s.x, s.y)) continue;
+          ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.spin); ctx.drawImage(glow(s.latch > 0 ? c2 : c1, 32), -24, -24, 48, 48);
+          ctx.globalCompositeOperation = 'source-over'; // solid body so the teeth stay readable on bright enemies
+          ctx.fillStyle = c1; ctx.strokeStyle = '#10180a'; ctx.lineWidth = 1.5; ctx.beginPath(); for (let i = 0; i < 16; i++) { const an = i / 16 * TAU, q = i % 2 ? 9 : 14; ctx.lineTo(Math.cos(an) * q, Math.sin(an) * q); } ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = s.latch > 0 ? c2 : '#10180a'; ctx.beginPath(); ctx.arc(0, 0, 4.5, 0, TAU); ctx.fill(); ctx.restore(); ctx.globalCompositeOperation = 'lighter';
+        }
+        break;
+      }
+      case 'ricochet': {
+        if (!F.prisms) break;
+        for (const s of F.prisms) {
+          for (let k = 0; k < 5; k++) { const idx = (s.ti + k * 2) % 10, x = s.tr[idx], y = s.tr[idx + 1]; if (x !== x) continue; ctx.globalAlpha = 0.12 + k * 0.09; ctx.drawImage(glow(c1, 32), x - 10, y - 10, 20, 20); }
+          ctx.globalAlpha = 1; ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.spin); ctx.drawImage(glow(c2, 32), -20, -20, 40, 40);
+          ctx.fillStyle = c1; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(9, 6); ctx.lineTo(-9, 6); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+        }
+        break;
+      }
+      case 'flak': {
+        if (!F.shells) break;
+        for (const s of F.shells) {
+          const z = Math.sin(clamp(1 - s.left / s.d0, 0, 1) * Math.PI) * Math.min(70, s.d0 * 0.3);
+          ctx.globalAlpha = 0.35; ctx.drawImage(glow(c1, 16), s.x - 8, s.y - 4, 16, 8); ctx.globalAlpha = 1;
+          ctx.save(); ctx.translate(s.x, s.y - z); ctx.rotate(s.spin); ctx.drawImage(glow(c1, 32), -22, -22, 44, 44);
+          ctx.fillStyle = c1; ctx.beginPath(); for (let i = 0; i < 12; i++) { const an = i / 12 * TAU, q = i % 2 ? 5.5 : 11; ctx.lineTo(Math.cos(an) * q, Math.sin(an) * q); } ctx.closePath(); ctx.fill(); ctx.restore();
+        }
+        break;
+      }
+      case 'lockon': {
+        const L = F.lock; if (!L) break;
+        const e = L.e, q = clamp(L.t / 0.6, 0, 1), s = e.r + 8 + 34 * (1 - q), k = s * 0.45;
+        ctx.save(); ctx.translate(e.x, e.y); ctx.rotate((1 - q) * 2); ctx.strokeStyle = q >= 0.95 ? '#ffffff' : c1; ctx.lineWidth = 3; ctx.lineCap = 'square';
+        for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 2); ctx.beginPath(); ctx.moveTo(-s, -s + k); ctx.lineTo(-s, -s); ctx.lineTo(-s + k, -s); ctx.stroke(); }
+        ctx.fillStyle = c2; ctx.beginPath(); ctx.arc(0, 0, 3, 0, TAU); ctx.fill(); ctx.restore();
+        break;
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+// frozen enemies get an ice shell: every shell goes in one path, filled and stroked once
+const FROZEN = [], HEX = [0, 1, 2, 3, 4, 5].map(i => [Math.cos(i / 6 * TAU + 0.5), Math.sin(i / 6 * TAU + 0.5)]);
+function drawFrozen() {
+  ctx.beginPath();
+  for (const e of FROZEN) { const r = e.r * 1.25; ctx.moveTo(e.x + HEX[0][0] * r, e.y + HEX[0][1] * r); for (let i = 1; i < 6; i++) ctx.lineTo(e.x + HEX[i][0] * r, e.y + HEX[i][1] * r); ctx.closePath(); }
+  ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(159,232,255,.22)'; ctx.fill();
+  ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = 'rgba(232,251,255,.9)'; ctx.lineWidth = 2; ctx.stroke();
+  FROZEN.length = 0;
+}
 
 /* ---------- spatial grid for fast "who is near" checks ---------- */
 const CELL = 80;
@@ -1389,6 +1964,7 @@ function killEnemy(e) {
   const col = e.col.startsWith('#') ? e.col : R.world.col;
   for (let i = 0; i < n; i++) { const a = rnd(0, TAU), s = rnd(60, e.boss ? 420 : 240); R.parts.push({ x: e.x, y: e.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rnd(0.3, 0.7), max: 0.7, r: rnd(2, 4), col }); }
   if (R.parts.length > 700) R.parts.splice(0, R.parts.length - 700);
+  if (e.frz > R.t && !e.boss) shatter(e);
   if (e.type === 'splitter' && !e.boss) for (let i = 0; i < ETYPES.splitter.split; i++) { const m = spawnEnemy('mini', e.x + rnd(-12, 12), e.y + rnd(-12, 12)); m.kx = rnd(-120, 120); m.ky = rnd(-120, 120); }
   if (e.boss) { bossDown(e); return; }
   dropGem(e.x, e.y, e.xp);
@@ -1450,11 +2026,11 @@ function updateShots(dt) {
     if (s.homing) {
       if (!s.tgt || s.tgt.dead) s.tgt = nearestEnemy(s.x, s.y, 600);
       if (s.tgt) { const want = Math.atan2(s.tgt.y - s.y, s.tgt.x - s.x), cur = Math.atan2(s.vy, s.vx); let da = want - cur; da = Math.atan2(Math.sin(da), Math.cos(da)); const na = cur + clamp(da, -s.turn * dt, s.turn * dt), sp = Math.min(560, Math.hypot(s.vx, s.vy) + 500 * dt); s.vx = Math.cos(na) * sp; s.vy = Math.sin(na) * sp; }
-      if (Math.random() < 0.6) R.parts.push({ x: s.x, y: s.y, vx: -s.vx * 0.1, vy: -s.vy * 0.1, life: 0.3, max: 0.3, r: 3, col: '#aaaaaa', smoke: true });
+      if (Math.random() < (s.smoke || 0.6)) R.parts.push({ x: s.x, y: s.y, vx: -s.vx * 0.1, vy: -s.vy * 0.1, life: 0.3, max: 0.3, r: 3, col: '#aaaaaa', smoke: true });
     }
     s.x += s.vx * dt; s.y += s.vy * dt;
     for (const e of query(s.x, s.y, s.r + 40)) {
-      if (e.dead || s.hit.has(e)) continue;
+      if (e.dead || s.hit.has(e) || (s.only && e !== s.tgt)) continue;
       if ((e.x - s.x) ** 2 + (e.y - s.y) ** 2 < (e.r + s.r) ** 2) {
         if (s.kind === 'missile') { explodeAt(s.x, s.y, s.blast, s.dmg, s.col); s.life = 0; break; }
         s.hit.add(e); hurtEnemy(e, s.dmg, s.vx / 400, s.vy / 400, s.col);
@@ -1485,10 +2061,11 @@ function explodeAt(x, y, r, dmg, col) {
 function updateFx(dt) {
   for (const f of R.fx) {
     f.t += dt;
-    if (f.kind === 'ring' && f.t >= 0 && f.dmg) {
+    const ringy = f.kind === 'ring' || f.kind === 'frost';
+    if (ringy && f.t >= 0 && f.dmg) {
       f.r = f.max * Math.min(1, f.t / f.dur);
-      for (const e of query(f.x, f.y, f.r + 30)) { if (f.hit.has(e)) continue; const d = Math.hypot(e.x - f.x, e.y - f.y); if (d < f.r + e.r) { f.hit.add(e); const a = Math.atan2(e.y - f.y, e.x - f.x); hurtEnemy(e, f.dmg, Math.cos(a) * f.knock / 10, Math.sin(a) * f.knock / 10, f.col); if (f.stun) e.stun = f.stun; } }
-    } else if (f.kind === 'ring') f.r = f.max * Math.min(1, f.t / f.dur);
+      for (const e of query(f.x, f.y, f.r + 30)) { if (f.hit.has(e)) continue; const d = Math.hypot(e.x - f.x, e.y - f.y); if (d < f.r + e.r) { f.hit.add(e); const a = Math.atan2(e.y - f.y, e.x - f.x); hurtEnemy(e, f.dmg, Math.cos(a) * f.knock / 10, Math.sin(a) * f.knock / 10, f.col, !!f.freeze); if (f.stun) e.stun = f.stun; if (f.freeze && !e.dead) freezeEnemy(e, f.freeze); } }
+    } else if (ringy) f.r = f.max * Math.min(1, f.t / f.dur);
     if (f.kind === 'beam' && f.t < f.dur) beamHit(f.x, f.y, f.a, f.len, f.wd, f.dmg, 99, 'bm' + f.a.toFixed(3), f.col);
     if (f.kind === 'meteor' && f.t >= f.dur && !f.done) { f.done = true; explodeAt(f.x, f.y, f.blast, f.dmg, f.col); R.shake = Math.max(R.shake, 5); sfx.boom(); }
   }
@@ -1555,7 +2132,7 @@ function update(dt) {
   buildGrid();
   runTimers(dt);
   updatePlayer(dt);
-  if (!R.over) updateWeapons(dt);
+  if (!R.over) { updateWeapons(dt); if (R.fusedList.length) updateFusions(dt); }
   spawner(dt);
   updateEnemies(dt);
   updateShots(dt);
@@ -1567,6 +2144,7 @@ function update(dt) {
   if (R.won || R.over) { R.endT -= dt; if (R.endT <= 0 && !R.ended) { R.ended = true; endRun(); } }
   if (R.pending > 0 && R.demo) { applyChoice(pick(rollChoices())); R.pending--; }
   else if (R.pending > 0 && mode === 'play' && !R.won && !R.over && R.t > 0.2) showLevelUp();
+  else if (R.fuseNote && mode === 'play') { const f = R.fuseNote; R.fuseNote = null; if (!R.fused[f.id]) { banner('FUSION READY', weaponById(f.a).name + ' + ' + weaponById(f.b).name + ' · open a chest'); sfx.ready(); } }
 }
 
 /* ---------- drawing ---------- */
@@ -1587,6 +2165,8 @@ function draw(t) {
   for (const m of R.mines) { if (!on(m.x, m.y)) continue; const blink = m.arm <= 0 && (t * 4) % 1 < 0.5; ctx.fillStyle = '#1a1a22'; ctx.beginPath(); ctx.arc(m.x, m.y, 9, 0, TAU); ctx.fill(); ctx.strokeStyle = m.col; ctx.lineWidth = 2; ctx.stroke(); if (blink) { ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(glow(m.col, 16), m.x - 12, m.y - 12, 24, 24); ctx.globalCompositeOperation = 'source-over'; } }
   // aura field under enemies
   for (const wp of R.weapons) if (wp.id === 'aura' && wp.st.rad) { const r = wp.st.rad, evo = R.evolved.aura; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.22 + 0.06 * Math.sin(t * 6); ctx.drawImage(glow(evo ? '#ff3b5c' : fxColStatic('#b45cff'), 64), R.p.x - r, R.p.y - r, r * 2, r * 2); ctx.globalAlpha = 0.5; ctx.strokeStyle = evo ? '#ff3b5c' : fxColStatic('#b45cff'); ctx.lineWidth = 2; ctx.setLineDash([8, 10]); ctx.lineDashOffset = -t * 30; ctx.beginPath(); ctx.arc(R.p.x, R.p.y, r, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  if (R.fusedList.length) drawFusionsGround(t, on);
+  FROZEN.length = 0;
   // enemies
   for (const e of R.enemies) {
     if (!on(e.x, e.y)) continue;
@@ -1599,8 +2179,10 @@ function draw(t) {
     ctx.setTransform(SC, 0, 0, SC, -camX * SC, -camY * SC);
     if (e.tele > 0) { ctx.strokeStyle = 'rgba(255,60,90,.6)'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.x + Math.cos(e.dA) * 240, e.y + Math.sin(e.dA) * 240); ctx.stroke(); ctx.setLineDash([]); }
     if (e.elite && !e.boss) { const w2 = e.r * 2; ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(e.x - w2 / 2, e.y - e.r - 12, w2, 4); ctx.fillStyle = '#ffd23f'; ctx.fillRect(e.x - w2 / 2, e.y - e.r - 12, w2 * clamp(e.hp / e.max, 0, 1), 4); }
+    if (e.frz > R.t) FROZEN.push(e);
     if (e.fuse) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5; ctx.drawImage(glow('#ff3b5c', 32), e.x - 40, e.y - 40, 80, 80); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
   }
+  if (FROZEN.length) drawFrozen();
   // effects under the player
   ctx.globalCompositeOperation = 'lighter';
   for (const f of R.fx) drawFx(f, t);
@@ -1619,6 +2201,7 @@ function draw(t) {
     if (wp.id === 'drone' && wp.st.drones) for (const d of wp.st.drones) { ctx.drawImage(glow('#6bffea', 32), d.x - 20, d.y - 20, 40, 40); ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = '#10222a'; ctx.beginPath(); ctx.ellipse(d.x, d.y, 11, 7, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = '#6bffea'; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = '#6bffea'; ctx.beginPath(); ctx.arc(d.x, d.y, 2.5, 0, TAU); ctx.fill(); ctx.fillRect(d.x - 12, d.y - 10, 24, 2); ctx.globalCompositeOperation = 'lighter'; }
     if (wp.id === 'laser' && R.evolved.laser && wp.st.beams) for (const a of wp.st.beams) drawBeam(R.p.x, R.p.y, a, 620 * R.st.area, 26 * R.st.area, fxColStatic('#ff3b5c'), 1);
   }
+  if (R.fusedList.length) drawFusionsTop(t, on);
   // enemy bullets
   for (const b of R.eshots) { if (!on(b.x, b.y)) continue; ctx.drawImage(glow(b.col, 32), b.x - 16, b.y - 16, 32, 32); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, TAU); ctx.fill(); }
   // particles
@@ -1670,6 +2253,11 @@ function drawFx(f, t) {
       const mx = f.x - 240 * (1 - q), my = f.y - 380 * (1 - q);
       ctx.drawImage(glow(f.col, 64), mx - 30, my - 30, 60, 60); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(mx, my, 8, 0, TAU); ctx.fill();
       break;
+    }
+    case 'frost': {
+      ctx.globalAlpha = 1 - p; ctx.strokeStyle = f.col; ctx.lineWidth = 6 * (1 - p) + 2; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.stroke();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#ffffff'; ctx.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * TAU + f.x; ctx.moveTo(f.x + Math.cos(a) * f.r, f.y + Math.sin(a) * f.r); ctx.lineTo(f.x + Math.cos(a) * (f.r + 16), f.y + Math.sin(a) * (f.r + 16)); } ctx.stroke();
+      ctx.globalAlpha = (1 - p) * 0.3; ctx.drawImage(glow(f.col, 64), f.x - f.r, f.y - f.r, f.r * 2, f.r * 2); ctx.globalAlpha = 1; break;
     }
     case 'warn': { ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 0.5 * (1 - p); ctx.fillStyle = '#ff3b5c'; ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.a); ctx.fillRect(0, -22, f.len, 44); ctx.restore(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'lighter'; break; }
   }
@@ -1726,6 +2314,7 @@ function chalValue(c) {
     case 'stars': return totalStars();
     case 'robots': return S.own.robots.length;
     case 'evoKinds': return Object.keys(S.evoSeen).length;
+    case 'fuseKinds': return FUSIONS.filter(f => S.fuseSeen[f.id]).length;
   }
   return S.stat[c.stat] || 0;
 }
@@ -1881,7 +2470,7 @@ function makeCard(c) {
   if (c.type === 'weapon') {
     const def = weaponById(c.id), w = R.weapons.find(x => x.id === c.id);
     if (!w) return { ...c, name: def.name, lv: 'NEW WEAPON', isNew: true, desc: def.desc, col: def.col, icon: c.id };
-    return { ...c, name: def.name, lv: 'LEVEL ' + w.lvl + ' → ' + (w.lvl + 1), desc: def.ups[w.lvl - 1] + (w.lvl + 1 === 8 ? ' · MAX LEVEL' : ''), col: def.col, icon: c.id };
+    return { ...c, name: def.name, lv: 'LEVEL ' + w.lvl + ' → ' + (w.lvl + 1), desc: def.ups[w.lvl - 1] + (w.lvl + 1 === 8 ? ' · MAX LEVEL' : '') + (w.lvl + 1 === FUSE_LEVEL && FUSIONS.some(f => !R.fused[f.id] && (f.a === c.id || f.b === c.id) && wlv(f.a === c.id ? f.b : f.a) >= FUSE_LEVEL) ? ' · FUSION READY' : ''), col: def.col, icon: c.id };
   }
   if (c.type === 'passive') {
     const def = passiveById(c.id), l = R.passives[c.id] || 0;
@@ -1923,6 +2512,11 @@ function renderCards() {
     // show which evolution this helps
     const evo = EVOLUTIONS.find(e => (c.type === 'weapon' && e.weapon === c.id) || (c.type === 'passive' && e.passive === c.id));
     if (evo && !R.evolved[evo.weapon] && S.evoSeen[evo.name]) { const h = document.createElement('div'); h.style.cssText = 'font-size:12px;font-weight:700;color:var(--gold)'; h.textContent = 'Part of: ' + evo.name; b.append(h); }
+    if (c.type === 'weapon') for (const f of FUSIONS) {
+      if (R.fused[f.id] || (f.a !== c.id && f.b !== c.id)) continue;
+      const other = f.a === c.id ? f.b : f.a; if (!wlv(other)) continue;
+      const h = document.createElement('div'); h.className = 'fh'; h.textContent = 'Fuses with ' + weaponById(other).name + ' (both LV ' + FUSE_LEVEL + ') → ' + (S.fuseSeen[f.id] ? f.name : '???'); b.append(h);
+    }
     b.addEventListener('click', () => {
       if (banMode) { if (c.type === 'heal' || c.type === 'chips') return; R.banned[c.type + c.id] = true; R.banishes--; banMode = false; const pool = poolFor().filter(p => !choices.some(q => q.type === p.type && q.id === p.id)); choices[i] = pool.length ? makeCard(pick(pool)) : makeCard({ type: 'heal', id: 'heal' }); sfx.nope(); renderCards(); return; }
       applyChoice(c); sfx.pick();
@@ -1938,7 +2532,11 @@ function renderCards() {
 function applyChoice(c) {
   if (c.type === 'weapon') {
     const w = R.weapons.find(x => x.id === c.id);
-    if (w) { w.lvl++; if (w.lvl >= 8) stat('maxWeapon', 1, true); }
+    if (w) {
+      w.lvl++;
+      if (w.lvl >= 8) stat('maxWeapon', 1, true);
+      if (w.lvl >= FUSE_LEVEL) { const fr = FUSIONS.find(f => fusionReady(f) && (f.a === c.id || f.b === c.id)); if (fr) R.fuseNote = fr; }
+    }
     else { addWeapon(c.id); stat('weapons', R.weapons.length, true); }
   } else if (c.type === 'passive') {
     R.passives[c.id] = (R.passives[c.id] || 0) + 1;
@@ -1955,25 +2553,36 @@ function openChest(big) {
   // evolution first
   const evo = EVOLUTIONS.find(e => { const w = R.weapons.find(x => x.id === e.weapon); return w && w.lvl >= 8 && R.passives[e.passive] && !R.evolved[e.weapon]; });
   if (evo) { R.evolved[evo.weapon] = true; S.evoSeen[evo.name] = true; stat('evos', 1); got.push({ evo }); }
-  else {
+  // then a fusion: two weapons at FUSE_LEVEL that fuse. It is a bonus: the chest still gives its normal items
+  // unless an evolution came out, so fusions never eat chest rewards that evolutions depend on
+  const fus = FUSIONS.find(fusionReady);
+  if (fus && addFusion(fus.id)) { if (!R.demo) S.fuseSeen[fus.id] = true; stat('fuses', 1); got.push({ fus }); }
+  if (!evo) {
     const n = big ? 3 : Math.random() < 0.18 * R.st.luck ? 3 : 1;
     for (let i = 0; i < n; i++) { const pool = poolFor(); if (!pool.length) { got.push(makeCard({ type: 'chips', id: 'chips' })); applyChoice({ type: 'chips' }); continue; } const c = makeCard(pick(pool)); applyChoice(c); got.push(c); }
   }
   R.chips += (big ? 30 : 8) * R.st.greed;
   if (R.demo) return;
+  buildLoadout(); // show new EVO / fusion slots right away
   mode = 'chest'; stick.on = false; $('joy').hidden = true;
   const list = $('chestList'); list.innerHTML = '';
   for (const g of got) {
     if (g.evo) {
       const d = document.createElement('div'); d.className = 'evobig'; d.innerHTML = '<div class="disp muted" style="letter-spacing:.3em">WEAPON EVOLVED</div><div class="nm"></div><div style="font-size:16px;margin-top:6px"></div>';
       d.querySelector('.nm').textContent = g.evo.name; d.lastChild.textContent = g.evo.desc; list.append(d); sfx.evolve(); R.flash = 0.4;
+    } else if (g.fus) {
+      const f = g.fus, d = document.createElement('div'); d.className = 'fusbig'; d.style.setProperty('--f1', f.col); d.style.setProperty('--f2', f.col2);
+      d.innerHTML = '<div class="disp muted" style="letter-spacing:.3em">WEAPONS FUSED</div><div class="recipe"></div><div class="nm"></div><div class="fds"></div>';
+      fusionRecipe(d.querySelector('.recipe'), f, true, 40);
+      d.querySelector('.nm').textContent = f.name; d.querySelector('.fds').textContent = f.desc; list.append(d);
+      sfx.fuse(); R.flash = 0.4;
     } else {
       const d = document.createElement('div'); d.className = 'card'; d.style.setProperty('--cc', g.col); d.style.animation = 'none';
       d.innerHTML = '<div class="top"><div class="ic"></div><div><div class="nm"></div><div class="lv"></div></div></div>';
       d.querySelector('.ic').append(iconCanvas(g.icon, g.col, 52)); d.querySelector('.nm').textContent = g.name; d.querySelector('.lv').textContent = g.lv; list.append(d);
     }
   }
-  if (!got.some(g => g.evo)) sfx.chest();
+  if (!got.some(g => g.evo || g.fus)) sfx.chest();
   show('scrChest');
 }
 
@@ -2015,6 +2624,10 @@ function endRun() {
   if (!R.endless) [['Clear', won], ['Destroy ' + fmt(killGoal(L)), won && R.kills >= killGoal(L)], ['Stay above half health', won && R.minHpFrac >= 0.5]].forEach(([t, ok2]) => { const s = document.createElement('span'); s.className = ok2 ? 'ok' : ''; s.textContent = (ok2 ? '★ ' : '☆ ') + t; rq.append(s); });
   const kv = $('resKv'); kv.innerHTML = '';
   [[fmtT(R.t), 'Time'], [fmt(R.kills), 'Destroyed'], ['LV ' + R.lvl, 'Level'], [R.weapons.length + ' / ' + Object.keys(R.evolved).length, 'Weapons / Evolved']].forEach(([v, k]) => { const d = document.createElement('div'); d.innerHTML = '<b></b><span></span>'; d.firstChild.textContent = v; d.lastChild.textContent = k; kv.append(d); });
+  const bd = $('resBuild'); bd.innerHTML = '';
+  for (const id in R.evolved) { const e = EVOLUTIONS.find(x => x.weapon === id); if (!e) continue; const s2 = document.createElement('span'); s2.className = 'bt evo'; s2.append(iconCanvas(id, weaponById(id).col, 22)); s2.append(e.name); bd.append(s2); }
+  for (const id of R.fusedList) { const f = fusionById(id), s2 = document.createElement('span'); s2.className = 'bt fus'; s2.style.setProperty('--f1', f.col); s2.style.setProperty('--f2', f.col2); s2.append(iconCanvas('fu_' + id, f.col, 22)); s2.append(f.name); bd.append(s2); }
+  bd.hidden = !bd.children.length;
   const er = $('resEarn'); er.innerHTML = '';
   for (const [k, v] of rows) { const d = document.createElement('div'); d.innerHTML = '<span></span><b></b>'; d.firstChild.textContent = k; d.lastChild.textContent = '+' + fmt(v); er.append(d); }
   const tt = document.createElement('div'); tt.className = 'tot'; tt.innerHTML = '<span>Total chips</span><b></b>'; tt.lastChild.textContent = '+' + fmt(total); er.append(tt);
@@ -2028,7 +2641,7 @@ function endRun() {
 
 /* ---------- Workshop ---------- */
 let shopTab = 'perm';
-const SHOP_TABS = [['perm', 'Upgrades'], ['robots', 'Robots'], ['weapons', 'Weapons'], ['paint', 'Paint'], ['fx', 'Effects'], ['evo', 'Evolutions']];
+const SHOP_TABS = [['perm', 'Upgrades'], ['robots', 'Robots'], ['weapons', 'Weapons'], ['paint', 'Paint'], ['fx', 'Effects'], ['evo', 'Evolutions'], ['fuse', 'Fusions']];
 function toShop() { audioOn(); if (!R || !R.demo) startDemo(); mode = 'menu'; $('hud').hidden = true; show('scrShop'); renderShop(); setSong('menu'); }
 function tagHtml(own, eq, price) {
   if (eq) return '<span class="tagp eq">EQUIPPED</span>';
@@ -2107,6 +2720,15 @@ function renderShop() {
       b.querySelector('.nm').textContent = seen ? e.name : '???'; b.querySelector('.nm').style.color = seen ? '#ffd23f' : '';
       b.querySelector('.ds').textContent = wd.name + ' + ' + pd.name + (seen ? '. ' + e.desc : '. Not found yet.');
     }
+  } else if (shopTab === 'fuse') {
+    const note = document.createElement('p'); note.className = 'muted'; note.style.cssText = 'margin:0 0 10px;font-weight:700'; note.textContent = 'Get two weapons that fuse to level ' + FUSE_LEVEL + ', then open a chest. Both weapons keep firing and you get a brand new attack. Found: ' + FUSIONS.filter(f => S.fuseSeen[f.id]).length + ' / ' + FUSIONS.length; body.prepend(note);
+    for (const f of FUSIONS) {
+      const seen = !!S.fuseSeen[f.id], b = document.createElement('div'); b.className = 'item fusi' + (seen ? ' seen' : ''); b.style.setProperty('--f1', f.col); b.style.setProperty('--f2', f.col2); grid.append(b);
+      b.innerHTML = '<div class="recipe"></div><div class="nm"></div><div class="ds"></div>';
+      fusionRecipe(b.querySelector('.recipe'), f, seen, 40);
+      b.querySelector('.nm').textContent = seen ? f.name : '???';
+      b.querySelector('.ds').textContent = weaponById(f.a).name + ' + ' + weaponById(f.b).name + (seen ? '. ' + f.desc : '. Not found yet.');
+    }
   }
 }
 
@@ -2126,6 +2748,7 @@ function toChal() {
 function buildLoadout() {
   const box = $('loadout'); box.innerHTML = '';
   for (const w of R.weapons) { const d = document.createElement('div'); d.className = 'slot' + (R.evolved[w.id] ? ' evo' : ''); d.append(iconCanvas(w.id, weaponById(w.id).col, 30)); const b = document.createElement('b'); b.textContent = R.evolved[w.id] ? 'EVO' : w.lvl; d.append(b); box.append(d); }
+  for (const id of R.fusedList) { const f = fusionById(id), d = document.createElement('div'); d.className = 'slot fus'; d.title = f.name; d.append(iconCanvas('fu_' + id, f.col, 30)); box.append(d); }
   for (const id in R.passives) { const d = document.createElement('div'); d.className = 'slot'; d.append(iconCanvas(id, passiveById(id).col, 30)); const b = document.createElement('b'); b.textContent = R.passives[id]; d.append(b); box.append(d); }
 }
 const hc = {};
@@ -2217,11 +2840,13 @@ function frame(now) {
   if (QUAL.t > 2.5 && QUAL.ema > 12 && QUAL.scale > 0.55) { QUAL.scale *= 0.85; QUAL.t = 0; QUAL.ema = 8; resize(); VIG = null; }
   if (mode === 'play') updateHUD();
 }
+document.querySelectorAll('.fuseLv').forEach(el => el.textContent = FUSE_LEVEL);
 toTitle();
 requestAnimationFrame(frame);
 
 /* test hooks */
-window.__ns = { S, get R() { return R; }, get mode() { return mode; }, set mode(v) { mode = v; }, startRun, update, draw, toMap, toShop, toPre, beginRun, endRun, applyChoice, rollChoices, openChest, keys, save, levelById, LEVELS, renderShop, setShopTab: t => { shopTab = t; renderShop(); } };
+window.__ns = { S, get R() { return R; }, get mode() { return mode; }, set mode(v) { mode = v; }, startRun, update, draw, toMap, toShop, toPre, beginRun, endRun, applyChoice, rollChoices, openChest, keys, save, levelById, LEVELS, renderShop, setShopTab: t => { shopTab = t; renderShop(); }, FUSIONS, EVOLUTIONS, addFusion, buildLoadout,
+  fuse: id => { const f = fusionById(id); if (!R || !f) return false; for (const w of [f.a, f.b]) { if (!wlv(w)) addWeapon(w); R.weapons.find(x => x.id === w).lvl = 8; } const ok2 = addFusion(id); buildLoadout(); return ok2; } };
 
 </script>
 </body></html>
