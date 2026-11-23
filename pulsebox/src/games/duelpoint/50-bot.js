@@ -49,7 +49,20 @@
   // leads to the other site is a reason to rotate there
   // crouching at a hold is only worth it where the way in can still be seen from down there (not behind a half wall or a sill)
   const lowSees = h => { const y = hAt(h.p[0], h.p[1]) + CEYE, d = Math.hypot(h.look[0] - h.p[0], h.look[1] - h.p[1]); return los(h.p[0], y, h.p[1], h.look[0], hAt(h.look[0], h.look[1]) + 1.2, h.look[1], false) >= d - .5; };
+  // the rotator: on a two-site map with four or more defenders, one of them starts half way between the sites (on the
+  // shortest way from one to the other) instead of on either, and goes wherever the call is. From there either site is
+  // half a rotation away; from the other site, help came after the charge was down.
+  function midSpot() {
+    if (MAP._mid !== undefined) return MAP._mid; MAP._mid = null; if (SITES.length !== 2) return null;
+    const q = findPath(SITES[0].c[0], SITES[0].c[1], SITES[1].c[0], SITES[1].c[1]); if (!q.length) return null;
+    const L = pathLen(q, SITES[0].c[0], SITES[0].c[1]); let x = SITES[0].c[0], z = SITES[0].c[1], d = 0;
+    for (const p of q) { const s2 = Math.hypot(p[0] - x, p[1] - z); if (d + s2 >= L / 2) { const k = (L / 2 - d) / s2; MAP._mid = [x + (p[0] - x) * k, z + (p[1] - z) * k]; break; } d += s2; x = p[0]; z = p[1]; }
+    return MAP._mid;
+  }
   function planHold(f, lane) {
+    const mid = !lane && twoSites() && (M.phase === 'buy' || M.t > roundT() - 20) && midSpot(), mates = M.fs.filter(o => o.team === f.team && o.alive);
+    if (mid && mates.length >= 4 && !mates.some(o => o !== f && o.bot && o.bot.plan && o.bot.plan.mid)) {
+      f.bot.hs = null; const A = SPAWN.att[0], P = { k: 'hold', mid: true, lane: 'mid', look: [mid[0] + (A[0] - mid[0]) * .3, mid[1] + (A[1] - mid[1]) * .3], crouch: false, sc: mid }; goTo(P, f, mid[0], mid[1]); return P; }
     let at = HOLDS;
     if (twoSites()) { const ls = laneSite(lane); f.bot.hs = ls != null ? ls : f.bot.hs != null ? f.bot.hs : defSiteFor(f); at = HOLDS.filter(h => h.s === f.bot.hs); }
     const c = at.filter(h => !lane || h.lane === lane || (lane === 'mid' && laneSite(h.lane) != null));
@@ -217,12 +230,12 @@
     if (side === 'def' && twoSites() && !M.planted) {
       if (sees || (B.last && B.last.heard && B.last.t === M.time && e.alive && Math.hypot(e.x - B.last.x, e.z - B.last.z) < 2)) { const S = nearestSite(e.x, e.z); if (Math.hypot(S.c[0] - e.x, S.c[1] - e.z) < (sees ? 22 : 28)) teamSaw(f.team, SITES.indexOf(S), e.key); }   // (seen, or their footsteps heard on the way in)
       const C = M.calls && M.calls[f.team];
-      if (C && P.k === 'hold' && f.bot.hs != null && f.bot.hs !== C.s && B.rotFor !== C.id && !sees) {
+      if (C && P.k === 'hold' && (P.mid || (f.bot.hs != null && f.bot.hs !== C.s)) && B.rotFor !== C.id && !sees) {
         if (B.rotWait !== C.id) { B.rotWait = C.id; B.rotAt = M.time + (B.diff >= 2 ? .6 : B.diff === 1 ? 1.4 : 2.6) + R() * .8; }
         else if (M.time >= B.rotAt) { B.rotFor = C.id;
           const staying = M.fs.filter(o => o.team === f.team && o.alive && o.bot && o.bot.hs === f.bot.hs && o.bot.rotFor !== C.id && o.bot.plan && o.bot.plan.k === 'hold').length;
           const lane = Object.keys(ROUTES).find(l => RSITE[l] === C.s);
-          if (staying >= 1 && lane) { B.rotFrom = f.bot.hs; P = B.plan = planHold(f, lane); P.until = M.time + 12; } }   // (staying counts the others still holding here: the last one stays)
+          if ((staying >= 1 || P.mid) && lane) { B.rotFrom = f.bot.hs; P = B.plan = planHold(f, lane); P.until = M.time + 12; } }   // (staying counts the others still holding here: the last one stays)
       }
     }
     if (P.k === 'hold' && !sees && B.last && !B.last.heard && B.lostT > 3.5 && B.lostT < 3.6 && R() < .25 + .15 * B.diff) { P = B.plan = { k: 'hunt' }; goTo(P, f, B.last.x, B.last.z); }

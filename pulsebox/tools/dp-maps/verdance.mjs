@@ -24,7 +24,7 @@ const m = art([
   '####..coooooooXo.:..#PPgqqqggqqqgPP#__:.rcrhrrrPPPPPP###',
   '###...o#oo#hh#oo.#gg#PPgqqqqqqqqgPP#__#.rrrrrcrPPPPPP###',
   '###...ooooocoooo.wgg#PPgqqXqqqqqgPP#__#.rrrrrrrPPPPPP###',
-  '###.....h........#gg#PPgqqqhhqcqgPP#__#...X.X..PPPPPP###',
+  '###...XXh........#gg#PPgqqqhhqcqgPP#__#...X.X..PPPPPP###',
   '#####:::##########gg#PPgqqqqqqqqgPP#__####::############',
   '####....##########..:..ggg....ggg..#__####.....#########',
   '####....##########..:..ggg....ggg..w__####.....#########',

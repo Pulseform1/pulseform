@@ -576,6 +576,9 @@ function laneSight(def) {
    if the map stays fair (every check above), the lane's long look is gone, the rifle lane is untouched, and it stands on
    plain floor (no doorway, roof, waypoint or special cell). Writes the crates into tools/dp-maps/<key>.mjs.
    node tools/duelpoint-maps.mjs --bend [key] */
+// --cut: every way in whose longest look onto its site is over CUT metres gets containers until it is under (no rifle lane kept)
+const CUT = process.argv[2] === '--cut' ? +(process.argv[4] || 32) : 0;
+const longLines = v => CUT ? v.lines.filter(([f, t]) => Math.hypot(t[0] - f[0], t[1] - f[1]) > CUT) : v.lines;
 function bend(def) {
   const md = path.join(path.dirname(fileURLToPath(import.meta.url)), 'dp-maps'), file = path.join(md, def.k + '.mjs'); if (!fs.existsSync(file)) return [];
   const raw = fs.readFileSync(file, 'utf8'), a0 = raw.indexOf('art(['), rowsAt = []; { const re = /'([^'\n]*)'/g; re.lastIndex = a0; let mm; while (rowsAt.length < def.src.length && (mm = re.exec(raw))) if (mm[1].length === def.src[0].length) rowsAt.push({ at: mm.index + 1, s: mm[1] }); }
@@ -588,18 +591,19 @@ function bend(def) {
   for (const k of Object.keys(bySite)) bySite[k] = bySite[k].map(g => [g.n, g.v, g.names]);
   const wp = new Set(); for (const pts of Object.values(def.routes)) for (const q of pts) wp.add(Math.floor(q[0]) + ',' + Math.floor(q[1]));
   for (const [site, lanes] of Object.entries(bySite)) {
-    lanes.sort((x, y) => y[1].open - x[1].open); const keep = lanes[0];
-    if (lanes.length < 2) { log.push(`${site}: one way in, nothing to bend`); continue; }
-    for (const [name, v, group] of lanes.slice(1)) {
-      if (v.far === 0) { log.push(`${site} ${name}: already bends (${v.open.toFixed(0)} m)`); continue; }
+    lanes.sort((x, y) => y[1].open - x[1].open); const keep = CUT ? null : lanes[0];
+    if (!CUT && lanes.length < 2) { log.push(`${site}: one way in, nothing to bend`); continue; }
+    for (const [name, v, group] of (CUT ? lanes : lanes.slice(1))) {
+      if (CUT && v.open <= CUT) continue;
+      if (!CUT && v.far === 0) { log.push(`${site} ${name}: already bends (${v.open.toFixed(0)} m)`); continue; }
       // break the long looks: containers in the way, a few metres short of the site, until no step along the lane sees the
       // site from more than 14 m (each one must lower that count, keep the map fair and leave the rifle lane's look alone)
-      let done = v.far === 0, cur = v; const why = { unfair: 0, keep: 0, none: 0 }, placed = [];
+      let done = CUT ? v.open <= CUT : v.far === 0, cur = v; const why = { unfair: 0, keep: 0, none: 0 }, placed = [];
       for (let it = 0; it < 8 && !done && placed.length + (v.placedBefore || 0) < 8; it++) {
         load(def); const siteCells = new Set(T.SITES.flatMap(S2 => S2.cells).map(c => Math.floor(c[0] / 2) + ',' + Math.floor(c[1] / 2)));
         // score the floor cells by how many of the lane's far looks cross them, just outside the site (1.5 to 12 m out)
         const score = new Map();
-        for (const [f, t] of cur.lines) { const L = Math.hypot(t[0] - f[0], t[1] - f[1]); let u0 = 0, seenC = new Set();
+        for (const [f, t] of longLines(cur)) { const L = Math.hypot(t[0] - f[0], t[1] - f[1]); let u0 = 0, seenC = new Set();
           for (let u = 0; u <= L; u += .5) { const x = lp(t[0], f[0], u / L), z = lp(t[1], f[1], u / L); if (siteCells.has(Math.floor(x / 2) + ',' + Math.floor(z / 2))) u0 = u + .5; }
           for (let u = u0 + 1.5; u <= Math.min(L, u0 + 12); u += .5) { const x = lp(t[0], f[0], u / L), z = lp(t[1], f[1], u / L), ci = Math.floor(x / 2), cj = Math.floor(z / 2), key = ci + ',' + cj; if (seenC.has(key)) continue; seenC.add(key);
             if (siteCells.has(key) || wp.has(key) || !art[cj] || !'._'.includes(art[cj][ci]) || def.src[cj][ci] !== '.') continue; score.set(key, (score.get(key) || 0) + 1); } }
@@ -608,13 +612,13 @@ function bend(def) {
         for (const [ci, cj] of cand) {
           const keepSrc = def.src; def.src = keepSrc.map((r, jj) => jj === cj ? r.slice(0, ci) + 'X' + r.slice(ci + 1) : r);
           const r = check(def), L1 = r.ok ? laneSight(def) : null; def.src = keepSrc;
-          if (!r.ok) { why.unfair++; continue; } if (L1[keep[0]].open < keep[1].open - 1) { why.keep++; continue; }
-          if (L1[name].lines.length < cur.lines.length * .93 && (!bestC || L1[name].lines.length < bestC.L.lines.length)) bestC = { ci, cj, L: L1[name] };   // each must cut a real share of the long looks
+          if (!r.ok) { why.unfair++; continue; } if (keep && L1[keep[0]].open < keep[1].open - 1) { why.keep++; continue; }
+          if (longLines(L1[name]).length < longLines(cur).length * .93 && (!bestC || longLines(L1[name]).length < longLines(bestC.L).length)) bestC = { ci, cj, L: L1[name] };   // each must cut a real share of the long looks
         }
         if (!bestC) { why.none++; break; }
-        def.src = def.src.map((r, jj) => jj === bestC.cj ? r.slice(0, bestC.ci) + 'X' + r.slice(bestC.ci + 1) : r); art[bestC.cj][bestC.ci] = 'X'; placed.push([bestC.ci, bestC.cj]); cur = bestC.L; if (cur.far === 0 || cur.lines.length <= v.lines.length * .15) done = true;
+        def.src = def.src.map((r, jj) => jj === bestC.cj ? r.slice(0, bestC.ci) + 'X' + r.slice(bestC.ci + 1) : r); art[bestC.cj][bestC.ci] = 'X'; placed.push([bestC.ci, bestC.cj]); cur = bestC.L; if (CUT ? cur.open <= CUT : (cur.far === 0 || cur.lines.length <= v.lines.length * .15)) done = true;
       }
-      if (done) log.push(`${site} ${name}: ${placed.length} container(s) at ${placed.map(c => c.join(',')).join(' ')} (far looks ${v.far} -> 0, longest ${v.open.toFixed(0)} m -> ${cur.open.toFixed(0)} m), ${keep[0]} stays straight (${keep[1].open.toFixed(0)} m)`);
+      if (done) log.push(`${site} ${name}: ${placed.length} container(s) at ${placed.map(c => c.join(',')).join(' ')} (far looks ${v.far} -> 0, longest ${v.open.toFixed(0)} m -> ${cur.open.toFixed(0)} m), ${keep ? keep[0] + ' stays straight (' + keep[1].open.toFixed(0) + ' m)' : 'cut to ' + CUT + ' m'}`);
       else if (placed.length) { log.push(`${site} ${name}: PARTLY ${placed.length} container(s) at ${placed.map(c => c.join(',')).join(' ')} (far looks ${v.far} -> ${cur.far}, longest ${v.open.toFixed(0)} m -> ${cur.open.toFixed(0)} m) ${JSON.stringify(why)}`); }
       if (!done && !placed.length) log.push(`${site} ${name}: NOTHING PLACED (${v.open.toFixed(0)} m from ${v.from.map(q => (q / 2).toFixed(0))}) ${JSON.stringify(why)}`);
     }
@@ -624,7 +628,15 @@ function bend(def) {
   return log;
 }
 const only = process.argv[2];
-if (only === '--bend') { for (const def of MAPS) { if (process.argv[3] && def.k !== process.argv[3]) continue; console.log(def.n); for (const l of bend(def)) console.log('   ' + l); } process.exit(0); }
+if (only === '--bend' || only === '--cut') { for (const def of MAPS) { if (process.argv[3] && def.k !== process.argv[3]) continue; console.log(def.n); for (const l of bend(def)) console.log('   ' + l); } process.exit(0); }
+// node tools/duelpoint-maps.mjs --look <key>: the map with the rotations between sites drawn (%), each way in's longest
+// view onto its site (L from, S the cell seen) and the defenders' way to each site (+)
+if (only === '--look') { const def = MAPS.find(m => m.k === process.argv[3]); load(def); const g = def.src.map(r => r.split('')), mark = (x, z, c, over = '.') => { const i = Math.floor(x / 2), j = Math.floor(z / 2); if (g[j] && over.includes(g[j][i])) g[j][i] = c; };
+  const trace = (a, b, c) => { let x = a[0], z = a[1]; for (const q of T.findPath(a[0], a[1], b[0], b[1])) { const n = Math.ceil(Math.hypot(q[0] - x, q[1] - z)); for (let k = 0; k <= n; k++) mark(lp(x, q[0], k / n), lp(z, q[1], k / n), c, '.oqr+'); x = q[0]; z = q[1]; } };
+  for (const S of T.SITES) trace(T.SPAWN.def[0], S.c, '+');
+  for (let i = 0; i + 1 < T.SITES.length; i++) trace(T.SITES[i].c, T.SITES[i + 1].c, '%');
+  const L = laneSight(def); for (const [n, v] of Object.entries(L)) if (v.from) { mark(v.from[0], v.from[1], 'L', '.oqr+%'); mark(v.to[0], v.to[1], 'S', 'oqr'); console.log(n.padEnd(8), v.open.toFixed(0) + ' m from cell', [Math.floor(v.from[0] / 2), Math.floor(v.from[1] / 2)], 'to', [Math.floor(v.to[0] / 2), Math.floor(v.to[1] / 2)]); }
+  console.log('     ' + Array.from({ length: g[0].length }, (_, i) => i % 10).join('') + '\n' + g.map((r, j) => String(j).padStart(3) + '  ' + r.join('')).join('\n')); process.exit(0); }
 if (only === '--lanes') { for (const def of MAPS) { const L = laneSight(def), bySite = {}; for (const [n, v] of Object.entries(L)) (bySite[v.site] = bySite[v.site] || []).push(n + ' ' + v.open.toFixed(0) + 'm' + (v.from ? ' from (' + (v.from[0] / 2).toFixed(0) + ',' + (v.from[1] / 2).toFixed(0) + ')' : ''));
   console.log(def.n.padEnd(14), Object.entries(bySite).map(([k, v]) => k + ': ' + v.join(' | ')).join('    ')); } process.exit(0); }
 let bad = 0;
