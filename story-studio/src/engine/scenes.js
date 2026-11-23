@@ -277,22 +277,36 @@ const SCENES = {
     if (fv) { ctx.save(); ctx.beginPath(); ctx.rect(wx, wy, ww, wh); ctx.clip(); shadowFigure(ctx, wx + ww * 0.62, wy + wh + 260, 420, fv, lt); ctx.restore(); }
     ctx.strokeStyle = "#08070e"; ctx.lineWidth = 12; ctx.strokeRect(wx, wy, ww, wh); ctx.beginPath(); ctx.moveTo(wx + ww / 2, wy); ctx.lineTo(wx + ww / 2, wy + wh); ctx.stroke();
     // counter along the back + sides
-    ctx.fillStyle = "#0b0a14"; ctx.fillRect(R.x0, R.y1 - 200, R.x1 - R.x0, 200); ctx.fillStyle = "#24203c"; ctx.fillRect(R.x0, R.y1 - 210, R.x1 - R.x0, 14);
-    poly(ctx, [R.wall(-1, 0.2, 0.62), R.wall(-1, 1, 0.62), [R.x0, R.y1], R.floor(0, 0.2)], "#0b0a14");
+    ctx.fillStyle = "#14122a"; ctx.fillRect(R.x0, R.y1 - 200, R.x1 - R.x0, 200); ctx.fillStyle = "#3a3560"; ctx.fillRect(R.x0, R.y1 - 212, R.x1 - R.x0, 14);
+    ctx.strokeStyle = "#0a0914"; ctx.lineWidth = 4; for (let k = 1; k < 5; k++) { const x = R.x0 + k * (R.x1 - R.x0) / 5; ctx.beginPath(); ctx.moveTo(x, R.y1 - 190); ctx.lineTo(x, R.y1 - 10); ctx.stroke(); }
+    // the sink tap
+    ctx.strokeStyle = "#5a5880"; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(R.vx, R.y1 - 212); ctx.lineTo(R.vx, R.y1 - 262); ctx.lineTo(R.vx + 34, R.y1 - 262); ctx.stroke();
+    // counters down the left wall: top, then cabinet fronts
+    poly(ctx, [R.wall(-1, 0.15, 0.6), R.wall(-1, 1, 0.6), [R.x0 + 0, R.y1 - 200], R.floor(0, 0.15)], "#15132a");
+    poly(ctx, [R.wall(-1, 0.15, 0.6), R.wall(-1, 1, 0.6), [R.x0, R.y1 - 212], [R.wall(-1, 0.15, 0.6)[0] + 90, R.wall(-1, 0.15, 0.6)[1] + 10]], "#3a3560");
     // open upper cabinets on the left wall (doors swung out)
     [[0.3, 0.45], [0.5, 0.62], [0.7, 0.8]].forEach(([d0, d1]) => {
       poly(ctx, quadOnWall(R, -1, d0, d1, 0.12, 0.38), "#030307");
       const a = R.wall(-1, d0, 0.12), b = R.wall(-1, d0, 0.38);
-      poly(ctx, [a, [a[0] + 120 * (1 - d0 * 0.6), a[1] + 20], [b[0] + 120 * (1 - d0 * 0.6), b[1] + 30], b], "#1b1830");
+      poly(ctx, [a, [a[0] + 120 * (1 - d0 * 0.6), a[1] + 20], [b[0] + 120 * (1 - d0 * 0.6), b[1] + 30], b], "#2e2a50");
+      ctx.strokeStyle = "#4a4478"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(a[0] + 120 * (1 - d0 * 0.6), a[1] + 20); ctx.lineTo(b[0] + 120 * (1 - d0 * 0.6), b[1] + 30); ctx.lineTo(...b); ctx.stroke();
     });
     // the fridge on the right, door open, cold light spilling out
     const fq = quadOnWall(R, 1, 0.12, 0.42, 0.05, 1);
-    poly(ctx, fq, "#c9dcf0"); light(ctx, (fq[0][0] + fq[1][0]) / 2, (fq[0][1] + fq[3][1]) / 2, 700, "rgba(190,225,255,.6)", 0.55 + 0.05 * Math.sin(lt * 30));
+    poly(ctx, fq, lin(ctx, fq[0][0], 0, fq[1][0], 0, [[0, "#7f93ad"], [1, "#4a5a74"]])); light(ctx, (fq[0][0] + fq[1][0]) / 2, (fq[0][1] + fq[3][1]) / 2, 700, "rgba(170,210,255,.55)", 0.45 + 0.05 * Math.sin(lt * 30));
     ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = 0.16; poly(ctx, [fq[3], fq[2], [fq[2][0] - 520, fq[2][1] - 30], [fq[3][0] - 700, H]], "#a8d4ff"); ctx.restore();
-    poly(ctx, [fq[0], [fq[0][0] - 260, fq[0][1] + 60], [fq[3][0] - 260, fq[3][1] - 40], fq[3]], "#d8e2ee");
-    poly(ctx, [[fq[0][0] - 250, fq[0][1] + 120], [fq[0][0] - 30, fq[0][1] + 60], [fq[3][0] - 30, fq[3][1] - 120], [fq[3][0] - 250, fq[3][1] - 80]], "#b8c6d6");
+    // the open fridge door, facing us: its inside, lit cold, with door shelves full of bottles
+    const A = fq[0], D = fq[3], B = [A[0] - 300, A[1] + 70], C = [D[0] - 300, D[1] - 50];
+    poly(ctx, [A, B, C, D], lin(ctx, B[0], 0, A[0], 0, [[0, "#6e819c"], [1, "#a9bdd6"]]));
+    poly(ctx, [[lerp(A[0], B[0], 0.08), lerp(A[1], B[1], 0.08) + 30], [lerp(A[0], B[0], 0.92), lerp(A[1], B[1], 0.92) + 30], [lerp(D[0], C[0], 0.92), lerp(D[1], C[1], 0.92) - 30], [lerp(D[0], C[0], 0.08), lerp(D[1], C[1], 0.08) - 30]], "#c8d8ea");
+    const rr2 = rng(4);
+    [0.24, 0.46, 0.68, 0.88].forEach((v) => {
+      const p0 = [lerp(A[0], D[0], v), lerp(A[1], D[1], v)], p1 = [lerp(B[0], C[0], v), lerp(B[1], C[1], v)];
+      for (let j = 0; j < 4; j++) { const u = 0.14 + j * 0.2 + rr2() * 0.04, x = lerp(p0[0], p1[0], u), y = lerp(p0[1], p1[1], u), hh = 50 + rr2() * 60; ctx.fillStyle = ["#c94a5a", "#e8c35a", "#5aa0c9", "#f4f4fa", "#7ac96a"][Math.floor(rr2() * 5)]; roundRect(ctx, x - 13, y - hh, 26, hh, 8); ctx.fill(); }
+      ctx.fillStyle = "#e9f2ff"; poly(ctx, [[p0[0], p0[1] - 4], [p1[0], p1[1] - 4], [p1[0], p1[1] + 10], [p0[0], p0[1] + 12]], "#e9f2ff");
+    });
     dust(ctx, lt, 30, fq[0][0] - 200, 1100, 300, 8);
-    shade(ctx, 700, 1050, 1150, 0.62);
+    shade(ctx, 600, 1000, 1250, 0.5);
   },
 
   basement(ctx, lt, o) {
