@@ -1,0 +1,31 @@
+{
+  "name": "pulse-stories-studio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.12.0",
+    "express": "^5.3.0",
+    "kokoro-js": "^1.2.1",
+    "mp4-muxer": "^5.2.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "webm-muxer": "^5.1.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.3.0",
+    "concurrently": "^10.0.7",
+    "vite": "^8.3.8"
+  },
+  "optionalDependencies": {
+    "ffmpeg-static": "^5.3.0"
+  },
+  "description": "Animated text-message story video creator: write or generate a story, preview it on an animated phone, export a 1080x1920 MP4.",
+  "scripts": {
+    "dev": "concurrently -k -n server,web -c green,magenta \"node server/index.js\" \"vite\"",
+    "build": "vite build",
+    "start": "node server/index.js --serve-dist",
+    "server": "node server/index.js",
+    "test:e2e": "node tests/e2e.mjs"
+  }
+}

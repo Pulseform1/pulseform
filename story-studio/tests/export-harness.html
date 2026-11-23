@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/src/fonts.css"></head><body>
+<script type="module">
+// Dev harness: full export pipeline without the UI (story -> voices -> mix -> MP4).
+import { generateStory } from "/src/story/generator.js";
+import { compileTimeline } from "/src/engine/timeline.js";
+import { buildNarration } from "/src/engine/voices.js";
+import { renderMix } from "/src/engine/audio.js";
+import { exportVideo, exportCapabilities } from "/src/engine/exporter.js";
+window.runExport = async (opts) => {
+  await document.fonts.load("400 40px 'Luckiest Guy'"); await document.fonts.load("400 40px Inter"); await document.fonts.load("400 40px Creepster");
+  const story = generateStory(opts);
+  const narr = await buildNarration(story);
+  const compiled = compileTimeline(story, narr.durations);
+  const mix = await renderMix(compiled, narr);
+  const res = await exportVideo(compiled, mix, { serverFfmpeg: true, onProgress: (p) => (window.progress = p) });
+  const b64 = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result.split(",")[1]); fr.readAsDataURL(res.blob); });
+  return { b64, notes: res.notes, seconds: res.seconds, duration: compiled.duration, caps: await exportCapabilities(), title: story.title, n: story.messages.length };
+};
+window.ready = true;
+</script></body></html>

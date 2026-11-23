@@ -1,0 +1,95 @@
+import { say, img, sys } from "../generator.js";
+
+const me = (t, o) => say("me", t, o);
+
+export default [
+  {
+    id: "school-group-project",
+    title: "The group project chat",
+    hook: (v, k) => k.pick(["The group project is due tomorrow. One person hasn't said a word.", "Every group project has that one person", "The quiet one in our group chat finally spoke"]),
+    outro: ["Protect the quiet ones.", "Tag your group project partner."],
+    vars: (k) => ({ a: k.name(), b: k.name(), q: k.name(), subj: k.pick(["bio", "history", "econ", "chem"]), clock: "11:58", chatTitle: "" }),
+    cast: (v) => [{ id: "me", name: "You", voice: "af_sky" }, { id: "a", name: v.a, color: "#ff5c8a", voice: "af_bella" }, { id: "b", name: v.b, color: "#4fa3ff", voice: "am_puck" }, { id: "q", name: v.q, avatar: "moon", color: "#5ad96b", voice: "am_echo" }],
+    beats: [
+      { m: (v) => [me(`ok the ${v.subj} presentation is TOMORROW. where are we`), say("a", "i made the title slide"), say("b", "i picked the font")] },
+      { m: (v) => [me("that's it??"), say("a", `${v.q} hasn't said a single word in 3 weeks btw`)] },
+      { tier: 1, m: (v) => [say("b", `${v.q} are you alive`), say("a", `${v.q} if you're reading this blink twice`), sys(`${v.q} is typing…`), sys(`${v.q} stopped typing`)] },
+      { tier: 1, m: () => [me("this is fine. i'll pull an all-nighter. again"), say("a", "i can do the bibliography"), say("b", "i can emotionally support")] },
+      { tier: 2, m: (v) => [say("a", `should we tell the teacher ${v.q} isn't helping`), me("let's give them till midnight")] },
+      { m: (v) => [sys("12:00 AM"), say("q", "sorry. was finishing."), img("q", "phone-screen", "presentation_FINAL_final.pptx. 34 slides.", { effect: "zoom" })] },
+      { tier: 3, m: () => [say("a", "34???"), say("b", "is that... animations? and SOURCES?"), me("there's a 3D model of a cell that rotates")] },
+    ],
+    pool: [
+      () => [say("b", "i made a meme about the project. it's not in the project. it's just for us")],
+      (v) => [say("a", "should we do a dress rehearsal"), me("we don't have a dress. or a rehearsal")],
+      (v) => [say("b", "is it bad that i don't know what our topic is"), me("yes")],
+      () => [say("b", "should our theme be dark mode or chaos mode"), me("we have no slides. there is no theme")],
+      (v) => [say("a", `i googled ${v.q}'s name. they won a science fair in 4th grade`), say("b", "so they're powerful but silent")],
+    ],
+    keys: [1, 5],
+    short: (v) => [me("presentation is TOMORROW and we have one slide"), say("a", `${v.q} hasn't said a word in 3 weeks`), sys("12:00 AM"), say("q", "sorry. was finishing."), img("q", "phone-screen", "34 slides. animations. sources.", { effect: "zoom" })],
+    endings: [
+      (v) => [say("q", "i also made speaker notes for each of you. you just have to read them"), me("i would die for you"), say("a", "this is the best day of my life"), say("q", "you're welcome. please don't change the font")],
+      (v) => [say("q", "i just don't like group chats. i like slides"), say("b", "king of silence"), say("q", "also i added a slide where all of you thank me. it's mandatory")],
+    ],
+  },
+  {
+    id: "school-wrong-text-teacher",
+    title: "I texted my teacher by accident",
+    hook: (v, k) => k.pick(["I accidentally texted my teacher what I really think of my essay", "I sent 'this essay is garbage lol' to my TEACHER", "My teacher replied to the wrong text"]),
+    outro: ["Check who you're texting.", "Tag your favorite teacher."],
+    vars: (k) => ({ t: k.pick(["Ms. Alvarez", "Mr. Brooks", "Dr. Patel", "Ms. Kowalski", "Mr. Osei"]), f: k.name(), clock: "11:12" }),
+    cast: (v) => [{ id: "me", name: "You", voice: "af_sky" }, { id: "x", name: v.t, avatar: "glasses", color: "#ff6b3d", voice: "am_michael" }],
+    beats: [
+      { m: (v) => [me(`${v.f} i wrote the whole essay at 3am. it's garbage. i used 'in conclusion' 4 times`), me("submitting it anyway lol")] },
+      { m: (v) => [say("x", "Interesting confession."), me("wait")] },
+      { m: (v) => [say("x", `This is ${v.t}. You added my number to your contacts as "${v.f}" during the field trip.`, { effect: "zoom" }), me("i'm going to move to the woods")] },
+      { tier: 1, m: () => [say("x", "Before you go to the woods: was it 'in conclusion' four times, or five?"), me("...five")] },
+      { tier: 2, m: () => [me("i'm so sorry. i'm deleting my account. and my face"), say("x", "Please don't. You're one of my best writers.")] },
+      { tier: 2, m: () => [say("x", "I read it already. Paragraph 3 is genuinely good. The rest reads like it was written at 3am."), me("it WAS written at 3am")] },
+      { tier: 3, m: () => [me("can i resubmit"), say("x", "You have until Friday. And go to sleep.")] },
+    ],
+    pool: [
+      () => [say("x", "Also, you spelled my name wrong in your contacts. Twice."), me("i will fix that immediately")],
+      () => [me("is my grade ruined"), say("x", "Your grade is fine. Your pride, maybe not.")],
+      () => [say("x", "For the record, paragraph 3 made me laugh. On purpose, I assume."), me("...on purpose. yes")],
+      () => [me("did you read the part where i compared the war to a group chat"), say("x", "I did. I laughed. Then I took off points.")],
+      () => [say("x", "For the record, I also used to write essays at 3am."), me("did you get caught"), say("x", "I became a teacher. That's my punishment.")],
+    ],
+    keys: [1, 2],
+    short: (v) => [me("this essay is garbage lol. used 'in conclusion' 4 times"), say("x", `This is ${v.t}.`, { effect: "zoom" }), me("i'm moving to the woods"), say("x", "It was 5 times. Resubmit by Friday."), me("in conclusion, deal")],
+    endings: [
+      () => [me("thank you. seriously"), say("x", "One condition: zero 'in conclusion'. Not even one."), me("in conclusion, deal"), say("x", "-5 points.")],
+      () => [me("i'm going to sleep now"), say("x", "Good. Also, I'm reading this text out loud to my class tomorrow. Anonymously."), me("PLEASE", { effect: "shake" })],
+    ],
+  },
+  {
+    id: "school-substitute-rumor",
+    title: "The substitute rumor",
+    hook: (v, k) => k.pick(["The whole class thought our substitute was a famous streamer", "Our group chat was on the projector the whole time", "The rumor about our substitute got out of hand"]),
+    outro: ["Turn off your laptop sync.", "Tag the person who'd do this."],
+    vars: (k) => ({ a: k.name(), b: k.name(), streamer: k.pick(["RazzleTV", "NovaPlays", "GhostChef", "Captain Lag"]), clock: "10:03", chatTitle: k.pick(["3rd period chaos", "room 214", "the back row"]) }),
+    cast: (v) => [{ id: "me", name: "You", voice: "af_sky" }, { id: "a", name: v.a, color: "#ff5c8a", voice: "af_bella" }, { id: "b", name: v.b, color: "#ffb02e", voice: "am_puck" }],
+    beats: [
+      { m: (v) => [say("a", `guys. the sub. is that ${v.streamer}??`), say("b", "NO WAY"), me("the voice is identical")] },
+      { m: (v) => [say("a", "he just said 'let's get this bread' while taking attendance"), say("b", "that's literally his catchphrase")] },
+      { tier: 1, m: () => [img("b", "classroom", "zoomed in. look at his hoodie"), me("the logo is covered by a lanyard. suspicious")] },
+      { tier: 1, m: (v) => [say("a", "someone ask him to say the intro"), say("b", "YOU ask him"), me("i'm not asking him")] },
+      { tier: 2, m: () => [say("a", "he's typing something on the laptop and smiling"), me("he's reading chat. live chat. he's streaming us")] },
+      { m: (v) => [say("b", "wait why is the projector showing a group chat"), say("a", "why is the projector showing OUR group chat", { effect: "zoom" })] },
+    ],
+    pool: [
+      () => [say("b", "he just did the streamer laugh. the exact one")],
+      (v) => [me("someone check if he's live right now"), say("a", "his channel says offline. that's exactly what he'd want us to think")],
+      () => [say("a", "he gave us a quiz and called it a 'side quest'"), say("b", "IT'S HIM")],
+      () => [say("b", "he called roll and said 'chat, we're live' under his breath"), me("i heard it too")],
+      () => [say("a", "he has a ring light in his car. i saw it in the parking lot"), me("case closed")],
+    ],
+    keys: [5],
+    short: (v) => [say("a", `the sub is ${v.streamer}. i swear`), say("b", "he said 'chat, we're live' under his breath"), say("a", "why is the projector showing OUR group chat", { effect: "zoom" }), sys("Substitute: 'Hi chat.'"), me("i'm leaving the country")],
+    endings: [
+      (v) => [say("b", `${v.a} your laptop is synced to the classroom screen`), sys("Substitute: 'Hi chat.'", { effect: "shake" }), say("a", "i'm leaving the country"), me("he's laughing so hard he had to sit down")],
+      (v) => [sys("Substitute: 'For the record, I'm not a streamer. I'm Theo's dad.'"), say("b", "THEO'S DAD??"), say("a", "he just said he'll tell Theo everything"), me("he's giving extra credit to whoever explains the rumor in a 5 paragraph essay")],
+    ],
+  },
+];

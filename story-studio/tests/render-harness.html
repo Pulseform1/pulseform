@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/src/fonts.css"></head>
+<body style="margin:0;background:#000"><canvas id="c" width="1080" height="1920"></canvas>
+<script type="module">
+// Dev harness: renders a story frame so tests can screenshot the renderer on its own.
+import { compileTimeline } from "/src/engine/timeline.js";
+import { createRenderer } from "/src/engine/renderer.js";
+import { normalizeStory } from "/src/story/model.js";
+const r = createRenderer(), ctx = document.getElementById("c").getContext("2d");
+window.renderStory = async (story, t) => {
+  await document.fonts.load("400 40px 'Luckiest Guy'"); await document.fonts.load("400 40px Inter"); await document.fonts.load("400 40px Creepster");
+  const s = normalizeStory(story); if (!window.__c || window.__s !== JSON.stringify(s)) { window.__c = compileTimeline(s); window.__s = JSON.stringify(s); }
+  r.draw(ctx, window.__c, t); return window.__c.duration;
+};
+window.ready = true;
+</script></body></html>

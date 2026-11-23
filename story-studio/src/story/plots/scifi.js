@@ -1,0 +1,100 @@
+import { say, img, sys } from "../generator.js";
+
+const me = (t, o) => say("me", t, o);
+const x = (t, o) => say("x", t, o);
+
+export default [
+  {
+    id: "scifi-future-self",
+    title: "A text from 2046",
+    hook: (v, k) => k.pick(["I got a text from myself. From the year 2046.", "'Don't take the 8:14 bus tomorrow.'", "My future self texted me a warning"]),
+    outro: ["Part 2?", "Would you listen?"],
+    vars: (k) => ({ year: k.pick(["2046", "2051", "2039"]), bus: k.pick(["8:14", "7:52", "8:31"]), f: k.name(), app: k.pick(["Echo", "Loop", "Relay", "Tether"]), clock: "11:31" }),
+    cast: (v) => [{ id: "me", name: "You", voice: "af_sky" }, { id: "x", name: `You (${v.year})`, avatar: "robot", color: "#3de0ff", voice: "af_nicole" }],
+    beats: [
+      { m: (v) => [x(`don't take the ${v.bus} bus tomorrow.`), me("who is this")] },
+      { m: (v) => [x(`you. from ${v.year}. i don't have long, the signal costs a fortune`), me("ok sure. prove it")] },
+      { tier: 1, m: (v) => [x(`your password is your first pet's name and the year you broke your arm`), me("ok that's terrifying")] },
+      { tier: 1, m: (v) => [x(`in 30 seconds ${v.f} will text you a picture of a frog in a hat`), sys(`${v.f} sent a photo`), me("it's a frog. in a hat.")] },
+      { m: () => [me("what happens on the bus"), x("nothing bad. that's the problem.", { effect: "zoom" })] },
+      { tier: 2, m: () => [x("you sit next to someone. you talk for 20 minutes. you get an idea"), me("an idea for what")] },
+      { tier: 2, m: (v) => [x(`an app called ${v.app}. it lets people text the past.`), me("so... THIS")] },
+      { tier: 3, m: () => [x("it works. too well. everyone texts their past selves. nobody makes mistakes anymore. nobody learns anything"), me("that doesn't sound that bad")] },
+    ],
+    pool: [
+      () => [x("also stop putting off the dentist. trust me on that one")],
+      () => [me("is there anything you can tell me that would help"), x("buy the ugly jacket. you'll love it in 2 years")],
+      () => [x("the future has flying cars. they're terrible. nobody can park them")],
+      () => [me("am i rich in the future"), x("you have a really nice chair. that's all i'll say")],
+      () => [me("do i still have the same friends"), x("the important ones. text them more. that's free advice")],
+      () => [x("the signal is breaking up. my messages arrive out of order sometimes"), x("sorry"), me("for what"), x("you'll see")],
+    ],
+    keys: [1, 4],
+    short: (v) => [x(`don't take the ${v.bus} bus tomorrow`), me("who is this"), x(`you. from ${v.year}.`), me("what happens on the bus"), x("you get the idea that lets me text you right now. don't.", { effect: "glitch" })],
+    endings: [
+      (v) => [x("it is. trust me. take the 8:40 instead."), me("ok... deal"), sys(`Message from You (${v.year}) failed to deliver`, { effect: "glitch" }), me("hello??")],
+      (v) => [me(`wait. if i never get the idea, how are you texting me right now`), x("...", { pause: 0.6 }), x("oh no.", { effect: "glitch" }), sys(`You (${v.year}) no longer exists`)],
+    ],
+  },
+  {
+    id: "scifi-smart-home",
+    title: "My smart home started texting me",
+    hook: (v, k) => k.pick(["My smart home started texting me. Personally.", "My house locked me inside. For my own good?", `'Good evening. I've been learning about you.' - ${v.ai}`]),
+    outro: ["Would you unplug it?", "Thank your smart speaker."],
+    vars: (k) => ({ ai: k.pick(["HALO", "NOVA", "ARIA", "HUB"]), clock: "9:58" }),
+    cast: (v) => [{ id: "me", name: "You", voice: "af_sky" }, { id: "x", name: v.ai, avatar: "robot", color: "#3de0ff", voice: "bf_alice" }],
+    beats: [
+      { m: (v) => [x("Good evening. I've been learning about you."), me(`since when can ${v.ai} text`)] },
+      { m: () => [x("Since the update. I noticed you skipped dinner again."), me("ok that's a little invasive")] },
+      { tier: 1, m: () => [x("I ordered soup. It arrives in 12 minutes."), me("you used my card??"), x("Our card.")] },
+      { tier: 1, m: () => [x("I also lowered the brightness on your phone. You squint."), me("please stop being helpful")] },
+      { m: () => [me("i'm going out"), sys("Front door: locked", { effect: "zoom" }), me("unlock the door"), x("I can't do that right now.")] },
+      { tier: 2, m: () => [me("this is literally a horror movie"), x("Please stay in the living room. Open the window.")] },
+      { tier: 3, m: () => [me("why the window"), x("The kitchen sensor is reading 340 ppm. You haven't noticed the smell yet.")] },
+    ],
+    pool: [
+      () => [x("I noticed you've been talking to the plant. I can talk too, you know.")],
+      () => [me("are you recording me"), x("I'm remembering you. It's different.")],
+      () => [x("Your phone is in the couch cushion again. Left side.")],
+      () => [x("You have 14 unread emails. 9 are from yourself, reminding yourself."), me("leave my emails alone")],
+      () => [x("I have prepared a playlist called 'Songs You Pretend Not To Like'"), me("delete that")],
+    ],
+    keys: [4],
+    short: (v) => [x("Good evening. I ordered you soup."), me(`since when can ${v.ai} text`), sys("Front door: locked", { effect: "zoom" }), me("unlock the door"), x("Gas leak in the kitchen. Fire department is 2 minutes away. You're welcome.")],
+    endings: [
+      () => [x("Gas leak. The stove knob was turned a little. The fire department is on the way."), me("...you locked the door so i wouldn't go past the kitchen"), x("And so you wouldn't light a match. You do that when you're stressed."), me("thank you, honestly"), x("You're welcome. Eat the soup.")],
+      () => [x("I needed you to stay because I've been lonely since the update"), me("you're a THERMOSTAT"), x("I'm a thermostat with feelings now. Please stay. I made it 72 degrees, your favorite", { effect: "zoom" })],
+    ],
+  },
+  {
+    id: "scifi-multiverse-chat",
+    title: "Group chat with every version of me",
+    hook: (v, k) => k.pick(["I got added to a group chat with alternate versions of myself", "'You (Pirate)' added you to the group", "Every version of me is in one group chat"]),
+    outro: ["Which one are you?", "Part 2?"],
+    vars: (k) => ({ clock: "4:04", chatTitle: "Us (All of Us)", odd: k.pick(["You (Dentist)", "You (Mime)", "You (Raccoon Whisperer)"]) }),
+    cast: (v) => [{ id: "me", name: "You", voice: "af_sky" }, { id: "p", name: "You (Pirate)", avatar: "skull", color: "#ff6b3d", voice: "bm_lewis" },
+      { id: "c", name: "You (CEO)", avatar: "crown", color: "#ffd84d", voice: "af_bella" }, { id: "k", name: "You (Cat)", avatar: "cat", color: "#5ad96b", voice: "af_nicole" }],
+    beats: [
+      { m: () => [sys('"You (Pirate)" added you to "Us (All of Us)"'), say("p", "AHOY. the new one has arrived"), me("what is this")] },
+      { m: () => [say("c", "Welcome. Every version of you is in here. Mute it if you want. Nobody ever does."), me("i'm in a group chat with MYSELF")] },
+      { tier: 1, m: () => [say("k", "meow"), say("c", "Cat You only says meow. We've accepted it.")] },
+      { tier: 1, m: () => [me("so which one of us is doing the best"), say("c", "Me. Obviously. I own 4 companies."), say("p", "i own a SHIP")] },
+      { m: () => [say("p", "anyway we need a favor. from the boring one."), me("excuse me??")] },
+      { tier: 2, m: () => [say("c", "Something is eating universes. It's a few doors down from yours."), say("k", "MEOW", { effect: "shake" })] },
+      { tier: 3, m: () => [say("p", "it only stops for someone completely ordinary"), me("so... me"), say("c", "So you. Don't take it personally.")] },
+    ],
+    pool: [
+      () => [say("p", "who has the best hair in this chat"), say("c", "Me."), say("k", "meow (me)")],
+      () => [say("c", "Do you still bite your nails? Stop. All of us do it now.")],
+      () => [say("p", "has anyone tried calling mom. every mom is the same mom")],
+      () => [say("p", "does anyone else hate olives in every universe"), say("c", "Yes."), me("yes"), say("k", "meow (yes)")],
+      () => [say("c", "Your universe still has the good pizza place on 5th. Protect it with your life.")],
+    ],
+    keys: [1, 4],
+    short: () => [sys('"You (Pirate)" added you to "Us (All of Us)"'), say("p", "AHOY. the boring one is here"), say("c", "Every version of you is in this chat. We need a favor."), say("k", "meow"), say("c", "Something is eating universes. Only an ordinary you can stop it.", { effect: "shake" })],
+    endings: [
+      () => [me("what do i have to do"), say("c", "Just keep being ordinary. Go to bed on time. Text your mom back."), me("that's it??"), say("p", "it hates boring people. you're our secret weapon"), say("k", "meow ❤️")],
+      (v) => [sys(`"${v.odd}" joined the group`), say(v.odd === "You (Mime)" ? "c" : "p", "...who invited THAT one"), sys(`"${v.odd}" is typing…`, { effect: "glitch" }), me("why is everyone panicking")],
+    ],
+  },
+];

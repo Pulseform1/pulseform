@@ -1,0 +1,100 @@
+import { say, img, sys } from "../generator.js";
+
+const me = (t, o) => say("me", t, o);
+const x = (t, o) => say("x", t, o);
+
+export default [
+  {
+    id: "suspense-locked-mall",
+    title: "Locked inside the mall",
+    hook: (v, k) => k.pick(["I fell asleep in a fitting room. The mall is closed.", "Locked inside the mall after midnight", "Footsteps. In a closed mall."]),
+    outro: ["Part 2?", "Would you hide or run?"],
+    vars: (k) => ({ f: k.name(), store: k.pick(["the big department store", "the shoe store", "the bookstore"]), clock: "12:14" }),
+    cast: (v) => [{ id: "me", name: "You", voice: "af_sky" }, { id: "x", name: v.f, avatar: "smile", color: "#ff6b3d", voice: "am_echo" }],
+    beats: [
+      { m: () => [me("don't freak out"), me("i fell asleep in a fitting room and the mall is CLOSED"), x("WHAT. it's midnight")] },
+      { m: () => [x("call security"), me("i don't have the number and i'm at 9%")] },
+      { tier: 1, m: (v) => [me(`i'm in ${v.store}. the gate's down`), x("is there an emergency exit sign"), me("yeah. but it says ALARM WILL SOUND")] },
+      { m: () => [me("wait"), me("there are footsteps", { effect: "heartbeat" }), x("security?"), me("no flashlight. just footsteps")] },
+      { tier: 2, m: () => [x("hide. NOW"), me("i'm under a display table"), x("don't make a sound. keep your screen dim")] },
+      { tier: 2, m: () => [me("they stopped. right by the mannequins"), x("can you see them"), me("i can see shoes. that's it")] },
+      { tier: 3, m: () => [me("they're humming. it's the song from the store speakers"), x("the store speakers have been off for an hour")] },
+      { m: () => [sys("A flashlight sweeps across the floor.", { effect: "zoom" })] },
+    ],
+    pool: [
+      () => [me("the music just started playing. the same 4 seconds on repeat"), x("that's so much worse")],
+      () => [x("my cousin used to work there. she said the 3rd floor is never fully closed"), me("why are you telling me THIS")],
+      () => [me("i found a map of the mall. there's a door marked STAFF ONLY behind the food court"), x("go")],
+      () => [me("the escalator just turned on by itself"), x("maybe it's on a timer"), me("it's going UP. nobody's on it")],
+      () => [x("my battery is at 30. i'm staying on with you. don't worry")],
+      () => [me("one mannequin is facing the other way now"), x("you're tired. you're seeing things"), me("i hope so")],
+    ],
+    keys: [3, 7],
+    short: () => [me("i fell asleep in a fitting room. the mall is CLOSED"), x("call security"), me("there are footsteps. no flashlight", { effect: "heartbeat" }), sys("A flashlight sweeps across the floor."), me("a voice just said 'we close at 9.' it's 12:30", { effect: "shake" })],
+    endings: [
+      () => [me("it's a guard. with a flashlight. she's waving at me"), me("she said she watched me sleep on the cameras for an hour and didn't have the heart to wake me"), x("that's the most wholesome horror story i've ever heard"), me("she's walking me out. she gave me a pretzel")],
+      () => [me("the flashlight stopped right on my table"), me("a voice just said 'we close at 9.'"), me("it's 12:30.", { effect: "shake" }), x("RUN. use the alarm door. RUN")],
+    ],
+  },
+  {
+    id: "suspense-elevator",
+    title: "Stuck in an elevator with a stranger",
+    hook: (v, k) => k.pick(["Stuck in an elevator. With a stranger who keeps whispering.", "The elevator stopped between floors 8 and 9", "The stranger in the elevator knew my name"]),
+    outro: ["Part 2?", "Would you trust them?"],
+    vars: (k) => ({ f: k.name(), clock: "7:56" }),
+    cast: (v) => [{ id: "me", name: "You", voice: "af_sky" }, { id: "x", name: v.f, avatar: "star", color: "#ffb02e", voice: "am_puck" }],
+    beats: [
+      { m: () => [me("i'm stuck in the elevator at work"), x("omg are you ok"), me("there's a guy in here with a hood up. he's whispering to himself")] },
+      { m: () => [x("hit the alarm button"), me("did. nothing")] },
+      { tier: 1, m: () => [me("he's counting. 'four minutes. four minutes.'"), x("four minutes till what")] },
+      { tier: 1, m: () => [me("he has a big duffel bag and he keeps checking it"), x("ok you're making ME nervous")] },
+      { m: () => [me("he just said my name.", { effect: "zoom" }), x("HOW does he know your name"), me("lanyard. i hope")] },
+      { tier: 2, m: () => [me("he asked if i'm afraid of the dark"), x("say no"), me("i said no. he said 'good.'"), sys("The lights go out.", { effect: "darken" })] },
+      { tier: 3, m: () => [me("his bag is glowing now"), x("what is IN it")] },
+    ],
+    pool: [
+      () => [me("he asked what floor i was going to. i said 8. he said 'interesting'"), x("stop talking to him")],
+      () => [x("the building manager says no elevator is stuck right now"), me("then where AM i")],
+      () => [me("he offered me a mint"), x("do NOT take the mint")],
+      () => [me("it's getting hot in here"), x("the fan should come on. tap the panel")],
+      () => [me("he's humming. it's actually kind of a nice song"), x("why is that scarier")],
+    ],
+    keys: [4],
+    short: () => [me("stuck in the elevator with a stranger"), me("he just said my name.", { effect: "zoom" }), x("HOW"), sys("The lights go out.", { effect: "darken" }), me("the display says 13. we don't have a 13th floor")],
+    endings: [
+      () => [me("it's a guitar. with lights. and a mic"), me("he's a singer. he's rehearsing for the show on the roof at 8. we're both late"), sys("The elevator jolts and starts moving."), me("he's giving me two tickets. i was SO scared for nothing")],
+      () => [sys("The elevator starts moving."), me("we're moving. thank god"), me("wait. the display says 13."), x("your building doesn't have a 13th floor", { effect: "shake" })],
+    ],
+  },
+  {
+    id: "suspense-last-train",
+    title: "I fell asleep on the last train",
+    hook: (v, k) => k.pick(["I fell asleep on the last train. It's going to the depot.", "The last train. The doors won't open.", "Someone is walking through the empty train cars."]),
+    outro: ["Part 2?", "Never fall asleep on the last train."],
+    vars: (k) => ({ f: k.name(), line: k.pick(["Green Line", "Blue Line", "Line 4", "the night express"]), clock: "1:47" }),
+    cast: (v) => [{ id: "me", name: "You", voice: "af_sky" }, { id: "x", name: v.f, avatar: "moon", color: "#5c8aff", voice: "am_echo" }],
+    beats: [
+      { m: (v) => [me(`i fell asleep on the ${v.line}. it's past my stop. way past`), x("get off at the next one")] },
+      { m: () => [me("there IS no next one. it's going to the depot"), x("are the doors open?"), me("locked. lights are half off")] },
+      { tier: 1, m: () => [x("is anyone else in your car"), me("no. the whole train looks empty")] },
+      { m: () => [me("someone's walking through the cars. i can hear the doors between them", { effect: "heartbeat" })] },
+      { tier: 2, m: () => [x("conductor?"), me("they're not saying anything. just opening the doors one by one"), x("how many cars away")] },
+      { tier: 2, m: () => [me("two"), x("hide behind the seats"), me("ok")] },
+      { tier: 3, m: () => [me("one car away. i can see a flashlight"), x("stay down. stay quiet")] },
+      { m: () => [sys("The door to your car slides open.", { effect: "zoom" })] },
+    ],
+    pool: [
+      () => [me("the ads on the train are from 1994"), x("what"), me("all of them")],
+      () => [x("track your location. i'm watching the dot"), x("the dot just disappeared")],
+      () => [me("there's a newspaper on the seat. the date is tomorrow")],
+      () => [me("we just passed a station that's all boarded up"), x("that's the old one. it's been closed for 20 years"), me("then why was someone on the platform")],
+      () => [x("i'm calling the transit line"), x("it just rings. nobody's answering")],
+    ],
+    keys: [3, 7],
+    short: (v) => [me(`fell asleep on the ${v.line}. it's going to the depot`), x("get off!!"), me("doors are locked. someone's walking through the cars", { effect: "heartbeat" }), sys("The door to your car slides open."), me("'you're not supposed to be on this train. nobody is.'", { effect: "shake" })],
+    endings: [
+      () => [me("it's a maintenance worker. she almost screamed when she saw me lol"), me("she said this happens every month. she's driving me home in the work van"), x("ok i'm still shaking for you"), me("she gave me a reflective vest as a souvenir")],
+      () => [me("it's a conductor. he looked at my ticket and said 'you're not supposed to be on this train.'"), me("'nobody is.'", { effect: "shake" }), x("GET OFF THE TRAIN")],
+    ],
+  },
+];

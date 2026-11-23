@@ -1,0 +1,103 @@
+import { say, img, sys } from "../generator.js";
+
+const me = (t, o) => say("me", t, o);
+const x = (t, o) => say("x", t, o);
+
+export default [
+  {
+    id: "mystery-hiding-friend",
+    title: "My missing friend is texting me",
+    hook: (v, k) => k.pick([`${v.f} has been missing for 2 days. Then they texted me.`, "My missing best friend sent me a clue", "'If you're reading this, I'm not missing. I'm hiding.'"]),
+    outro: ["Would you have gone?", "Part 2?", "Who sent the texts?"],
+    vars: (k) => ({ f: k.name(), place: k.pick(["drive-in", "skate park", "train yard", "botanical garden"]), city: k.pick(["Chicago", "New York", "Philly", "LA"]), num: k.int(11, 29) }),
+    cast: (v) => [{ id: "me", name: "You", voice: "af_sky" }, { id: "x", name: v.f, avatar: "moon", color: "#2fb7a8", voice: "af_heart" }],
+    beats: [
+      { m: () => [x("if you're reading this, i'm not missing. i'm hiding.")] },
+      { m: (v) => [me(`${v.f}??? everyone is looking for you. your mom called the police`), x("don't tell anyone you heard from me")] },
+      { m: () => [me("where ARE you"), x("can't say it over text. remember the time capsule from 6th grade?")] },
+      { tier: 1, m: (v) => [me("by the slide at the park?"), x("not the park."), img("x", "map"), me(`that's the old ${v.place}`)] },
+      { tier: 1, m: () => [x("third bench from the gate. something's taped underneath"), me("why are you being so cryptic")] },
+      { tier: 2, m: (v) => [me("ok i'm here. found it. a key and a note"), img("me", "note"), me(`it just says ${v.num}. bus station?`), x("lockers. go now. before 9")] },
+      { tier: 3, m: (v) => [me(`locker ${v.num} is open. there's a phone inside`), x("is it ringing?"), me("it's ringing.", { effect: "heartbeat" })] },
+      { m: () => [x("don't answer it."), me("too late. it's your voice on a recording."), me("it says 'don't trust the texts'", { effect: "zoom" })] },
+    ],
+    pool: [
+      () => [x("check your mailbox"), me("there's a cassette tape. who even has a tape player"), x("your grandpa")],
+      (v) => [me("a detective just knocked asking about you"), x("did they show a badge"), me("...no")],
+      () => [x("if anyone asks, the last thing i said was 'see you monday'"), me("you never said that"), x("exactly")],
+      () => [me("there's a car that's been parked outside my house since you disappeared"), x("dark blue?"), me("how do you know that")],
+      () => [x("don't use the bus. walk. and turn off your location"), me("you're scaring me")],
+      () => [me("your mom keeps asking if i know anything"), x("tell her i'm safe. but not where")],
+    ],
+    poolAt: 4,
+    keys: [2, 7],
+    short: (v) => [x("i'm not missing. i'm hiding. go to the bus station. locker 17"), me(`${v.f}??`), me("there's a phone in the locker. it's ringing"), x("don't answer it."), me("too late. it's your voice. it says 'don't trust the texts'", { effect: "zoom" })],
+    endings: [
+      () => [me("so who am i texting right now"), x("someone who needed you to bring that phone to the station"), x("thanks for finding it.", { effect: "glitch" })],
+      (v) => [x("ok ok i'm not in danger. look up. i'm on the bridge"), me("YOU'RE HERE??"), x(`i got into the art program in ${v.city}. i leave tonight. i didn't know how to say goodbye`), me("you could have just SAID that"), x("you would've talked me out of it")],
+      () => [me("the phone stopped ringing. there's a new photo on it"), img("me", "photo-blur", "it's me. taken 30 seconds ago."), x("now you know why i'm hiding", { effect: "shake" })],
+    ],
+  },
+  {
+    id: "mystery-wrong-number-hunt",
+    title: "A stranger sent me on a treasure hunt",
+    hook: (v, k) => k.pick(["A wrong number sent me on a treasure hunt", `'Annie, it's Grandpa. The first clue is under your mat.'`, "I'm not Annie. I followed the clues anyway."]),
+    outro: ["Would you follow the clues?", "Part 2?"],
+    vars: (k) => ({ apt: k.pick(["4B", "2C", "7A", "3F"]), year: k.pick(["1971", "1968", "1979"]), clock: "4:15" }),
+    cast: () => [{ id: "me", name: "You", voice: "af_sky" }, { id: "x", name: "Unknown", avatar: "unknown", color: "#4a4f66", voice: "bm_george" }],
+    beats: [
+      { m: () => [x("Annie, it's Grandpa. First clue: where we watched the comet."), me("sorry, wrong number")] },
+      { m: () => [x("No mistake. Check under your welcome mat."), me("ok this is weird. i'm not annie"), x("I know. Annie never answers.")] },
+      { tier: 1, m: (v) => [me("whose mat"), x(`Yours. Apartment ${v.apt}.`), me("how do you know where i live"), x(`I lived there in ${v.year}.`)] },
+      { m: () => [img("me", "key", "there's actually a key here??"), x("Good. The radiator in the bedroom has a loose panel.")] },
+      { tier: 2, m: () => [me("there's a tin box behind it"), img("me", "polaroid", "an old photo. two kids on a roof"), x("Me and my sister. She hid things too.")] },
+      { tier: 2, m: () => [me("there's a map under the photo"), img("me", "map"), x("The X is the old water tower. Bring a flashlight.")] },
+      { tier: 3, m: () => [me("i'm at the tower. this is insane"), x("Third step from the top. Pull hard."), me("it moved."), img("me", "treasure")] },
+      { m: () => [me("why me. why not annie"), x("Because Annie stopped looking for things a long time ago.", { pause: 0.4 })] },
+    ],
+    pool: [
+      () => [x("Don't tell the landlord. She thinks the radiator is haunted."), me("is it"), x("A little.")],
+      () => [me("the key has a number scratched on it. 19"), x("The year I hid it was 19-something. Use your imagination.")],
+      () => [x("When you were small you found a marble in the garden. Still have it?"), me("how could you know that")],
+      () => [me("my neighbor just asked why i'm digging through the radiator at midnight"), x("Tell her the house is talking to you. It is.")],
+      () => [x("When you find the next piece, don't open it inside."), me("why not"), x("You'll see.")],
+    ],
+    keys: [3, 7],
+    short: (v) => [x("Annie, it's Grandpa. Look under your welcome mat."), me("wrong number. but... there's a key here"), x(`I lived in ${v.apt} in ${v.year}. Check behind the radiator.`), img("me", "polaroid", "an old photo. the boy looks like my dad"), x("Hello, grandkid.", { effect: "zoom" })],
+    endings: [
+      () => [me("who are you really"), x("Look at the photo again. The boy on the left."), me("...that's my dad as a kid.", { effect: "zoom" }), x("Hello, kiddo. I'm sorry I missed everything.")],
+      () => [me("there's another note in the box"), me("'the next one is in YOUR house. in the room you don't know about.'", { effect: "heartbeat" }), x("Happy hunting.")],
+    ],
+  },
+  {
+    id: "mystery-morse-lights",
+    title: "The house across the street",
+    hook: (v, k) => k.pick(["The lights across the street were blinking in a pattern", "My neighbor's lights spelled out SOS", "I decoded my neighbor's lights at 1 AM"]),
+    outro: ["Check on your neighbors.", "Part 2?", "What would you do?"],
+    vars: (k) => ({ f: k.name(), clock: "1:12" }),
+    cast: (v) => [{ id: "me", name: "You", voice: "af_sky" }, { id: "x", name: v.f, avatar: "star", color: "#4fa3ff", voice: "am_echo" }],
+    beats: [
+      { m: () => [me("the house across the street is doing the light thing again"), x("the old lady's house?"), me("on off on off. like a pattern")] },
+      { tier: 1, m: () => [x("film it"), img("me", "window"), x("hold on. that's morse code. i swear")] },
+      { m: () => [x("short short short. long long long. short short short"), me("that's SOS", { effect: "zoom" })] },
+      { tier: 1, m: () => [me("should i call someone"), x("non emergency line? what if it's nothing")] },
+      { tier: 2, m: () => [me("ok it changed. new pattern"), x("decoding... K. E. Y."), me("key??"), x("under the mat maybe")] },
+      { tier: 2, m: () => [me("i'm not going over there alone"), x("i'm 4 minutes away. wait for me")] },
+      { tier: 3, m: () => [me("ok we're on the porch"), x("you're literally standing next to me why are we texting"), me("because if we talk she'll hear us")] },
+      { m: () => [me("found the key. there's a sound from the basement"), sys("Something knocks. Three times.", { effect: "heartbeat" })] },
+    ],
+    pool: [
+      () => [x("try flashing your lights back. so she knows someone saw"), me("ok. she stopped. she saw")],
+      () => [me("her mailbox is stuffed. like 3 days of mail"), x("ok we're calling someone. now")],
+      () => [me("her cat is sitting in the window. staring right at me"), x("cats know things")],
+      () => [x("why would she use morse code and not just call"), me("maybe she can't reach a phone")],
+      () => [me("the curtains just moved. upstairs."), x("she lives alone right?"), me("yeah")],
+    ],
+    keys: [2, 7],
+    short: (v) => [me("the house across the street is blinking. short short short, long long long"), x("that's SOS"), me("i'm going over"), me("she's in the basement. she fell. she used the lamp switch to signal"), x("you literally saved her life")],
+    endings: [
+      () => [x("it's her!! she fell on the basement stairs 2 days ago. she reached the lamp switch on the wall"), me("ambulance is here. she keeps saying thank you"), x("she just asked if we want to learn morse code properly lol")],
+      () => [me("there's nobody down here. just a lamp on a timer"), x("so who set the timer"), me("there's a note on it: 'thanks for coming. now look at YOUR house'"), img("me", "house", "every light in my house is blinking", { effect: "shake" })],
+    ],
+  },
+];
