@@ -333,7 +333,7 @@
   function resetMini() { mmCanvas = null; }
   // the sites by letter: 'A or B', 'A, B or C'
   const siteWords = (w = 'or') => { const k = SITES.map(S => S.k); return k.length < 2 ? k.join('') : k.slice(0, -1).join(', ') + ' ' + w + ' ' + k[k.length - 1]; };
-  const MM_COL = { r: 'rgba(255,138,61,.4)', T: 'rgba(61,242,255,.95)', J: 'rgba(255,210,63,.95)', H: 'rgba(150,150,140,.95)', i: 'rgba(170,220,255,.75)', g: 'rgba(90,170,70,.75)', L: 'rgba(120,140,255,.55)', V: 'rgba(255,150,70,.9)',
+  const MM_COL = { h: 'rgba(120,128,140,.85)', w: 'rgba(120,190,230,.85)', r: 'rgba(255,138,61,.4)', T: 'rgba(61,242,255,.95)', J: 'rgba(255,210,63,.95)', H: 'rgba(150,150,140,.95)', i: 'rgba(170,220,255,.75)', g: 'rgba(90,170,70,.75)', L: 'rgba(120,140,255,.55)', V: 'rgba(255,150,70,.9)',
     '<': 'rgba(242,181,30,.55)', '>': 'rgba(242,181,30,.55)', '^': 'rgba(242,181,30,.55)', v: 'rgba(242,181,30,.55)', G: 'rgba(232,181,32,.9)', W: 'rgba(160,110,80,.95)' };
   function miniMap() {
     if (mmCanvas) return mmCanvas; const s = 8, c = mmCanvas = document.createElement('canvas'); c.width = GW * s; c.height = GH * s; const g = c.getContext('2d');

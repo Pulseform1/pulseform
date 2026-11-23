@@ -46,6 +46,14 @@ function mapChecks() {
   ok(T.rayGrid(20, 1, 6, 0, 0, -1, 100) < 5, 'a low ray hits the sea wall');
   ok(Math.abs(T.rayGrid(25, 1.6, 37, 0, 1, 0, 100) - 1.2) < .01, 'a ray straight up in the Tunnel hits the roof');
   ok(Math.abs(T.rayGrid(14, 1.6, 21, .6, -.8, 0, 100) - 2) < .01, 'a ray aimed down hits the ground');
+  // half walls and windows (Frostline has both): what you can see and shoot past, and that nobody walks through
+  { const mi = T.MAPS.findIndex(m => m.k === 'frostline'); T.loadMap(mi); const find = ch => { for (let j = 0; j < T.GH; j++) for (let i = 0; i < T.GW; i++) if (T.SRC[j][i] === ch && '._oiP'.includes(T.SRC[j][i - 1]) && '._oiP'.includes(T.SRC[j][i + 1])) return [i, j]; return null; };
+    const hw = find('h'), wn = find('w'); ok(hw && wn, 'Frostline has a half wall and a window with open floor either side', JSON.stringify([hw, wn]));
+    if (hw && wn) { const ray = (c, y) => T.rayGrid(c[0] * 2 - .5, y, c[1] * 2 + 1, 1, 0, 0, 5);
+      ok(ray(hw, 1.62) === 5 && ray(hw, 1.12) < 1, 'a half wall: seen and shot over standing, cover when crouched', `standing ${ray(hw, 1.62)}, crouched ${ray(hw, 1.12).toFixed(2)}`);
+      ok(ray(wn, 1.62) === 5 && ray(wn, .9) < 1 && ray(wn, 2.6) < 1, 'a window: open at eye height, wall below the sill and above the head', `eye ${ray(wn, 1.62)}, low ${ray(wn, .9).toFixed(2)}, high ${ray(wn, 2.6).toFixed(2)}`);
+      ok(!T.NAV[T.idx(hw[0], hw[1])] && !T.NAV[T.idx(wn[0], wn[1])] && T.hMove(hw[0] * 2 + 1, hw[1] * 2 + 1) > 50 && T.hMove(wn[0] * 2 + 1, wn[1] * 2 + 1) > 50, 'neither can be walked through or climbed'); }
+    T.loadMap(0); }
 }
 
 // a quiet match to measure in: you against a bot that is parked far away, in the live phase

@@ -49,6 +49,7 @@
       quad(k, [[a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]]], n, [uv(ua, y0), uv(ub, y0), uv(ub, y1), uv(ua, y1)], shade, tint);
     };
     const hex = c => { const v = parseInt(c.slice(1), 16); return [(v >> 16 & 255) / 255, (v >> 8 & 255) / 255, (v & 255) / 255].map(q => Math.pow(q, 2.2)); };
+    const TRIM = [.2, .21, .24];
     const roofed = new Uint8Array(NC); for (const rf of ROOFS) for (let j = rf.r[1]; j <= rf.r[3]; j++) for (let i = rf.r[0]; i <= rf.r[2]; i++) roofed[idx(i, j)] = 1;
     const tall = (i, j) => { const k = idx(i, j); return k >= 0 && CH[k] >= 1 && !CAX[k] ? 1 : 0; };
     // how dark a grid corner is: darker the more solid cells meet there
@@ -79,11 +80,15 @@
         }
         continue;
       }
-      const top = CH[k], kind = c === '#' ? 'wall' : c === 'X' ? 'steel' : c === 'c' ? 'crate' : c === 'P' || c === 'H' ? 'dock' : 'quay';
+      const top = CH[k], kind = c === '#' || c === 'h' || c === 'w' ? 'wall' : c === 'X' ? 'steel' : c === 'c' ? 'crate' : c === 'P' || c === 'H' ? 'dock' : 'quay';
       const tint = kind === 'steel' ? STEEL[group[k] % STEEL.length] : kind === 'quay' ? [.86, .85, .82] : WHITE, uv = kind === 'wall' ? uvWall : kind === 'steel' ? uvBox : kind === 'crate' ? uvCrate : kind === 'dock' ? uvDock : uvPlain;
       const mat = kind === 'quay' ? 'ground' : kind;
       // the top
-      if (kind === 'wall') flat('ground', x0, z0, x1, z1, top, 1, 4, [1, 1, 1, 1], [.62, .6, .57]);
+      if (kind === 'wall') flat('ground', x0, z0, x1, z1, top, 1, 4, [1, 1, 1, 1], c === '#' ? [.62, .6, .57] : [.78, .76, .72]);
+      if (c === 'w') {   // a window: the wall over the opening (its underside, its top, and a face wherever no full wall stands beside it)
+        flat('wall', x0, z0, x1, z1, WIN_H, -1, 4, [.55, .55, .55, .55]); flat('ground', x0, z0, x1, z1, WALL_H, 1, 4, [1, 1, 1, 1], [.62, .6, .57]);
+        for (let e = 0; e < 4; e++) { const ni = i + (e === 0 ? 1 : e === 1 ? -1 : 0), nj = j + (e === 2 ? 1 : e === 3 ? -1 : 0), nk = idx(ni, nj); if (nk < 0 || CH[nk] >= WALL_H - .01) continue;
+          const d = roofed[nk] ? .62 : 1; wallFace('wall', i, j, e, Math.max(WIN_H, CH[nk]), WALL_H, uvWall, [d, d, d, d], WHITE); } }
       else if (kind === 'crate') quad('crate', [[x0, top, z0], [x0, top, z1], [x1, top, z1], [x1, top, z0]], [0, 1, 0], [[0, 0], [0, 1], [1, 1], [1, 0]], [1, 1, 1, 1]);
       else flat(kind === 'steel' ? 'steeltop' : 'ground', x0, z0, x1, z1, top, 1, kind === 'steel' ? CS : 4, [1, 1, 1, 1], kind === 'dock' ? [.88, .88, .86] : kind === 'steel' ? tint.map(q => q * .8) : tint);
       // the sides
@@ -94,7 +99,9 @@
         const d = nk >= 0 && roofed[nk] ? .62 : 1, lo = (nh <= .01 ? .78 : .92) * d;
         wallFace(mat, i, j, e, nh, top, uv, [lo, lo, d, d], tint);
         // the painted band that names the lane
-        if (kind === 'wall' && nk >= 0 && nh <= .01 && AREA[nk] >= 0) wallFace('band', i, j, e, 1.28, 1.6, uvPlain, [d, d, d, d], hex(AREAS[AREA[nk]].col), .012);
+        if (c === '#' && nk >= 0 && nh <= .01 && AREA[nk] >= 0) wallFace('band', i, j, e, 1.28, 1.6, uvPlain, [d, d, d, d], hex(AREAS[AREA[nk]].col), .012);
+        if (c === 'h') wallFace('band', i, j, e, top - .13, top, uvPlain, [d, d, d, d], TRIM, .012);   // a half wall's coping
+        if (c === 'w') { wallFace('band', i, j, e, top - .1, top, uvPlain, [d, d, d, d], TRIM, .014); wallFace('band', i, j, e, WIN_H, WIN_H + .1, uvPlain, [d, d, d, d], TRIM, .014); }   // a window's sill and head
         if (kind === 'dock' && nh <= .8) wallFace('band', i, j, e, top - .16, top, uvPlain, [1, 1, 1, 1], hex('#f2c230'), .012);
       }
     }

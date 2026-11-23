@@ -4,6 +4,7 @@
 //   node tools/duelpoint-maps.mjs <key>      just that map, printed with its routes and holds, nothing written
 // Cells (see 30-map.js):  # wall  X container  c crate  P dock (7 8 its stairs)  H high ledge  o q r sites A B C
 //   A D spawns  T teleporter  J jump pad  i ice  g tall grass  L low gravity  V steam vent  < > ^ v belts  G gate  W breakable wall
+//   h half wall (1.2 m: seen and shot over, not climbed)  w window (seen and shot through between 1.05 and 2.25 m, not walked through)
 // Fair means: every attackers' way in reaches its site in the time band, defenders reach every site first, the rotation
 // between sites is quick enough, no spawn can see a site or the other spawn, and every open cell can be walked to.
 import fs from 'node:fs';
@@ -485,19 +486,32 @@ function check(def) {
   for (const side of ['att', 'def']) { let n = 0; for (let k = 0; k < W * H; k++) if (T.ZONE[side][k]) n++; if (n < 8) { out.ok = false; out.why.push(`${side} spawn room too small for 4v4 (${n} cells)`); } }
   return out;
 }
-// defender holds: near each site, watching where each way in arrives; and one on each site
+// defender holds: the places a defender may be waiting. For each way in: up to three spots near the site that watch where it
+// arrives, chosen for how tucked away they are (in a corner, behind a half wall or a crate, at a window, up on a ledge, in
+// the dark under a roof), and up to two close ones just inside the entry that cannot be seen from the approach (the corner
+// you have to check as you come through). And one on each site.
 function holdsFor(def, seed) {
   load(def);
-  const R = rng(seed), out = [], [W, H] = T.size();
+  const R = rng(seed), out = [], [W, H] = T.size(), ch = (i, j) => (def.src[j] || '')[i] || '#';
+  const dark = (i, j) => (def.roofs || []).some(r => i >= r.r[0] && i <= r.r[2] && j >= r.r[1] && j <= r.r[3]);
+  const score = (i, j, E) => { let tuck = 0; for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) if ((a || b) && !T.NAV[T.idx(i + a, j + b)]) tuck++;
+    const dx = E[0] / 2 - (i + .5), dz = E[1] / 2 - (j + .5), sx = Math.abs(dx) > .6 ? Math.sign(dx) : 0, sz = Math.abs(dz) > .6 ? Math.sign(dz) : 0;
+    const front = [[sx, sz], [Math.abs(dx) >= Math.abs(dz) ? sx : 0, Math.abs(dx) >= Math.abs(dz) ? 0 : sz]].some(([a, b]) => (a || b) && 'hwc'.includes(ch(i + a, j + b)));
+    return 1 + Math.min(tuck, 5) + (front ? 5 : 0) + (T.CH[T.idx(i, j)] >= 1.4 ? 3 : 0) + (dark(i, j) ? 2 : 0); };
+  const take = (c, n, lane, s, e) => { const got = []; for (let t = 0; t < n && c.length; t++) {
+      const tot = c.reduce((a, q) => a + q.w, 0); let r = R() * tot, k = 0; while (k < c.length - 1 && (r -= c[k].w) > 0) k++;
+      const p = c[k].p; got.push(p); out.push({ p: [p[0] / 2, p[1] / 2], look: e, lane, s }); c = c.filter(q => Math.hypot(q.p[0] - p[0], q.p[1] - p[1]) >= 5); } };
   for (const [lane, pts] of Object.entries(def.routes)) {
-    const s = def.rsite ? def.rsite[lane] : 0, e = pts[pts.length - 1], E = [e[0] * 2, e[1] * 2], S = T.SITES[s].c, c = [];
+    const s = def.rsite ? def.rsite[lane] : 0, e = pts[pts.length - 1], E = [e[0] * 2, e[1] * 2], S = T.SITES[s].c, far = [], near = [];
     if (out.some(h => h.s === s && Math.hypot(h.look[0] - e[0], h.look[1] - e[1]) < 1)) continue;   // two ways that arrive at the same door share its holds
+    const b = pts.length > 1 ? pts[pts.length - 2] : null, B = b ? [b[0] * 2, b[1] * 2] : T.SPAWN.att[0];   // where the attackers come from
     for (let j = 1; j < H - 1; j++) for (let i = 1; i < W - 1; i++) {
       const k = T.idx(i, j); if (!T.NAV[k] || 'AD'.includes(def.src[j][i]) || T.TPX[k] >= 0 || T.PADX[k] >= 0) continue;
-      const p = [i * 2 + 1, j * 2 + 1], dS = Math.hypot(p[0] - S[0], p[1] - S[1]), dE = Math.hypot(p[0] - E[0], p[1] - E[1]);
-      if (dS < 14 && dE > 7 && dE < 22 && sees(p, E)) c.push(p);
+      const p = [i * 2 + 1, j * 2 + 1], dS = Math.hypot(p[0] - S[0], p[1] - S[1]), dE = Math.hypot(p[0] - E[0], p[1] - E[1]); if (!sees(p, E)) continue;
+      if (dS < 16 && dE > 7 && dE < 24) { const w = score(i, j, E); far.push({ p, w: w * w }); }
+      else if (dE > 2.4 && dE <= 7 && dS < Math.hypot(B[0] - S[0], B[1] - S[1]) && !sees(p, B)) { const w = score(i, j, E); near.push({ p, w: w * w }); }
     }
-    for (let t = 0; t < 2 && c.length; t++) { const p = c.splice(Math.floor(R() * c.length), 1)[0]; out.push({ p: [p[0] / 2, p[1] / 2], look: e, lane, s }); }
+    take(far, 3, lane, s, e); take(near, 2, lane, s, e);
   }
   T.SITES.forEach((S, s) => { const lanes = Object.keys(def.routes).filter(l => (def.rsite ? def.rsite[l] : 0) === s), e = def.routes[lanes[0]].slice(-1)[0]; out.push({ p: [S.c[0] / 2, S.c[1] / 2], look: e, lane: 'any', s }); });
   return out;
@@ -505,7 +519,7 @@ function holdsFor(def, seed) {
 function show(def) {
   load(def); const g = def.src.map(r => r.split(''));
   Object.values(def.routes).forEach((pts, n) => pts.forEach(p => { const i = Math.floor(p[0]), j = Math.floor(p[1]); if (g[j] && g[j][i] === '.') g[j][i] = String(n + 1); }));
-  for (const h of def.holds || []) { const i = Math.floor(h.p[0]), j = Math.floor(h.p[1]); if (g[j] && '.oqr'.includes(g[j][i])) g[j][i] = '*'; }
+  for (const h of def.holds || []) { const i = Math.floor(h.p[0]), j = Math.floor(h.p[1]); if (g[j] && '.oqrPH'.includes(g[j][i])) g[j][i] = '*'; }
   return '     ' + Array.from({ length: g[0].length }, (_, i) => i % 10).join('') + '\n' + g.map((r, j) => String(j).padStart(3) + '  ' + r.join('')).join('\n');
 }
 

@@ -9,12 +9,15 @@
        g  tall grass (hides you; bullets go straight through)            L  low gravity (jump onto the containers)
        V  a steam vent (puffs a cloud that blocks sight, on a clock)      < > ^ v  a conveyor belt running that way
        G  a gate (open; a switch at MAP.sw closes it into a wall)         W  a breakable wall (enough fire knocks it down)
+     And two pieces for places to hide and to be watched from, on any map:
+       h  a half wall (1.2 m: crouch behind it unseen, stand and shoot over it; nobody climbs it)
+       w  a window (a sill, an opening from 1.05 to 2.25 m, wall above: you see and shoot through it, nobody walks through)
      The Gate's opening into the Yard is offset from the Yard's doorway, so neither spawn can see the other.
      Three ways from the Gate (west) to the site: Pier along the north, the Yard and its doorway through the middle,
      the roofed Tunnel along the south. Everything else (rays, movement, bot paths, the world mesh) reads these cells. */
   // the grid's size is the map's own: the one-site maps are 32 by 22, the two-site maps bigger (loadMap sets these)
   const CS = 2, MAXNC = 72 * 52; let GW = 32, GH = 22, MW = GW * CS, MH = GH * CS, NC = GW * GH;
-  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.45, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7, HIGH_H = 3.2, GRASS_H = 1.75, GATE_H = 3.6, BRK_HP = 320;
+  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.45, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7, HALF_H = 1.2, SILL_H = 1.05, WIN_H = 2.25, HIGH_H = 3.2, GRASS_H = 1.75, GATE_H = 3.6, BRK_HP = 320;
   const WALKABLE = '.oqrADP78HJTigLVG<>^v', BELTS = '>v<^';   // belt directions: east, south, west, north
   /* Every map is one of these: rows of cells (all 32 by 22), roofs and doorways as rectangles [col0, row0, col1, row1],
      named areas, the attacker's routes and the defender's holds in cell units, and a theme for the look (72-world).
@@ -101,6 +104,7 @@
       if (c === '#') a = b = WALL_H; else if (c === 'X') a = b = BOX_H; else if (c === 'c') a = b = CRATE_H; else if (c === 'P') a = b = DOCK_H;
       else if (c === '~') { a = b = FENCE_H; FENCE[k] = 1; } else if (c === '7') { b = DOCK_H / 2; CAX[k] = 2; } else if (c === '8') { a = DOCK_H / 2; b = DOCK_H; CAX[k] = 2; }
       else if (c === 'H') a = b = HIGH_H; else if (c === 'W') a = b = WALL_H;
+      else if (c === 'h') { a = b = HALF_H; FENCE[k] = 1; } else if (c === 'w') { a = b = SILL_H; FENCE[k] = 1; }   // (FENCE: nobody steps up onto it)
       CH[k] = a; CB[k] = b; NAV[k] = WALKABLE.includes(c) ? 1 : 0;
       if (c === 'i') ICE[k] = 1; else if (c === 'g') GRASS[k] = 1; else if (c === 'L') LOWG[k] = 1; else if (BELTS.includes(c)) BELT[k] = BELTS.indexOf(c) + 1; else if (c === 'V') VENTS.push(mid);
       if (c === 'A') SPAWN.att.push(mid); if (c === 'D') SPAWN.def.push(mid); if (c === 'o' || c === 'q' || c === 'r') { SITE.push(mid); siteCells['oqr'.indexOf(c)].push(mid); }
@@ -113,6 +117,7 @@
       const held = d => d[0] !== d[2] ? solid(d[0] - 1, d[1]) && solid(d[2] + 1, d[3]) : d[1] !== d[3] ? solid(d[0], d[1] - 1) && solid(d[2], d[3] + 1) : (solid(d[0] - 1, d[1]) && solid(d[0] + 1, d[1])) || (solid(d[0], d[1] - 1) && solid(d[0], d[1] + 1));
       const keep = DOORS.filter(held); DOORS.length = 0; DOORS.push(...keep); }
     for (const d of DOORS) for (let j = d[1]; j <= d[3]; j++) for (let i = d[0]; i <= d[2]; i++) CEIL[idx(i, j)] = DOOR_H;
+    for (let k = 0; k < NC; k++) if (SRC[Math.floor(k / GW)][k % GW] === 'w') CEIL[k] = WIN_H;   // a window: the wall carries on above the opening
     siteCells.forEach((cells, q) => { if (!cells.length) return; const c = [0, 0]; for (const p of cells) { c[0] += p[0] / cells.length; c[1] += p[1] / cells.length; } SITES.push({ k: 'ABC'[q], cells, c }); });
     siteC[0] = SITES[0].c[0]; siteC[1] = SITES[0].c[1];
     // the mechanic's pieces

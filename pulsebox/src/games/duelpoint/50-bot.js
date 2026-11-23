@@ -47,6 +47,8 @@
   }
   // defend: a spot watching a way in. On a two-site map, at the site this defender is holding; a noise from a lane that
   // leads to the other site is a reason to rotate there
+  // crouching at a hold is only worth it where the way in can still be seen from down there (not behind a half wall or a sill)
+  const lowSees = h => { const y = hAt(h.p[0], h.p[1]) + CEYE, d = Math.hypot(h.look[0] - h.p[0], h.look[1] - h.p[1]); return los(h.p[0], y, h.p[1], h.look[0], hAt(h.look[0], h.look[1]) + 1.2, h.look[1], false) >= d - .5; };
   function planHold(f, lane) {
     let at = HOLDS;
     if (twoSites()) { const ls = laneSite(lane); f.bot.hs = ls != null ? ls : f.bot.hs != null ? f.bot.hs : defSiteFor(f); at = HOLDS.filter(h => h.s === f.bot.hs); }
@@ -54,7 +56,7 @@
     // with teammates holding too: not a spot one of them has, and at the start of a round a way in nobody watches yet
     let pool = c.length ? c : at.length ? at : HOLDS; const held = M.fs.map(o => o !== f && o.team === f.team && o.alive && o.bot && o.bot.plan).filter(Boolean).map(p => p.h || (p.back && p.back.h)).filter(Boolean);
     if (held.length) { const free = pool.filter(h2 => !held.includes(h2)); if (free.length) pool = free; if (!lane) { const fresh = pool.filter(h2 => !held.some(q => q.lane === h2.lane)); if (fresh.length) pool = fresh; } }
-    const h = pick(pool), P = { k: 'hold', h, lane: h.lane, look: h.look, crouch: R() < .35, sc: (SITES[h.s] || SITES[0]).c };
+    const h = pick(pool), P = { k: 'hold', h, lane: h.lane, look: h.look, crouch: R() < .35 && lowSees(h), sc: (SITES[h.s] || SITES[0]).c };
     // a map with gates: early in the round a defender may go and shut the one into its site first, then take its spot
     if (GATES.length && !lane && M.t > roundT() - 25 && R() < .6) {
       const g = GATES.findIndex(G2 => G2.open && G2.sw.some(q => Math.hypot(q[0] - P.sc[0], q[1] - P.sc[1]) < 16) && !M.fs.some(o => o !== f && o.bot && o.bot.plan && o.bot.plan.gate === GATES.indexOf(G2)));
