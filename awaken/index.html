@@ -248,34 +248,103 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .empty .btn{margin-top:4px}
 
 /* daily quest */
+/* quest tab (spec 4.4): summary row, segmented meter, goal rows with a 4px track, hazard warning, CLEAR stamp */
+.q-sum{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px}
+.q-n{margin:0;display:flex;align-items:baseline;gap:2px;white-space:nowrap}
+.q-n b{font:700 28px/1 var(--f-disp);color:var(--ink);text-shadow:0 0 12px var(--line-b)}
+.q-n span{font:500 14px/1 var(--f-disp);letter-spacing:.06em;color:var(--dim)}
+.clock{display:flex;align-items:center;gap:6px;font:600 18px/1 var(--f-disp);letter-spacing:.04em;white-space:nowrap}
+.clock .i{width:18px;height:18px;color:var(--glow)}
+.clock small{font:500 12px/1 var(--f-body);color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+.clock.urgent{color:var(--red)}.clock.urgent .i{color:var(--red)}
+.clock.urgent span{animation:urgent 2s ease-in-out infinite}
+@keyframes urgent{50%{text-shadow:0 0 12px var(--red)}}
+@media (max-width:360px){.clock small{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
+.qmeter{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;height:6px;margin:0 3px 18px}
+.qmeter i{position:relative;overflow:hidden;transform:skewX(-12deg);background:var(--line-c);box-shadow:inset 0 0 0 1px var(--line-b)}
+.qmeter i::before{content:"";position:absolute;inset:0;transform-origin:left;transform:scaleX(var(--p,0));background:linear-gradient(90deg,var(--line),var(--glow))}
+.qmeter i.on{box-shadow:0 0 8px color-mix(in srgb,var(--ok) 55%,transparent)}.qmeter i.on::before{background:var(--ok)}
 .goal-h{margin:0 0 4px;text-align:center;font:600 14px/1 var(--f-disp);letter-spacing:.34em;color:var(--glow)}
 .goals{list-style:none;margin:0;padding:0;display:grid}
-.goal{position:relative;width:100%;display:grid;grid-template-columns:1fr auto 24px;align-items:center;gap:12px;padding:13px 4px 13px;background:none;border:0;border-bottom:1px solid var(--line-b);text-align:left}
+.goal{position:relative;width:100%;min-height:56px;display:grid;grid-template-columns:minmax(0,1fr) auto 26px;align-items:center;gap:12px;padding:12px 4px 14px;background:none;border:0;text-align:left}
+.goal::before{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--line-c)}
 .goal:active{background:var(--line-c)}
 .g-name{font:500 16px/1.2 var(--f-body)}
-.g-val{font:600 16px/1 var(--f-disp);font-variant-numeric:tabular-nums;letter-spacing:.03em;white-space:nowrap}
-.chk{width:22px;height:22px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:2px}
-.chk .i{width:16px;height:16px}
+.g-val{font:600 16px/1 var(--f-disp);font-variant-numeric:tabular-nums;letter-spacing:.03em;white-space:nowrap;color:var(--dim)}
+.g-val b{font-size:18px;font-weight:700;color:var(--ink)}
+.chk{width:26px;height:26px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:2px}
+.chk .i{width:18px;height:18px}
 .goal.done .chk{border-color:var(--ok);color:var(--ok);box-shadow:0 0 10px color-mix(in srgb,var(--ok) 50%,transparent)}
-.goal.done .g-val{color:var(--ok)}
-.g-bar{position:absolute;left:0;bottom:-1px;height:2px;width:calc(var(--p)*100%);background:var(--glow);box-shadow:0 0 8px var(--line)}
-.goal.done .g-bar{background:var(--ok)}
-.warn{margin:16px 0 0;text-align:center;font-size:14px;color:var(--dim);text-wrap:balance}
-.warn b{color:var(--red);letter-spacing:.08em;font-family:var(--f-disp)}
-.warn u{color:var(--red);text-decoration:none;border-bottom:1px solid currentColor}
-.clock{margin-top:14px;display:flex;justify-content:center;align-items:baseline;gap:8px;font:600 24px/1 var(--f-disp);font-variant-numeric:tabular-nums;letter-spacing:.06em}
-.clock .i{width:20px;height:20px;color:var(--glow);align-self:center}
-.clock small{font:500 12px var(--f-body);color:var(--dim);letter-spacing:.12em;text-transform:uppercase}
+.goal.done .g-val,.goal.done .g-val b{color:var(--ok)}
+.g-bar{position:absolute;left:0;bottom:0;height:4px;width:calc(var(--p)*100%);background:linear-gradient(90deg,var(--line),var(--glow));box-shadow:0 0 8px var(--line)}
+.goal.done .g-bar{background:var(--ok);box-shadow:0 0 8px color-mix(in srgb,var(--ok) 55%,transparent)}
+/* leading glint on progress fills; hidden at zero (.z) and on finished goals */
+.g-bar::after,.gl i::after{content:"";position:absolute;right:0;top:-2px;bottom:-2px;width:2px;background:#fff;box-shadow:0 0 8px var(--glow)}
+.g-bar.z::after,.gl i.z::after,.goal.done .g-bar::after{display:none}
+/* M15: a goal that just turned done flashes once (negative delay keeps the phase across re-renders) */
+.goal.just{animation:goal-just .8s ease-out var(--jd,0s) both}
+.goal.just .chk{animation:chk-pop .4s var(--ease-pop) var(--jd,0s) both}
+@keyframes goal-just{from{background:color-mix(in srgb,var(--ok) 18%,transparent)}to{background:transparent}}
+@keyframes chk-pop{0%{transform:scale(.4)}100%{transform:none}}
+/* hazard strip; .calm for the no-penalty notes on rest and recovery days */
+.warn{margin:16px 0 0;padding:10px 12px;border:1px solid color-mix(in srgb,var(--red) 55%,transparent);border-radius:var(--r1);
+  background:repeating-linear-gradient(-45deg,color-mix(in srgb,var(--red) 9%,transparent) 0 10px,transparent 10px 20px);font-size:14px;line-height:1.4;color:var(--ink);text-wrap:pretty}
+.warn b{color:var(--red-glow);letter-spacing:.08em;font-family:var(--f-disp)}
+.warn u{color:var(--red-glow);text-decoration:none;border-bottom:1px solid currentColor}
+.warn.calm{border-color:var(--line-b);background:none;color:var(--dim);text-align:center}
 .stamp{margin:16px auto 0;width:max-content;padding:8px 18px 7px;border:2px solid var(--ok);color:var(--ok);font:700 18px/1 var(--f-disp);letter-spacing:.32em;transform:rotate(-2deg);box-shadow:0 0 18px color-mix(in srgb,var(--ok) 35%,transparent),inset 0 0 12px color-mix(in srgb,var(--ok) 25%,transparent)}
+.stamp.q-clear{margin-top:18px;padding:9px 20px 8px;font-size:26px;letter-spacing:.3em;text-indent:.3em}
+.stamp.q-clear.in{animation:stampin-r .45s var(--ease-pop) var(--sd,0s) both}
 .rw-line{margin:12px 0 0;text-align:center;color:var(--dim);font-size:14px}
+/* optional quests: 48px rows, a reward chip, done pips in the header corner */
 .side{list-style:none;margin:0;padding:0;display:grid;gap:2px}
-.side-q{width:100%;display:grid;grid-template-columns:22px 1fr auto;gap:12px;align-items:center;padding:11px 2px;background:none;border:0;border-bottom:1px solid var(--line-c);text-align:left}
-.side-q .box{width:20px;height:20px;border:1.5px solid var(--line-a);border-radius:2px;display:grid;place-items:center}
-.side-q .box .i{width:14px;height:14px}
+.side-q{width:100%;min-height:48px;display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 2px;background:none;border:0;border-bottom:1px solid var(--line-c);text-align:left}
+.side-q .box{width:24px;height:24px;border:1.5px solid var(--line-a);border-radius:2px;display:grid;place-items:center}
+.side-q .box .i{width:16px;height:16px}
 .side-q.done .box{border-color:var(--ok);color:var(--ok)}
 .side-q.done .side-n{color:var(--dim);text-decoration:line-through}
-.side-r{font:600 12px/1 var(--f-disp);letter-spacing:.06em;color:var(--glow);white-space:nowrap}
+.side-r{padding:5px 6px;border:1px solid var(--line-b);border-radius:var(--r1);background:var(--line-c);font:600 12px/1 var(--f-disp);letter-spacing:.06em;color:var(--glow);white-space:nowrap}
+.side-q.done .side-r{color:var(--dim);background:none}
+@media (max-width:360px){.side-q{grid-template-columns:24px minmax(0,1fr);row-gap:6px}.side-q .box{grid-row:span 2}.side-r{justify-self:start}}
+/* a small legend that sits on the window's top edge, right corner (counts, days left) */
+.win-meta{position:absolute;top:0;right:24px;z-index:2;transform:translateY(-50%);display:flex;background:var(--deep);line-height:1}
+.win-meta .tag{display:block}
+.win-meta .pips{padding:5px 8px;border:1px solid var(--line-b);border-radius:var(--r1)}
+.pips{display:inline-flex;align-items:center;gap:7px}
+.pips i{width:10px;height:10px;border:1px solid var(--line-a);transform:rotate(45deg) scale(.86)}
+.pips i.on{background:var(--line);border-color:var(--glow);box-shadow:0 0 6px var(--line)}
+/* weekly / monthly */
+.pqs{list-style:none;margin:0;padding:0;display:grid;gap:16px}
+.pq{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 12px}
+.pq-t{grid-column:1/-1;display:flex;align-items:baseline;gap:8px;font-size:14px;line-height:1.3}
+.pq-n{flex:1;min-width:0}
+.pq-t b{font:600 16px/1 var(--f-disp);letter-spacing:.02em;white-space:nowrap;color:var(--ink)}
+.pq-t small{min-width:3.4em;text-align:right;font:500 12px/1 var(--f-disp);color:var(--dim)}
+.pq .bar{grid-column:1/-1}
+.pq.claimed{color:var(--dim)}.pq.claimed .pq-t b{color:var(--ok)}.pq.claimed .bar i{background:var(--ok);box-shadow:none}
+.pq.ready{margin-left:-12px;padding-left:9px;border-left:3px solid var(--gold)}
+.pq.ready .bar{grid-column:1}
+.pq.ready .bar i{background:linear-gradient(90deg,#e0a225,var(--gold));box-shadow:0 0 10px color-mix(in srgb,var(--gold) 60%,transparent)}
+.pq.ready .btn{box-shadow:0 0 16px color-mix(in srgb,var(--gold) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.45);animation:ready 1.4s ease-in-out var(--rd,0s) 3}
+@keyframes ready{50%{box-shadow:0 0 28px var(--gold),0 0 0 2px color-mix(in srgb,var(--gold) 70%,transparent),inset 0 1px 0 rgba(255,255,255,.45)}}
+.pq-each{margin:16px 0 0;font:500 14px/1.3 var(--f-disp);letter-spacing:.03em;color:var(--dim)}
+.pq-each b{color:var(--glow)}.pq-each b.au{color:var(--gold)}
+.pq-bonus{margin-top:10px;padding:10px 12px 12px;border:1px solid var(--line-b);border-radius:var(--r2);background:var(--line-c)}
+.pq-bh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;font:600 12px/1 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.pq-bonus ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.pq-bonus li{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:center;font-size:14px;line-height:1.3}
+.pq-bonus.got{border-color:color-mix(in srgb,var(--ok) 40%,transparent)}.pq-bonus.got li span{color:var(--dim)}
+/* bar sizes and quarter ticks */
+.bar.sm{height:4px}.bar.md{height:6px}
+.bar.q{position:relative}
+.bar.q::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,transparent calc(25% - 1px),var(--deep) 0 25%,transparent 0 calc(50% - 1px),var(--deep) 0 50%,transparent 0 calc(75% - 1px),var(--deep) 0 75%,transparent 0)}
+/* quick tiles */
 .quick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.q-tile{min-height:64px;flex-direction:column;gap:6px;padding:10px 8px;font-size:14px}
+.q-tile .i{width:24px;height:24px}
+.q-gates{border-color:var(--rk-a);background:radial-gradient(80% 100% at 50% 100%,var(--rk-b),transparent 72%),var(--line-c)}
+.q-gates .pill{position:absolute;top:8px;right:8px;background:var(--rk);color:var(--void)}
 .pill{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--line);color:var(--on-accent);font:700 12px/1 var(--f-disp)}
 
 /* buttons */
@@ -348,25 +417,62 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .li .tag{justify-self:end}
 
 /* gates */
-.gates{display:grid;gap:12px}
-.gate{display:grid;grid-template-columns:58px 1fr;gap:14px;padding:14px 12px;border:1px solid var(--line-b);background:var(--line-c);border-radius:3px}
-.gate.red{border-color:color-mix(in srgb,var(--red) 60%,transparent);background:color-mix(in srgb,var(--red) 8%,transparent)}
-.gate.trial{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 7%,transparent)}
+/* gates tab (spec 4.5): rift poster cards. The stage has a horizon line, the portal and the boss in front of it. */
+.gates{display:grid;gap:14px}
+.gate{display:grid;grid-template-columns:1fr;padding:0;overflow:hidden;border:1px solid var(--rk-b);border-left:3px solid var(--rk);border-radius:var(--r2);
+  background:linear-gradient(180deg,var(--rk-c),color-mix(in srgb,var(--deep) 55%,transparent) 55%)}
+.g-stage{position:relative;height:96px;overflow:hidden;
+  background:linear-gradient(transparent 78%,var(--rk-b) 78% 79%,transparent 79%),radial-gradient(45% 80% at 50% 62%,var(--rk-b),transparent 72%)}
+.gate.feat .g-stage{height:128px}
+.g-stage::after{content:"";position:absolute;left:50%;top:78%;width:104px;height:12px;margin:-6px 0 0 -52px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.6),transparent)}
+.gate .portal{position:absolute;left:50%;top:2px;width:72px;height:92px;margin-left:-36px;color:var(--rk);font-size:28px}
+.gate.feat .portal{top:4px;width:84px;height:108px;margin-left:-42px;font-size:34px}
+.gate .portal.has-foe{background:radial-gradient(closest-side,color-mix(in srgb,currentColor 40%,transparent),color-mix(in srgb,currentColor 10%,transparent) 70%,transparent)}
+.g-stage .p-foe{position:absolute;left:50%;bottom:21%;z-index:1;width:64px;height:64px;margin-left:-32px;filter:drop-shadow(0 0 4px #000);image-rendering:pixelated}
+.gate.feat .g-stage .p-foe{width:96px;height:96px;margin-left:-48px}
+.g-rank{position:absolute;left:18px;top:16px;z-index:2;width:20px;height:20px;display:grid;place-items:center;transform:rotate(45deg);border:2px solid currentColor;background:var(--deep);box-shadow:0 0 10px color-mix(in srgb,currentColor 45%,transparent)}
+.g-rank b{transform:rotate(-45deg);font:700 12px/1 var(--f-disp);color:var(--ink)}
+.gate.red .g-stage::before{content:"";position:absolute;left:0;right:0;top:0;height:6px;z-index:2;background:repeating-linear-gradient(-45deg,var(--red) 0 8px,transparent 8px 16px)}
+.gate.trial{border-color:color-mix(in srgb,var(--gold) 55%,transparent);border-left-color:var(--rk)}
+.gate.trial .portal::after{content:"";position:absolute;inset:-7px;border-radius:50%;background:repeating-conic-gradient(var(--gold) 0 9deg,transparent 9deg 18deg);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px))}
+.g-ribbon{position:absolute;top:14px;right:0;z-index:2;padding:5px 10px 5px 16px;background:var(--gold);color:var(--void);font:700 12px/1 var(--f-disp);letter-spacing:.1em;text-transform:uppercase;
+  clip-path:polygon(8px 0,100% 0,100% 100%,8px 100%,0 50%)}
+.g-info{min-width:0;display:grid;gap:4px;align-content:start}
+.g-info h3{margin:0;font:600 18px/1.2 var(--f-disp);letter-spacing:.02em}
+.g-meta,.g-ex,.g-rw{margin:0;font-size:14px;color:var(--dim)}
+.gate .g-info{padding:12px 16px 16px;gap:8px}
+.g-boss-l{margin:-4px 0 0;font-size:14px;color:var(--dim)}
+.gate .g-meta,.gate .g-ex,.gate .g-rw{display:flex;flex-wrap:wrap;gap:6px}
+.gc,.gate .g-meta .tag{display:inline-flex;align-items:center;height:24px;padding:0 8px;border:1px solid var(--line-b);border-radius:var(--r1);font:600 12px/1 var(--f-disp);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
+.gate .g-meta .tag.red{border-color:currentColor;color:var(--red)}.gate .g-meta .tag.gold{border-color:currentColor;color:var(--gold)}
+.gc[class*="rk-"]{border-color:currentColor;font-weight:700}
+.gc.rk-E{color:var(--rank-e)}.gc.rk-D{color:var(--rank-d)}.gc.rk-C{color:var(--rank-c)}.gc.rk-B{color:var(--rank-b)}.gc.rk-A{color:var(--rank-a)}.gc.rk-S{color:var(--rank-s)}
+.gate .g-ex span{display:inline-flex;align-items:center;height:26px;padding:0 8px;border-radius:var(--r1);background:var(--line-c);box-shadow:inset 0 0 0 1px var(--line-c);font:500 12px/1 var(--f-body);color:var(--ink)}
+.rc{display:inline-flex;align-items:center;height:26px;padding:0 8px;border:1px solid currentColor;border-radius:var(--r1);font:700 14px/1 var(--f-disp);letter-spacing:.04em;white-space:nowrap}
+.rc-xp{color:var(--glow)}.rc-au{color:var(--gold)}.rc-up{color:var(--ok)}
+.gate .g-info .btn{justify-self:stretch;min-height:48px;margin-top:6px}
+/* MP meter above the list */
+.g-mp{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;margin:0 0 14px}
+.g-mp-m p{margin:6px 0 0;font-size:14px;color:var(--dim)}
+.mp-row{margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;font:500 14px/1.2 var(--f-disp);letter-spacing:.04em;color:var(--dim)}
+/* hunter rank ladder: six chips on a rail filled in the rank colour up to the current rank */
+.rank-w{display:grid;gap:16px}
+.ladder{position:relative;list-style:none;margin:0;padding:6px 0;display:grid;grid-template-columns:repeat(6,1fr)}
+.ladder::before,.ladder::after{content:"";position:absolute;top:50%;left:calc(100% / 12);height:2px;margin-top:-1px}
+.ladder::before{right:calc(100% / 12);background:var(--line-b)}
+.ladder::after{width:calc(var(--ri,0) * 100% / 6);background:var(--rk);box-shadow:0 0 8px var(--rk-b)}
+.ladder li{position:relative;z-index:1;margin:0 3px;display:grid;justify-items:center;gap:6px;padding:10px 0 8px;border:1px solid var(--line-c);border-radius:var(--r1);background:var(--deep);font:500 12px/1 var(--f-disp);color:var(--dim);letter-spacing:.02em;white-space:nowrap}
+.ladder li.past{border-color:var(--rk-b);color:var(--dim)}
+.ladder li.on{z-index:2;transform:scale(1.15);border-color:var(--rk);background:color-mix(in srgb,var(--rk) 14%,var(--deep));color:var(--ink);box-shadow:0 0 14px var(--rk-b)}
+.rank-nx{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;font:600 12px/1 var(--f-disp);letter-spacing:.06em;color:var(--dim)}
+.rank-nx .bar i{background:var(--rk);box-shadow:0 0 8px var(--rk-b)}
+@media (max-width:360px){.ladder{grid-template-columns:repeat(3,1fr);row-gap:12px}.ladder li{margin:0 7px}.ladder::before,.ladder::after{display:none}}
 .portal{width:58px;height:74px;border-radius:50%;display:grid;place-items:center;border:2px solid currentColor;font:700 24px/1 var(--f-disp);
   background:radial-gradient(closest-side,color-mix(in srgb,currentColor 55%,transparent),color-mix(in srgb,currentColor 12%,transparent) 70%,transparent);box-shadow:0 0 18px color-mix(in srgb,currentColor 45%,transparent),inset 0 0 14px color-mix(in srgb,currentColor 40%,transparent)}
 .portal span{color:var(--ink);text-shadow:0 0 10px currentColor}
 .portal.red{color:var(--red)}
 .portal.big{width:70px;height:90px;font-size:30px}
-.g-info{min-width:0;display:grid;gap:4px;align-content:start}
-.g-info h3{margin:0;font:600 18px/1.2 var(--f-disp);letter-spacing:.02em}
-.g-meta,.g-ex,.g-rw{margin:0;font-size:14px;color:var(--dim)}
-.g-rw{color:var(--gold);font:600 14px/1.3 var(--f-disp);letter-spacing:.04em}
-.g-info .btn{justify-self:start;margin-top:6px}
-.mp-row{margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;font:500 14px/1.2 var(--f-disp);letter-spacing:.04em;color:var(--dim)}
-.ladder{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.ladder li{display:grid;justify-items:center;gap:6px;padding:10px 0 8px;border:1px solid var(--line-c);font:500 12px/1 var(--f-disp);color:var(--dim);letter-spacing:.04em}
-.ladder li.on{border-color:var(--line-a);background:var(--line-c);color:var(--ink);box-shadow:0 0 14px var(--line-b)}
-.ladder li.past{color:var(--dim)}
 .gi-top{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;margin-bottom:12px}
 .gi-top h3{margin:0 0 4px;font:600 18px/1.2 var(--f-disp)}
 .waves{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:12px}
@@ -468,22 +574,20 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .c.fail{background:var(--red)}
 .c.rest{background:color-mix(in srgb,var(--dim) 45%,transparent)}
 .c.ward{background:var(--gold)}
-.burn{margin:14px 0 4px;padding:12px 14px;border:1px solid var(--line-b);border-radius:3px;background:color-mix(in srgb,var(--gold) 5%,transparent)}
-.burn-t{display:flex;align-items:center;gap:8px;margin-bottom:8px}.burn-t .i{color:var(--gold)}.burn-t b{font:700 20px/1 var(--f-disp);color:var(--ink)}.burn-t span{font-size:14px;color:var(--dim)}
-.burn .bar i{background:linear-gradient(90deg,var(--gold),#ff8a4c)}
-.burn small{display:block;margin-top:8px;font-size:12px;line-height:1.4;color:var(--dim)}
 .seg-wrap{flex-wrap:wrap}.seg-wrap .seg-b{flex:1 1 30%;min-width:0;border-top:1px solid var(--line-b);margin-top:-1px}
 .code-box{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:10px 12px;border:1px solid var(--line-a);border-radius:3px;background:color-mix(in srgb,var(--line) 6%,transparent)}
 .code-box code{flex:1;min-width:0;font:600 14px/1.3 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;color:var(--ink);overflow-wrap:anywhere}
 .c.freeze{background:#7fd8ff;box-shadow:inset 0 0 0 1px #fff6}
+/* calories burned today: one row (flame, kcal, 4px bar, the full quest's burn); the weight hint only when unset */
+.burn{margin:14px 0 0;padding:10px 12px;display:grid;grid-template-columns:auto minmax(40px,1fr) auto;align-items:center;gap:6px 10px;border:1px solid var(--line-b);border-radius:var(--r2);background:color-mix(in srgb,var(--gold) 5%,transparent)}
+.burn-t{display:flex;align-items:center;gap:6px}.burn-t .i{width:18px;height:18px;color:var(--gold)}.burn-t b{font:700 16px/1 var(--f-disp);color:var(--ink);white-space:nowrap}
+.burn .bar i{background:linear-gradient(90deg,var(--gold),#ff8a4c);box-shadow:0 0 8px color-mix(in srgb,var(--gold) 50%,transparent)}
+.burn-q{font:500 14px/1 var(--f-disp);color:var(--dim);white-space:nowrap}
+.burn small{grid-column:1/-1;font-size:12px;line-height:1.4;color:var(--dim)}
 .event{display:flex;flex-direction:column;gap:2px;margin:0 0 14px;padding:10px 14px;border:1px solid var(--line-a);border-left:3px solid var(--glow);background:color-mix(in srgb,var(--line) 8%,transparent);border-radius:3px}
 .event b{font:700 12px/1.2 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--glow)}
 .event span{font-size:14px;color:var(--dim)}
 .event.ev-red{border-left-color:var(--red);background:color-mix(in srgb,var(--red) 8%,transparent)}.event.ev-red b{color:var(--red)}
-.pqs{list-style:none;margin:0;padding:0;display:grid;gap:12px}
-.pq{position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;padding-bottom:8px}
-.pq-t{display:flex;flex-direction:column;gap:2px;font-size:14px}.pq-t b{font:600 12px/1 var(--f-disp);letter-spacing:.06em;color:var(--dim)}
-.pq .g-bar{bottom:0}.pq.claimed{color:var(--dim)}.pq.claimed .g-bar{background:var(--ok)}
 .summon-b{margin:0;display:flex;gap:6px;padding:8px 10px;letter-spacing:.08em}
 .summon-b .i{width:18px;height:18px}
 .summoned{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px 0 0;font-size:14px;color:var(--violet)}
@@ -822,6 +926,7 @@ body.locked .toast.stat{border-left-color:var(--gold)}body.locked .toast.bad{bor
   .hud.weak .hb.hp i{box-shadow:0 0 8px var(--red)}
   .view.enter>.win,.ntf .win-head .win-ico,.ring::before,.bump,.kw,.kt::before{animation:none!important}.gain,.lag{display:none}
   .ntf .rewards.loot li,.ntf .ntf-stamp{opacity:1!important;animation:none!important}
+  .clock.urgent span,.goal.just,.goal.just .chk,.pq.ready .btn,.stamp.q-clear{animation:none!important}.goal.just{background:color-mix(in srgb,var(--ok) 18%,transparent)}
   .btn:active{transform:none}}
 /* recovery */
 .joints{list-style:none;margin:0;padding:0;display:grid}
@@ -2405,10 +2510,26 @@ function renderTabs(){
   const tabs=[['quest','Quest'],['status','Status'],['gates','Gates'],['recover','Recover'],['items','Items'],['records','Records']];
   $('#tabs').innerHTML=`<div class="tabs-in">${tabs.map(([id,l])=>`<button class="tab${id==='gates'?` rk-tone-${R.id}`:''}${UI.tab===id?' on':''}" data-a="tab" data-x="${id}" ${UI.tab===id?'aria-current="page"':''}><span class="tab-i">${ico(id==='gates'?'gate':id)}</span><span class="tab-l">${l}</span>${id==='gates'&&open>0?`<span class="cnt num">${open}<span class="sr"> open</span></span>`:''}${dots[id]?'<span class="dot" aria-label="needs attention"></span>':''}</button>`).join('')}</div>`;
 }
+// one goal row. A goal that has just turned done is marked .just for 900ms (spec 4.4 / M15); a re-render inside
+// that window keeps the animation's phase through a negative delay instead of replaying it.
 function goalRow(act,x,name,val,tg,label,done){
-  const p=tg?Math.min(1,val/tg):0;
-  return `<li><button class="goal${done?' done':''}" data-a="${act}" data-x="${x}"><span class="g-name">${name}</span><span class="g-val">[${label}]</span><span class="chk">${done?ico('check'):''}</span><span class="g-bar" data-k="g-${act}-${x}" style="--p:${p}"></span></button></li>`;
+  const p=tg?Math.min(1,val/tg):0,k=`${act}-${x}`,now=Date.now(),G=UI.goals||(UI.goals={prev:{},at:{}});
+  if(done&&G.prev[k]===false) G.at[k]=now;
+  G.prev[k]=done;
+  const jt=done&&G.at[k]?now-G.at[k]:1e9,just=jt<900;
+  const i=label.indexOf('/'),cur=i<0?label:label.slice(0,i),rest=i<0?'':label.slice(i);
+  return `<li><button class="goal${done?' done':''}${just?' just':''}" data-a="${act}" data-x="${x}"${just?` style="--jd:-${jt}ms"`:''}><span class="g-name">${name}</span><span class="g-val">[<b class="num">${cur}</b><span class="g-of">${rest}</span>]</span><span class="chk">${done?ico('check'):''}</span><span class="g-bar${p>0?'':' z'}" data-k="g-${act}-${x}" style="--p:${p}"></span></button></li>`;
 }
+// small diamond pips (n of total), decorative: the count is always written out next to them
+const pips=(n,total)=>`<span class="pips" aria-hidden="true">${Array.from({length:total},(_,i)=>`<i${i<n?' class="on"':''}></i>`).join('')}</span>`;
+// ms since `key` turned on, for one-shot entrances that survive re-renders (negative delays). Already on at the
+// first render: never (1e9), unless `load` says the first sight counts as the start.
+function since(key,on,load){const T=UI.since||(UI.since={});
+  if(!on){T[key]=0;return 1e9}
+  if(T[key]===undefined) T[key]=load?Date.now():-1;
+  if(T[key]===-1) return 1e9;
+  if(T[key]===0) T[key]=Date.now();
+  return Date.now()-T[key]}
 
 /* quest tab */
 function vQuest(){
@@ -2419,50 +2540,61 @@ function vQuest(){
   if(retestDue()) h+=`<section class="win tone-ok">${winHead('Reassessment Test','!')}<p class="sys">[Four weeks have passed. Show the System how far you have come.]</p>
     <p class="note" style="text-align:center">One honest set each of push-ups, sit-ups and squats, plus your running distance. Your goals update to match.</p>
     <button class="btn pri block" data-a="retest">Take the test</button></section>`;
-  const ids=Object.keys(d.targets);
+  const ids=Object.keys(d.targets),isDone=id=>d.prog[id]>=d.targets[id]-1e-6;
   const rows=ids.map(id=>{const v=d.prog[id],tg=d.targets[id],swapped=d.subs&&d.subs[id];
-    return goalRow('task',id,`${taskName(id)}${swapped?' <span class="tag teal">Adapted</span>':''}`,v,tg,`${fmtTask(id,v)}/${fmtTask(id,tg)}${taskSfx(id)}`,v>=tg-1e-6)}).join('');
+    return goalRow('task',id,`${taskName(id)}${swapped?' <span class="tag teal">Adapted</span>':''}`,v,tg,`${fmtTask(id,v)}/${fmtTask(id,tg)}${taskSfx(id)}`,isDone(id))}).join('');
   const sore=soreJoints(),hj=d.heal&&hurting()[0];
   let main='';
   if(hj){const done=d.cleared||(d.recDone||[]).some(r=>adaptLv(r)>=2);main=goalRow('recInfo',hj,`Recovery session: ${esc(REC_BY[hj].name)}`,done?1:0,1,done?'1/1':'0/1',done)}
+  // summary: goals done on the left, the reset clock on the right; a segmented meter with one cell per goal
+  const nDone=ids.filter(isDone).length,left=nextReset()-Date.now();
+  const sum=`<div class="q-sum"><p class="q-n"><b class="num">${nDone}</b><span>/${ids.length} goals</span></p>
+      <div class="clock${left<72e5?' urgent':''}">${ico('clock')}<span class="num" data-live="reset">${hms(left)}</span><small>to reset</small></div></div>
+    <div class="qmeter" aria-hidden="true">${ids.map(id=>`<i class="${isDone(id)?'on':''}" style="--p:${clamp(d.prog[id]/d.targets[id],0,1)}"></i>`).join('')}</div>`;
+  const clr=since('clear-'+d.date,!!d.cleared);
   h+=`<section class="win">${winHead('Quest Info','!')}
     <p class="sys">${d.rest?'[Rest Day] The Daily Quest is optional today.':d.heal&&!d.cleared?'[Recovery Day] The System has eased today\'s quest.':'[Daily Quest: Strength Training has arrived.]'}</p>
-    ${sore.length?`<p class="note" style="text-align:center;margin:-6px 0 12px">Status ailment: ${sore.map(AILMENT).join(', ')}. <button class="link" data-a="tab" data-x="recover">Recovery</button></p>`:''}
+    ${sum}
+    ${sore.length?`<p class="note" style="text-align:center;margin:0 0 12px">Status ailment: ${sore.map(AILMENT).join(', ')}. <button class="link" data-a="tab" data-x="recover">Recovery</button></p>`:''}
     <h3 class="goal-h">GOAL</h3>${main?`<ul class="goals">${main}</ul>`:''}
     ${hj?'<p class="note" style="text-align:center;margin:12px 0 0">Optional today. Stop if pain goes above 3/10.</p>':''}<ul class="goals">${rows}</ul>
     ${calMeter(d)}
-    ${d.cleared?`<div class="stamp">COMPLETE</div><p class="rw-line">Rewards received: Status Recovery · Ability points +3 · Random Box</p>`
-      :`<p class="warn">${d.rest?'Clearing it anyway still adds to your streak.':d.heal?'No penalty today. Go easy, and do a recovery session for the joint that hurts.':d.grace?'<b>FIRST DAY:</b> No penalty yet. From tomorrow, failure will result in an appropriate <u>penalty</u>.':'<b>WARNING:</b> Failure to complete the daily quest will result in an appropriate <u>penalty</u>.'}</p>`}
-    <div class="clock">${ico('clock')}<span data-live="reset">${hms(nextReset()-Date.now())}</span><small>until reset</small></div>
+    ${d.cleared?`<div class="stamp q-clear tone-ok${clr<450?' in':''}"${clr<450?` style="--sd:-${clr}ms"`:''}>CLEAR</div><p class="rw-line">Rewards received: Status Recovery · Ability points +3 · Random Box</p>`
+      :`<p class="warn${d.rest||d.heal?' calm':''}">${d.rest?'Clearing it anyway still adds to your streak.':d.heal?'No penalty today. Go easy, and do a recovery session for the joint that hurts.':d.grace?'<b>FIRST DAY:</b> No penalty yet. From tomorrow, failure will result in an appropriate <u>penalty</u>.':'<b>WARNING:</b> Failure to complete the daily quest will result in an appropriate <u>penalty</u>.'}</p>`}
   </section>`;
   const sideDone=d.side.filter(q=>q.done).length;
-  h+=`<section class="win">${winHead('Optional Quests')}<ul class="side">${d.side.map((q,i)=>{const s=SIDE_BY[q.id];return `<li><button class="side-q${q.done?' done':''}" data-a="side" data-x="${i}" aria-pressed="${q.done}"><span class="box">${q.done?ico('check'):''}</span><span class="side-n">${s.name}</span><span class="side-r">+${SIDE_XP} XP · ${STAT_INFO[s.stat].short}</span></button></li>`}).join('')}</ul>
+  h+=`<section class="win">${winHead('Optional Quests')}<span class="win-meta" aria-hidden="true">${pips(sideDone,d.side.length)}</span><ul class="side">${d.side.map((q,i)=>{const s=SIDE_BY[q.id];return `<li><button class="side-q${q.done?' done':''}" data-a="side" data-x="${i}" aria-pressed="${q.done}"><span class="box">${q.done?ico('check'):''}</span><span class="side-n">${s.name}</span><span class="side-r">+${SIDE_XP} XP · ${STAT_INFO[s.stat].short}</span></button></li>`}).join('')}</ul>
     <div class="mp-row"><span>${sideDone} / ${d.side.length} done${d.sideFull?' · Full Discipline earned':` · all ${d.side.length}: +${SIDE_FULL.xp} XP, +${SIDE_FULL.gold} gold`}</span>
-      ${d.sideReroll||d.side.every(q=>q.done)?'':`<button class="btn sm ghost" data-a="sideReroll">Swap one</button>`}</div>
+      ${d.sideReroll||d.side.every(q=>q.done)?'':`<button class="btn sm" data-a="sideReroll">Swap one</button>`}</div>
     <p class="note">Tick these off yourself. New ones arrive at every reset.</p></section>`;
   h+=periodWin('w')+periodWin('m');
-  const open=S.gates.list.length+(trialGate()?1:0);
-  h+=`<div class="quick"><button class="btn" data-a="runOpen" data-x="gps">${ico('run')}${S.run?`Run · ${trim(toUser(S.run.dist))} ${unit()}`:'Start a run'}</button>
-    <button class="btn" data-a="tab" data-x="gates">${ico('gate')}Gates${open?` <span class="pill">${open}</span>`:''}</button></div>`;
+  const open=S.gates.list.length+(trialGate()?1:0),R=rankOf();
+  h+=`<div class="quick"><button class="btn q-tile" data-a="runOpen" data-x="gps">${ico('run')}<span>${S.run?`Run · ${trim(toUser(S.run.dist))} ${unit()}`:'Start a run'}</span></button>
+    <button class="btn q-tile q-gates rk-tone-${R.id}" data-a="tab" data-x="gates">${ico('gate')}<span>Gates</span>${open?`<span class="pill num">${open}<span class="sr"> open</span></span>`:''}</button></div>`;
   return h;
 }
-// calories burned today next to what the full Daily Quest burns, so every set visibly adds up
+// calories burned today next to what the full Daily Quest burns, so every set visibly adds up (one row)
 function calMeter(d){
   const today=calDay(d.date),quest=Object.keys(d.targets).reduce((a,id)=>a+calOf(taskEx(id),d.targets[id]),0);
-  return `<div class="burn" role="group" aria-label="Calories burned today"><div class="burn-t">${ico('flame')}<b>${kcal(today)}</b><span>burned today</span></div>
-    <div class="bar" role="progressbar" aria-label="Calories toward the full Daily Quest" aria-valuemin="0" aria-valuemax="${Math.round(quest)}" aria-valuenow="${Math.round(Math.min(today,quest))}"><i data-k="burn" style="width:${quest?clamp(today/quest,0,1)*100:0}%"></i></div>
-    <small>The full Daily Quest burns about ${kcal(quest)}. Estimate${S.settings.weight?'':` for ${S.settings.units==='mi'?'154 lb':'70 kg'}: set your weight in Settings`}.</small></div>`;
+  return `<div class="burn" role="group" aria-label="Calories burned today"><div class="burn-t">${ico('flame')}<b>${kcal(today)}</b><span class="sr">burned today</span></div>
+    <div class="bar sm gl" role="progressbar" aria-label="Calories toward the full Daily Quest" aria-valuemin="0" aria-valuemax="${Math.round(quest)}" aria-valuenow="${Math.round(Math.min(today,quest))}"><i data-k="burn" class="${today>0?'':'z'}" style="width:${quest?clamp(today/quest,0,1)*100:0}%"></i></div>
+    <span class="burn-q num">/ ${kcal(quest)}</span>
+    ${S.settings.weight?'':`<small>Estimate for ${S.settings.units==='mi'?'154 lb':'70 kg'}: set your weight in Settings.</small>`}</div>`;
 }
 function periodWin(kind){
   const P=S.periods[kind];if(!P) return '';
   const left=daysBetween(S.daily.date,periodEnd(kind,P.key)),rw=pqReward(kind);
-  const rows=P.list.map((q,i)=>{const def=pqDef(kind,q),v=Math.min(q.target,pqProg(q)),done=v>=q.target,dist=q.id==='dist';
-    const lbl=dist?`${trim(toUser(v))}/${trim(toUser(q.target))}`:`${fmt(Math.floor(v))}/${fmt(q.target)}`;
-    return `<li class="pq${q.claimed?' claimed':''}"><div class="pq-t"><span>${def.name(q.target)}</span><b>${q.claimed?'Claimed':lbl}</b></div><span class="g-bar" data-k="pq-${kind}-${i}" style="--p:${v/q.target}"></span>
-      ${done&&!q.claimed?`<button class="btn sm pri" data-a="claimPQ" data-x="${kind}:${i}">Claim</button>`:''}</li>`}).join('');
-  const bonus=PQ_INFO[kind].bonus.map(([id,n])=>`${ITEMS[id].name}${n>1?' ×'+n:''}`).join(' + ');
-  return `<section class="win">${winHead(PQ_INFO[kind].name)}<ul class="pqs">${rows}</ul>
-    <div class="mp-row"><span>Each: +${fmt(rw.xp)} XP · +${fmt(rw.gold)} gold<br>All 3: ${P.bonus?'bonus claimed':bonus}</span><span class="tag">${left} day${left===1?'':'s'} left</span></div></section>`;
+  const rows=P.list.map((q,i)=>{const def=pqDef(kind,q),v=Math.min(q.target,pqProg(q)),done=v>=q.target,dist=q.id==='dist',ready=done&&!q.claimed;
+    const lbl=dist?`${trim(toUser(v))} / ${trim(toUser(q.target))}`:`${fmt(Math.floor(v))} / ${fmt(q.target)}`,pct=Math.floor(v/q.target*100);
+    const rd=since(`pq-${kind}-${P.key}-${i}`,ready,true);
+    return `<li class="pq${q.claimed?' claimed':''}${ready?' ready':''}"><div class="pq-t"><span class="pq-n">${def.name(q.target)}</span><b class="num">${q.claimed?'Claimed':lbl}</b>${q.claimed?'':`<small class="num">${pct}%</small>`}</div>
+      <div class="bar md q gl"><i data-k="pq-${kind}-${i}" class="${v>0?'':'z'}" style="width:${q.claimed?100:v/q.target*100}%"></i></div>
+      ${ready?`<button class="btn sm pri" data-a="claimPQ" data-x="${kind}:${i}"${rd<1e9?` style="--rd:-${Math.min(rd,5000)}ms"`:''}>Claim</button>`:''}</li>`}).join('');
+  const nClaimed=P.list.filter(q=>q.claimed).length;
+  const bonus=PQ_INFO[kind].bonus.map(([id,n])=>`<li>${slot(id,0,40,{icon:ITEMS[id].icon,count:n>1?n:null})}<span>${esc(ITEMS[id].name)}${n>1?' ×'+n:''}</span></li>`).join('');
+  return `<section class="win">${winHead(PQ_INFO[kind].name)}<span class="win-meta"><span class="tag${left<=1?' red':left<3?' gold':''}">${left} day${left===1?'':'s'} left</span></span><ul class="pqs">${rows}</ul>
+    <p class="pq-each">Each: <b>+${fmt(rw.xp)} XP</b> · <b class="au">+${fmt(rw.gold)} gold</b></p>
+    <div class="pq-bonus${P.bonus?' got':''}"><div class="pq-bh"><span>All 3 bonus${P.bonus?' · claimed':''}</span>${pips(nClaimed,P.list.length)}</div><ul>${bonus}</ul></div></section>`;
 }
 function penaltyWin(){
   const p=S.penalty,paused=penaltyPaused();
@@ -2506,28 +2638,36 @@ function vStatus(){
 }
 
 /* gates tab */
-function gateCard(g){
-  const R=RANKS[g.rank];
-  return `<article class="gate${g.red?' red':''}${g.trial?' trial':''}">
-    <div class="portal rk-${R.id}${g.red?' red':''}${sprURL(slug(g.boss))?' has-foe':''}" aria-hidden="true"><span>${R.id}</span>${sprImg(slug(g.boss),'p-foe')}</div>
-    <div class="g-info"><h3>${esc(g.name)}</h3>
-      <p class="g-meta">${g.red?'<span class="tag red">Red Gate</span> ':''}${g.trial?'<span class="tag gold">Trial</span> ':''}${R.id}-Rank · Boss: ${esc(g.boss)} · about ${g.est} min</p>
-      <p class="g-ex">${g.exs.map(id=>EX[id].name).join(' · ')}</p>
-      <p class="g-rw">${fmt(g.xp*xpMult('gate'))} XP · ${fmt(g.gold*goldMult())} gold${g.trial?' · Rank up':''}</p>
-      <button class="btn sm ${g.trial||g.red?'':'pri'}" data-a="gateInfo" data-x="${esc(g.id)}">Inspect gate</button></div></article>`;
+// rift poster (spec 4.5): a stage with the portal and the boss standing in front of it, then the info block.
+// feat = the first non-trial open gate: taller stage, 3x boss, primary Inspect button.
+function gateCard(g,feat){
+  const R=RANKS[g.rank],boss=sprImg(slug(g.boss),'p-foe');
+  return `<article class="gate rk-tone-${g.red?'X':R.id}${feat?' feat':''}${g.red?' red':''}${g.trial?' trial':''}">
+    <div class="g-stage"><div class="portal rk-${R.id}${g.red?' red':''}${boss?' has-foe':''}" aria-hidden="true">${boss?'':`<span>${R.id}</span>`}</div>${boss}
+      <span class="g-rank rk-${R.id}" aria-hidden="true"><b>${R.id}</b></span>${g.trial?'<span class="g-ribbon">Rank-up Trial</span>':''}</div>
+    <div class="g-info"><h3>${esc(g.name)}</h3><p class="g-boss-l">Boss · ${esc(g.boss)}</p>
+      <p class="g-meta">${g.red?'<span class="tag red">Red Gate · No escape</span>':''}${g.trial?'<span class="tag gold">Trial</span>':''}<span class="gc rk-${R.id}">${R.id}-Rank</span><span class="gc">about ${g.est} min</span><span class="gc">${g.trial?'No MP':'10 MP'}</span></p>
+      <p class="g-ex">${g.exs.map(id=>`<span>${EX[id].name}</span>`).join('')}</p>
+      <p class="g-rw"><span class="rc rc-xp num">${fmt(g.xp*xpMult('gate'))} XP</span><span class="rc rc-au num">${fmt(g.gold*goldMult())} gold</span>${g.trial?'<span class="rc rc-up">Rank up</span>':''}</p>
+      <button class="btn block ${feat?'pri':'ghost'}" data-a="gateInfo" data-x="${esc(g.id)}">Inspect gate</button></div></article>`;
 }
 function vGates(){
-  const tr=trialGate(),p=S.player,list=S.gates.list,nx=RANKS[p.rank+1];
+  const tr=trialGate(),p=S.player,list=S.gates.list,R=RANKS[p.rank],nx=RANKS[p.rank+1],mm=maxMP(),mp=clamp(p.mp,0,mm),fi=list.findIndex(g=>!g.trial);
+  const lv=nx?clamp((p.level-R.min)/(nx.min-R.min),0,1):1;
   return `${tr?`<section class="win">${winHead('Reassessment','!')}<p class="sys">[You have met the level requirement for ${RANKS[tr.rank].id}-Rank.]</p><div class="gates">${gateCard(tr)}</div><p class="note">Trials cost no MP and stay open until you clear them.</p></section>`:''}
   <section class="win">${winHead('Gates Detected')}
-    ${soreJoints().length?`<p class="note" style="margin:-4px 0 12px;text-align:center">Gates leave out exercises that load your sore joints. <button class="link" data-a="tab" data-x="recover">Recovery</button></p>`:''}
-    ${list.length?`<div class="gates">${list.map(gateCard).join('')}</div>`
+    <div class="g-mp"><div class="g-mp-m">${meter('mp','MP',mp,mm)}<p>10 MP per gate · enough for ${Math.floor(mp/10)}</p></div>${S.inv.key?`<button class="btn sm" data-a="use" data-x="key">${ico('key')}Use key (${S.inv.key})</button>`:''}</div>
+    ${soreJoints().length?`<p class="note" style="margin:0 0 12px;text-align:center">Gates leave out exercises that load your sore joints. <button class="link" data-a="tab" data-x="recover">Recovery</button></p>`:''}
+    ${list.length?`<div class="gates">${list.map((g,i)=>gateCard(g,i===fi)).join('')}</div>`
       :S.gates.done.length?emptyState('gate',`Every gate is cleared for today. New gates open in <span data-live="reset">${hms(nextReset()-Date.now())}</span>.`,`<button class="btn sm ghost" data-a="runOpen" data-x="gps">${ico('run')}Start a run</button>`)
       :emptyState('recover','Your sore joints rule out every gate exercise today. Try a recovery session instead.',`<button class="btn sm ghost" data-a="tab" data-x="recover">Recovery</button>`)}
-    <div class="mp-row"><span>MP ${fmt(p.mp)} / ${fmt(maxMP())} · 10 MP per gate</span>${S.inv.key?`<button class="btn sm" data-a="use" data-x="key">${ico('key')}Use key (${S.inv.key})</button>`:''}</div>
   </section>
   <section class="win">${winHead('Hunter Rank')}
-    <ol class="ladder">${RANKS.map((r,i)=>`<li class="${i===p.rank?'on':i<p.rank?'past':''}"><span class="rk rk-${r.id}">${r.id}</span>Lv ${r.min}</li>`).join('')}</ol>
+    <div class="rank-w rk-tone-${R.id}" style="--ri:${p.rank}">
+      <ol class="ladder">${RANKS.map((r,i)=>`<li class="${i===p.rank?'on':i<p.rank?'past':''}"${i===p.rank?' aria-current="step"':''}><span class="rk rk-${r.id}">${r.id}</span>Lv ${r.min}</li>`).join('')}</ol>
+      <div class="rank-nx"><div class="bar sm gl" role="progressbar" aria-label="Progress to the next rank" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(lv*100)}"><i data-k="rank-lv" class="${lv>0?'':'z'}" style="width:${lv*100}%"></i></div>
+        <span class="num">${nx?(p.level>=nx.min?`Lv ${p.level} · trial ready`:`Lv ${p.level} → ${nx.min}`):`Lv ${p.level} · top rank`}</span></div>
+    </div>
     <p class="note">${nx?(p.level>=nx.min?(tr?`Clear the ${nx.id}-Rank Reassessment Trial above to rank up.`:`Your sore joints rule out the ${nx.id}-Rank trial for now. It returns when you recover.`):`The ${nx.id}-Rank Reassessment Trial unlocks at level ${nx.min}.`):'You stand at the top. There is no rank above S.'}</p>
   </section>`;
 }
@@ -3489,6 +3629,7 @@ function tick(){
   if(rollover()){announce();save();refresh()}
   const t=hms(nextReset()-Date.now());
   $$('[data-live=reset]').forEach(e=>{if(e.textContent!==t) e.textContent=t});
+  const urg=nextReset()-Date.now()<72e5;$$('.clock').forEach(c=>c.classList.toggle('urgent',urg));
   if(S.session) sessTick();
   if(S.run) runLive();
   if(UI.sheet&&UI.sheet.kind==='hold'){
