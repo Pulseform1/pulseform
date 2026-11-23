@@ -485,8 +485,9 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .waves b{font:600 16px/1 var(--f-disp);font-variant-numeric:tabular-nums}
 
 /* items */
-.gold-big{display:flex;align-items:center;justify-content:center;gap:8px;margin:-2px 0 12px;color:var(--gold);font:700 26px/1 var(--f-disp);font-variant-numeric:tabular-nums}
-.gold-big .i{width:22px;height:22px}
+.gold-big{position:sticky;top:calc(72px + env(safe-area-inset-top,0px));z-index:4;display:flex;align-items:center;justify-content:center;gap:8px;margin:-10px 0 -6px;padding:8px 0 10px;
+  background:linear-gradient(var(--void) 72%,transparent);color:var(--gold);font:700 26px/1 var(--f-disp);font-variant-numeric:tabular-nums}
+.gold-big .i{width:22px;height:22px}.gold-big small{font-size:14px;letter-spacing:.1em}
 .item{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line-c)}
 .it-ico{width:56px;height:56px;display:grid;place-items:center;border:1px solid var(--line-a);background:var(--line-c);color:var(--glow);box-shadow:inset 0 0 12px var(--line-c)}
 .it-ico .i{width:24px;height:24px}
@@ -511,7 +512,52 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .rf.new{animation:rf-new .9s var(--ease-sys) 1}
 @keyframes rf-new{0%{filter:brightness(2.5)}100%{filter:none}}
 .rf .cnt{position:absolute;right:-6px;bottom:-6px;min-width:22px;height:20px;padding:0 4px;background:var(--void);border:1px solid var(--rk-a);color:var(--ink);font:700 12px/18px var(--f-disp);text-align:center}
-.rf .rk-corner{left:-6px;top:-6px;right:auto;bottom:auto}
+.rf .rk-corner{left:-6px;top:-6px;right:auto;bottom:auto;z-index:1;background:var(--deep)}
+/* items (spec 4.6) */
+.item>.rf{justify-self:center}
+.it-b h4 .tag{margin-left:6px;vertical-align:2px;color:var(--ok)}
+.item.is-eq{box-shadow:inset 3px 0 0 -1px var(--ok)}
+.item.none .it-b h4{color:var(--dim)}.item.none .rf .i{color:var(--dim)}
+.item.box-hot .rf{border-color:var(--gold);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 22%,transparent),inset 0 -12px 18px -10px color-mix(in srgb,var(--gold) 55%,transparent),0 0 14px color-mix(in srgb,var(--gold) 45%,transparent)}
+.item.box-hot .rf::before{border-color:var(--gold)}.item.box-hot .rf .cnt{border-color:var(--gold);color:var(--gold)}
+/* empty gear slot: dashed outline, faint slot icon */
+.rf.vacant{border:1px dashed var(--line-b);background:none;box-shadow:none}.rf.vacant::before{display:none}.rf.vacant .i{opacity:.4;color:var(--glow)}
+/* paper doll: weapon | hunter | armor, accessory under the hunter */
+.doll{display:grid;grid-template-columns:minmax(72px,104px) minmax(96px,1fr) minmax(72px,104px);grid-template-rows:auto auto;gap:8px 12px;align-items:center;justify-items:center}
+.doll .d-w{grid-column:1;grid-row:1}.doll .d-a{grid-column:3;grid-row:1}.doll .d-c{grid-column:2;grid-row:2}
+.doll-s{display:grid;justify-items:center;gap:8px;width:100%;min-width:0}
+.doll-l{display:grid;justify-items:center;width:100%;min-width:0;text-align:center;font:600 12px/1.25 var(--f-disp)}
+.doll-l small{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.doll-l b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;letter-spacing:.02em;color:var(--ink)}.doll-l b.none{color:var(--dim)}
+.doll .d-c .doll-l{width:96px}
+.doll-hero{position:relative;grid-column:2;grid-row:1;display:grid;place-items:center;width:120px;height:120px;isolation:isolate}
+.doll-hero::after{content:"";position:absolute;left:0;bottom:6px;width:120px;height:20px;border-radius:50%;background:radial-gradient(closest-side,var(--rk-b),transparent);box-shadow:0 0 18px var(--rk-c);z-index:-1}
+.doll-spr{width:96px;height:96px;image-rendering:pixelated;filter:drop-shadow(0 0 8px var(--line-b))}
+.doll-init b{font:700 40px/1 var(--f-disp);color:var(--ink);text-shadow:0 0 12px var(--rk)}
+.doll-sum{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line-c);text-align:center;font:600 14px/1.5 var(--f-disp);letter-spacing:.03em;color:var(--glow)}
+.doll-sum i{font-style:normal;color:var(--dim)}
+@media (max-width:360px){.doll{column-gap:6px}}
+/* shop: price pill, struck-out list price, affordability bar */
+.price-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--gold);border-radius:var(--r-pill);background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold);font:700 14px/1.1 var(--f-disp);letter-spacing:.02em;white-space:nowrap}
+.price-tag .i{width:14px;height:14px}
+.buy{display:grid;justify-items:stretch;gap:6px;min-width:0}
+.btn.buy-b{min-width:72px;padding:6px 12px;border-color:var(--gold);border-radius:var(--r-pill);background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold)}
+.btn.buy-b .price-tag{padding:0;border:0;background:none;color:inherit}
+.btn.buy-b[disabled]{color:var(--dim);border-color:var(--line-b);background:none}
+.afford{display:grid;gap:3px;text-align:right}
+.afford small{font-size:12px;line-height:1.1;color:var(--dim);white-space:nowrap}
+.bar.xs{height:3px}.bar.gold{background:color-mix(in srgb,var(--gold) 14%,transparent);box-shadow:none}.bar.gold i{background:var(--gold);box-shadow:0 0 6px color-mix(in srgb,var(--gold) 55%,transparent)}
+.deal{display:grid;grid-template-columns:96px minmax(0,1fr);gap:16px;align-items:center}
+.deal-b{min-width:0}
+.deal-k{margin:0 0 4px;font:600 12px/1 var(--f-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--glow)}
+.deal-b h3{margin:0 0 4px;font:600 18px/1.2 var(--f-disp);letter-spacing:.03em;color:var(--ink)}
+.deal-d{margin:0 0 8px;font-size:14px;line-height:1.35;color:var(--dim)}
+.deal-p{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0}
+.deal-p s{font:600 14px/1 var(--f-disp);color:var(--dim);text-decoration-thickness:2px;text-decoration-color:var(--dim)}
+.deal-f{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 12px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line-c)}
+.deal-f .buy{min-width:120px}
+.deal-r{display:inline-flex;align-items:center;gap:6px;font:500 12px/1 var(--f-disp);letter-spacing:.06em;color:var(--dim)}
+.deal-r .i{width:14px;height:14px}.deal-r .num{color:var(--ink)}
 .sh-spr{width:64px;height:64px;filter:drop-shadow(0 0 6px var(--violet))}
 .sh:not(.got) .sh-spr{filter:brightness(.35)}
 .sum-spr{width:32px;height:32px;filter:drop-shadow(0 0 5px var(--violet))}
@@ -553,7 +599,14 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .it-b p{margin:0;font-size:14px;color:var(--dim)}
 .price{display:inline-flex;align-items:center;gap:4px;color:var(--gold)}
 .price .i{width:13px;height:13px}
-.swatch{width:44px;height:44px;border:1px solid var(--ink);background:linear-gradient(135deg,var(--sw1),var(--sw2))}
+/* skin swatch: a 56x40 mini System window in the skin's colours */
+.swatch{position:relative;width:56px;height:40px;border:1px solid var(--sw1);box-shadow:0 0 8px color-mix(in srgb,var(--sw1) 40%,transparent);
+  background:linear-gradient(color-mix(in srgb,var(--sw1) 30%,transparent) 0 6px,transparent 6px),
+    linear-gradient(90deg,color-mix(in srgb,var(--sw2) 55%,transparent) 0 70%,transparent 70%) 8px 14px/30px 2px no-repeat,
+    linear-gradient(90deg,color-mix(in srgb,var(--sw1) 55%,transparent) 0 100%) 8px 22px/20px 2px no-repeat,
+    linear-gradient(color-mix(in srgb,var(--sw1) 10%,var(--deep)),var(--deep))}
+.swatch::before,.swatch::after{content:"";position:absolute;width:6px;height:6px;border:2px solid var(--sw2)}
+.swatch::before{left:-2px;top:-2px;border-right:0;border-bottom:0}.swatch::after{right:-2px;bottom:-2px;border-left:0;border-top:0}
 
 /* records */
 .streak{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
@@ -772,6 +825,7 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .seg-b{flex:1;min-height:44px;padding:8px 6px;border:0;border-left:1px solid var(--line-b);background:none;font:600 12px/1.1 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
 .seg-b:first-child{border-left:0}
 .seg-b.on{background:var(--line-b);color:var(--ink);text-shadow:0 0 10px var(--line)}
+@media (max-width:360px){.seg-b{padding:8px 2px;letter-spacing:.03em}}
 .field{display:grid;gap:8px;margin:0 0 16px}
 .field>span{font:600 12px/1 var(--f-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
 .field input,.field select,.field textarea{width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--line-a);border-radius:3px;background:color-mix(in srgb,var(--void) 70%,transparent);color:var(--ink)}
@@ -800,13 +854,32 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .preview{margin:14px 0 0;padding:10px 12px;border:1px dashed var(--line-a);font:500 14px/1.5 var(--f-disp);letter-spacing:.02em;text-align:center}
 .brand{text-align:center;font:700 14px/1 var(--f-disp);letter-spacing:.6em;color:var(--dim);text-indent:.6em}
 
-.army{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:12px}
-.sh{display:grid;justify-items:center;gap:3px;padding:10px 6px;border:1px solid var(--line-c);text-align:center;min-width:0}
+.army{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:12px}
+.army-head{display:flex;align-items:center;gap:14px;margin:0 0 4px}
+.army-ring.ring{flex:none;margin:0}
+.army-ring.ring::before{animation:none}
+.army-ring.ring.kw.grew{animation:none}.army-ring>.gain{display:none}
+.army-ring.grew::before{animation:ring-from var(--t-fill) var(--ease-sys) var(--kd,0s) backwards}
+@keyframes ring-from{from{--rv:var(--p0,0)}}
+.army-ring b{position:relative;font:700 20px/1 var(--f-disp);color:var(--ink)}
+.army-tx{min-width:0}.army-tx .effects{margin-top:8px}
+.army-n{margin:0;font:600 14px/1.3 var(--f-disp);letter-spacing:.04em;color:var(--dim)}
+.army-rk{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:10px 0 0;font:600 12px/1 var(--f-disp);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.army-rk::after{content:"";flex:1;height:1px;background:var(--line-c)}
+.army-rk b{order:1;font-weight:600;color:var(--ink)}.army-rk.full b{color:var(--ok)}
+.army-rk:first-child{margin-top:0}
+.sh{position:relative;display:grid;justify-items:center;gap:5px;padding:12px 6px 10px;border:1px solid var(--line-c);text-align:center;min-width:0}
+.sh .rf{margin-bottom:4px}
+.sh.got .rf{box-shadow:inset 0 0 18px color-mix(in srgb,var(--violet) 35%,transparent),inset 0 0 0 1px var(--rk-c),0 0 10px var(--rk-b)}
+.sh.got .rf .spr{filter:drop-shadow(0 0 4px var(--violet))}
+.sh:not(.got) .rf{border-color:var(--rk-b);box-shadow:none;outline:0}.sh:not(.got) .rf::after{display:none}.sh:not(.got) .rf .i{color:var(--dim)}
+.sh .pips{gap:5px}.sh .pips i{width:8px;height:8px}
+.sh-new{position:absolute;top:6px;right:6px;color:var(--glow);background:var(--deep)}
 .sh:not(.got){color:var(--dim);border-color:var(--line-c)}.sh:not(.got) .sh-ico{color:var(--dim)}
 .sh.got{opacity:1;border-color:var(--line-a);background:var(--line-c);box-shadow:0 0 12px var(--line-b)}
 .sh-ico{width:64px;height:64px;display:grid;place-items:center;color:var(--glow)}
 .sh-ico .i{width:30px;height:30px;filter:drop-shadow(0 0 6px var(--line))}
-.sh b{font:600 12px/1.2 var(--f-disp);overflow-wrap:anywhere}
+.sh b{font:600 14px/1.2 var(--f-disp);overflow-wrap:anywhere}
 .sh small{font-size:12px;color:var(--dim);line-height:1.3}
 .seg+.gold-big,.seg+.win{margin-top:0}
 /* contract */
@@ -1241,7 +1314,7 @@ const sprImg=(id,cls,variant,style)=>{const u=sprURL(id,variant);return u?`<img 
 // a rarity-framed loot slot (.rf): size 40/56/72/80/96, rank index 0-5 (E when unranked); falls back to an icon when the art is missing
 function slot(id,r,size,o={}){
   const R=RANKS[clamp(r|0,0,RANKS.length-1)],sp=window.SPRITES&&window.SPRITES[id],big=sp&&sp.n>=32?' big32':'';
-  return `<div class="rf s${size}${big} rk-tone-${R.id}${o.cls?' '+o.cls:''}">${sprImg(id,'',o.variant)||ico(o.icon||'box')}${o.count!=null?`<span class="cnt num">×${o.count}</span>`:''}</div>`;
+  return `<div class="rf s${size}${big} rk-tone-${R.id}${o.cls?' '+o.cls:''}"${o.style?` style="${o.style}"`:''}>${sprImg(id,'',o.variant)||ico(o.icon||'box')}${o.count!=null?`<span class="cnt num">×${o.count}</span>`:''}${o.extra||''}</div>`;
 }
 // enemy art with the System fallback: its own sprite, else the riftling recoloured to the gate's rank
 const foeImg=(f,R,cls,style)=>sprImg(f.id,cls,'',style)||sprImg('riftling',cls,'rk:'+R.hex,style);
@@ -2170,6 +2243,7 @@ function buyGear(id,price){
 function equipGear(id,quiet){
   const g=GEAR[id];if(!g||!S.gear.owned.includes(id)) return;
   S.gear.eq[g.slot]=S.gear.eq[g.slot]===id?null:id;
+  if(S.gear.eq[g.slot]) UI.newEq={slot:g.slot,t:Date.now()};
   if(!quiet) toast(S.gear.eq[g.slot]?`Equipped: ${g.name}`:`Unequipped: ${g.name}`);
   S.player.hp=Math.min(S.player.hp,maxHP());
   checkUnlocks();save();refresh();
@@ -2203,7 +2277,7 @@ function extract(id,chance){
   S.player.mp-=20;
   if(Math.random()<chance){
     const v=S.shadows[id];
-    if(v) v.lv=Math.min(5,v.lv+1); else S.shadows[id]={lv:1};
+    if(v) v.lv=Math.min(5,v.lv+1); else {S.shadows[id]={lv:1};UI.newSh={id,t:0}}
     Sfx.level();buzz([60,40,60,40,160]);
     notify({kind:'level',head:'Arise',art:id,artVariant:'shadow',big:sh.name.toUpperCase(),lines:[v?`[${sh.name} grows stronger.]`:`[${sh.name} has joined your army.]`,`${sh.grade} shadow · level ${S.shadows[id].lv}`],rewards:[['Army bonus',bonusText({[sh.key]:sh.v})]]});
     checkUnlocks();
@@ -2672,36 +2746,61 @@ function vGates(){
   </section>`;
 }
 
-/* items tab */
-const gearIcon=id=>{const R=RANKS[GEAR[id].rank];return (sprImg(id,'gear-spr')||'')+`<span class="rk rk-${R.id}${sprURL(id)?' rk-corner':''}">${R.id}</span>`};
+/* items tab (spec 4.6): paper doll, rarity-framed slots, shop deal hero with affordability bars, shadow trophy case */
+const SLOT_ICO={weapon:'sword',armor:'ward',acc:'elixir'};
+// a gear piece in its rank frame, with the rank letter chip in the top-left corner
+const gearSlot=(id,size,o={})=>{const g=GEAR[id],R=RANKS[g.rank];return slot(id,g.rank,size,{icon:SLOT_ICO[g.slot],extra:`<span class="rk rk-${R.id} rk-corner">${R.id}</span>`,...o})};
+// ms since a one-render highlight started (equip flash, new shadow); 1e9 when there is none
+const markAge=m=>m&&m.t?Date.now()-m.t:1e9;
 function vItems(){
   const p=S.player,tab=UI.itemsTab||'inv';
   const segs=[['inv','Inventory'],['gear','Equipment'],['shop','Shop'],['army','Shadows']];
   const head=`<div class="seg" role="tablist">${segs.map(([id,l])=>`<button class="seg-b${tab===id?' on':''}" data-a="itemsTab" data-x="${id}" role="tab" aria-selected="${tab===id}">${l}</button>`).join('')}</div>`;
-  const gold=`<div class="gold-big">${ico('coin')}<b class="num" data-cu="gold-big">${fmt(p.gold)}</b> <small style="font-size:14px;letter-spacing:.1em">GOLD</small></div>`;
-  const gearRow=(id,btn)=>{const g=GEAR[id],R=RANKS[g.rank];return `<li class="item"><div class="it-ico gear-ico">${gearIcon(id)}</div><div class="it-b"><h4>${esc(g.name)}</h4><p>${SLOTS[g.slot]} · ${bonusText(g.b)}</p></div>${btn}</li>`};
+  const gearRow=(id,btn,eq)=>{const g=GEAR[id];return `<li class="item${eq?' is-eq':''}">${gearSlot(id,56)}<div class="it-b"><h4>${esc(g.name)}${eq?' <span class="tag ok">Equipped</span>':''}</h4><p>${SLOTS[g.slot]} · ${bonusText(g.b)}</p></div>${btn}</li>`};
+  // Buy buttons carry the price pill; when it is out of reach, a gold bar under it shows how close you are
+  const buyBtn=(a,x,price,name)=>{const short=p.gold<price;
+    return `<div class="buy"><button class="btn sm buy-b" data-a="${a}"${x?` data-x="${x}"`:''} aria-label="Buy ${esc(name)} for ${fmt(price)} gold"${short?' disabled':''}><span class="price-tag">${ico('coin')}<span class="num">${fmt(price)}</span></span></button>${short?afford(price):''}</div>`};
+  const afford=price=>`<span class="afford"><span class="bar xs gold" aria-hidden="true"><i style="width:${clamp(p.gold/price,0,1)*100}%"></i></span><small class="num">${fmt(price-p.gold)} more</small></span>`;
+  if(tab!=='army'&&UI.newSh&&UI.newSh.t) UI.newSh=null;
   if(tab==='gear'){
-    const owned=S.gear.owned.filter(id=>GEAR[id]);
+    const owned=S.gear.owned.filter(id=>GEAR[id]),sum={},R=RANKS[p.rank];
+    Object.values(S.gear.eq).forEach(id=>{const g=GEAR[id];if(g) for(const [k,v] of Object.entries(g.b)) sum[k]=(sum[k]||0)+v});
+    const dollSlot=(slot_,area)=>{
+      const id=S.gear.eq[slot_],g=GEAR[id],age=g&&UI.newEq&&UI.newEq.slot===slot_?markAge(UI.newEq):1e9;
+      const fr=g?gearSlot(id,72,{cls:age<900?'new':'',style:age<900?`animation-delay:-${age}ms`:''})
+        :`<div class="rf s72 vacant">${ico(SLOT_ICO[slot_])}</div>`;
+      return `<div class="doll-s ${area}">${fr}<span class="doll-l"><small>${SLOTS[slot_]}</small><b${g?'':' class="none"'}>${g?esc(g.name):'Empty'}</b></span></div>`};
+    const hero=sprImg('hunter-full','doll-spr')||`<div class="rf s96 rk-tone-${R.id} doll-init"><b>${esc((p.name||'H').trim().charAt(0).toUpperCase()||'H')}</b></div>`;
+    const keys=Object.keys(sum);
     return `${head}<section class="win">${winHead('Equipment')}
-      <ul class="list">${Object.entries(SLOTS).map(([slot,l])=>{const id=S.gear.eq[slot],g=GEAR[id];return `<li class="item"><div class="it-ico${g?' gear-ico':''}">${g?gearIcon(id):ico(slot==='weapon'?'sword':slot==='armor'?'ward':'elixir')}</div><div class="it-b"><h4>${l}</h4><p>${g?`<b>${esc(g.name)}</b> · ${bonusText(g.b)}`:'Empty'}</p></div><span></span></li>`}).join('')}</ul>
+      <div class="doll">${dollSlot('weapon','d-w')}<div class="doll-hero rk-tone-${R.id}">${hero}</div>${dollSlot('armor','d-a')}${dollSlot('acc','d-c')}</div>
+      <p class="doll-sum">${keys.length?keys.map(k=>`<span${/\d/.test(bonusText({[k]:sum[k]}))?` data-cu="eq-${k}"`:''}>${bonusText({[k]:sum[k]})}</span>`).join('<i aria-hidden="true"> · </i>'):'Nothing equipped. Gear gives small, lasting bonuses.'}</p>
     </section>
     <section class="win">${winHead('Owned Gear')}
-      ${owned.length?`<ul class="list">${owned.map(id=>gearRow(id,S.gear.eq[GEAR[id].slot]===id?`<button class="btn sm" data-a="equip2" data-x="${id}">Unequip</button>`:`<button class="btn sm pri" data-a="equip2" data-x="${id}">Equip</button>`)).join('')}</ul>`
+      ${owned.length?`<ul class="list">${owned.map(id=>{const eq=S.gear.eq[GEAR[id].slot]===id;return gearRow(id,eq?`<button class="btn sm" data-a="equip2" data-x="${id}">Unequip</button>`:`<button class="btn sm pri" data-a="equip2" data-x="${id}">Equip</button>`,eq)}).join('')}</ul>`
         :emptyState('sword','No gear yet. Buy it in the Shop, or find it in gates and Random Boxes.',`<button class="btn sm ghost" data-a="itemsTab" data-x="shop">${ico('coin')}Visit the Shop</button>`)}
     </section>`;
   }
   if(tab==='shop'){
     const deal=dailyDeal();
     const stock=Object.keys(GEAR).filter(id=>GEAR[id].rank<=p.rank+1&&!S.gear.owned.includes(id));
-    return `${head}${gold}
-    ${deal?`<section class="win tone-ok">${winHead('Daily Deal','✦')}<ul class="list"><li class="item"><div class="it-ico${deal.kind==='gear'?' gear-ico':''}">${deal.kind==='gear'?gearIcon(deal.id):ico(ITEMS[deal.id].icon)}</div>
-      <div class="it-b"><h4>${esc(deal.name)}</h4><p><span class="price">${ico('coin')}${fmt(deal.price)}</span> · 30% off today</p></div>
-      ${deal.bought?'<span class="tag ok">Claimed</span>':`<button class="btn sm pri" data-a="buyDeal" ${p.gold<deal.price?'disabled':''}>Buy</button>`}</li></ul><p class="note">A new deal arrives at every reset.</p></section>`:''}
+    const gold=`<div class="gold-big">${ico('coin')}<b class="num" data-cu="gold-big">${fmt(p.gold)}</b> <small>GOLD</small></div>`;
+    let dealW='';
+    if(deal){
+      const gear=deal.kind==='gear',was=gear?GEAR[deal.id].price:ITEMS[deal.id].price;
+      dealW=`<section class="win tone-ok">${winHead('Daily Deal','✦')}
+        <div class="deal">${gear?gearSlot(deal.id,96):slot(deal.id,0,96,{icon:ITEMS[deal.id].icon})}
+          <div class="deal-b"><p class="deal-k">30% off today</p><h3>${esc(deal.name)}</h3><p class="deal-d">${gear?`${SLOTS[GEAR[deal.id].slot]} · ${bonusText(GEAR[deal.id].b)}`:ITEMS[deal.id].desc}</p>
+            <p class="deal-p"><s class="num" aria-label="was ${fmt(was)} gold">${fmt(was)}</s><span class="price-tag">${ico('coin')}<span class="num">${fmt(deal.price)}</span></span></p></div></div>
+        <div class="deal-f">${deal.bought?'<span class="tag ok">Claimed</span>':`<div class="buy"><button class="btn sm pri" data-a="buyDeal"${p.gold<deal.price?' disabled':''}>Buy deal</button>${p.gold<deal.price?afford(deal.price):''}</div>`}
+          <span class="deal-r">${ico('clock')}New deal in <span class="num" data-live="reset">${hms(nextReset()-Date.now())}</span></span></div></section>`;
+    }
+    return `${head}${gold}${dealW}
     <section class="win">${winHead('Items')}
-      <ul class="list">${Object.entries(ITEMS).filter(([,it])=>it.price).map(([id,it])=>`<li class="item"><div class="it-ico">${ico(it.icon)}</div><div class="it-b"><h4>${it.name}</h4><p>${it.desc} <span class="price">${ico('coin')}${fmt(it.price)}</span></p></div>
-        <button class="btn sm" data-a="buy" data-x="${id}" ${p.gold<it.price?'disabled':''}>Buy</button></li>`).join('')}</ul></section>
+      <ul class="list">${Object.entries(ITEMS).filter(([,it])=>it.price).map(([id,it])=>`<li class="item">${slot(id,0,56,{icon:it.icon})}<div class="it-b"><h4>${it.name}</h4><p>${it.desc}</p></div>
+        ${buyBtn('buy',id,it.price,it.name)}</li>`).join('')}</ul></section>
     <section class="win">${winHead('Gear')}
-      ${stock.length?`<ul class="list">${stock.map(id=>gearRow(id,`<button class="btn sm" data-a="buyGear" data-x="${id}" ${p.gold<GEAR[id].price?'disabled':''}>${fmt(GEAR[id].price)}</button>`)).join('')}</ul>`:emptyState('check','You own everything available at your rank. Rank up for more.')}
+      ${stock.length?`<ul class="list">${stock.map(id=>gearRow(id,buyBtn('buyGear',id,GEAR[id].price,GEAR[id].name))).join('')}</ul>`:emptyState('check','You own everything available at your rank. Rank up for more.')}
       <p class="note">Stock up to one rank above yours.</p></section>
     <section class="win">${winHead('System Skins')}
       <ul class="list">${Object.entries(SKINS).map(([id,sk])=>{const own=S.skins.includes(id),on=S.settings.skin===id;return `<li class="item"><div class="swatch" style="--sw1:${sk.c[0]};--sw2:${sk.c[1]}" aria-hidden="true"></div><div class="it-b"><h4>${sk.name}</h4><p>${own?(on?'In use':'Owned'):`<span class="price">${ico('coin')}${fmt(sk.price)}</span>`}</p></div>
@@ -2710,17 +2809,27 @@ function vItems(){
   if(tab==='army'){
     const ids=Object.keys(SHADOWS),have=ids.filter(id=>S.shadows[id]);
     const totals=ARMY_KEYS.map(k=>[k,armyBonus(k)]).filter(([,v])=>v>0);
+    // a newly extracted shadow flashes once and wears a NEW tag the first time the army is seen (not behind an overlay)
+    const NS=UI.newSh;if(NS&&!NS.t&&!curN&&!NQ.length&&!UI.screen) NS.t=Date.now();
+    const nsAge=markAge(NS);
+    const cell=id=>{const sh=SHADOWS[id],v=S.shadows[id],nw=v&&NS&&NS.id===id&&nsAge<8000;
+      return `<div class="sh${v?' got':''}">${slot(id,sh.rank,80,{variant:v?'shadow':'dark',icon:'shadow',cls:nw&&nsAge<900?'new':'',style:nw&&nsAge<900?`animation-delay:-${nsAge}ms`:''})}
+        ${nw?'<span class="tag sh-new">New</span>':''}<b>${v?esc(sh.name):'???'}</b>${v?`${pips(v.lv,5)}<span class="sr">Level ${v.lv}</span><small>${sh.grade} · ${bonusText({[sh.key]:sh.v*(1+.5*(v.lv-1))})}</small>`:`<small>${sh.grade}</small>`}</div>`};
+    const groups=RANKS.map((R,r)=>{const g=ids.filter(id=>SHADOWS[id].rank===r);if(!g.length) return '';const n=g.filter(id=>S.shadows[id]).length;
+      return `<h3 class="army-rk${n===g.length?' full':''}"><span>${R.id}-Rank</span><b class="num">${n}/${g.length}</b></h3>${g.map(cell).join('')}`}).join('');
     return `${head}<section class="win tone-violet">${winHead('Shadow Army')}
-      <p class="sys"><b data-cu="army">${have.length}</b> / ${ids.length} shadows</p>
+      <div class="army-head"><div class="ring army-ring" data-k="army" style="--sz:56px;--th:4px;--v:${ids.length?have.length/ids.length:0}" aria-hidden="true"><b class="num" data-cu="army">${have.length}</b></div>
+        <div class="army-tx"><p class="army-n"><span class="sr">${have.length} </span>of ${ids.length} shadows extracted</p>
+        ${totals.length?`<ul class="effects" aria-label="Army bonus">${totals.map(([k,v])=>`<li>+${Math.round(v*100)}% ${BONUS_LABEL[k]}</li>`).join('')}</ul>`:''}</div></div>
       ${have.length?'':emptyState('shadow','No shadows yet. Defeat a gate boss, then choose Arise.')}
-      ${totals.length?`<ul class="effects" aria-label="Army bonus">${totals.map(([k,v])=>`<li>+${Math.round(v*100)}% ${BONUS_LABEL[k]}</li>`).join('')}</ul>`:''}
-      <div class="army">${ids.map(id=>{const sh=SHADOWS[id],v=S.shadows[id];return `<div class="sh${v?' got':''}" title="${esc(sh.name)}"><div class="sh-ico">${sprImg(id,'sh-spr',v?'shadow':'dark')||ico('shadow')}</div>
-        <b>${v?esc(sh.name):'???'}</b><small>${RANKS[sh.rank].id} · ${sh.grade}${v?` · Lv ${v.lv}`:''}</small>${v?`<small>${bonusText({[sh.key]:sh.v*(1+.5*(v.lv-1))})}</small>`:''}</div>`}).join('')}</div>
+      <div class="army">${groups}</div>
       <p class="note">Defeat a gate boss, then choose Arise to extract its shadow (20 MP). Extracting a shadow you own levels it up (max 5). Each army bonus is capped at +${Math.round(ARMY_CAP*100)}%.</p></section>`;
   }
-  return `${head}<section class="win">${winHead('Inventory')}${gold}
-    <ul class="list">${Object.entries(ITEMS).map(([id,it])=>`<li class="item"><div class="it-ico">${ico(it.icon)}</div><div class="it-b"><h4>${it.name}<span>×${S.inv[id]||0}</span></h4><p>${it.desc}</p></div>
-      ${S.inv[id]&&!it.passive?`<button class="btn sm" data-a="use" data-x="${id}">${id==='box'?'Open':'Use'}</button>`:'<span></span>'}</li>`).join('')}</ul>
+  // inventory: what you hold first, then the rest dimmed as silhouettes
+  const inv=Object.entries(ITEMS).map(([id,it],i)=>({id,it,n:S.inv[id]||0,i})).sort((a,b)=>(b.n>0)-(a.n>0)||a.i-b.i);
+  return `${head}<section class="win">${winHead('Inventory')}
+    <ul class="list">${inv.map(({id,it,n})=>`<li class="item${n?'':' none'}${id==='box'&&n?' box-hot':''}">${slot(id,0,56,{icon:it.icon,variant:n?'':'dark',count:n?n:null})}<div class="it-b"><h4>${it.name}${n?'':'<span class="sr"> (none)</span>'}</h4><p>${it.desc}</p></div>
+      ${n&&!it.passive?`<button class="btn sm" data-a="use" data-x="${id}">${id==='box'?'Open':'Use'}</button>`:'<span></span>'}</li>`).join('')}</ul>
     ${S.buffs.scroll||S.buffs.balm?`<p class="note">Active: ${[S.buffs.scroll&&'XP Scroll',S.buffs.balm&&'Joint Balm'].filter(Boolean).join(', ')}</p>`:''}
   </section>`;
 }
