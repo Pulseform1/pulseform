@@ -47,11 +47,11 @@ export function compileTimeline(story, narration = {}) {
     const lead = isScene ? SCENE_LEAD[m.scene] || 0.25 : 0;
     return { msg: m, i, char: chars[m.from], side: isScene ? "scene" : isSys ? "center" : isMe ? "right" : "left", plain, words, typing, compose, read, narr, lead, pause: Math.max(0, m.pause || 0) };
   });
-  const effTail = (m) => (m.type === "scene" ? SCENE_IN + SCENE_OUT + 0.5 : m.effect === "darken" ? 0.5 : m.effect === "heartbeat" ? 0.6 : m.effect ? 0.25 : 0);
+  const effTail = (m) => (m.type === "scene" ? SCENE_IN + SCENE_OUT + 0.3 : m.effect === "darken" ? 0.5 : m.effect === "heartbeat" ? 0.6 : m.effect ? 0.25 : 0);
   const outroLen = story.outro ? 2.4 : 1.3;
 
   // k stretches typing and reading time (not narration, which has a fixed length).
-  const readFor = (it, k) => (it.side === "scene" ? it.lead + Math.max(it.read * k, it.narr ? it.narr + 0.7 : 0) : Math.max(it.read * k, it.narr ? it.narr + 0.18 : 0));
+  const readFor = (it, k) => (it.side === "scene" ? it.lead + Math.max(it.read * k, it.narr ? it.narr + 0.45 : 0) : Math.max(it.read * k, it.narr ? it.narr + 0.18 : 0));
   const total = (k) => INTRO + outroLen + items.reduce((s, it) => s + (it.typing + it.compose) * k + readFor(it, k) + it.pause + effTail(it.msg), 0);
   let k = 1 / (story.pacing.speed || 1);
   if (story.pacing.fit && items.length) {
@@ -75,9 +75,9 @@ export function compileTimeline(story, narration = {}) {
       t += SCENE_IN;
       it.tAppear = t;
       it.readDur = readFor(it, k);
-      cues.push({ t, type: "amb-" + m.scene, dur: it.readDur + SCENE_OUT });
       if (it.narr) it.narration = { start: t + it.lead, dur: it.narr };
       if (m.figure) { it.figureT = t + it.lead + (it.narr || it.readDur - it.lead) * 0.55; cues.push({ t: it.figureT, type: "figure" }); }
+      cues.push({ t, type: "amb-" + m.scene, dur: it.readDur + SCENE_OUT, figT: it.figureT });
       if (m.effect) { const len = m.effect === "zoom" || m.effect === "darken" ? it.readDur : EFFECT_LEN[m.effect] || 0.5; const at = it.figureT || t + 0.2; effects.push({ type: m.effect, start: at, end: at + len, item: it }); cues.push({ t: at, type: "fx-" + m.effect }); }
       const capText = stripMarkup(m.text || "").trim() ? m.text : "";
       if (capText) {
@@ -88,7 +88,7 @@ export function compileTimeline(story, narration = {}) {
       }
       t += it.readDur + SCENE_OUT + it.pause;
       it.sceneEnd = t;
-      t += 0.5;   // a beat before the chat continues
+      t += 0.3;   // a beat before the chat continues
       it.tEnd = t;
       continue;
     }

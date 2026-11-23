@@ -41,7 +41,7 @@ export const IMAGES = [
   ["map", "Map pin"], ["clock", "Clock"], ["phone-screen", "Phone screenshot"], ["cat", "Cat"], ["dog", "Dog"], ["pizza", "Pizza"],
   ["cake", "Birthday cake"], ["classroom", "Classroom"], ["test", "Test paper"], ["bus", "School bus"], ["car", "Car at night"],
   ["stars", "Night sky"], ["portal", "Glowing portal"], ["robot", "Robot"], ["mountain", "Mountains"], ["cave", "Cave"],
-  ["treasure", "Treasure chest"], ["ring", "Ring"], ["receipt", "Receipt"], ["polaroid", "Old photo"], ["key", "Key"], ["footprints", "Footprints"],
+  ["treasure", "Treasure chest"], ["ring", "Ring"], ["receipt", "Receipt"], ["polaroid", "Old photo"], ["key", "Key"], ["footprints", "Footprints"], ["yellow-hall", "Endless yellow hallway"], ["fuse", "Glowing fuse"],
 ].map(([id, label]) => ({ id, label }));
 
 export const REACTIONS = ["", "❤️", "😂", "😮", "😢", "😡", "👍", "‼️", "❓"];
@@ -59,6 +59,9 @@ export const SCENES = [
   { id: "bedroom", label: "Bedroom at night (computer glowing)" }, { id: "hallway", label: "Dark hallway" }, { id: "kitchen", label: "Kitchen at night" },
   { id: "basement", label: "Basement stairs" }, { id: "living", label: "Living room (TV static)" }, { id: "frontdoor", label: "Front door (someone knocking)" },
   { id: "computer", label: "Pulsebox on a computer screen" },
+  { id: "endless-halls", label: "The Endless Halls: yellow halls (figure: the Hollow Man)" }, { id: "endless-crawler", label: "The Endless Halls: the Crawler" },
+  { id: "endless-watcher", label: "The Endless Halls: the Watcher" }, { id: "endless-grin", label: "The Endless Halls: lights out, the Grin" },
+  { id: "endless-fusebox", label: "The Endless Halls: fuse box (3 fuses)" }, { id: "endless-exit", label: "The Endless Halls: EXIT door, sunrise" },
 ];
 
 // Kokoro voices (free, run locally by the Studio server).
@@ -121,7 +124,8 @@ export function normalizeStory(s = {}) {
       from: type === "scene" ? "narrator" : m.from === "system" || ids.has(m.from) ? m.from : type === "system" ? "system" : characters[1]?.id || "me",
       text: String(m.text ?? ""), image: m.image || "", pause: Number(m.pause) || 0, effect: m.effect || "", reaction: m.reaction || "", typing: m.typing !== false,
       scene: type === "scene" ? m.scene || "hallway" : "", figure: type === "scene" && !!m.figure,
-      say: m.say ? String(m.say) : "",   // optional: how the voice should say it (e.g. "box dot pulseform dot org"), captions keep the text
+      say: m.say ? String(m.say) : "",
+      label: type === "scene" && m.label ? String(m.label) : "",   // on-screen stamp in the scene, e.g. "FLOOR 13 · FUSES 0/3"   // optional: how the voice should say it (e.g. "box dot pulseform dot org"), captions keep the text
     };
   });
   return {

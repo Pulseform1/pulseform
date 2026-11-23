@@ -135,7 +135,7 @@ function drawFrame(ctx, compiled, t, layout, track, imgCache) {
   const sc = sceneAt(compiled, t);
   if (sc && sc.q >= 0.5) {
     const it = sc.it, base = it.tStart;
-    drawScene(ctx, it.msg.scene, t - base, it.sceneEnd - base, { figT: it.figureT != null ? it.figureT - base : null });
+    drawScene(ctx, it.msg.scene, t - base, it.sceneEnd - base, { figT: it.figureT != null ? it.figureT - base : null, label: it.msg.label });
     if (dark) { ctx.fillStyle = `rgba(0,0,0,${0.55 * dark})`; ctx.fillRect(0, 0, W, H); }
     if (sc.q < 1) { ctx.fillStyle = `rgba(0,0,0,${(1 - sc.q) * 2})`; ctx.fillRect(0, 0, W, H); }
     drawOverlays(ctx, compiled, t, fx, fxk);

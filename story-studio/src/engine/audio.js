@@ -125,6 +125,29 @@ function sfx(ctx, bus, cue, r) {
     case "amb-living": hiss(ctx, bus, { t, dur: cue.dur, gain: 0.07, type: "bandpass", freq: 3200, q: 0.6, attack: 0.1 }); break;
     case "amb-frontdoor": [0.05, 0.6, 1.15].forEach((k) => { tone(ctx, bus, { t: t + k, dur: 0.16, freq: 150, glideTo: 70, gain: 0.7 }); hiss(ctx, bus, { t: t + k, dur: 0.08, gain: 0.35, type: "lowpass", freq: 1100 }); });
       hiss(ctx, bus, { t, dur: cue.dur, gain: 0.04, type: "lowpass", freq: 500, attack: 0.6 }); break;
+    // ---- inside The Endless Halls
+    case "amb-endless-halls": case "amb-endless-crawler": case "amb-endless-watcher": case "amb-endless-grin": {
+      const dark = cue.type === "amb-endless-grin";
+      tone(ctx, bus, { t, dur: cue.dur, freq: 120, type: "sawtooth", gain: dark ? 0.008 : 0.022, cutoff: 520, attack: 0.3 });   // fluorescent hum
+      hiss(ctx, bus, { t, dur: cue.dur, gain: 0.012, type: "highpass", freq: 6500, attack: 0.3 });
+      if (cue.type === "amb-endless-crawler" && cue.figT) for (let x = cue.figT; x < t + cue.dur; x += 0.08 + r() * 0.16) { hiss(ctx, bus, { t: x, dur: 0.03, gain: 0.06 + r() * 0.08, type: "highpass", freq: 2500 + r() * 3000 }); if (r() < 0.15) tone(ctx, bus, { t: x, dur: 0.1, freq: 70, gain: 0.2 }); }
+      if (cue.type === "amb-endless-watcher" && cue.figT) for (let x = cue.figT + 0.02; x < t + cue.dur; x += 1.1) { tone(ctx, bus, { t: x, dur: 0.5, freq: 85, glideTo: 38, gain: 0.55, release: 0.4 }); hiss(ctx, bus, { t: x, dur: 0.18, gain: 0.18, type: "lowpass", freq: 900 }); }
+      if (dark) {
+        const off = t + 1.2;   // the flashlight dies
+        hiss(ctx, bus, { t: off, dur: 0.04, gain: 0.3, type: "highpass", freq: 3000 }); tone(ctx, bus, { t: off, dur: 0.06, freq: 1800, gain: 0.08 });
+        tone(ctx, bus, { t: off, dur: cue.dur - 1.2, freq: 46, gain: 0.16, attack: 1.2 });
+        if (cue.figT) for (let k = 0; k < 6; k++) tone(ctx, bus, { t: cue.figT + 0.1 + k * 0.13, dur: 0.12, freq: 760 - k * 45, type: "sawtooth", gain: 0.035, cutoff: 1700, release: 0.08 });   // a giggle
+      }
+      break;
+    }
+    case "amb-endless-fusebox":
+      [0.9, 1.6, 2.3].forEach((k) => { tone(ctx, bus, { t: t + k, dur: 0.22, freq: 170, glideTo: 60, gain: 0.6 }); hiss(ctx, bus, { t: t + k, dur: 0.14, gain: 0.2, type: "bandpass", freq: 3200, q: 0.8 }); });
+      tone(ctx, bus, { t: t + 2.3, dur: 1.4, freq: 60, glideTo: 120, type: "sawtooth", gain: 0.05, cutoff: 600, attack: 0.3 });
+      [523, 659, 784, 1047].forEach((f, i) => tone(ctx, bus, { t: t + 2.55 + i * 0.09, dur: 1.2, freq: f, type: "triangle", gain: 0.06, release: 1 })); break;
+    case "amb-endless-exit":
+      tone(ctx, bus, { t: t + 0.6, dur: 0.5, freq: 120, glideTo: 50, gain: 0.6 }); hiss(ctx, bus, { t: t + 0.6, dur: 0.3, gain: 0.25, type: "lowpass", freq: 1500 });
+      hiss(ctx, bus, { t: t + 0.7, dur: cue.dur - 0.7, gain: 0.08, type: "bandpass", freq: 700, freqTo: 2500, q: 0.5, attack: 1 });
+      [262, 330, 392, 523, 659].forEach((f) => tone(ctx, bus, { t: t + 1, dur: cue.dur - 0.8, freq: f, type: "triangle", gain: 0.035, attack: 1.4, release: 1.2 })); break;
     case "amb-computer": tone(ctx, bus, { t, dur: cue.dur, freq: 110, gain: 0.025, attack: 0.4 }); hiss(ctx, bus, { t, dur: cue.dur, gain: 0.025, type: "lowpass", freq: 600, attack: 0.4 }); break;
     default: break;
   }

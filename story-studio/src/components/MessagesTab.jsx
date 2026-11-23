@@ -58,6 +58,7 @@ export function MessagesTab({ story, setStory, activeId, onSelect }) {
                 placeholder={m.type === "scene" ? "What the narrator says, e.g. He stepped into the hallway." : m.type === "image" ? "Caption (optional)" : m.type === "missed-call" ? "Missed voice call" : m.from === "system" ? "e.g. The hallway light flickers." : "Message…"} />}
               <div className="msg-opts">
                 {m.type === "scene" && <select value={m.scene} onChange={(e) => update(m.id, { scene: e.target.value })} title="Scene">{SCENES.map((x) => <option key={x.id} value={x.id}>🎬 {x.label}</option>)}</select>}
+                {m.type === "scene" && <input className="say" value={m.label} placeholder="On-screen label (optional), e.g. FLOOR 13 · FUSES 0/3" title="A stamp shown in the scene's top-left corner: a game HUD or a place and time" onChange={(e) => update(m.id, { label: e.target.value })} />}
                 {m.type === "scene" && <input className="say" value={m.say} placeholder="Say it as… (optional)" title="How the narrator pronounces it, e.g. box dot pulseform dot org. Captions still show the text above." onChange={(e) => update(m.id, { say: e.target.value })} />}
                 {m.type === "scene" && <label className="chk" title="A shadow figure appears during the scene"><input type="checkbox" checked={m.figure} onChange={(e) => update(m.id, { figure: e.target.checked })} />shadow figure</label>}
                 {m.type === "image" && <select value={m.image.startsWith("data:") ? "__mine" : m.image} title="Picture"

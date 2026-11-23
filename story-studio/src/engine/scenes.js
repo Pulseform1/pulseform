@@ -1,7 +1,7 @@
 // Full-screen scenes the story cuts away to while the narrator speaks: rooms of a house at night,
 // drawn with Canvas 2D in one-point perspective (no image files). Each scene moves: a handheld camera
 // drift, a slow push in, flickering lights, a swaying flashlight or bulb, and an optional shadow figure.
-import { rng, roundRect, clamp, lerp } from "./util.js";
+import { rng, roundRect, clamp, lerp, easeInOut } from "./util.js";
 
 const W = 1080, H = 1920, TAU = Math.PI * 2;
 const INK = "#0b0d1a", LIME = "#c6ff3d";
@@ -45,10 +45,10 @@ function drawRoom(ctx, R, c) {
 function quadOnWall(R, side, d0, d1, v0, v1) { return [R.wall(side, d0, v0), R.wall(side, d1, v0), R.wall(side, d1, v1), R.wall(side, d0, v1)]; }
 
 // a tall thin silhouette with pale eyes. a = visibility 0..1
-export function shadowFigure(ctx, x, footY, h, a, t, eyes = true) {
+export function shadowFigure(ctx, x, footY, h, a, t, eyes = true, body = "#010103") {
   if (a <= 0) return;
   ctx.save(); ctx.globalAlpha = a; ctx.translate(x, footY); const s = h / 600; ctx.scale(s, s); ctx.rotate(Math.sin(t * 0.7) * 0.015);
-  ctx.fillStyle = "#010103";
+  ctx.fillStyle = body;
   ctx.beginPath(); ctx.ellipse(0, -548, 30, 44, 0, 0, TAU); ctx.fill();
   ctx.beginPath();
   ctx.moveTo(-12, -508); ctx.quadraticCurveTo(-74, -490, -78, -440);          // shoulder
@@ -401,6 +401,148 @@ const SCENES = {
   },
 };
 
+
+// ---------------------------------------------------------------- inside The Endless Halls (a Pulsebox horror game)
+// Sickly yellow office halls that repeat forever, a first-person HUD, and the game's monsters with their rules.
+function yellowHall(ctx, lt, { lights = 1, seed = 1 } = {}) {
+  const R = room(540, 800, 300, 380);
+  drawRoom(ctx, R, {
+    ceil: "#cfc27e", back: "#e2d48a",
+    floor: lin(ctx, 0, R.y1, 0, H, [[0, "#6e5f24"], [1, "#43391a"]]),
+    left: lin(ctx, 0, 0, R.x0, 0, [[0, "#9c8a38"], [1, "#d6c56c"]]),
+    right: lin(ctx, W, 0, R.x1, 0, [[0, "#968434"], [1, "#d2c068"]]),
+  });
+  ctx.lineWidth = 3; ctx.strokeStyle = "rgba(90,70,10,.16)";   // wallpaper stripes
+  for (let z = 0; z < 34; z++) { const d = persp(z * 0.45, 2.4); [-1, 1].forEach((sd) => { const a = R.wall(sd, d, 0.08), b = R.wall(sd, d, 0.9); ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); }); }
+  [-1, 1].forEach((sd) => poly(ctx, [R.wall(sd, 0, 0.93), R.wall(sd, 1, 0.93), R.wall(sd, 1, 1), R.wall(sd, 0, 1)], "rgba(60,48,12,.55)"));
+  [[-1, 0.18, 0.28], [1, 0.34, 0.42], [-1, 0.53, 0.59], [1, 0.66, 0.7], [-1, 0.78, 0.81], [1, 0.85, 0.87]].forEach(([sd, d0, d1]) => poly(ctx, quadOnWall(R, sd, d0, d1, 0.22, 1), "#3a3112"));
+  ctx.strokeStyle = "rgba(40,30,8,.22)"; ctx.lineWidth = 2;
+  for (let z = 1; z < 12; z++) { const d = persp(z, 2.4), a = R.floor(0, d), b = R.floor(1, d); ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); }
+  ctx.strokeStyle = "rgba(120,100,40,.35)";
+  for (let i = 1; i < 6; i++) { const a = R.ceil(i / 6, 0), b = R.ceil(i / 6, 1); ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); }
+  for (let z = 0; z < 9; z++) {   // fluorescent panels, some dying
+    const d0 = persp(z * 1.2 + 0.3, 2.4), d1 = persp(z * 1.2 + 0.8, 2.4);
+    const on = rng(seed * 31 + z)() < lights ? flicker(lt, seed + z * 13, 6) : 0.08;
+    poly(ctx, [R.ceil(0.36, d0), R.ceil(0.64, d0), R.ceil(0.64, d1), R.ceil(0.36, d1)], on > 0.5 ? "#fffbe0" : "#7a7048");
+    const [lx, ly] = R.ceil(0.5, (d0 + d1) / 2);
+    light(ctx, lx, ly + 60, 420 * (1 - d0 * 0.7), "rgba(255,240,170,.35)", 0.5 * on);
+  }
+  light(ctx, R.vx, R.vy, 360, "rgba(255,245,190,.9)", 0.45 * lights);   // the far end is a haze: it never ends
+  return R;
+}
+function crawler(ctx, x, y, s, a, t) {   // pale, eyeless, upside down on the ceiling
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.scale(s, s);
+  ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 18; ctx.shadowOffsetY = 10;
+  ctx.strokeStyle = "#b9ae90"; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.lineWidth = 15;
+  const leg = (sx, sy, kx, ky, fx, ph) => { const w = Math.sin(t * 9 + ph) * 10; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(kx + w, ky); ctx.lineTo(fx + w * 1.5, 0); ctx.stroke(); };
+  leg(-50, 60, -130, 150, -190, 0); leg(-30, 70, -70, 170, -110, 2); leg(40, 66, 120, 160, 180, 1); leg(60, 58, 150, 130, 210, 3);
+  ctx.fillStyle = "#d4ccb4"; ctx.beginPath(); ctx.ellipse(0, 70, 78, 34, 0.05, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-104, 100, 36, 46, -0.35, 0, TAU); ctx.fill();          // the head: smooth, no eyes
+  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.fillStyle = "#1a1408"; ctx.beginPath(); ctx.ellipse(-110, 126, 13, 20, -0.35, 0, TAU); ctx.fill();   // a gaping mouth
+  ctx.strokeStyle = "rgba(60,50,30,.5)"; ctx.lineWidth = 3; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(-40 + k * 26, 50); ctx.quadraticCurveTo(-30 + k * 26, 70, -40 + k * 26, 92); ctx.stroke(); }   // ribs
+  ctx.restore();
+}
+function endlessHud(ctx, lt, battery) {
+  ctx.save();
+  ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.beginPath(); ctx.arc(W / 2, H / 2, 5, 0, TAU); ctx.fill();   // crosshair
+  const bx = W - 190, by = H - 120, low = battery < 0.15;
+  ctx.globalAlpha = low && Math.sin(lt * 10) > 0 ? 0.35 : 0.9;
+  ctx.strokeStyle = low ? "#ff4d5e" : "#fff"; ctx.lineWidth = 5; roundRect(ctx, bx, by, 120, 50, 8); ctx.stroke(); ctx.fillStyle = ctx.strokeStyle; ctx.fillRect(bx + 120, by + 16, 10, 18);
+  ctx.fillRect(bx + 8, by + 8, Math.max(6, 104 * battery), 34);
+  ctx.globalAlpha = 0.9; ctx.font = "700 28px 'Chakra Petch', Inter, sans-serif"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  ctx.fillText(`${Math.round(battery * 100)}%`, bx - 14, by + 26);
+  ctx.restore();
+}
+const BATTERY = { "endless-halls": 0.64, "endless-crawler": 0.41, "endless-watcher": 0.22, "endless-grin": 0.03, "endless-fusebox": 0.03, "endless-exit": 0.02 };
+
+Object.assign(SCENES, {
+  "endless-halls"(ctx, lt, o) {
+    const R = yellowHall(ctx, lt, { seed: 3 });
+    shade(ctx, 540, 860, 1300, 0.35);
+    shadowFigure(ctx, R.vx + 18, R.y1 - 4, 320, figureVis(lt, o.figT), lt, false, "#15110a");   // the faceless Hollow Man, far away
+  },
+  "endless-crawler"(ctx, lt, o) {
+    const R = yellowHall(ctx, lt, { seed: 9, lights: 0.6 });
+    shade(ctx, 540, 900, 1200, 0.55);
+    const fv = figureVis(lt, o.figT);
+    if (fv) { const k = easeInOut(clamp((lt - o.figT) / 5)), d = lerp(0.84, 0.56, k); const [cx, cy] = R.ceil(0.56 + Math.sin(lt * 0.9) * 0.06, d); crawler(ctx, cx, cy, 2.3 * (1 - d * 0.8), fv, lt); }
+  },
+  "endless-watcher"(ctx, lt, o) {
+    const R = yellowHall(ctx, lt, { seed: 17, lights: 0.8 });
+    shade(ctx, 540, 900, 1250, 0.45);
+    if (o.figT == null) return;
+    // it only moves when you look away: every 1.1 s the view blinks, and it's closer
+    const since = lt - o.figT, n = since < 0 ? 0 : Math.floor(since / 1.1) + 1;
+    const d = Math.max(0.3, 0.8 - n * 0.12), [fx, fy] = R.floor(0.5, d), h = (fy - R.ceil(0.5, d)[1]) * 0.8;
+    shadowFigure(ctx, fx, fy, h, 1, 0, false, "#e4ddcb");
+    const s = h / 600; ctx.fillStyle = "#14100a"; ctx.beginPath(); ctx.ellipse(fx - 12 * s, fy - 552 * s, 7 * s, 9 * s, 0, 0, TAU); ctx.ellipse(fx + 12 * s, fy - 552 * s, 7 * s, 9 * s, 0, 0, TAU); ctx.fill();
+    if (since > 0 && since % 1.1 < 0.09) { ctx.fillStyle = "#000"; ctx.fillRect(-100, -100, W + 200, H + 200); }
+  },
+  "endless-grin"(ctx, lt, o) {
+    yellowHall(ctx, lt, { seed: 23, lights: 0.15 });
+    const on = lt < 1.8 ? flicker(lt, 5, 14) : 0;   // the flashlight flickers... and dies
+    if (on > 0.5) shade(ctx, 540 + Math.sin(lt * 2) * 80, 900, 800, 0.9);
+    else { ctx.fillStyle = "rgba(0,0,0,.95)"; ctx.fillRect(-100, -100, W + 200, H + 200); }
+    const fv = on > 0.5 ? 0 : figureVis(lt, o.figT);   // it hides from light
+    if (fv) {
+      ctx.save(); ctx.globalAlpha = fv; ctx.translate(540, 930); const b = 1 + Math.sin(lt * 2.2) * 0.03; ctx.scale(b, b);
+      ctx.fillStyle = "#efe8d2"; ctx.shadowColor = "rgba(255,250,230,.5)"; ctx.shadowBlur = 30;
+      ctx.beginPath(); ctx.moveTo(-230, -20); ctx.quadraticCurveTo(0, 60, 230, -20); ctx.quadraticCurveTo(0, 190, -230, -20); ctx.fill();
+      ctx.shadowBlur = 0; ctx.strokeStyle = "#1a160c"; ctx.lineWidth = 5;
+      for (let i = -7; i <= 7; i++) { const x = i * 28; ctx.beginPath(); ctx.moveTo(x, 20 - Math.abs(i) * 4); ctx.lineTo(x, 110 - Math.abs(i) * 9); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(-220, -12); ctx.quadraticCurveTo(0, 125, 220, -12); ctx.stroke();
+      ctx.fillStyle = "#fff"; ctx.shadowColor = "#fff"; ctx.shadowBlur = 22; ctx.beginPath(); ctx.ellipse(-110, -170, 10, 7, 0, 0, TAU); ctx.ellipse(110, -170, 10, 7, 0, 0, TAU); ctx.fill();
+      ctx.restore();
+    }
+  },
+  "endless-fusebox"(ctx, lt) {
+    ctx.fillStyle = lin(ctx, 0, 0, 0, H, [[0, "#cbbb62"], [1, "#8c7c30"]]); ctx.fillRect(-100, -100, W + 200, H + 200);
+    ctx.strokeStyle = "rgba(90,70,10,.18)"; ctx.lineWidth = 4; for (let x = -60; x < W + 100; x += 44) { ctx.beginPath(); ctx.moveTo(x, -100); ctx.lineTo(x, H + 100); ctx.stroke(); }
+    const bx = 250, by = 520, bw = 580, bh = 820, ins = [1.5, 2.2, 2.9], done = lt >= ins[2];
+    ctx.fillStyle = "rgba(0,0,0,.35)"; roundRect(ctx, bx + 18, by + 24, bw, bh, 18); ctx.fill();
+    ctx.fillStyle = lin(ctx, bx, 0, bx + bw, 0, [[0, "#6d7378"], [1, "#4a4f54"]]); roundRect(ctx, bx, by, bw, bh, 18); ctx.fill();
+    ctx.fillStyle = "#23272b"; roundRect(ctx, bx + 40, by + 150, bw - 80, bh - 230, 12); ctx.fill();
+    poly(ctx, [[bx, by + 10], [bx - 170, by - 40], [bx - 170, by + bh + 60], [bx, by + bh - 10]], "#555b60");   // the open door
+    ctx.fillStyle = "#ffd23d"; ctx.font = "700 46px 'Chakra Petch', Inter, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("EXIT STAIRWELL", bx + bw / 2, by + 62); ctx.font = "700 32px 'Chakra Petch', Inter, sans-serif"; ctx.fillText("POWER", bx + bw / 2, by + 108);
+    [0, 1, 2].forEach((i) => {
+      const sx = bx + 125 + i * 165, sy = by + 230, inT = ins[i], k = clamp((lt - inT + 0.25) / 0.25);
+      ctx.fillStyle = "#0e1012"; roundRect(ctx, sx - 40, sy, 80, 360, 14); ctx.fill();
+      ctx.fillStyle = lt >= inT ? "#3dff7a" : "#ff3d3d"; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 25; ctx.beginPath(); ctx.arc(sx, sy - 40, 16, 0, TAU); ctx.fill(); ctx.shadowBlur = 0;
+      if (k > 0) {   // the fuse slides in
+        const fy = sy + 30 - (1 - k) * 260;
+        ctx.fillStyle = "rgba(255,235,200,.35)"; roundRect(ctx, sx - 26, fy, 52, 300, 22); ctx.fill();
+        ctx.fillStyle = "#b8b0a0"; ctx.fillRect(sx - 30, fy, 60, 40); ctx.fillRect(sx - 30, fy + 260, 60, 40);
+        ctx.strokeStyle = "#ffb03d"; ctx.lineWidth = 6; ctx.shadowColor = "#ff9a3d"; ctx.shadowBlur = 20; ctx.beginPath(); ctx.moveTo(sx, fy + 40); for (let j = 0; j < 7; j++) ctx.lineTo(sx + (j % 2 ? 14 : -14), fy + 60 + j * 28); ctx.lineTo(sx, fy + 260); ctx.stroke(); ctx.shadowBlur = 0;
+      }
+      if (lt >= inT && lt < inT + 0.35) { const r = rng(i + 7); ctx.fillStyle = "#fff3a0"; for (let j = 0; j < 18; j++) { const a = r() * TAU, d = (lt - inT) * (300 + r() * 500); ctx.fillRect(sx + Math.cos(a) * d, sy + 20 + Math.sin(a) * d, 5, 5); } }
+    });
+    if (done) { ctx.fillStyle = "#3dff7a"; ctx.font = "700 44px 'Chakra Petch', Inter, sans-serif"; ctx.fillText("● ONLINE", bx + bw / 2, by + bh - 40); light(ctx, 540, 900, 1100, "rgba(90,255,150,.6)", 0.35 + 0.1 * Math.sin(lt * 6)); }
+    shade(ctx, 540, 900, 1300, 0.45);
+  },
+  "endless-exit"(ctx, lt) {
+    ctx.fillStyle = lin(ctx, 0, 0, 0, H, [[0, "#3a3416"], [1, "#1c190a"]]); ctx.fillRect(-100, -100, W + 200, H + 200);
+    const dx = 300, dy = 640, dw = 480, dh = 1000, open = easeInOut(clamp((lt - 1.2) / 1.2));
+    // EXIT sign
+    ctx.fillStyle = "#0c2a14"; roundRect(ctx, 400, 440, 280, 120, 14); ctx.fill();
+    ctx.fillStyle = "#4dff8a"; ctx.shadowColor = "#4dff8a"; ctx.shadowBlur = 40; ctx.font = "700 86px 'Chakra Petch', Inter, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("EXIT", 540, 503); ctx.shadowBlur = 0;
+    light(ctx, 540, 500, 600, "rgba(80,255,140,.5)", 0.6);
+    // behind the door: the sunrise
+    ctx.fillStyle = lin(ctx, 0, dy, 0, dy + dh, [[0, "#ffd9a0"], [0.6, "#ff9a6a"], [1, "#ffcf8a"]]); ctx.fillRect(dx, dy, dw, dh);
+    light(ctx, 540, dy + dh * 0.45, 700, "rgba(255,240,200,.9)", open);
+    // the door swings open toward us
+    const ex = dx + dw * (1 - open) + (dx - 80 - dx) * open;
+    poly(ctx, [[dx, dy], [lerp(dx + dw, dx - 140, open), dy - 40 * open], [lerp(dx + dw, dx - 140, open), dy + dh + 60 * open], [dx, dy + dh]], "#4a5048");
+    ctx.fillStyle = "#c0c4b8"; ctx.fillRect(lerp(dx + dw - 70, dx - 110, open), dy + dh * 0.5, 50, 16);
+    ctx.strokeStyle = "#151510"; ctx.lineWidth = 16; ctx.strokeRect(dx, dy, dw, dh);
+    // and the light takes over
+    const wash = clamp((lt - 2.6) / 2.5) * 0.8;
+    if (wash > 0) { ctx.fillStyle = `rgba(255,236,200,${wash})`; ctx.fillRect(-100, -100, W + 200, H + 200); }
+  },
+});
+
 export function drawScene(ctx, id, lt, dur, o = {}) {
   const fn = SCENES[id] || SCENES.hallway;
   ctx.save();
@@ -409,8 +551,18 @@ export function drawScene(ctx, id, lt, dur, o = {}) {
   ctx.translate(W / 2 + ox, H / 2 + oy); ctx.scale(push, push); ctx.translate(-W / 2, -H / 2);
   fn(ctx, lt, o);
   ctx.restore();
-  // colour grade: cold blue-purple, grain, vignette
-  ctx.save(); ctx.globalCompositeOperation = "soft-light"; ctx.fillStyle = "rgba(70,40,160,.35)"; ctx.fillRect(0, 0, W, H); ctx.restore();
-  grain(ctx, lt, 0.035);
+  const game = id.startsWith("endless-");
+  // colour grade: cold blue-purple in the house, sickly yellow-green in the game
+  ctx.save(); ctx.globalCompositeOperation = "soft-light"; ctx.fillStyle = game ? "rgba(120,130,20,.3)" : "rgba(70,40,160,.35)"; ctx.fillRect(0, 0, W, H); ctx.restore();
+  grain(ctx, lt, game ? 0.045 : 0.035);
   vignette(ctx, 0.55);
+  if (game) endlessHud(ctx, lt, BATTERY[id] ?? 0.5);
+  if (o.label) {   // a location stamp / game HUD label, top left
+    ctx.save(); ctx.font = "700 34px 'Chakra Petch', Inter, sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    const tw = ctx.measureText(o.label).width;
+    ctx.fillStyle = "rgba(5,5,10,.62)"; roundRect(ctx, 44, 224, tw + 48, 62, 12); ctx.fill();
+    ctx.strokeStyle = game ? "rgba(255,226,122,.5)" : "rgba(255,255,255,.18)"; ctx.lineWidth = 2; roundRect(ctx, 44, 224, tw + 48, 62, 12); ctx.stroke();
+    ctx.fillStyle = game ? "#ffe27a" : "#e8e6ff"; ctx.fillText(o.label, 68, 256);
+    ctx.restore();
+  }
 }

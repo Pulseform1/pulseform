@@ -1,0 +1,211 @@
+{
+  "title": "Trapped Inside The Endless Halls",
+  "genre": "horror",
+  "duration": 120,
+  "hook": "I got trapped INSIDE a Pulsebox game... the only way out is the kid who made it",
+  "outro": "Who's still in there?",
+  "clock": "3:07",
+  "group": false,
+  "characters": [
+    {
+      "id": "me",
+      "name": "Jay",
+      "avatar": "initials",
+      "color": "#ff8a3d",
+      "voice": "am_echo"
+    },
+    {
+      "id": "milo",
+      "name": "Milo",
+      "avatar": "initials",
+      "color": "#7c5cff",
+      "voice": "am_puck"
+    }
+  ],
+  "messages": [
+    {
+      "type": "scene",
+      "scene": "endless-halls",
+      "label": "FLOOR 13 · FUSES 0/3",
+      "effect": "glitch",
+      "text": "3:07 AM. Jay clicked play on The Endless Halls. The screen flashed yellow... and he wasn't in his room anymore."
+    },
+    {
+      "from": "me",
+      "type": "image",
+      "image": "yellow-hall",
+      "text": "i'm INSIDE your game"
+    },
+    {
+      "from": "milo",
+      "text": "jay it's 3am. what are you talking about"
+    },
+    {
+      "from": "milo",
+      "text": "...the endless halls??"
+    },
+    {
+      "from": "milo",
+      "text": "don't panic. i made this game. i can get you out"
+    },
+    {
+      "from": "milo",
+      "text": "find *3 fuses*. power the EXIT stairwell. reach the lobby before sunrise"
+    },
+    {
+      "from": "me",
+      "text": "and if i don't make it by sunrise?"
+    },
+    {
+      "from": "milo",
+      "text": "you don't want to know",
+      "pause": 0.5
+    },
+    {
+      "type": "scene",
+      "scene": "endless-crawler",
+      "label": "FLOOR 13 · FUSES 0/3",
+      "figure": true,
+      "text": "The first fuse was at the end of the hall. So was something else... crawling on the ceiling. With no eyes."
+    },
+    {
+      "from": "me",
+      "text": "something with no eyes is on the ceiling"
+    },
+    {
+      "from": "milo",
+      "text": "the crawler. it's blind. it hunts by *sound*"
+    },
+    {
+      "from": "milo",
+      "text": "walk slow. don't run. and DON'T text back"
+    },
+    {
+      "from": "system",
+      "type": "system",
+      "text": "4 minutes later",
+      "pause": 0.4
+    },
+    {
+      "from": "me",
+      "type": "image",
+      "image": "fuse",
+      "text": "got it. fuse 1"
+    },
+    {
+      "type": "scene",
+      "scene": "endless-watcher",
+      "label": "FLOOR 13 · FUSES 1/3",
+      "figure": true,
+      "text": "Fuse two was guarded by something pale. Every time Jay blinked... it was closer."
+    },
+    {
+      "from": "me",
+      "text": "it MOVES when i blink"
+    },
+    {
+      "from": "milo",
+      "text": "the watcher. never take your eyes off it"
+    },
+    {
+      "from": "me",
+      "text": "fuse 2. but my flashlight is at *3%*"
+    },
+    {
+      "type": "scene",
+      "scene": "endless-grin",
+      "label": "FLOOR 13 · FUSES 2/3",
+      "figure": true,
+      "text": "Then his flashlight died. And in the dark... something smiled."
+    },
+    {
+      "from": "me",
+      "text": "milo it's SMILING at me",
+      "effect": "shake"
+    },
+    {
+      "from": "milo",
+      "text": "the grin. it hides from *light*"
+    },
+    {
+      "from": "milo",
+      "text": "your phone. turn the brightness ALL the way up"
+    },
+    {
+      "from": "system",
+      "type": "system",
+      "text": "Brightness 100%",
+      "effect": "flash"
+    },
+    {
+      "from": "me",
+      "text": "it's gone. fuse 3 was right behind it"
+    },
+    {
+      "type": "scene",
+      "scene": "endless-fusebox",
+      "label": "FUSES 3/3",
+      "text": "Three fuses. Three clicks. And at the end of the hall, the EXIT sign turned green."
+    },
+    {
+      "from": "milo",
+      "text": "GO GO GO",
+      "effect": "zoom"
+    },
+    {
+      "type": "scene",
+      "scene": "endless-exit",
+      "label": "LOBBY · 5:59 AM",
+      "text": "Jay ran down the stairwell, floor after floor... and burst out into the sunrise."
+    },
+    {
+      "from": "me",
+      "text": "i'm out. i woke up at my desk 😭"
+    },
+    {
+      "from": "milo",
+      "text": "told you. i know my games 😎"
+    },
+    {
+      "from": "milo",
+      "text": "jay wait. the game says *2 players* are still in the halls",
+      "effect": "glitch"
+    },
+    {
+      "type": "scene",
+      "scene": "computer",
+      "text": "The Endless Halls and eight more horror games, free on Pulsebox. box.pulseform.org. It's a computer game site, so play it on a computer. Escape... if you can.",
+      "say": "The Endless Halls, and eight more horror games, free on Pulsebox. Box dot pulseform dot org. It's a computer game site, so play it on a computer. Escape... if you can."
+    }
+  ],
+  "look": {
+    "background": "horror",
+    "chatTheme": "violet",
+    "hookStyle": "banner"
+  },
+  "captions": {
+    "style": "pop",
+    "font": "Creepster",
+    "size": 1,
+    "position": 0.79,
+    "highlight": "#ff3d6e"
+  },
+  "narration": {
+    "enabled": true,
+    "speed": 1.15,
+    "includeImages": true,
+    "narrator": "am_onyx",
+    "narratorSpeed": 1.0,
+    "narratorFx": "creepy",
+    "systemNotes": false
+  },
+  "audio": {
+    "music": "suspense",
+    "musicVolume": 0.5,
+    "sfxVolume": 0.85
+  },
+  "pacing": {
+    "fit": true,
+    "speed": 1
+  }
+}
