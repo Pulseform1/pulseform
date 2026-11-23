@@ -6,18 +6,20 @@ s = s.replace('Nugget', 'Pepper')
 rep("const SAVE_KEY = 'cluck-launch-save-v1';", "const SAVE_KEY = 'cluck-launch-2-save-v1';")
 rep("""<div class="step"><canvas id="hw4" width="144" height="144"></canvas><div><b>4. Upgrade</b>Every flight earns coins. Buy better gear, fly higher, and reach space!</div></div>""",
     """<div class="step"><canvas id="hw4" width="144" height="144"></canvas><div><b>4. Smash &amp; upgrade</b>Crash through fences, hay, cacti and more for cash. Too slow and you bonk! Buy gear and go all the way round the world.</div></div>""")
-rep("""<div class="tip">Grab coins, pop balloons for a lift, and bounce on pink clouds. Watch out for birds, planes and UFOs up high!</div>""",
-    """<div class="tip">The world is 40,075 m round: farm, prairie, desert, ocean, jungle, canyon, the frozen north and the megacity. Skip across the sea, bounce on springboards, fly through gold rings. A better helmet smashes harder and loses less speed.</div>""")
+rep("""<div class="tip">Press <b>▲</b> (or tap) right as you reach the end of the ramp for a <b>PERFECT JUMP</b>. Grab coins fast for a <b>combo</b>, pop balloons, ride warm <b>thermals</b> up, bounce on pink clouds and hunt the <b>golden eggs</b> hidden in every sky. Watch out for birds, storms, planes and space junk!</div>""",
+    """<div class="tip">The world is 40,075 m round: farm, prairie, desert, savanna, ocean, volcano isles, jungle, canyon, the Alps, the frozen north, the megacity and the beach. Press <b>▲</b> (or tap) on the glowing end of the ramp for a <b>PERFECT JUMP</b>. Skip across the sea, bounce on springboards, fly through gold rings and find the <b>golden egg</b> hidden in every land. A better helmet smashes harder and loses less speed.</div>""")
 rep('<div class="step"><canvas id="hw1" width="144" height="144"></canvas><div><b>1. Slide!</b>Press <b style="display:inline">Space</b> or tap to slide down the snowy ramp and jump off the end.</div></div>',
     '<div class="step"><canvas id="hw1" width="144" height="144"></canvas><div><b>1. Slide!</b>Press <b style="display:inline">Space</b> or tap to slide down the ramp and jump off the end.</div></div>')
 rep("""    <h2>SPACE!</h2>
     <p id="endText"></p>
+    <div class="sum" id="endSum"></div>
     <ul>
       <li>New gear in the shop: the <b>Star Engine</b> and <b>Star Tank</b>.</li>
       <li>Hard challenges for real sky pros.</li>
       <li>The Moon is up there at 12,000 m. Can you touch it?</li>
     </ul>""", """    <h2>AROUND THE WORLD!</h2>
     <p id="endText"></p>
+    <div class="sum" id="endSum"></div>
     <ul>
       <li>Hard challenges for real globe-trotters, and the <b>Egg</b> tab: hatch a new egg for golden perks.</li>
       <li>Every extra lap pays a big bonus. How many laps can Pepper do?</li>
@@ -82,14 +84,15 @@ rep("""const SKINS = [
 rep("hat: 'none', skin: 'white',", "hat: 'none', skin: 'midnight',")
 rep("own: { hats: ['none'], skins: ['white'],", "own: { hats: ['none'], skins: ['midnight'],")
 rep("tier: { ramp: 0, sled: 0, glider: 0, rocket: 0, tank: 0 },", "tier: { ramp: 0, sled: 0, glider: 0, rocket: 0, tank: 0, helmet: 0 },")
-rep("gad: { cone: 0, magnet: 0, boots: 0, shield: 0, burner: 0, doubler: 0, recycler: 0 },", "gad: { cone: 0, magnet: 0, boots: 0, shield: 0, burner: 0, doubler: 0, recycler: 0, piggy: 0, skipper: 0, wheels: 0, tail: 0 },")
+rep("gad: { cone: 0, magnet: 0, boots: 0, shield: 0, burner: 0, doubler: 0, recycler: 0, flap: 0, radar: 0 },", "gad: { cone: 0, magnet: 0, boots: 0, shield: 0, burner: 0, doubler: 0, recycler: 0, flap: 0, radar: 0, piggy: 0, skipper: 0, wheels: 0, tail: 0, bumper: 0 },")
 rep("best: { dist: 0, alt: 0, speed: 0 },", "best: { dist: 0, alt: 0, speed: 0, smash: 0, cash: 0 }, laps: 0,")
-rep("""  { id: 'recycler', name: 'Fuel Recycler', desc: 'Slowly refills your tank up in space while the rocket is off.', lv: [0.12, 0.22, 0.35], prices: [9000, 26000, 60000], post: 2 }
-];""", """  { id: 'recycler', name: 'Fuel Recycler', desc: 'Slowly refills your tank up in space while the rocket is off.', lv: [0.12, 0.22, 0.35], prices: [9000, 26000, 60000], post: 2 },
+rep("""  { id: 'radar', name: 'Egg Radar', desc: 'Beeps when a golden egg is near and points the way. Eggs show up far more often.', lv: [1], prices: [350] }
+];""", """  { id: 'radar', name: 'Egg Radar', desc: 'Beeps when a golden egg is near and points the way. Eggs show up far more often.', lv: [1], prices: [350] },
   { id: 'piggy', name: 'Piggy Bank', desc: 'Everything you smash pays more.', lv: [1.3, 1.65, 2.1], prices: [120, 900, 5000] },
   { id: 'skipper', name: 'Skipping Feet', desc: 'Skip across water like a stone: at lower speeds, and losing less.', lv: [1, 2, 3], prices: [600, 2500, 9000] },
   { id: 'wheels', name: 'Belly Wheels', desc: 'Little wheels under your belly. Roll on and on after you land.', lv: [0.6, 0.38, 0.22], prices: [200, 1100, 5500] },
-  { id: 'tail', name: 'Tail Fan', desc: 'A buzzing fan on your tail: a gentle push the whole time you fly.', lv: [0.5, 1, 1.8], prices: [700, 3500, 16000] }
+  { id: 'tail', name: 'Tail Fan', desc: 'A buzzing fan on your tail: a gentle push the whole time you fly.', lv: [0.5, 1, 1.8], prices: [700, 3500, 16000] },
+  { id: 'bumper', name: 'Bumper Belly', desc: 'A springy rubber belly. Lose less speed every time you smash something.', lv: [0.8, 0.62, 0.45], prices: [400, 2400, 12000] }
 ];""")
 rep("""const CATS = [
   { id: 'ramp', name: 'Ramp', list: RAMPS },""", """const CATS = [
@@ -147,10 +150,10 @@ const CHALLENGES = [
 rep("""    shield: S.gad.shield ? GADGETS[3].lv[S.gad.shield - 1] : 0
   };""", """    shield: S.gad.shield ? GADGETS[3].lv[S.gad.shield - 1] : 0,
     smash: HELMETS[S.tier.helmet || 0].smash, keep: HELMETS[S.tier.helmet || 0].keep,
-    piggy: S.gad.piggy ? GADGETS[7].lv[S.gad.piggy - 1] : 1,
+    piggy: gadLv('piggy', 1), bumper: gadLv('bumper', 1),
     skipMin: [24, 18, 13, 9][S.gad.skipper || 0], skipKeep: [0.8, 0.86, 0.91, 0.95][S.gad.skipper || 0],
-    wheel: S.gad.wheels ? GADGETS[9].lv[S.gad.wheels - 1] : 1,
-    tail: S.gad.tail ? GADGETS[10].lv[S.gad.tail - 1] : 0
+    wheel: gadLv('wheels', 1),
+    tail: gadLv('tail')
   };""")
 rep("""    dist: Math.round(r.dist * 0.25 * k),
     alt: Math.round(Math.max(0, r.alt - LIP_ALT) * 1.0 * k),""", """    dist: Math.round(r.dist * 0.2 * k),
@@ -158,12 +161,11 @@ rep("""    dist: Math.round(r.dist * 0.25 * k),
     smash: Math.round(r.cash * k),
     laps: Math.round(r.laps * 25000 * k),""")
 # ---------------- the ground: hills shaped by region, flat sea where there is ocean ----------------
-rep("""function groundY(x) {
-  if (x < 2) return PLATEAU;
-  if (x < 520) { const u = (x - 2) / 518; return PLATEAU * (1 - (0.5 - 0.5 * Math.cos(Math.PI * u))) + Math.sin(u * 9) * 1.2 * u * (1 - u); }
-  const k = Math.min(1, (x - 520) / 300);
-  return k * (5 * Math.sin((x - 520) / 140) + 2.2 * Math.sin((x - 520) / 47 + 1) + 7 * Math.sin((x - 520) / 610));
-}""", """// how hilly the ground is here, blending smoothly across region edges (the sea is flat, and below the land)
+rex(r"function hillY\(x\) \{\n.*?\nfunction groundY\(x\) \{\n.*?\n\}\n", r"""// no frozen lakes round the world: the Frosty North is icy all over instead
+const LAKE0 = 1e9, LAKEGAP = 1e9, LAKELEN = 0;
+const lakeW = x => x > 600 && regionAt(x).id === 'arctic' ? 0.6 : 0;
+const lakeLevel = x => groundY(x);
+// how hilly the ground is here, blending smoothly across region edges (the sea is flat, and below the land)
 function landShape(x) {
   const m = wmod(x), i = regionIdx(x), R = REGIONS[i], N = REGIONS[(i + 1) % REGIONS.length], P = REGIONS[(i + REGIONS.length - 1) % REGIONS.length];
   const amp = r => r.water ? 0 : r.amp, base = r => r.water ? SEA - 3 : 0;
@@ -180,7 +182,8 @@ function groundY(x) {
   return b + k * a * (5 * Math.sin((x - 520) / 140) + 2.2 * Math.sin((x - 520) / 47 + 1) + 7 * Math.sin((x - 520) / 610));
 }
 // the surface you meet: the sea where there is sea, else the ground
-const surfaceY = x => isWater(x) ? SEA : groundY(x);""")
+const surfaceY = x => isWater(x) ? SEA : groundY(x);
+""")
 # ---------------- smashables, springboards and gold rings, made with the cells ----------------
 rep("""  const put = (k, rad, extra) =>""", """  // on the ground: things to smash, springboards; in the low sky: gold rings and crates on balloons
   if (x0 > 60 && gy >= y0 - CELL && gy < y0 + CELL && j === Math.max(0, Math.floor((Math.max(gy, SEA) + 0.5) / CELL))) {
@@ -219,7 +222,7 @@ rep("""  // ground
   // ground
   const gy = groundY(x);
   if (!isWater(x) && y <= gy + 0.02) {""")
-rep("        const mu = st.mu * 1.4 + (F.tumble > 0 ? 0.25 : 0);", "        const mu = st.mu * 1.4 * st.wheel + (F.tumble > 0 ? 0.25 : 0);")
+rep("        const mu = (st.mu * 1.4 + (F.tumble > 0 ? 0.25 : 0)) * (1 - 0.82 * lakeW(x));", "        const mu = (st.mu * 1.4 * st.wheel + (F.tumble > 0 ? 0.25 : 0)) * (1 - 0.82 * lakeW(x));")
 # smashing: fast enough and it shatters (you lose some speed), too slow and you bonk off it
 rep("""    if (o.k === 'coin') {""", """    if (o.k === 'ob' || o.k === 'spring') {
       const hx = o.w / 2 + 0.45, top = o.y + o.h + 0.3;
@@ -302,8 +305,8 @@ rep("""    ['Distance', fmt(r.dist) + ' m', pay.dist, newBest.dist],
     ...(r.laps ? [['Laps of the world', '' + r.laps, pay.laps, true]] : []),
     ['Height', fmt(r.alt) + ' m', pay.alt, newBest.alt],""")
 rep("    case 'spaceNoGlider': return r && r.alt >= SPACE && r.glider === 0 ? 1 : 0;", "    case 'spaceNoGlider': return r && r.alt >= SPACE && r.glider === 0 ? 1 : 0;\n    case 'cashRun': return r ? r.cash : null;")
-rep("  for (const k of ['coinsRun', 'balRun', 'cloudRun', 'air', 'rocketT', 'slide', 'fuels', 'balloons', 'clouds']) {\n    const v = k === 'coinsRun' ? r.nCoins : k === 'balRun' ? r.balloons : k === 'cloudRun' ? r.clouds : r[k];",
-    "  for (const k of ['coinsRun', 'balRun', 'cloudRun', 'air', 'rocketT', 'slide', 'fuels', 'balloons', 'clouds', 'smash', 'cashRun', 'skips', 'springs', 'rings', 'tnts']) {\n    const v = k === 'coinsRun' ? r.nCoins : k === 'balRun' ? r.balloons : k === 'cloudRun' ? r.clouds : k === 'cashRun' ? r.cash : r[k];")
+rep("  for (const k of ['coinsRun', 'balRun', 'cloudRun', 'air', 'rocketT', 'slide', 'fuels', 'balloons', 'clouds', 'perfect', 'thermals', 'comboBest', 'jets']) {\n    const v = k === 'coinsRun' ? r.nCoins : k === 'balRun' ? r.balloons : k === 'cloudRun' ? r.clouds : r[k];",
+    "  for (const k of ['coinsRun', 'balRun', 'cloudRun', 'air', 'rocketT', 'slide', 'fuels', 'balloons', 'clouds', 'perfect', 'thermals', 'comboBest', 'jets', 'smash', 'cashRun', 'skips', 'springs', 'rings', 'tnts']) {\n    const v = k === 'coinsRun' ? r.nCoins : k === 'balRun' ? r.balloons : k === 'cloudRun' ? r.clouds : k === 'cashRun' ? r.cash : r[k];")
 rep("  S.best.dist = Math.max(S.best.dist, r.dist);", "  S.best.smash = Math.max(S.best.smash || 0, r.smash); S.best.cash = Math.max(S.best.cash || 0, r.cash); S.laps = (S.laps || 0) + r.laps;\n  S.best.dist = Math.max(S.best.dist, r.dist);")
 rep("  const faces = F && F.reentry ? `Parachuted home from ${fmt(r.alt)} m!` : r.alt >= SPACE ? 'Space chicken!' :", "  const faces = r.laps ? 'Round the world!' : F && F.splash ? 'Splashdown!' : r.smash >= 40 ? 'Wrecking hen!' : r.alt >= SPACE ? 'Space chicken!' :")
 # tips: where to go next round the world
@@ -472,7 +475,7 @@ rex(r"const unlocked = it => .*?\n", "const GATES = [0, 3000, 9000, 19500];\ncon
 rex(r"const lockText = it => .*?\n", "const lockText = it => { const d = GATES[it.post === true ? 1 : it.post]; return `Fly ${fmt(d)} m (${regionAt(d).name}) to unlock`; };\n")
 # the tail fan runs on a battery; the air gets thick past ~1000 km/h so nobody coasts forever
 rep("  if (st.tail && !F.contact && v > 3) {", "  if (st.tail && !F.contact && v > 3 && (F.tailT = (F.tailT || 0) + dt) < st.tailDur) {")
-rep("    tail: S.gad.tail ? GADGETS[10].lv[S.gad.tail - 1] : 0\n", "    tail: S.gad.tail ? GADGETS[10].lv[S.gad.tail - 1] : 0, tailDur: [0, 12, 18, 26][S.gad.tail || 0]\n")
+rep("    tail: gadLv('tail')\n", "    tail: gadLv('tail'), tailDur: [0, 12, 18, 26][S.gad.tail || 0]\n")
 rep("    const df = dens * v * v * (st.d0 + st.dk * 2 * sa * sa);", "    const df = dens * v * v * (st.d0 + st.dk * 2 * sa * sa) + (v > VWALL ? (v - VWALL) * (v - VWALL) * 0.004 : 0);")
 rep("const CEIL = 3200;", "const CEIL = 3200;\nconst VWALL = 280;       // m/s: past this the air pushes back hard")
 rep("desc: 'A buzzing fan on your tail: a gentle push the whole time you fly.', lv: [0.5, 1, 1.8]", "desc: 'A buzzing fan on your tail: a steady push for the first 12 / 18 / 26 seconds of every flight.', lv: [0.8, 1.4, 2.2]")
@@ -485,3 +488,173 @@ rep("F.smash++; const pay = Math.round(o.pay * st.piggy); F.cash += pay;", "F.sm
 rep("const CEIL = 3200;", "const CEIL = 3800;")
 rep("(v > VWALL ? (v - VWALL) * (v - VWALL) * 0.004 : 0)", "(v > st.vwall ? (v - st.vwall) * (v - st.vwall) * 0.004 : 0)")
 rep("tailDur: [0, 12, 18, 26][S.gad.tail || 0]\n", "tailDur: [0, 12, 18, 26][S.gad.tail || 0], vwall: VWALL + 14 * S.tier.rocket\n")
+
+# =====================================================================================================
+# Cluck Launch 2, part two: four more lands, more things to smash, its own trophies, daily goals and
+# golden eggs (one per land), a Bumper Belly, a top helmet, and a finish line when you get round.
+# =====================================================================================================
+# ---------------- four new lands ----------------
+rep("""  { id: 'ocean', name: 'Big Blue Ocean', at: 9000, water: true, mult: 2.3 },""", """  { id: 'savanna', name: 'Sunny Savanna', at: 7000, g: ['#ecd27a', '#d2b052', '#a8843a'], amp: 0.9, mult: 2.05 },
+  { id: 'ocean', name: 'Big Blue Ocean', at: 9000, water: true, mult: 2.3 },
+  { id: 'isles', name: 'Volcano Isles', at: 12000, g: ['#6a5a56', '#4a3c38', '#2e2422'], amp: 1.6, mult: 2.6 },""")
+rep("""  { id: 'arctic', name: 'Frosty North',""", """  { id: 'alpine', name: 'Alpine Peaks', at: 22000, g: ['#a8e070', '#74b84a', '#4e8a34'], amp: 2.2, mult: 4.1 },
+  { id: 'arctic', name: 'Frosty North',""")
+rep("""  { id: 'home', name: 'Home Farm, again!',""", """  { id: 'beach', name: 'Sunshine Beach', at: 37500, g: ['#fff0bc', '#f2d58a', '#d4b268'], amp: 0.35, mult: 7.8 },
+  { id: 'home', name: 'Home Farm, again!',""")
+rep("""  home: [['fence', 12, 1.4, 1.3, 4],""", """  savanna: [['mound', 30, 1.4, 2.2, 14], ['acacia', 40, 1.1, 3.8, 18], ['grasshut', 35, 2.4, 2.4, 16], ['jeep', 65, 3, 1.9, 30], ['tnt', 15, 1, 1, 10]],
+  isles: [['lavarock', 80, 2.2, 1.9, 36], ['tiki', 45, 2.6, 2.6, 22], ['palm', 30, 0.7, 4.5, 14], ['crate', 22, 1.2, 1.2, 10], ['tnt', 15, 1, 1, 10]],
+  alpine: [['snowmanO', 20, 1.3, 2.7, 10], ['cheese', 45, 1.9, 1.7, 22], ['skirack', 25, 1.7, 1.6, 12], ['chalet', 110, 4, 3.8, 55], ['tnt', 15, 1, 1, 10]],
+  beach: [['ball', 4, 1, 1, 3], ['umbrella', 10, 1.8, 2.5, 6], ['sandcastle', 10, 1.6, 1.1, 6], ['icecream', 50, 2.4, 2.3, 26], ['lifeguard', 60, 1.9, 4.2, 30], ['tnt', 15, 1, 1, 10]],
+  home: [['fence', 12, 1.4, 1.3, 4],""")
+rep("""iceberg: '#eaf8ff', tnt: '#e8362f' };""", """iceberg: '#eaf8ff', tnt: '#e8362f', mound: '#c9864a', acacia: '#6aa83a', grasshut: '#d9b05a', jeep: '#7a9a4a', lavarock: '#ff6a2a', snowmanO: '#ffffff', cheese: '#ffd23f', skirack: '#e8362f', chalet: '#9a5f35', ball: '#ff4fa0', umbrella: '#ff5a5a', icecream: '#ffb3d1', lifeguard: '#e8362f' };""")
+rep("""home: ['#a9c9a0', null, '#8db684', null, 0.6]
+};""", """home: ['#a9c9a0', null, '#8db684', null, 0.6],
+  savanna: ['#e0c486', null, '#c9a868', null, 0.35], isles: ['#7a8aa8', null, '#5e6e8e', null, 0.4], alpine: ['#9ab4d8', '#ffffff', '#7a98c4', '#f4faff', 1.25], beach: ['#a8d4f0', null, '#8fc0e4', null, 0.15]
+};""")
+rep("""    mountains(0.14, base + H * 0.12, H * 0.26 * B[4], B[2], B[3], 23);""", """    mountains(0.14, base + H * 0.12, H * 0.26 * B[4], B[2], B[3], 23);
+    if (B === BACKS.isles) volcanoBg(base, t);""")
+rep("""function mountains(p, base, hgt, col, snow, seed) {""", """// the Volcano Isles have a smoking volcano far out at sea
+function volcanoBg(base, t) {
+  const X = W * 0.68 - ((cam.x * cam.k * 0.02) % (W * 1.8)) + W * 0.4, Y = base + H * 0.1, w = H * 0.55, h = H * 0.42;
+  if (X < -w || X > W + w) return;
+  g.fillStyle = '#5a4a5a'; g.beginPath(); g.moveTo(X - w, Y + 40); g.lineTo(X - w * 0.16, Y - h); g.lineTo(X + w * 0.16, Y - h); g.lineTo(X + w, Y + 40); g.fill();
+  g.fillStyle = '#ff7a2a'; g.beginPath(); g.moveTo(X - w * 0.16, Y - h); g.lineTo(X - w * 0.05, Y - h * 0.7); g.lineTo(X + w * 0.02, Y - h * 0.82); g.lineTo(X + w * 0.1, Y - h * 0.6); g.lineTo(X + w * 0.16, Y - h); g.fill();
+  g.fillStyle = 'rgba(120,110,120,.55)'; for (let i = 0; i < 5; i++) { const p = (t * 0.08 + i / 5) % 1; g.beginPath(); g.arc(X + p * w * 0.5 + Math.sin(p * 6 + i) * 10, Y - h - p * h * 0.9, w * (0.06 + p * 0.14), 0, 7); g.fill(); }
+}
+function mountains(p, base, hgt, col, snow, seed) {""")
+# their scenery
+rep("""    else if (R.id === 'prairie') {""", """    else if (R.id === 'savanna') { if (kind < 10) acaciaD(X, Y, hh * 1.1); else if (kind < 30) grassD(X, Y, cam.k, '#b8942e'); }
+    else if (R.id === 'isles') { if (kind < 20) palmD(X, Y, hh * 1.2, h); else if (kind < 30) rockD(X, Y, hh * 0.35, '#3e3230'); }
+    else if (R.id === 'alpine') { if (kind < 28) pine(X, Y, hh, h); else if (kind < 31) cabin(X, sy(groundY(x) - 0.5), cam.k, h); else if (kind < 40) grassD(X, Y, cam.k, '#4e8a34'); }
+    else if (R.id === 'beach') { if (kind < 12) palmD(X, Y, hh * 1.2, h); else if (kind < 18) umbrellaD(X, Y, cam.k * 2.4, h); }
+    else if (R.id === 'prairie') {""")
+rep("""// the things you smash, drawn at their real size""", """function acaciaD(X, Y, h) { if (X < -h * 2 || X > W + h * 2) return; g.strokeStyle = '#6b4526'; g.lineWidth = h * 0.06; g.beginPath(); g.moveTo(X, Y); g.lineTo(X, Y - h * 0.55); g.lineTo(X - h * 0.3, Y - h * 0.85); g.moveTo(X, Y - h * 0.55); g.lineTo(X + h * 0.35, Y - h * 0.88); g.stroke(); g.fillStyle = '#6a9a3a'; g.beginPath(); g.ellipse(X, Y - h * 0.92, h * 0.75, h * 0.14, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.12)'; g.beginPath(); g.ellipse(X - h * 0.1, Y - h * 0.98, h * 0.45, h * 0.06, 0, 0, 7); g.fill(); }
+function umbrellaD(X, Y, k, seed) { if (X < -k * 2 || X > W + k * 2) return; g.strokeStyle = '#ddd'; g.lineWidth = Math.max(1, k * 0.06); g.beginPath(); g.moveTo(X, Y); g.lineTo(X, Y - k); g.stroke(); const c = ['#ff5a5a', '#2f8fe8', '#ffd23f'][seed % 3]; for (let i = 0; i < 4; i++) { g.fillStyle = i % 2 ? '#fff' : c; g.beginPath(); g.moveTo(X, Y - k * 1.15); g.arc(X, Y - k * 0.85, k * 0.6, Math.PI + i * Math.PI / 4, Math.PI + (i + 1) * Math.PI / 4); g.closePath(); g.fill(); } }
+// the finish line at the Home Farm: you get here once you have gone all the way round
+function finishLine(x0, x1, t) {
+  for (let n = Math.max(1, Math.ceil((x0 - 30) / WORLD)); n * WORLD < x1 + 30; n++) {
+    const x = n * WORLD, k = cam.k, X = sx(x), Y = sy(groundY(x)), hh = 11 * k, w = 16 * k;
+    for (const s2 of [-1, 1]) { g.fillStyle = '#e8362f'; g.fillRect(X + s2 * w / 2 - k * 0.5, Y - hh, k, hh); g.fillStyle = '#fff'; for (let i = 0; i < 5; i++) g.fillRect(X + s2 * w / 2 - k * 0.5, Y - hh + i * hh / 5, k, hh / 10); }
+    g.fillStyle = '#fff'; g.fillRect(X - w / 2, Y - hh - 3 * k, w, 3 * k); g.strokeStyle = '#1d2440'; g.lineWidth = Math.max(1, k * 0.15); g.strokeRect(X - w / 2, Y - hh - 3 * k, w, 3 * k);
+    g.fillStyle = '#1d2440'; for (let i = 0; i < 16; i++) g.fillRect(X - w / 2 + i * w / 16, Y - hh - (i % 2 ? 3 : 0.6) * k, w / 16, 0.6 * k);
+    if (k > 3) { g.fillStyle = '#e8362f'; g.font = `900 ${Math.round(k * 1.3)}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(n > 1 ? 'LAP ' + n + '!' : 'ALL THE WAY ROUND!', X, Y - hh - 1.5 * k); }
+    for (let i = 0; i < 9; i++) { g.fillStyle = ['#e8362f', '#ffd23f', '#2f8fe8', '#3fbf6a'][i % 4]; const bx = X - w / 2 + i * w / 9, by = Y - hh - 3 * k; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + w / 9, by); g.lineTo(bx + w / 18, by - k * 1.1); g.fill(); }
+    for (let i = 0; i < 8; i++) { const cx = x + (i < 4 ? -14 - i * 2.2 : 14 + (i - 4) * 2.2); chick(sx(cx), sy(groundY(cx) + Math.max(0, Math.sin(t * 8 + i * 1.7)) * 0.7), k, i); }
+  }
+}
+// the things you smash, drawn at their real size""")
+rep("""    default: box(-w / 2, -h, w, h, col);""", """    case 'mound': g.fillStyle = col; g.beginPath(); g.moveTo(-w / 2, 0); g.quadraticCurveTo(-w * 0.35, -h * 0.6, -w * 0.1, -h); g.lineTo(w * 0.1, -h * 0.92); g.quadraticCurveTo(w * 0.35, -h * 0.5, w / 2, 0); g.closePath(); g.fill(); g.stroke(); g.fillStyle = 'rgba(80,40,10,.45)'; for (const [a, b] of [[-0.15, 0.3], [0.1, 0.55], [-0.05, 0.75]]) { g.beginPath(); g.arc(a * w, -b * h, w * 0.05, 0, 7); g.fill(); } break;
+    case 'acacia': acaciaD(0, 0, h); break;
+    case 'grasshut': box(-w * 0.4, -h * 0.55, w * 0.8, h * 0.55, '#c9a05a'); g.fillStyle = '#e8c86a'; g.beginPath(); g.moveTo(-w / 2 - w * 0.1, -h * 0.5); g.quadraticCurveTo(0, -h * 1.25, w / 2 + w * 0.1, -h * 0.5); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#5a3a1a'; g.fillRect(-w * 0.1, -h * 0.4, w * 0.2, h * 0.4); break;
+    case 'jeep': box(-w / 2, -h * 0.8, w, h * 0.5, col); box(-w * 0.2, -h, w * 0.4, h * 0.22, '#9fe0ff'); g.fillStyle = '#222'; for (const wx of [-w * 0.3, w * 0.3]) { g.beginPath(); g.arc(wx, -h * 0.2, h * 0.2, 0, 7); g.fill(); } g.fillStyle = '#ffd23f'; g.fillRect(w * 0.4, -h * 0.7, w * 0.08, h * 0.12); break;
+    case 'lavarock': g.fillStyle = '#3a2a28'; g.beginPath(); g.moveTo(-w / 2, 0); g.lineTo(-w * 0.4, -h * 0.7); g.lineTo(-w * 0.05, -h); g.lineTo(w * 0.35, -h * 0.8); g.lineTo(w / 2, 0); g.closePath(); g.fill(); g.stroke(); g.strokeStyle = `rgba(255,${130 + Math.sin(t * 4 + o.ph) * 50 | 0},40,.95)`; g.lineWidth = lw * 2; g.beginPath(); g.moveTo(-w * 0.3, -h * 0.5); g.lineTo(-w * 0.05, -h * 0.75); g.lineTo(w * 0.1, -h * 0.4); g.lineTo(w * 0.3, -h * 0.6); g.stroke(); break;
+    case 'snowmanO': g.fillStyle = '#fff'; for (const [dy, r2] of [[0.25, 0.5], [0.62, 0.36], [0.88, 0.25]]) { g.beginPath(); g.arc(0, -dy * h, r2 * w, 0, 7); g.fill(); g.stroke(); } g.fillStyle = '#ff8a1f'; g.beginPath(); g.moveTo(w * 0.1, -h * 0.88); g.lineTo(w * 0.5, -h * 0.85); g.lineTo(w * 0.1, -h * 0.82); g.fill(); g.fillStyle = '#e8362f'; g.fillRect(-w * 0.35, -h * 0.76, w * 0.7, h * 0.06); break;
+    case 'cheese': g.fillStyle = col; g.beginPath(); g.ellipse(0, -h / 2, w / 2, h / 2, 0, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#e8b020'; g.beginPath(); g.ellipse(0, -h / 2, w * 0.3, h * 0.3, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(160,110,10,.5)'; for (const [a, b] of [[-0.3, 0.3], [0.25, 0.7], [0.3, 0.3]]) { g.beginPath(); g.arc(a * w, -b * h, w * 0.06, 0, 7); g.fill(); } break;
+    case 'skirack': box(-w / 2, -h * 0.15, w, h * 0.15, '#8a5a30'); for (let i = 0; i < 4; i++) box(-w * 0.4 + i * w * 0.26, -h, w * 0.08, h * 0.9, ['#e8362f', '#2f8fe8', '#ffd23f', '#3fbf6a'][i]); break;
+    case 'chalet': box(-w / 2, -h * 0.6, w, h * 0.6, col); g.fillStyle = '#fff'; g.beginPath(); g.moveTo(-w * 0.62, -h * 0.58); g.lineTo(0, -h); g.lineTo(w * 0.62, -h * 0.58); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#ffd96a'; g.fillRect(-w * 0.32, -h * 0.45, w * 0.18, h * 0.16); g.fillRect(w * 0.14, -h * 0.45, w * 0.18, h * 0.16); g.fillStyle = '#e8362f'; for (let i = 0; i < 5; i++) g.fillRect(-w * 0.4 + i * w * 0.2, -h * 0.25, w * 0.1, h * 0.08); break;
+    case 'ball': for (let i = 0; i < 4; i++) { g.fillStyle = ['#ff4fa0', '#fff', '#2f8fe8', '#ffd23f'][i]; g.beginPath(); g.moveTo(0, -h / 2); g.arc(0, -h / 2, w / 2, i * Math.PI / 2 + t, (i + 1) * Math.PI / 2 + t); g.closePath(); g.fill(); } g.beginPath(); g.arc(0, -h / 2, w / 2, 0, 7); g.stroke(); break;
+    case 'umbrella': umbrellaD(0, 0, h, Math.floor(o.ph * 3)); break;
+    case 'icecream': box(-w / 2, -h * 0.65, w, h * 0.5, '#fff'); g.fillStyle = '#ffb3d1'; g.fillRect(-w / 2, -h * 0.65, w, h * 0.12); g.fillStyle = '#222'; for (const wx of [-w * 0.3, w * 0.3]) { g.beginPath(); g.arc(wx, -h * 0.12, h * 0.12, 0, 7); g.fill(); } g.fillStyle = '#d9a95a'; g.beginPath(); g.moveTo(-w * 0.12, -h * 0.65); g.lineTo(0, -h * 0.82); g.lineTo(w * 0.12, -h * 0.65); g.fill(); g.fillStyle = col; g.beginPath(); g.arc(0, -h * 0.9, w * 0.14, 0, 7); g.fill(); break;
+    case 'lifeguard': for (const s2 of [-1, 1]) box(s2 * w * 0.35 - w * 0.04, -h * 0.65, w * 0.08, h * 0.65, '#fff'); box(-w / 2, -h * 0.75, w, h * 0.12, '#c9a05a'); box(-w * 0.4, -h, w * 0.8, h * 0.25, col); g.fillStyle = '#fff'; g.font = `900 ${Math.max(5, h * 0.12)}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('+', 0, -h * 0.87); break;
+    default: box(-w / 2, -h, w, h, col);""")
+# no ski village on the farm; the finish line stands where the start was
+rep("  valleyDecor(x0, x1, t);\n", "  finishLine(x0, x1, t);\n")
+# ---------------- goals for the new lands ----------------
+rep("""  { id: 'ocean', text: 'Reach the Big Blue Ocean (9,000 m)', stat: 'dist', n: 9000, pay: 900 },""", """  { id: 'perf', text: 'Land a Perfect Jump (press ▲ on the glowing end of the ramp)', stat: 'perfect', n: 1, pay: 60 },
+  { id: 'savanna', text: 'Reach the Sunny Savanna (7,000 m)', stat: 'dist', n: 7000, pay: 700 },
+  { id: 'ocean', text: 'Reach the Big Blue Ocean (9,000 m)', stat: 'dist', n: 9000, pay: 900 },
+  { id: 'isles', text: 'Cross the sea to the Volcano Isles (12,000 m)', stat: 'dist', n: 12000, pay: 1200 },""")
+rep("""  { id: 'arctic', text: 'Reach the Frosty North (24,500 m)', stat: 'dist', n: 24500, pay: 4000 },""", """  { id: 'alpine', text: 'Climb into the Alpine Peaks (22,000 m)', stat: 'dist', n: 22000, pay: 3200 },
+  { id: 'arctic', text: 'Reach the Frosty North (24,500 m)', stat: 'dist', n: 24500, pay: 4000 },""")
+rep("""  { id: 'world', text: 'Fly ALL the way round the world (40,075 m)', stat: 'dist', n: WORLD, pay: 20000 }""", """  { id: 'beach', text: 'Land on Sunshine Beach (37,500 m)', stat: 'dist', n: 37500, pay: 12000 },
+  { id: 'world', text: 'Fly ALL the way round the world (40,075 m)', stat: 'dist', n: WORLD, pay: 20000 }""")
+rep("""  { name: 'Meteor Head', smash: 13, keep: 0.38, price: 42000, desc: 'Your head is on fire. In a good way.', post: 2 }
+];""", """  { name: 'Meteor Head', smash: 13, keep: 0.38, price: 42000, desc: 'Your head is on fire. In a good way.', post: 2 },
+  { name: 'Star Breaker', smash: 18, keep: 0.3, price: 95000, desc: 'A crown of tiny stars. Chalets, trucks and icebergs go pop.', post: 3 }
+];""")
+# smashing: the Bumper Belly keeps your speed, and a Corn Rush smashes anything
+rep("const v2 = Math.hypot(vx, vy), power = v2 * st.smash;", "const v2 = Math.hypot(vx, vy), power = F.rush > 0 ? Math.max(v2 * st.smash, o.hp) : v2 * st.smash;")
+rep("const loss = clamp(o.hp / power, 0.03, 0.85) * 0.5 * st.keep;", "const loss = clamp(o.hp / power, 0.03, 0.85) * 0.5 * st.keep * st.bumper;")
+# ---------------- golden eggs: one hidden in every land, near the ground ahead of you ----------------
+rex(r"const EGG_ZONES = .*?\n", "const EGG_ZONES = REGIONS.map((R, i) => ({ id: R.id, name: R.name, pay: Math.round(50 * R.mult * (1 + i * 0.5) / 10) * 10 }));\n")
+rex(r"/\* egg-hooks \*/.*?/\* /egg-hooks \*/", """/* egg-hooks */
+function eggZoneNow() { return F.x < 250 ? -1 : regionIdx(F.x); }
+function eggSpot(zi) {
+  const x = F.x + clamp(Math.abs(F.vx) * 2.6, 60, 700) + rnd(0, 20);
+  return [x, surfaceY(x) + rnd(3, 12)];
+}
+/* /egg-hooks */""")
+rep("  add('crystals', r.crystals); add('dist', Math.round(r.dist));", "  add('crystals', r.crystals); add('dist', Math.round(r.dist)); add('smash', r.smash); add('tnts', r.tnts); add('skips', r.skips); add('springs', r.springs); add('rings', r.rings); add('cash', r.cash);")
+# ---------------- trophies for a trip round the world ----------------
+rex(r"const TROPHIES = \[\n.*?\n\];", """const TROPHIES = [
+  { id: 't_first', icon: '🐣', name: 'First Flight', desc: 'Finish your first flight', n: 1, v: () => lifeV('runs'), pay: 20 },
+  { id: 't_perf', icon: '🎯', name: 'Perfect Jump', desc: 'Press ▲ right at the end of the ramp', n: 1, v: () => lifeV('perf'), pay: 40 },
+  { id: 't_perf25', icon: '🏅', name: 'Jump Master', desc: 'Land 25 Perfect Jumps', n: 25, v: () => lifeV('perf'), pay: 900 },
+  { id: 't_sm1', icon: '💥', name: 'First Smash', desc: 'Smash anything', n: 1, v: () => lifeV('smash'), pay: 20 },
+  { id: 't_sm300', icon: '🔨', name: 'Wrecking Hen', desc: 'Smash 300 things in all', n: 300, v: () => lifeV('smash'), pay: 600 },
+  { id: 't_sm3k', icon: '🏗️', name: 'Demolition Queen', desc: 'Smash 3,000 things in all', n: 3000, v: () => lifeV('smash'), pay: 6000, reward: ['skins', 'storm', 'Storm Chaser feathers'] },
+  { id: 't_tnt', icon: '🧨', name: 'Kaboom', desc: 'Blow up 25 TNT crates', n: 25, v: () => lifeV('tnts'), pay: 800 },
+  { id: 't_skip', icon: '🌊', name: 'Stone Skipper', desc: 'Skip across the water 20 times', n: 20, v: () => lifeV('skips'), pay: 1500 },
+  { id: 't_spring', icon: '🦘', name: 'Boing Boing', desc: 'Bounce on 25 springboards', n: 25, v: () => lifeV('springs'), pay: 700 },
+  { id: 't_ring', icon: '💍', name: 'Ring Master', desc: 'Fly through 50 gold rings', n: 50, v: () => lifeV('rings'), pay: 1200 },
+  { id: 't_combo', icon: '🔥', name: 'Combo Chicken', desc: 'Get a x30 coin combo', n: 30, v: () => lifeV('combo'), pay: 500 },
+  { id: 't_cash', icon: '💰', name: 'Cash Cow', desc: 'Earn 100,000 smash cash in all', n: 100000, v: () => lifeV('cash'), pay: 5000 },
+  { id: 't_flap', icon: '💪', name: 'Wing Day', desc: 'Do 50 power flaps', n: 50, v: () => lifeV('flaps'), pay: 350 },
+  { id: 't_boom', icon: '💨', name: 'Sonic Boom', desc: 'Go faster than sound (1,235 km/h)', n: 1, v: () => lifeV('booms'), pay: 2500, reward: ['capes', 'thunder', 'the Thunder Cape'] },
+  { id: 't_rush', icon: '🌽', name: 'Corn Rush', desc: 'Catch a golden corn', n: 1, v: () => lifeV('rush'), pay: 300 },
+  { id: 't_desert', icon: '🌵', name: 'Hot Feet', desc: 'Reach the Sizzling Desert', n: 4500, v: () => S.best.dist, pay: 400 },
+  { id: 't_ocean', icon: '⛵', name: 'Ocean Crosser', desc: 'Cross the Big Blue Ocean to the Volcano Isles', n: 12000, v: () => S.best.dist, pay: 1500 },
+  { id: 't_alps', icon: '🧀', name: 'Yodel-ay-cluck', desc: 'Reach the Alpine Peaks', n: 22000, v: () => S.best.dist, pay: 4000 },
+  { id: 't_north', icon: '❄️', name: 'Northern Lights', desc: 'Reach the Frosty North', n: 24500, v: () => S.best.dist, pay: 5000, reward: ['capes', 'aurora', 'the Aurora Cape'] },
+  { id: 't_city', icon: '🌃', name: 'Big City Hen', desc: 'Reach the Neon Megacity', n: 29500, v: () => S.best.dist, pay: 8000 },
+  { id: 't_beach', icon: '🏖️', name: 'Beach Day', desc: 'Reach Sunshine Beach', n: 37500, v: () => S.best.dist, pay: 12000 },
+  { id: 't_world', icon: '🌍', name: 'World Traveller', desc: 'Fly all the way round the world', n: WORLD, v: () => S.best.dist, pay: 25000, reward: ['capes', 'globe', 'the World Cape'] },
+  { id: 't_lap2', icon: '🔁', name: 'Twice Round', desc: 'Go round the world twice in one flight', n: WORLD * 2, v: () => S.best.dist, pay: 80000 },
+  { id: 't_egg6', icon: '🥇', name: 'Egg Hunter', desc: 'Find 6 golden eggs', n: 6, v: () => eggCount(), pay: 2000 },
+  { id: 't_eggall', icon: '🏆', name: 'Egg Master', desc: 'Find the golden egg in every land', n: 0, v: () => eggCount(), pay: 30000, reward: ['capes', 'golden', 'the Golden Cape'] },
+  { id: 't_dist', icon: '✈️', name: 'Frequent Flyer', desc: 'Fly 400,000 m in all', n: 400000, v: () => lifeV('dist'), pay: 8000 },
+  { id: 't_days', icon: '📅', name: 'Regular', desc: 'Fly 25 days', n: 25, v: () => lifeV('runs'), pay: 600 },
+  { id: 't_daily', icon: '📆', name: 'Daily Hero', desc: 'Finish 5 daily goals', n: 5, v: () => lifeV('dailies'), pay: 800 },
+  { id: 't_looks', icon: '🎩', name: 'Fashion Hen', desc: 'Own 12 looks (hats, feathers, capes, paint, flames)', n: 12, v: () => looksOwned(), pay: 800 }
+];""")
+rep("""  { id: 'golden', name: 'Golden Cape',""", """  { id: 'globe', name: 'World Cape', price: 0, a: '#2f8fe8', b: '#3fbf6a', kind: 'cape', trim: true, need: 'trophy' },
+  { id: 'golden', name: 'Golden Cape',""")
+# ---------------- daily goals about smashing and travelling ----------------
+rex(r"const DAILY_POOL = \[\n.*?\n\];", """const DAILY_POOL = [
+  { stat: 'smash', n: [5, 20, 50, 120], text: 'Smash {n} things in one flight', icon: '💥' },
+  { stat: 'cash', n: [40, 300, 1500, 5000], text: 'Earn {n} smash cash in one flight', icon: '💰' },
+  { stat: 'dist', n: [500, 3500, 12000, 30000], text: 'Fly {n} m in one flight', icon: '🌍' },
+  { stat: 'nCoins', n: [20, 60, 120, 200], text: 'Grab {n} coins in one flight', icon: '🪙' },
+  { stat: 'springs', n: [1, 2, 3, 4], text: 'Bounce on {n} springboards in one flight', icon: '🦘' },
+  { stat: 'rings', n: [1, 2, 3, 4], text: 'Fly through {n} gold rings in one flight', icon: '💍' },
+  { stat: 'skips', n: [1, 2, 4, 6], text: 'Skip {n} times across the water', icon: '🌊', min: 2 },
+  { stat: 'tnts', n: [1, 1, 2, 3], text: 'Blow up {n} TNT crates in one flight', icon: '🧨' },
+  { stat: 'comboBest', n: [8, 15, 25, 35], text: 'Get a x{n} coin combo', icon: '🔥' },
+  { stat: 'perfect', n: [1, 1, 1, 1], text: 'Land a Perfect Jump', icon: '🎯' }
+];""")
+rep("const day = todayStr(), lv = S.best.alt < 300 ? 0 : S.best.alt < 1800 ? 1 : S.best.alt < SPACE ? 2 : 3;", "const day = todayStr(), lv = S.best.dist < 1500 ? 0 : S.best.dist < 9000 ? 1 : S.best.dist < 24500 ? 2 : 3;")
+rep("return { day, stat: d.stat, n, icon: d.icon, text: d.text.replace('{n}', fmt(n)), pay: [80, 350, 1400, 6000][lv] };", "return { day, stat: d.stat, n, icon: d.icon, text: d.text.replace('{n}', fmt(n)), pay: [80, 450, 2000, 7000][lv] };")
+# ---------------- the finish: a summary, fireworks, and the World Cape ----------------
+rex(r"function endSummary\(\) \{\n.*?\n\}", """function endSummary() {
+  const el = $('endSum'); if (!el) return;
+  el.innerHTML = [`📅 Day ${S.day}`, `🌍 ${fmt(Math.max(S.best.dist, F ? F.maxX : 0))} m`, `💥 ${fmt(lifeV('smash') + (F ? F.smash : 0))} smashed`, `🥚 ${eggCount()}/${EGG_ZONES.length} eggs`, `🏆 ${TROPHIES.filter(q => S.troph[q.id]).length}/${TROPHIES.length}`].map(x => `<span>${x}</span>`).join('');
+}""")
+rep("""over the prairie, the desert, two oceans, the jungle, the canyon, the frozen north and the megacity, and back home to the farm.`;
+    show('scrEnd');""", """over the prairie, the desert, the savanna, two oceans and the volcano isles, the jungle, the canyon, the Alps, the frozen north, the megacity and the beach, and back home to the farm.`;
+    document.querySelector('#scrEnd ul').innerHTML = '<li>You win the <b>World Cape</b> (in Looks) and a big trophy.</li><li>Hard challenges for real globe-trotters, and the <b>Egg</b> tab: hatch a new egg for golden perks.</li><li>Every extra lap pays a big bonus. How many laps can Pepper do?</li>';
+    endSummary(); show('scrEnd');""")
+rep("""  FLASH = 1; sfx.space(); confetti(); banner('PEPPER WENT', 'ALL THE WAY ROUND!');""", """  FLASH = 1; sfx.space(); confetti(); banner('PEPPER WENT', 'ALL THE WAY ROUND!');
+  for (let i = 0; i < 6; i++) setTimeout(() => { if (!F || mode !== 'play') return; const fx = F.x + rnd(-14, 14) * F.hs, fy = F.y + rnd(4, 12) * F.hs, col = ['#ff5a5a', '#ffd23f', '#7dff9a', '#7ad0ff', '#ff8ae0'][i % 5]; burst(fx, fy, 26, () => { const a = Math.random() * 6.28, v = rnd(6, 16); return { t: 'star', x: fx, y: fy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rnd(0.6, 1.2), s: 0.5 * F.hs, add: true, col, rot: rnd(0, 6), vr: rnd(-4, 4) }; }); sfx.pop(); }, 300 + i * 330);""")
+# ---------------- economy: a smooth rocket ladder (the first game's space engines made one huge jump here) ----------------
+rep("  { name: 'Star Engine', thrust: 95, price: 16000, desc: 'Space tech. Only for chickens who made it.', post: 1 },", "  { name: 'Star Engine', thrust: 62, price: 8000, desc: 'Space tech, tuned for flying low and far.', post: 1 },")
+rep("  { name: 'Ion Drive', thrust: 110, price: 34000, desc: 'A soft blue glow that never stops pushing.', post: 2 },", "  { name: 'Ion Drive', thrust: 74, price: 19000, desc: 'A soft blue glow that never stops pushing.', post: 1 },")
+rep("  { name: 'Warp Core', thrust: 145, price: 80000, desc: 'Bends space a little. Hold on to your feathers.', post: 2 },", "  { name: 'Warp Core', thrust: 88, price: 42000, desc: 'Bends space a little. Hold on to your feathers.', post: 2 },")
+rep("  { name: 'Cosmic Thruster', thrust: 178, price: 190000, desc: 'The engine of legends. Points at the stars.', post: 3 }", "  { name: 'Cosmic Thruster', thrust: 105, price: 95000, desc: 'The engine of legends. Points at the horizon.', post: 3 }")
+rep("    dist: Math.round(r.dist * 0.2 * k),", "    dist: Math.round(r.dist * 0.28 * k),")
+rep("{ name: 'Star Engine', thrust: 62, price: 8000,", "{ name: 'Star Engine', thrust: 62, price: 6500,")
+# the further round you get, the more each metre pays (so the middle of the trip does not drag)
+rep("    dist: Math.round(r.dist * 0.28 * k),", "    dist: Math.round(r.dist * 0.28 * (1 + Math.min(r.dist, WORLD) / 7000) * k),")
+# the title demo flies Pepper, not a white hen
+rep("  F.look = { skin: ['white', 'brown', 'rainbow'][demoN % 3],", "  F.look = { skin: ['midnight', 'midnight', 'gold'][demoN % 3],")
+# crossing the finish line: keep the big lap banner on screen instead of a 'Welcome to Home Farm' one
+rep("    case 'region': if (!quiet) {", "    case 'region': if (!quiet && !(F.x > WORLD && wmod(F.x) < 400)) {")
