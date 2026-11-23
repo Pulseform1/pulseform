@@ -9843,6 +9843,7 @@ const GAME = {
   on('charge', f => { if (!M || M.mode === 'demo' || M.phase === 'end') return; const P = me(); if (f === P) toast(isTouch() ? 'YOU HAVE THE CHARGE' : 'YOU HAVE THE CHARGE  ·  H TO DROP IT'); else if (f && f.team === P.team && M.round && M.time - (M.chargeToastT || -9) > .5) toast(f.name.toUpperCase() + ' HAS THE CHARGE'); else if (!f && sideOf(P) === 'att') { const ar = M.charge && areaAt(M.charge.x, M.charge.z); toast('THE CHARGE IS DOWN' + (ar ? '  ·  ' + ar.n.toUpperCase() : '')); } M.chargeToastT = M.time; });
   function tx(g, s, x, y, px, col = BONE, align = 'center', weight = 700) { px = fitPx(g, px); g.font = `${weight} ${px}px ${FONT}`; g.fillStyle = col; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); }
   function rr(g, x, y, w, h, r, fill, stroke, lw = 2) {
+    if (!(w > 0 && h > 0)) return; r = Math.max(0, Math.min(r || 0, w / 2, h / 2));   // (a box squeezed to nothing, or a corner bigger than the box, draws nothing rather than throwing)
     g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
     if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); }
   }
@@ -11318,7 +11319,7 @@ const GAME = {
         rr(g, sx, sy, sw, sh, 4, sh2 ? 'rgba(53,224,200,.3)' : 'rgba(12,16,22,.85)', YOU, 1.2); tx(g, 'SELL', sx + sw / 2, sy + sh / 2 + 1, sh * .55, YOU, 'center', 900); }
       g.save(); g.globalAlpha = can || on || have ? 1 : .35; g.beginPath(); g.rect(cx + 2, cy + 2, cw - 4, ch - 4); g.clip(); const iy = cy + tp * 1.7, ih = ch - tp * 1.7 - 3;
       if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih * (G.cat === 'Sidearm' ? 1.12 : 1.05), (cw - 12 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.5 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.2 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } }
-      else if (AB) { const mx = cx + cw / 2, my = iy + ih / 2, r = Math.min(ih * .36, cw * .22), mx2 = AB.ab[AB.s2].max; g.strokeStyle = it.col; g.lineWidth = 3 * u; g.beginPath(); g.arc(mx, my - 4 * u, r, 0, TAU); g.stroke(); abIcon(g, ABICON[me().op + AB.s2] || 'orb', mx, my - 4 * u, r * .62, BONE, it.col);
+      else if (AB) { const mx = cx + cw / 2, my = iy + ih / 2, r = Math.max(1, Math.min(ih * .36, cw * .22)), mx2 = AB.ab[AB.s2].max; g.strokeStyle = it.col; g.lineWidth = 3 * u; g.beginPath(); g.arc(mx, my - 4 * u, r, 0, TAU); g.stroke(); abIcon(g, ABICON[me().op + AB.s2] || 'orb', mx, my - 4 * u, r * .62, BONE, it.col);
         rr(g, mx + r * .55, my - 4 * u + r * .35, r * .62, r * .62, 3, it.col); tx(g, AB.s2.toUpperCase(), mx + r * .86, my - 4 * u + r * .66, r * .44, INK, 'center', 900);
         for (let c = 0; c < mx2; c++) { g.fillStyle = c < (P.ab[AB.s2] | 0) ? it.col : 'rgba(255,255,255,.18)'; g.fillRect(mx - mx2 * 7 * u + c * 14 * u + 2 * u, my + r + 2 * u, 10 * u, 6 * u); } }
       else if (N) { const ih2 = ih - tp * 1.1, mx = cx + cw / 2, my = iy + ih2 / 2 + 4 * u, s2 = ih2 / 62; for (let i = 0; i < NADE.per; i++) { const ox = mx + (i - (NADE.per - 1) / 2) * 30 * s2; rr(g, ox - 10 * s2, my - 18 * s2, 20 * s2, 40 * s2, 5 * s2, '#59606b', '#9aa3ad', 1.5); g.fillStyle = NADE.col; g.fillRect(ox - 10 * s2, my - 10 * s2, 20 * s2, 5 * s2); rr(g, ox - 6 * s2, my - 25 * s2, 12 * s2, 8 * s2, 2 * s2, '#3d434b'); g.fillStyle = '#9aa3ad'; g.fillRect(ox + 6 * s2, my - 24 * s2, 3 * s2, 18 * s2); } if (!foot) tx(g, 'CARRY ' + NADE.per, mx, cy + ch - tp * .7, tp * .62, DIM); }
@@ -12887,7 +12888,16 @@ addEventListener('keyup', e => { if (K.state === 'play' && GAME.key) GAME.key(e.
 
 /* ---------- loop ---------- */
 let last = performance.now();
+// One frame. The next is asked for first, and the game's own work runs inside a guard: an error in one frame (a window
+// caught mid-resize, half way in or out of full screen, made one game draw a box with a negative size) used to end the
+// loop for good, leaving a black screen and, online, a player the others stopped hearing from. Now that frame is lost,
+// the error is logged once, and the next frame carries on. A window squeezed to almost nothing is not drawn at all.
+let frameErrs = 0;
 function frame(now) {
+  requestAnimationFrame(frame);
+  try { frameBody(now); } catch (e) { if (frameErrs++ < 3) console.error(e); }
+}
+function frameBody(now) {
   const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
   const run = K.state === 'play' || K.state === 'title' || K.state === 'over';
   if (run && !POSE) {
@@ -12895,13 +12905,13 @@ function frame(now) {
     if (K.bot && K.state === 'title') { if (botOverAt && K.t > botOverAt) { botOverAt = 0; attract(); } else if (!botOverAt && GAME.bot) GAME.bot(dt); }
     GAME.update(dt); fx(dt);
   }
+  if (innerWidth < 80 || innerHeight < 60) { masterSync(); return; }   // (mid-resize: nothing sensible fits, so draw nothing this frame)
   g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = GAME.bg || '#000'; g.fillRect(0, 0, innerWidth, innerHeight);
   const sx = shake ? (Math.random() - .5) * shake : 0, sy = shake ? (Math.random() - .5) * shake : 0;
   g.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * (ox + sx * sc), dpr * (oy + sy * sc));
   GAME.draw(g); drawFx();
   if (flashA > 0) { g.globalAlpha = flashA; g.fillStyle = flashC; g.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); g.globalAlpha = 1; }
   masterSync();
-  requestAnimationFrame(frame);
 }
 if (GAME.noSkins) { $('bSkins').parentNode.hidden = true; $('bSkins2').hidden = true; }
 if (GAME.noHud) { $('hScore').hidden = true; document.querySelector('.hud-coins').hidden = true; }

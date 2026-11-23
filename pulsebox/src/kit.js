@@ -228,7 +228,16 @@ addEventListener('keyup', e => { if (K.state === 'play' && GAME.key) GAME.key(e.
 
 /* ---------- loop ---------- */
 let last = performance.now();
+// One frame. The next is asked for first, and the game's own work runs inside a guard: an error in one frame (a window
+// caught mid-resize, half way in or out of full screen, made one game draw a box with a negative size) used to end the
+// loop for good, leaving a black screen and, online, a player the others stopped hearing from. Now that frame is lost,
+// the error is logged once, and the next frame carries on. A window squeezed to almost nothing is not drawn at all.
+let frameErrs = 0;
 function frame(now) {
+  requestAnimationFrame(frame);
+  try { frameBody(now); } catch (e) { if (frameErrs++ < 3) console.error(e); }
+}
+function frameBody(now) {
   const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
   const run = K.state === 'play' || K.state === 'title' || K.state === 'over';
   if (run && !POSE) {
@@ -236,13 +245,13 @@ function frame(now) {
     if (K.bot && K.state === 'title') { if (botOverAt && K.t > botOverAt) { botOverAt = 0; attract(); } else if (!botOverAt && GAME.bot) GAME.bot(dt); }
     GAME.update(dt); fx(dt);
   }
+  if (innerWidth < 80 || innerHeight < 60) { masterSync(); return; }   // (mid-resize: nothing sensible fits, so draw nothing this frame)
   g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = GAME.bg || '#000'; g.fillRect(0, 0, innerWidth, innerHeight);
   const sx = shake ? (Math.random() - .5) * shake : 0, sy = shake ? (Math.random() - .5) * shake : 0;
   g.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * (ox + sx * sc), dpr * (oy + sy * sc));
   GAME.draw(g); drawFx();
   if (flashA > 0) { g.globalAlpha = flashA; g.fillStyle = flashC; g.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); g.globalAlpha = 1; }
   masterSync();
-  requestAnimationFrame(frame);
 }
 if (GAME.noSkins) { $('bSkins').parentNode.hidden = true; $('bSkins2').hidden = true; }
 if (GAME.noHud) { $('hScore').hidden = true; document.querySelector('.hud-coins').hidden = true; }
