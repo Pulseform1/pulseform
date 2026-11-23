@@ -44,6 +44,11 @@ const { assert, quiet, awaken, page } = require('./helpers');
     if (w > 320) over.push(id + ':' + w);
   }
   assert(over.length === 0, 'no sideways scrolling at 320px (' + over.join(',') + ')');
+  const hud = await p.evaluate(() => { const b = s => document.querySelector(s).getBoundingClientRect();
+    return { clipped: [...document.querySelectorAll('#tabs .tab-l')].filter(l => l.scrollWidth > l.clientWidth).map(l => l.textContent), labels: document.querySelectorAll('#tabs .tab-l').length,
+      oneRow: b('#top .icon-btn[data-a=settings]').bottom <= b('#top .lv').bottom + 2 && b('#top .coin').right <= b('#top .icon-btn[data-a=settings]').left && b('#top .icon-btn[data-a=settings]').right <= innerWidth };
+  });
+  assert(hud.labels === 6 && hud.clipped.length === 0 && hud.oneRow, 'the top bar and all six tab labels fit at 320px (' + hud.clipped.join(',') + ')');
   assert(errors.length === 0, 'no page errors ' + JSON.stringify(errors));
   await b.close();
 })();

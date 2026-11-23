@@ -102,8 +102,6 @@ h1,h2,h3,h4{text-wrap:balance}
 /* ---------- top bar ---------- */
 .top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 10px) 0 14px;background:linear-gradient(var(--void) 72%,transparent)}
 .lv{flex:none;width:48px;height:48px;display:grid;place-items:center;align-content:center;gap:1px;background:var(--line-c);border:1px solid var(--line-a);border-radius:3px;box-shadow:0 0 14px var(--line-b),inset 0 0 10px var(--line-c)}
-.lv small{font:600 12px/1 var(--f-disp);letter-spacing:.14em;color:var(--dim)}
-.lv b{font:700 20px/1 var(--f-disp);font-variant-numeric:tabular-nums}
 .who{flex:1;min-width:0;display:grid;gap:7px}
 .who-n{display:flex;align-items:center;gap:8px;min-width:0}
 .nm{font:600 18px/1.1 var(--f-disp);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -115,19 +113,60 @@ h1,h2,h3,h4{text-wrap:balance}
 .icon-btn:active{background:var(--line-c)}
 .rk{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 5px;border:1px solid currentColor;border-radius:2px;font:700 12px/1 var(--f-disp);letter-spacing:.04em;flex:none}
 .rk-E{color:var(--rank-e)}.rk-D{color:var(--rank-d)}.rk-C{color:var(--rank-c)}.rk-B{color:var(--rank-b)}.rk-A{color:var(--rank-a)}.rk-S{color:var(--rank-s)}
+/* hunter card HUD (spec 3.2): portrait ring = XP, HP/MP segment bars; no <img> in #top (the face is a CSS background) */
+.top.hud{min-height:72px;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 8px) 0 14px}
+.top.hud::after{content:"";position:absolute;left:-16px;right:-16px;bottom:8px;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--line-a) 18%,var(--line-a) 82%,transparent)}
+.lv.hud-port{position:relative;width:56px;height:56px;padding:0;border:0;border-radius:50%;color:var(--ink);
+  background:radial-gradient(circle at 50% 38%,var(--rk-b),var(--void) 70%);box-shadow:0 0 16px var(--rk-b)}
+.hud-ring{position:absolute;inset:0;border-radius:50%;pointer-events:none;background:conic-gradient(var(--rk) calc(var(--xp,0)*1turn),var(--line-c) 0);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3.5px));
+  filter:drop-shadow(0 0 4px var(--rk))}
+.hud-face{position:absolute;left:4px;top:4px;width:48px;height:48px;border-radius:50%;background:no-repeat center/48px 48px;image-rendering:pixelated;pointer-events:none}
+.hud-init{font:700 22px/1 var(--f-disp);color:var(--ink);text-transform:uppercase}
+.hud-lv{position:absolute;right:-6px;bottom:-4px;min-width:28px;height:22px;padding:0 5px;display:grid;place-items:center;background:var(--void);border:1px solid var(--rk);color:var(--ink);font:700 14px/1 var(--f-disp)}
+.hud .who{gap:0}
+.hud .who-n{min-height:22px}
+.hud-bars{display:grid;gap:4px;margin-top:6px}
+.hb{display:grid;grid-template-columns:22px 1fr;gap:6px;align-items:center;font:700 12px/1 var(--f-disp);letter-spacing:.06em}
+.hb span{color:var(--dim)}.hb.hp span{color:var(--red-glow)}.hb.mp span{color:var(--glow)}
+.hb i{position:relative;display:block;height:6px;background:var(--line-c);overflow:hidden}
+.hb i::before{content:"";position:absolute;inset:0;transform-origin:left;transform:scaleX(var(--v,0));background:linear-gradient(90deg,var(--c1),var(--c2))}
+.hb i::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),rgba(3,6,13,.85) calc(10% - 1px) 10%)}
+.hb.hp{--c1:var(--hp1);--c2:var(--hp2)}.hb.mp{--c1:var(--line);--c2:var(--glow)}
+.hud .xpbar{position:absolute;left:0;right:0;bottom:6px;height:3px}
+.hud .coin{flex:none}
+.hud.weak .hb.hp i{animation:weak 1.6s ease-in-out infinite}
+@keyframes weak{50%{box-shadow:0 0 10px var(--red)}}
+@media (max-width:359px){.hud-tag{position:absolute;width:1px;height:1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.hud.weak .hb.hp span::after{content:"!"}}
 .tag{display:inline-block;padding:2px 6px;border:1px solid currentColor;border-radius:2px;font:600 12px/1.2 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
 .tag.red{color:var(--red)}.tag.gold{color:var(--gold)}.tag.ok{color:var(--ok)}
 
 /* ---------- tab bar ---------- */
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:color-mix(in srgb,var(--void) 86%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--line-b);
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:color-mix(in srgb,var(--void) 90%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:0;
   padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 .tabs-in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
-.tab{position:relative;min-width:0;background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 0 5px;color:var(--dim);font:600 12px/1 var(--f-disp);letter-spacing:.02em;text-transform:uppercase}
+.tabs::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--line-a) 15%,var(--line-a) 85%,transparent)}
+.tab{position:relative;min-width:0;min-height:56px;background:none;border:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;padding:7px 0 5px;color:var(--dim);font:600 12px/1 var(--f-disp);letter-spacing:.02em;text-transform:uppercase}
+/* the icon sits in a span (an <svg> cannot carry ::before), which also holds the active plate and the raised portal */
+.tab-i{position:relative;isolation:isolate;width:24px;height:24px;display:grid;place-items:center;flex:none}
 .tab .i{width:24px;height:24px}
+.tab-l{display:block;max-width:100%;overflow:hidden;white-space:nowrap}
 .tab.on{color:var(--glow);text-shadow:0 0 10px var(--line)}
 .tab.on .i{filter:drop-shadow(0 0 6px var(--line))}
-.tab.on::before{content:"";position:absolute;top:-7px;left:28%;right:28%;height:2px;background:var(--glow);box-shadow:0 0 10px var(--line)}
-.tab .dot{position:absolute;top:3px;left:calc(50% + 9px);width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red)}
+.tab.on .tab-i::before{content:"";position:absolute;left:50%;top:50%;width:44px;height:28px;margin:-14px 0 0 -22px;z-index:-1;background:var(--line-b);
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%)}
+.tab.on::before{content:"";position:absolute;top:-6px;left:30%;right:30%;height:2px;background:var(--glow);box-shadow:0 0 10px var(--line)}
+/* raised Gates portal: rank-toned static rim (no rotation) */
+.tab[data-x=gates] .tab-i{width:48px;height:48px;margin-top:-18px;border-radius:50%;border:1.5px solid var(--rk);
+  background:radial-gradient(circle,var(--rk-b),var(--void) 72%);box-shadow:0 0 14px var(--rk-b)}
+.tab[data-x=gates].on .tab-i::before{display:none}
+.tab[data-x=gates].on .tab-i{box-shadow:0 0 22px var(--rk-a)}
+.tab[data-x=gates].on::before{display:none}
+/* attention markers: red diamond dot; gold count pill for open gates */
+.tab .dot{position:absolute;top:3px;left:calc(50% + 9px);width:8px;height:8px;border-radius:0;transform:rotate(45deg);background:var(--red);box-shadow:0 0 8px var(--red);outline:1px solid var(--void)}
+.tab[data-x=gates] .dot{top:-10px;left:calc(50% - 24px)}
+.tab .cnt{position:absolute;top:-14px;left:calc(50% + 12px);min-width:18px;height:18px;padding:0 4px;border-radius:var(--r-pill);
+  background:var(--gold);color:var(--void);font:700 12px/18px var(--f-disp);letter-spacing:0;text-align:center;text-shadow:none;box-shadow:0 0 0 1px var(--void)}
 
 /* ---------- system window ---------- */
 .view{display:grid;gap:18px;padding-top:2px}
@@ -601,7 +640,7 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .choice b{font:600 16px/1.2 var(--f-disp);letter-spacing:.06em}
 .choice small{color:var(--dim);font-size:14px}
 .choice .tag{justify-self:start;margin-top:4px}
-#toasts{position:fixed;top:calc(env(safe-area-inset-top,0px) + 74px);left:0;right:0;z-index:70;display:grid;justify-items:center;gap:6px;pointer-events:none;padding:0 16px}
+#toasts{position:fixed;top:calc(env(safe-area-inset-top,0px) + 80px);left:0;right:0;z-index:70;display:grid;justify-items:center;gap:6px;pointer-events:none;padding:0 16px}
 .toast{max-width:100%;padding:8px 14px;border:1px solid var(--line-a);background:color-mix(in srgb,var(--deep) 94%,transparent);font:600 14px/1.2 var(--f-disp);letter-spacing:.05em;box-shadow:0 0 16px var(--line-b);animation:toast 2.3s ease forwards;text-align:center}
 .toast.stat{border-color:var(--gold);color:var(--gold)}
 .toast.bad{border-color:var(--red);color:var(--red)}
@@ -645,7 +684,8 @@ body.locked .toast.stat{border-left-color:var(--gold)}body.locked .toast.bad{bor
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   /* keep the wave rewards and the defeat readable without motion */
   .wfx,.wfx *,.dfx,.dfx *,.foe,.shade,.dmg{animation:none!important}.foe.die{opacity:.3;filter:grayscale(1)}.wfx-cf,.fx-pts,.slash{display:none}
-  .win-fx::after,.bwarn.sys,.rf.new{animation:none!important}.win-fx::after{display:none}
+  .win-fx::after,.bwarn.sys,.rf.new,.hud.weak .hb.hp i{animation:none!important}.win-fx::after{display:none}
+  .hud.weak .hb.hp i{box-shadow:0 0 8px var(--red)}
   .btn:active{transform:none}}
 /* recovery */
 .joints{list-style:none;margin:0;padding:0;display:grid}
@@ -2111,18 +2151,28 @@ function refresh(){
 }
 document.addEventListener('visibilitychange',()=>document.body.classList.toggle('bg-hidden',document.hidden));
 function renderTop(){
-  const p=S.player,R=rankOf(),need=xpNeed(p.level);
-  $('#top').innerHTML=`<button class="lv" data-a="tab" data-x="status" aria-label="Level ${p.level}. Open status"><small>LV</small><b>${p.level}</b></button>
-    <div class="who"><div class="who-n"><span class="rk rk-${R.id}" title="${R.id}-Rank">${R.id}</span><span class="nm">${esc(p.name)}</span>${weakened()?'<span class="tag red">Weakened</span>':soreJoints().length?'<span class="tag gold">Recovering</span>':''}</div>
-    <div class="xpbar" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="${need}" aria-valuenow="${p.xp}"><i style="width:${p.xp/need*100}%"></i></div></div>
-    <div class="coin" aria-label="${fmt(p.gold)} gold">${ico('coin')}<b>${fmt(p.gold)}</b></div>
-    <button class="icon-btn" data-a="settings" aria-label="Settings">${ico('gear')}</button>`;
+  const p=S.player,R=rankOf(),need=xpNeed(p.level),lv=p.level,name=p.name||'',weak=weakened();
+  const xp=clamp(p.xp/need,0,1),pct=Math.floor(xp*100),hpM=maxHP(),mpM=maxMP(),hp=clamp(p.hp,0,hpM),mp=clamp(p.mp,0,mpM);
+  const face=sprURL('hunter',S.settings.skin==='shadow'?'shadow':''),init=[...name][0]||'?';
+  const tag=weak?['Weakened','red']:soreJoints().length?['Recovering','gold']:null;
+  const top=$('#top');top.className=`top hud rk-tone-${R.id}${weak?' weak':''}`;
+  top.innerHTML=`<button class="lv hud-port" data-a="tab" data-x="status" style="--xp:${xp}" aria-label="Level ${lv}, ${pct}% to level ${lv+1}. Open status">
+      <span class="hud-ring" aria-hidden="true"></span>${face?`<i class="hud-face" aria-hidden="true" style="background-image:url('${face}')"></i>`:`<b class="hud-init" aria-hidden="true">${esc(init)}</b>`}<b class="hud-lv num" aria-hidden="true">${lv}</b></button>
+    <div class="who"><div class="who-n"><span class="rk rk-${R.id}" title="${R.id}-Rank">${R.id}</span><span class="nm">${esc(name)}</span>${tag?`<span class="tag ${tag[1]} hud-tag">${tag[0]}</span>`:''}</div>
+      <div class="hud-bars">
+        <div class="hb hp" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="${hpM}" aria-valuenow="${hp}" style="--v:${hpM?hp/hpM:0}"><span aria-hidden="true">HP</span><i data-k="hud-hp"></i></div>
+        <div class="hb mp" role="meter" aria-label="MP" aria-valuemin="0" aria-valuemax="${mpM}" aria-valuenow="${mp}" style="--v:${mpM?mp/mpM:0}"><span aria-hidden="true">MP</span><i data-k="hud-mp"></i></div>
+      </div></div>
+    <div class="coin" aria-label="${fmt(p.gold)} gold">${ico('coin')}<b class="num" data-cu="gold">${fmt(p.gold)}</b></div>
+    <button class="icon-btn" data-a="settings" aria-label="Settings">${ico('gear')}</button>
+    <div class="xpbar" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="${need}" aria-valuenow="${p.xp}"><i data-k="xp" style="width:${xp*100}%"></i></div>`;
 }
 function renderTabs(){
   const d=S.daily,dots={quest:(d&&!d.cleared&&!d.rest)||weakened(),status:S.player.points>0,gates:!!trialGate(),
     recover:soreJoints().length>0&&!(d&&d.recDone&&d.recDone.length),items:S.inv.box>0,records:false};
+  const open=S.gates.list.length,R=rankOf();
   const tabs=[['quest','Quest'],['status','Status'],['gates','Gates'],['recover','Recover'],['items','Items'],['records','Records']];
-  $('#tabs').innerHTML=`<div class="tabs-in">${tabs.map(([id,l])=>`<button class="tab${UI.tab===id?' on':''}" data-a="tab" data-x="${id}" ${UI.tab===id?'aria-current="page"':''}>${ico(id)}${l}${dots[id]?'<span class="dot" aria-label="needs attention"></span>':''}</button>`).join('')}</div>`;
+  $('#tabs').innerHTML=`<div class="tabs-in">${tabs.map(([id,l])=>`<button class="tab${id==='gates'?` rk-tone-${R.id}`:''}${UI.tab===id?' on':''}" data-a="tab" data-x="${id}" ${UI.tab===id?'aria-current="page"':''}><span class="tab-i">${ico(id==='gates'?'gate':id)}</span><span class="tab-l">${l}</span>${id==='gates'&&open>0?`<span class="cnt num">${open}<span class="sr"> open</span></span>`:''}${dots[id]?'<span class="dot" aria-label="needs attention"></span>':''}</button>`).join('')}</div>`;
 }
 function goalRow(act,x,name,val,tg,label,done){
   const p=tg?Math.min(1,val/tg):0;
