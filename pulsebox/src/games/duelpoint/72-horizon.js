@@ -88,22 +88,32 @@
     const m = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, fog: false, side: THREE.BackSide });
     const c = new THREE.Mesh(new THREE.CylinderGeometry(R, R, Hm, 64, 1, true), m); c.position.set(MW / 2, Hm / 2 - 24, MH / 2); c.renderOrder = -9; W0.add(c);
   }
-  /* The sky's clouds, painted into the dome: cumulus near the horizon, built of soft puffs, lit on the sun's side and grey
-     underneath; thin streaks high up. Smoky and lit from below over the lava; faint violet haze over the city at night;
-     colourful nebula wisps in space. sx: where the sun is across the texture (0..1). */
+  /* The sky's clouds, painted into a see-through picture over the sky: cumulus near the horizon, built of soft puffs, lit on the
+     sun's side and grey underneath; a few thin streaks higher up (never so high that the wrap round the sky bunches them).
+     Smoky and lit from below over the lava; faint violet haze over the city at night; colourful nebula wisps in space.
+     Everything is drawn three times, a picture's width apart, so whatever crosses the picture's edge carries on across the
+     join. sx: where the sun is across the picture (0..1). (The picture is 1024 by 512: the horizon is half way down.) */
   function skyClouds(g, w, h, TH, sx) {
-    const t = MAP.theme || 'harbor', hor = h * .5, n = { snow: 26, jungle: 22, harbor: 16, desert: 7, lava: 18, neon: 10, space: 12, autumn: 15 }[t] || 14;
-    if (t === 'space') { for (let i = 0; i < n; i++) { const x = Math.random() * w, y = h * (.12 + Math.random() * .3), c = ['120,80,220', '60,160,255', '255,90,160'][i % 3]; for (let k = 0; k < 8; k++) { const gr = g.createRadialGradient(x + k * 18, y + Math.sin(k) * 10, 0, x + k * 18, y + Math.sin(k) * 10, 60 + Math.random() * 60); gr.addColorStop(0, `rgba(${c},.09)`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.fillRect(0, 0, w, hor); } } return; }
-    // high streaks
-    if (t !== 'lava') for (let i = 0; i < 10; i++) { const x = Math.random() * w, y = h * (.12 + Math.random() * .16); g.fillStyle = `rgba(255,255,255,${t === 'neon' ? .03 : .08 + Math.random() * .08})`; g.beginPath(); g.ellipse(x, y, 120 + Math.random() * 200, 3 + Math.random() * 4, (Math.random() - .5) * .1, 0, 7); g.fill(); }
+    const t = MAP.theme || 'harbor', hor = h * .5, n = { snow: 26, jungle: 22, harbor: 16, desert: 7, lava: 18, neon: 10, space: 12, autumn: 15 }[t] || 14, R = Math.random;
+    const wrap = fn => { for (const dx of [-w, 0, w]) { g.save(); g.translate(dx, 0); fn(); g.restore(); } };
+    if (t === 'space') { for (let i = 0; i < n; i++) { const x = R() * w, y = h * (.2 + R() * .26), c = ['120,80,220', '60,160,255', '255,90,160'][i % 3], parts = Array.from({ length: 8 }, (_, k) => [x + k * 18, y + Math.sin(k) * 10, 60 + R() * 60]);
+        wrap(() => { for (const [px, py, r] of parts) { const gr = g.createRadialGradient(px, py, 0, px, py, r); gr.addColorStop(0, `rgba(${c},.09)`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.fillRect(px - r, py - r, r * 2, r * 2); } }); } return; }
+    const soft = px => { if ('filter' in g) g.filter = px ? `blur(${px}px)` : 'none'; };
+    // high streaks (no higher than about 45 degrees up, and not too long, or they bend into rings round the top of the sky)
+    if (t !== 'lava') for (let i = 0; i < 10; i++) { const x = R() * w, y = h * (.25 + R() * .1), a = t === 'neon' ? .03 : .07 + R() * .07, rx = 28 + R() * 45, ry = 2 + R() * 2.5, rot = (R() - .5) * .08;
+      wrap(() => { soft(1.5); g.fillStyle = `rgba(255,255,255,${a})`; g.beginPath(); g.ellipse(x, y, rx, ry, rot, 0, 7); g.fill(); soft(0); }); }
     for (let i = 0; i < n; i++) {
-      const x = Math.random() * w, y = hor - h * (.03 + Math.random() * .12), s = (1 - (hor - y) / (h * .2)) * .6 + .5, cw = (50 + Math.random() * 90) * s, ch = (14 + Math.random() * 18) * s;
+      const x = R() * w, y = hor - h * (.03 + R() * .12), s = (1 - (hor - y) / (h * .2)) * .6 + .5, cw = (50 + R() * 90) * s, ch = (14 + R() * 18) * s;
       const dsun = Math.min(Math.abs(x - sx * w), w - Math.abs(x - sx * w)) / w, lit = t === 'lava' ? 'rgba(255,150,90,' : t === 'neon' ? 'rgba(200,150,255,' : `rgba(255,${Math.round(252 - 30 * (1 - dsun * 2))},${Math.round(245 - 50 * (1 - dsun * 2))},`;
       const body = t === 'lava' ? 'rgba(70,40,34,' : t === 'neon' ? 'rgba(80,50,120,' : 'rgba(255,255,255,', shade = t === 'lava' ? 'rgba(40,22,18,' : t === 'neon' ? 'rgba(30,20,50,' : t === 'snow' ? 'rgba(170,184,204,' : 'rgba(190,204,222,', a = t === 'neon' ? .35 : .85;
-      const puffs = Array.from({ length: 6 + Math.floor(Math.random() * 6) }, () => [x + (Math.random() - .5) * cw * 1.6, y - Math.random() * ch * 1.2, ch * (.6 + Math.random() * .7)]);
-      g.fillStyle = shade + (a * .7) + ')'; g.beginPath(); for (const [px, py, r] of puffs) { g.moveTo(px + r * 1.4, py + r * .35); g.ellipse(px, py + r * .35, r * 1.4, r * .7, 0, 0, 7); } g.fill();   // the shaded underside
-      g.fillStyle = body + a + ')'; g.beginPath(); for (const [px, py, r] of puffs) { g.moveTo(px + r, py); g.arc(px, py, r, 0, 7); } g.fill();
-      if (t === 'lava') { g.fillStyle = 'rgba(255,120,50,.35)'; g.beginPath(); for (const [px, py, r] of puffs) { g.moveTo(px + r, py + r * .5); g.ellipse(px, py + r * .5, r, r * .4, 0, 0, 7); } g.fill(); }   // lit from below by the lava
-      else { const side = ((sx * w - x + w * 1.5) % w - w / 2) > 0 ? 1 : -1; g.fillStyle = lit + (a * .6) + ')'; g.beginPath(); for (const [px, py, r] of puffs) { g.moveTo(px + side * r * .3 + r * .7, py - r * .3); g.arc(px + side * r * .3, py - r * .3, r * .7, 0, 7); } g.fill(); }   // lit on the sun's side
+      const puffs = Array.from({ length: 6 + Math.floor(R() * 6) }, () => [x + (R() - .5) * cw * 1.6, y - R() * ch * 1.2, ch * (.6 + R() * .7)]), side = ((sx * w - x + w * 1.5) % w - w / 2) > 0 ? 1 : -1;
+      const fill = (style, f) => { g.fillStyle = style; g.beginPath(); for (const q of puffs) f(...q); g.fill(); };
+      wrap(() => {
+        soft(1.2); fill(shade + (a * .7) + ')', (px, py, r) => { g.moveTo(px + r * 1.4, py + r * .35); g.ellipse(px, py + r * .35, r * 1.4, r * .7, 0, 0, 7); });   // the shaded underside
+        if (t === 'lava') fill('rgba(255,120,50,.4)', (px, py, r) => { g.moveTo(px + r * 1.1, py + r * .55); g.ellipse(px, py + r * .55, r * 1.1, r * .55, 0, 0, 7); });   // lit from below by the lava: under the body, so only its lower edge glows
+        soft(.6); fill(body + a + ')', (px, py, r) => { g.moveTo(px + r, py); g.arc(px, py, r, 0, 7); });
+        if (t !== 'lava') { soft(2); fill(lit + (a * .5) + ')', (px, py, r) => { g.moveTo(px + side * r * .3 + r * .7, py - r * .3); g.arc(px + side * r * .3, py - r * .3, r * .7, 0, 7); }); }   // lit on the sun's side
+        soft(0);
+      });
     }
   }

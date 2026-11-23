@@ -61,18 +61,41 @@
     addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
     X.texLog = []; buildWorld(); buildSky(); X.mapTex = X.texLog; X.texLog = null; buildFx(); warmShaders(); try { buildPortraits(); } catch (e) { console.warn(e); }
   }
+  /* The sky. Its colours, the sun and the stars are worked out for each direction you look in (a small shader), so they are
+     the same wherever you look: round, with nothing pinched together overhead (painted into a picture wrapped round a sphere,
+     everything drawn up high gathered into a funnel straight above, and the sun was a tall smear). The clouds are painted
+     into a see-through picture laid over it, kept low enough on the sky that the wrap does not stretch them, and drawn
+     across its two edges so none is cut where they meet. One mesh, one draw. */
+  const SKY_VS = 'varying vec3 vDir; varying vec2 vUv; void main() { vDir = position; vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
+  const SKY_FS = `uniform vec3 top; uniform vec3 mid; uniform vec3 hor; uniform vec3 sunDir; uniform float glowK; uniform float stars; uniform sampler2D map;
+    varying vec3 vDir; varying vec2 vUv;
+    float hash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+    void main() {
+      vec3 d = normalize(vDir);
+      float t = smoothstep(0.0, 1.0, clamp(acos(clamp(d.y, -1.0, 1.0)) / 3.14159265 * 2.0, 0.0, 1.0));   // 0 straight up, 1 at the horizon and below (eased, so the top colour spreads evenly instead of gathering in a spot overhead)
+      vec3 col = t < 0.55 ? mix(top, mid, t / 0.55) : mix(mid, hor, (t - 0.55) / 0.45);
+      if (stars > 0.0 && d.y > 0.0) {   // a star in about one cell in a hundred of a fine grid on the sky
+        vec3 p = d * 260.0, c = floor(p); float h = hash(c);
+        if (h > 0.988) { vec3 at = c + 0.5 + (vec3(hash(c + 7.1), hash(c + 3.3), hash(c + 5.7)) - 0.5) * 0.5; float k = smoothstep(0.42, 0.05, length(p - at)) * (0.35 + 0.65 * hash(c + 1.9)) * smoothstep(0.0, 0.15, d.y); col = mix(col, vec3(1.0), k); }
+      }
+      float a = acos(clamp(dot(d, sunDir), -1.0, 1.0));   // how far from the sun, in radians
+      float disc = smoothstep(0.034, 0.026, a), glow = (0.62 * exp(-a * a / 0.012) + 0.34 * exp(-a / 0.32)) * glowK;
+      col = mix(col, vec3(1.0, 0.95, 0.84), clamp(glow, 0.0, 1.0)); col = mix(col, vec3(1.0, 0.99, 0.94), disc * glowK);
+      vec4 cl = texture2D(map, vUv); col = mix(col, cl.rgb, cl.a);
+      gl_FragColor = vec4(pow(col, vec3(2.2)), 1.0);
+      #include <tonemapping_fragment>
+      #include <encodings_fragment>
+    }`;
   function buildSky() {
-    const TH = X.theme || { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'] }, S = TH.sky; if (X.dome) { X.scene.remove(X.dome); X.dome.material.map.dispose(); }
-    // the dome: deep blue overhead, pale haze at the horizon, a glow round the sun, a few long clouds
-    const th = Math.acos(SUN[1]) / Math.PI, ph = ((Math.atan2(SUN[2], -SUN[0]) / TAU) + 1) % 1;
-    const tex = canvasTex(X.low ? 1024 : 2048, X.low ? 512 : 1024, (g, w, h) => {
-      const gr = g.createLinearGradient(0, 0, 0, h * .5); gr.addColorStop(0, S[0]); gr.addColorStop(.55, S[1]); gr.addColorStop(1, S[2]); g.fillStyle = gr; g.fillRect(0, 0, w, h * .5); g.fillStyle = S[2]; g.fillRect(0, h * .5, w, h * .5);
-      if (TH.stars) for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(255,255,255,${.3 + Math.random() * .7})`; g.fillRect(Math.random() * w, Math.random() * h * .45, Math.random() < .1 ? 2 : 1, Math.random() < .1 ? 2 : 1); }
-      for (const dx of [-w, 0, w]) { const sg = g.createRadialGradient(ph * w + dx, th * h, 4 * w / 1024, ph * w + dx, th * h, 190 * w / 1024); sg.addColorStop(0, 'rgba(255,252,235,1)'); sg.addColorStop(.06, 'rgba(255,244,205,.95)'); sg.addColorStop(.3, 'rgba(255,230,180,.35)'); sg.addColorStop(1, 'rgba(255,230,180,0)'); g.fillStyle = sg; g.fillRect(0, 0, w, h * .5); }
-      g.save(); g.scale(w / 1024, h / 512); skyClouds(g, 1024, 512, TH, ph); g.restore();   // (72-horizon)
-    });
+    const TH = X.theme || { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'] }, S = TH.sky, t = MAP.theme;
+    if (X.dome) { X.scene.remove(X.dome); X.dome.material.uniforms.map.value.dispose(); X.dome.material.dispose(); }
+    const ph = ((Math.atan2(SUN[2], -SUN[0]) / TAU) + 1) % 1;
+    const tex = canvasTex(X.low ? 1024 : 2048, X.low ? 512 : 1024, (g, w, h) => { g.save(); g.scale(w / 1024, h / 512); skyClouds(g, 1024, 512, TH, ph); g.restore(); });   // (72-horizon)
     tex.wrapT = THREE.ClampToEdgeWrapping;
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(700, 32, 20), new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false, depthWrite: false })); dome.renderOrder = -10; X.scene.add(dome); X.dome = dome;
+    const srgb = c => { const v = new THREE.Color(c); return new THREE.Vector3(v.r, v.g, v.b); }, sd = new THREE.Vector3(SUN[0], SUN[1], SUN[2]).normalize();
+    const mat = new THREE.ShaderMaterial({ vertexShader: SKY_VS, fragmentShader: SKY_FS, side: THREE.BackSide, depthWrite: false, fog: false,
+      uniforms: { top: { value: srgb(S[0]) }, mid: { value: srgb(S[1]) }, hor: { value: srgb(S[2]) }, sunDir: { value: sd }, glowK: { value: t === 'neon' ? .55 : t === 'space' ? .8 : 1 }, stars: { value: TH.stars ? 1 : 0 }, map: { value: tex } } });
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(700, 48, 24), mat); dome.renderOrder = -10; dome.frustumCulled = false; X.scene.add(dome); X.dome = dome;
   }
   // keep the frame rate on slow phones: if frames run long for a while, draw fewer pixels (never fewer than the screen's own)
   // (and if that is not enough, the shadows go: they draw every fighter and gun a second time)

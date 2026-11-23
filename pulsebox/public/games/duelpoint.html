@@ -3236,18 +3236,41 @@ const GAME = {
     addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
     X.texLog = []; buildWorld(); buildSky(); X.mapTex = X.texLog; X.texLog = null; buildFx(); warmShaders(); try { buildPortraits(); } catch (e) { console.warn(e); }
   }
+  /* The sky. Its colours, the sun and the stars are worked out for each direction you look in (a small shader), so they are
+     the same wherever you look: round, with nothing pinched together overhead (painted into a picture wrapped round a sphere,
+     everything drawn up high gathered into a funnel straight above, and the sun was a tall smear). The clouds are painted
+     into a see-through picture laid over it, kept low enough on the sky that the wrap does not stretch them, and drawn
+     across its two edges so none is cut where they meet. One mesh, one draw. */
+  const SKY_VS = 'varying vec3 vDir; varying vec2 vUv; void main() { vDir = position; vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
+  const SKY_FS = `uniform vec3 top; uniform vec3 mid; uniform vec3 hor; uniform vec3 sunDir; uniform float glowK; uniform float stars; uniform sampler2D map;
+    varying vec3 vDir; varying vec2 vUv;
+    float hash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+    void main() {
+      vec3 d = normalize(vDir);
+      float t = smoothstep(0.0, 1.0, clamp(acos(clamp(d.y, -1.0, 1.0)) / 3.14159265 * 2.0, 0.0, 1.0));   // 0 straight up, 1 at the horizon and below (eased, so the top colour spreads evenly instead of gathering in a spot overhead)
+      vec3 col = t < 0.55 ? mix(top, mid, t / 0.55) : mix(mid, hor, (t - 0.55) / 0.45);
+      if (stars > 0.0 && d.y > 0.0) {   // a star in about one cell in a hundred of a fine grid on the sky
+        vec3 p = d * 260.0, c = floor(p); float h = hash(c);
+        if (h > 0.988) { vec3 at = c + 0.5 + (vec3(hash(c + 7.1), hash(c + 3.3), hash(c + 5.7)) - 0.5) * 0.5; float k = smoothstep(0.42, 0.05, length(p - at)) * (0.35 + 0.65 * hash(c + 1.9)) * smoothstep(0.0, 0.15, d.y); col = mix(col, vec3(1.0), k); }
+      }
+      float a = acos(clamp(dot(d, sunDir), -1.0, 1.0));   // how far from the sun, in radians
+      float disc = smoothstep(0.034, 0.026, a), glow = (0.62 * exp(-a * a / 0.012) + 0.34 * exp(-a / 0.32)) * glowK;
+      col = mix(col, vec3(1.0, 0.95, 0.84), clamp(glow, 0.0, 1.0)); col = mix(col, vec3(1.0, 0.99, 0.94), disc * glowK);
+      vec4 cl = texture2D(map, vUv); col = mix(col, cl.rgb, cl.a);
+      gl_FragColor = vec4(pow(col, vec3(2.2)), 1.0);
+      #include <tonemapping_fragment>
+      #include <encodings_fragment>
+    }`;
   function buildSky() {
-    const TH = X.theme || { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'] }, S = TH.sky; if (X.dome) { X.scene.remove(X.dome); X.dome.material.map.dispose(); }
-    // the dome: deep blue overhead, pale haze at the horizon, a glow round the sun, a few long clouds
-    const th = Math.acos(SUN[1]) / Math.PI, ph = ((Math.atan2(SUN[2], -SUN[0]) / TAU) + 1) % 1;
-    const tex = canvasTex(X.low ? 1024 : 2048, X.low ? 512 : 1024, (g, w, h) => {
-      const gr = g.createLinearGradient(0, 0, 0, h * .5); gr.addColorStop(0, S[0]); gr.addColorStop(.55, S[1]); gr.addColorStop(1, S[2]); g.fillStyle = gr; g.fillRect(0, 0, w, h * .5); g.fillStyle = S[2]; g.fillRect(0, h * .5, w, h * .5);
-      if (TH.stars) for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(255,255,255,${.3 + Math.random() * .7})`; g.fillRect(Math.random() * w, Math.random() * h * .45, Math.random() < .1 ? 2 : 1, Math.random() < .1 ? 2 : 1); }
-      for (const dx of [-w, 0, w]) { const sg = g.createRadialGradient(ph * w + dx, th * h, 4 * w / 1024, ph * w + dx, th * h, 190 * w / 1024); sg.addColorStop(0, 'rgba(255,252,235,1)'); sg.addColorStop(.06, 'rgba(255,244,205,.95)'); sg.addColorStop(.3, 'rgba(255,230,180,.35)'); sg.addColorStop(1, 'rgba(255,230,180,0)'); g.fillStyle = sg; g.fillRect(0, 0, w, h * .5); }
-      g.save(); g.scale(w / 1024, h / 512); skyClouds(g, 1024, 512, TH, ph); g.restore();   // (72-horizon)
-    });
+    const TH = X.theme || { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'] }, S = TH.sky, t = MAP.theme;
+    if (X.dome) { X.scene.remove(X.dome); X.dome.material.uniforms.map.value.dispose(); X.dome.material.dispose(); }
+    const ph = ((Math.atan2(SUN[2], -SUN[0]) / TAU) + 1) % 1;
+    const tex = canvasTex(X.low ? 1024 : 2048, X.low ? 512 : 1024, (g, w, h) => { g.save(); g.scale(w / 1024, h / 512); skyClouds(g, 1024, 512, TH, ph); g.restore(); });   // (72-horizon)
     tex.wrapT = THREE.ClampToEdgeWrapping;
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(700, 32, 20), new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false, depthWrite: false })); dome.renderOrder = -10; X.scene.add(dome); X.dome = dome;
+    const srgb = c => { const v = new THREE.Color(c); return new THREE.Vector3(v.r, v.g, v.b); }, sd = new THREE.Vector3(SUN[0], SUN[1], SUN[2]).normalize();
+    const mat = new THREE.ShaderMaterial({ vertexShader: SKY_VS, fragmentShader: SKY_FS, side: THREE.BackSide, depthWrite: false, fog: false,
+      uniforms: { top: { value: srgb(S[0]) }, mid: { value: srgb(S[1]) }, hor: { value: srgb(S[2]) }, sunDir: { value: sd }, glowK: { value: t === 'neon' ? .55 : t === 'space' ? .8 : 1 }, stars: { value: TH.stars ? 1 : 0 }, map: { value: tex } } });
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(700, 48, 24), mat); dome.renderOrder = -10; dome.frustumCulled = false; X.scene.add(dome); X.dome = dome;
   }
   // keep the frame rate on slow phones: if frames run long for a while, draw fewer pixels (never fewer than the screen's own)
   // (and if that is not enough, the shadows go: they draw every fighter and gun a second time)
@@ -3947,23 +3970,33 @@ const GAME = {
     const m = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, fog: false, side: THREE.BackSide });
     const c = new THREE.Mesh(new THREE.CylinderGeometry(R, R, Hm, 64, 1, true), m); c.position.set(MW / 2, Hm / 2 - 24, MH / 2); c.renderOrder = -9; W0.add(c);
   }
-  /* The sky's clouds, painted into the dome: cumulus near the horizon, built of soft puffs, lit on the sun's side and grey
-     underneath; thin streaks high up. Smoky and lit from below over the lava; faint violet haze over the city at night;
-     colourful nebula wisps in space. sx: where the sun is across the texture (0..1). */
+  /* The sky's clouds, painted into a see-through picture over the sky: cumulus near the horizon, built of soft puffs, lit on the
+     sun's side and grey underneath; a few thin streaks higher up (never so high that the wrap round the sky bunches them).
+     Smoky and lit from below over the lava; faint violet haze over the city at night; colourful nebula wisps in space.
+     Everything is drawn three times, a picture's width apart, so whatever crosses the picture's edge carries on across the
+     join. sx: where the sun is across the picture (0..1). (The picture is 1024 by 512: the horizon is half way down.) */
   function skyClouds(g, w, h, TH, sx) {
-    const t = MAP.theme || 'harbor', hor = h * .5, n = { snow: 26, jungle: 22, harbor: 16, desert: 7, lava: 18, neon: 10, space: 12, autumn: 15 }[t] || 14;
-    if (t === 'space') { for (let i = 0; i < n; i++) { const x = Math.random() * w, y = h * (.12 + Math.random() * .3), c = ['120,80,220', '60,160,255', '255,90,160'][i % 3]; for (let k = 0; k < 8; k++) { const gr = g.createRadialGradient(x + k * 18, y + Math.sin(k) * 10, 0, x + k * 18, y + Math.sin(k) * 10, 60 + Math.random() * 60); gr.addColorStop(0, `rgba(${c},.09)`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.fillRect(0, 0, w, hor); } } return; }
-    // high streaks
-    if (t !== 'lava') for (let i = 0; i < 10; i++) { const x = Math.random() * w, y = h * (.12 + Math.random() * .16); g.fillStyle = `rgba(255,255,255,${t === 'neon' ? .03 : .08 + Math.random() * .08})`; g.beginPath(); g.ellipse(x, y, 120 + Math.random() * 200, 3 + Math.random() * 4, (Math.random() - .5) * .1, 0, 7); g.fill(); }
+    const t = MAP.theme || 'harbor', hor = h * .5, n = { snow: 26, jungle: 22, harbor: 16, desert: 7, lava: 18, neon: 10, space: 12, autumn: 15 }[t] || 14, R = Math.random;
+    const wrap = fn => { for (const dx of [-w, 0, w]) { g.save(); g.translate(dx, 0); fn(); g.restore(); } };
+    if (t === 'space') { for (let i = 0; i < n; i++) { const x = R() * w, y = h * (.2 + R() * .26), c = ['120,80,220', '60,160,255', '255,90,160'][i % 3], parts = Array.from({ length: 8 }, (_, k) => [x + k * 18, y + Math.sin(k) * 10, 60 + R() * 60]);
+        wrap(() => { for (const [px, py, r] of parts) { const gr = g.createRadialGradient(px, py, 0, px, py, r); gr.addColorStop(0, `rgba(${c},.09)`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.fillRect(px - r, py - r, r * 2, r * 2); } }); } return; }
+    const soft = px => { if ('filter' in g) g.filter = px ? `blur(${px}px)` : 'none'; };
+    // high streaks (no higher than about 45 degrees up, and not too long, or they bend into rings round the top of the sky)
+    if (t !== 'lava') for (let i = 0; i < 10; i++) { const x = R() * w, y = h * (.25 + R() * .1), a = t === 'neon' ? .03 : .07 + R() * .07, rx = 28 + R() * 45, ry = 2 + R() * 2.5, rot = (R() - .5) * .08;
+      wrap(() => { soft(1.5); g.fillStyle = `rgba(255,255,255,${a})`; g.beginPath(); g.ellipse(x, y, rx, ry, rot, 0, 7); g.fill(); soft(0); }); }
     for (let i = 0; i < n; i++) {
-      const x = Math.random() * w, y = hor - h * (.03 + Math.random() * .12), s = (1 - (hor - y) / (h * .2)) * .6 + .5, cw = (50 + Math.random() * 90) * s, ch = (14 + Math.random() * 18) * s;
+      const x = R() * w, y = hor - h * (.03 + R() * .12), s = (1 - (hor - y) / (h * .2)) * .6 + .5, cw = (50 + R() * 90) * s, ch = (14 + R() * 18) * s;
       const dsun = Math.min(Math.abs(x - sx * w), w - Math.abs(x - sx * w)) / w, lit = t === 'lava' ? 'rgba(255,150,90,' : t === 'neon' ? 'rgba(200,150,255,' : `rgba(255,${Math.round(252 - 30 * (1 - dsun * 2))},${Math.round(245 - 50 * (1 - dsun * 2))},`;
       const body = t === 'lava' ? 'rgba(70,40,34,' : t === 'neon' ? 'rgba(80,50,120,' : 'rgba(255,255,255,', shade = t === 'lava' ? 'rgba(40,22,18,' : t === 'neon' ? 'rgba(30,20,50,' : t === 'snow' ? 'rgba(170,184,204,' : 'rgba(190,204,222,', a = t === 'neon' ? .35 : .85;
-      const puffs = Array.from({ length: 6 + Math.floor(Math.random() * 6) }, () => [x + (Math.random() - .5) * cw * 1.6, y - Math.random() * ch * 1.2, ch * (.6 + Math.random() * .7)]);
-      g.fillStyle = shade + (a * .7) + ')'; g.beginPath(); for (const [px, py, r] of puffs) { g.moveTo(px + r * 1.4, py + r * .35); g.ellipse(px, py + r * .35, r * 1.4, r * .7, 0, 0, 7); } g.fill();   // the shaded underside
-      g.fillStyle = body + a + ')'; g.beginPath(); for (const [px, py, r] of puffs) { g.moveTo(px + r, py); g.arc(px, py, r, 0, 7); } g.fill();
-      if (t === 'lava') { g.fillStyle = 'rgba(255,120,50,.35)'; g.beginPath(); for (const [px, py, r] of puffs) { g.moveTo(px + r, py + r * .5); g.ellipse(px, py + r * .5, r, r * .4, 0, 0, 7); } g.fill(); }   // lit from below by the lava
-      else { const side = ((sx * w - x + w * 1.5) % w - w / 2) > 0 ? 1 : -1; g.fillStyle = lit + (a * .6) + ')'; g.beginPath(); for (const [px, py, r] of puffs) { g.moveTo(px + side * r * .3 + r * .7, py - r * .3); g.arc(px + side * r * .3, py - r * .3, r * .7, 0, 7); } g.fill(); }   // lit on the sun's side
+      const puffs = Array.from({ length: 6 + Math.floor(R() * 6) }, () => [x + (R() - .5) * cw * 1.6, y - R() * ch * 1.2, ch * (.6 + R() * .7)]), side = ((sx * w - x + w * 1.5) % w - w / 2) > 0 ? 1 : -1;
+      const fill = (style, f) => { g.fillStyle = style; g.beginPath(); for (const q of puffs) f(...q); g.fill(); };
+      wrap(() => {
+        soft(1.2); fill(shade + (a * .7) + ')', (px, py, r) => { g.moveTo(px + r * 1.4, py + r * .35); g.ellipse(px, py + r * .35, r * 1.4, r * .7, 0, 0, 7); });   // the shaded underside
+        if (t === 'lava') fill('rgba(255,120,50,.4)', (px, py, r) => { g.moveTo(px + r * 1.1, py + r * .55); g.ellipse(px, py + r * .55, r * 1.1, r * .55, 0, 0, 7); });   // lit from below by the lava: under the body, so only its lower edge glows
+        soft(.6); fill(body + a + ')', (px, py, r) => { g.moveTo(px + r, py); g.arc(px, py, r, 0, 7); });
+        if (t !== 'lava') { soft(2); fill(lit + (a * .5) + ')', (px, py, r) => { g.moveTo(px + side * r * .3 + r * .7, py - r * .3); g.arc(px + side * r * .3, py - r * .3, r * .7, 0, 7); }); }   // lit on the sun's side
+        soft(0);
+      });
     }
   }
   /* ---------- 72 world: the mesh of Saltworks, generated from the map's cells ----------
