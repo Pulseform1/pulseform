@@ -345,7 +345,7 @@
     }
     // an ultimate orb close by, with nothing else going on: go and take it
     if (M.orbs && !sees && !engaged && !fresh && !M.planted && P.k !== 'retake' && (f.ult | 0) < ultCost(f) && !gun(f).melee) {
-      const o = M.orbs.find(q => !q.taken && Math.hypot(q.x - f.x, q.z - f.z) < 7 && Math.abs(hAt(q.x, q.z) - f.y) < .5);
+      const o = M.orbs.find(q => !q.taken && Math.hypot(q.x - f.x, q.z - f.z) < 7 && Math.abs(hAt(q.x, q.z) - f.y) < .5 && walkLine(f.x, f.z, q.x, q.z));   // (one it can walk straight to: an orb the other side of a wall had a bot pushing at the wall all round)
       if (o) { if (Math.hypot(o.x - f.x, o.z - f.z) < ORB.r * .7) { I.use = true; goal = null; } else goal = [o.x, o.z]; }
     }
     B.hp0 = f.hp;
