@@ -196,9 +196,15 @@
   const lockerName = k => k === 'knife' ? 'KNIFE' : GUNS[k].n.toUpperCase();
   function drawLocker(g, V, W, u) {
     if (SH.lview === 'gun') return drawLockerGun(g, V, W, u);
+    if (SH.lview === 'card') return drawLockerCard(g, V, W, u);
     const x0 = V.x0 + 60 / pxPer() + 20 * u, x1 = V.x1 - 24 * u, top = V.y0 + 92 * u, t = X ? X.t : 0;
     tx(g, 'LOCKER', x0, V.y0 + 46 * u, 40 * u, BONE, 'left', 900); g.font = `900 ${fitPx(g, 40 * u)}px ${FONT}`; const tw0 = g.measureText('LOCKER').width;
-    tx(g, `YOUR LOADOUT  ·  ${STATS.skins.length} SKIN${STATS.skins.length === 1 ? '' : 'S'}`, x0 + tw0 + 16 * u, V.y0 + 52 * u, 11 * u, DIM, 'left', 900);
+    const lt = `YOUR LOADOUT  ·  ${STATS.skins.length} SKIN${STATS.skins.length === 1 ? '' : 'S'}`; tx(g, lt, x0 + tw0 + 16 * u, V.y0 + 52 * u, 11 * u, DIM, 'left', 900);
+    // your player card: the banner and title other players see (worn here, earned on the season pass)
+    { g.font = `900 ${fitPx(g, 11 * u)}px ${FONT}`; const bx = x0 + tw0 + 32 * u + g.measureText(lt).width, bw = Math.min(210 * u, V.x1 - 290 * u - bx), bh = tapH(36), by = V.y0 + 46 * u - bh / 2 + 4 * u, c = myCard();
+      if (bw > 120 * u) { const hot = zone(bx, by, bw, bh, () => { SH.lview = 'card'; click(); });
+        bannerBg(g, bx, by, bw, bh, c.banner, 8); rr(g, bx, by, bw, bh, 8, null, hot ? BONE : 'rgba(239,233,220,.4)', hot ? 2 : 1.5);
+        tx(g, 'PLAYER CARD  ›', bx + 12 * u, by + bh * .36, 12 * u, BONE, 'left', 900); fitTx(g, c.title ? c.title.toUpperCase() : 'NO TITLE', bx + 12 * u, by + bh * .7, 9.5 * u, (BANNERS[c.banner] || BANNERS.plain)[2], 'left', 800, bw - 24 * u); } }
     coinTag(g, V.x1 - 266 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'STORE', () => { UI.panel = 'store'; }, { px: 13 * u });
     const gap = 10 * u, hh = 20 * u, tg = 6 * u, cw = (x1 - x0 - gap * 3) / 4, availH = V.y1 - 10 * u - top;
     LOCKER_COLS.forEach((secs, ci) => {
@@ -217,6 +223,37 @@
           g.restore(); y += th + tg; }
         y += 8 * u - tg; });
     });
+  }
+  /* Your player card: the banner behind it and the title under your name, as everyone sees them in a lobby, on the
+     scoreboard and in agent select. Every title and banner there is, in two lists: tap one you have to wear it; the rest
+     are shown dimmed, with where to get them (the season pass hands them out). */
+  function drawLockerCard(g, V, W, u) {
+    const x0 = V.x0 + 60 / pxPer() + 20 * u, x1 = V.x1 - 24 * u, c = myCard(), owned = { t: new Set(STATS.titles || []), b: new Set(['plain', ...(STATS.banners || [])]) };
+    btn(g, x0, V.y0 + 24 * u, 150 * u, tapH(36), '‹  LOADOUT', () => { SH.lview = 'grid'; }, { px: 13 * u });
+    const ty = V.y0 + 24 * u + tapH(36) + 30 * u; tx(g, 'PLAYER CARD', x0, ty, 34 * u, BONE, 'left', 900);
+    tx(g, 'WHAT OTHER PLAYERS SEE: IN THE LOBBY, ON THE SCOREBOARD, IN AGENT SELECT', x0 + 2 * u, ty + 26 * u, 10.5 * u, DIM, 'left', 900);
+    // the card itself, large
+    const touch = isTouch(), cw0 = Math.min(560 * u, x1 - x0), chh = (touch ? 64 : 92) * u, cy = ty + (touch ? 36 : 44) * u;   // (a phone: a shorter card and more columns, so the rows stay big enough to tap)
+    playerCard(g, x0, cy, cw0, chh, u, { name: MP.name || 'You', op: CFG.op, lv: c.lv, title: c.title, banner: c.banner, edge: BONE });
+    if (SH.msg && performance.now() - SH.msg.t0 < 2600) fitTx(g, SH.msg.s, x0 + cw0 + 20 * u, cy + chh / 2, 13 * u, SH.msg.good ? YOU : GOLD, 'left', 800, x1 - x0 - cw0 - 20 * u);
+    const lockMsg = what => { SH.msg = { s: `${what} comes from the season pass: see the PASS page`, t0: performance.now() }; click(false); };
+    // the two lists: titles on the left, banners on the right
+    const top = cy + chh + (touch ? 22 : 26) * u, gap = 26 * u, lw = (x1 - x0 - gap) * .58, rx = x0 + lw + gap, rw = x1 - rx, avail = V.y1 - 14 * u - top - 18 * u;
+    const nT = owned.t.size, nB = [...owned.b].filter(k => BANNERS[k]).length;
+    tx(g, `TITLES  ·  ${nT} OF ${TITLES.length}`, x0, top, 11 * u, DIM, 'left', 900); tx(g, `BANNERS  ·  ${nB} OF ${Object.keys(BANNERS).length}`, rx, top, 11 * u, DIM, 'left', 900);
+    // titles: 'none' first, then the ones you have, then the rest
+    const tl = ['', ...TITLES.filter(q => owned.t.has(q)), ...TITLES.filter(q => !owned.t.has(q))], tc = touch ? 4 : 3, tr = Math.ceil(tl.length / tc), tg = 6 * u, th = cl((avail - (tr - 1) * tg) / tr, 22 * u, 40 * u), tw = (lw - (tc - 1) * tg) / tc;
+    tl.forEach((q, i) => { const x = x0 + (i % tc) * (tw + tg), y = top + 14 * u + Math.floor(i / tc) * (th + tg), have = q === '' || owned.t.has(q), on = (c.title || '') === q;
+      const hot = zone(x, y, tw, th, () => { if (!have) return lockMsg('That title'); if (!on) { STATS.title = q; saveAll(true); click(); } });
+      rr(g, x, y, tw, th, 6, on ? 'rgba(53,224,200,.14)' : hot && have ? 'rgba(239,233,220,.12)' : 'rgba(13,17,24,.9)', on ? YOU : hot ? 'rgba(239,233,220,.6)' : have ? 'rgba(239,233,220,.24)' : 'rgba(239,233,220,.08)', on ? 2 : 1);
+      fitTx(g, (on ? '✓ ' : have ? '' : '🔒 ') + (q ? q.toUpperCase() : 'NO TITLE'), x + tw / 2, y + th / 2, Math.min(11.5 * u, th * .36), on ? YOU : have ? BONE : '#5a6272', 'center', 900, tw - 12 * u); });
+    // banners: plain first, then the ones you have, then the rest; each swatch is the banner itself
+    const keys = Object.keys(BANNERS), bl = ['plain', ...keys.filter(k => k !== 'plain' && owned.b.has(k)), ...keys.filter(k => k !== 'plain' && !owned.b.has(k))], bc = touch ? 3 : 2, br = Math.ceil(bl.length / bc), bg = 6 * u, bh = cl((avail - (br - 1) * bg) / br, 22 * u, 44 * u), bw = (rw - (bc - 1) * bg) / bc;
+    bl.forEach((k, i) => { const x = rx + (i % bc) * (bw + bg), y = top + 14 * u + Math.floor(i / bc) * (bh + bg), have = owned.b.has(k), on = c.banner === k;
+      const hot = zone(x, y, bw, bh, () => { if (!have) return lockMsg('That banner'); if (!on) { STATS.banner = k; saveAll(true); click(); } });
+      g.save(); if (!have) g.globalAlpha = .32; bannerBg(g, x, y, bw, bh, k, 6); g.restore();
+      rr(g, x, y, bw, bh, 6, null, on ? YOU : hot ? BONE : have ? 'rgba(239,233,220,.3)' : 'rgba(239,233,220,.1)', on ? 2.5 : 1.2);
+      fitTx(g, (on ? '✓ ' : have ? '' : '🔒 ') + bannerName(k).toUpperCase(), x + 10 * u, y + bh / 2, Math.min(11.5 * u, bh * .34), on ? YOU : have ? BONE : '#6a7282', 'left', 900, bw - 20 * u); });
   }
   function drawLockerGun(g, V, W, u) {
     const x0 = V.x0 + 60 / pxPer() + 20 * u, x1 = V.x1 - 24 * u, k = SH.locker, std = 'std:' + k, eqId = STATS.equip[k] || std, sel = SH.lsel || eqId, sk = skinOfId(sel), t = X ? X.t : 0, par = sk && sk.R.tier >= 5, col = par ? prism(t, 0) : sk ? sk.R.col : '#c9cfd8';

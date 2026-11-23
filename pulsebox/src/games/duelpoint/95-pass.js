@@ -1,7 +1,7 @@
   /* ---------- 95 the PASS page: the season's track, the challenges, and your card ----------
      The rules are in 26-progress; this draws them. The track is two rows of tiles (free above, premium below), a column
      per tier, paged with the arrows and opening on the tier you are at. Under it: today's and this week's challenges, and
-     your card as others see it in a lobby (banner, title, level), with a button each to change the title and the banner. */
+     your card as others see it in a lobby (banner, title, level), with a button to the locker's PLAYER CARD page to change them. */
   const PS = { off: null, toast: null };   // off: the first tier on screen (null: follow your tier); toast: { t0, got } after unlocking premium
   // a card banner: its two colours behind a card, with slanted bars in its accent
   function bannerBg(g, x, y, w, h, key, r = 8) {
@@ -98,8 +98,7 @@
       const ly = y2 + 20 * u + chh + 8 * u; g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x, ly, colw, 5 * u); g.fillStyle = lvCol(L.l); g.fillRect(x, ly, colw * L.into / L.need, 5 * u);
       const ts = ['', ...(STATS.titles || [])], bs = ['plain', ...(STATS.banners || []).filter(k => BANNERS[k] && k !== 'plain')], by2 = ly + 12 * u, bw2 = (colw - 8 * u) / 2, bh2 = Math.max(tapH(26), 0);
       if (by2 + bh2 <= V.y1 - 4 * u) {
-        btn(g, x, by2, bw2, bh2, 'TITLE: ' + (c.title || 'none').toUpperCase(), () => { STATS.title = ts[(ts.indexOf(STATS.title || '') + 1) % ts.length]; saveAll(true); }, { px: 10.5 * u, off: ts.length < 2 });
-        btn(g, x + bw2 + 8 * u, by2, bw2, bh2, 'BANNER: ' + bannerName(c.banner).toUpperCase(), () => { STATS.banner = bs[(bs.indexOf(c.banner) + 1) % bs.length]; saveAll(true); }, { px: 10.5 * u, off: bs.length < 2 }); } }
+        btn(g, x, by2, colw, bh2, 'CHANGE TITLE & BANNER  ›', () => { UI.panel = 'locker'; SH.lview = 'card'; }, { px: 11 * u }); } }
     // premium, just unlocked: what it handed over
     if (PS.toast) { const t = (performance.now() - PS.toast.t0) / 1000, got = PS.toast.got; if (t > 5) PS.toast = null; else { const a = smooth(cl(t / .25, 0, 1)) * smooth(cl((5 - t) / .4, 0, 1)), w = Math.min(560 * u, x1 - x0), h = 64 * u, x = 640 - w / 2, y = V.y0 + 90 * u; g.save(); g.globalAlpha = a;
       rr(g, x, y, w, h, 10, 'rgba(20,16,6,.97)', GOLD, 2); tx(g, 'PREMIUM UNLOCKED', 640, y + 22 * u, 18 * u, GOLD, 'center', 900); fitTx(g, got.length ? `${got.length} reward${got.length === 1 ? '' : 's'} from the tiers you have passed: ` + got.slice(0, 4).map(q => rewardName(q.rw)).join(', ') + (got.length > 4 ? ' …' : '') : 'Its rewards arrive as you climb the tiers.', 640, y + 46 * u, 11 * u, BONE, 'center', 700, w - 24 * u); g.restore(); } }

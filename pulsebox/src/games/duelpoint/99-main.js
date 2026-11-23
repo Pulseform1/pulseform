@@ -75,7 +75,7 @@
   GAME.esc = () => { if (UI.tedit) { closeTouchEdit(); return true; } if (WH.open) { if (!WH.spin) WH.open = false; return true; } if (UI.rankScale) { UI.rankScale = null; return true; }
     if (screen === 'select') { selectKey('Escape'); return true; }
     if (screen === 'party') { if (!MP.online()) { screen = 'menu'; UI.panel = 'home'; } return true; }
-    if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker')) { if (SH.reveal) SH.reveal = null; else if (SH.show) { SH.show = null; if (UI.returnTo === 'pass') { UI.returnTo = null; UI.panel = 'pass'; } } else if (UI.panel === 'locker' && SH.lview === 'gun') { SH.lview = 'grid'; SH.lsel = null; } else UI.panel = 'home'; return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
+    if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker')) { if (SH.reveal) SH.reveal = null; else if (SH.show) { SH.show = null; if (UI.returnTo === 'pass') { UI.returnTo = null; UI.panel = 'pass'; } } else if (UI.panel === 'locker' && (SH.lview === 'gun' || SH.lview === 'card')) { SH.lview = 'grid'; SH.lsel = null; } else UI.panel = 'home'; return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
   GAME.draw = g => {
     const now = performance.now(), dt = Math.min(.1, (now - (lastDraw || now)) / 1000), V = K.view; lastDraw = now; if (dt > 0) UI.fps = UI.fps ? lp(UI.fps, 1 / dt, .05) : 1 / dt;
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, g.canvas.width, g.canvas.height); g.restore();
