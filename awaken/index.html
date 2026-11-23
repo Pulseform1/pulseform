@@ -375,37 +375,78 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .note .link{padding:10px 0;margin:-10px 0}
 .aw .link{min-height:44px;border-bottom:0;text-decoration:underline dashed var(--line-a);text-underline-offset:5px}
 
-/* status */
-.st-top{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
-.st-lv{display:grid;justify-items:center;padding:10px 14px;border:1px solid var(--line-a);box-shadow:inset 0 0 18px var(--line-c)}
-.st-lv b{font:700 46px/1 var(--f-disp);font-variant-numeric:tabular-nums;text-shadow:0 0 18px var(--line)}
-.st-lv span{font:600 12px/1 var(--f-disp);letter-spacing:.14em;color:var(--dim);margin-top:4px}
-.st-id{margin:0;display:grid;gap:6px;min-width:0}
-.st-id div{display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:baseline;min-width:0}
+/* status (spec 4.7): character sheet. Hero ring around the hunter, vitals, radar, points banner, stat tiles, skills */
+.st-hero{display:grid;grid-template-columns:152px minmax(0,1fr);gap:16px;align-items:center}
+.st-port{display:grid;justify-items:center;gap:4px}
+.ring.st-ring{margin:0;background:radial-gradient(circle at 50% 46%,var(--rk-c),transparent 68%)}
+.ring.st-ring::before{background:conic-gradient(var(--rk) calc(var(--rv)*1turn),var(--line-c) 0);filter:drop-shadow(0 0 6px var(--rk-b));animation:none}
+.ring.st-ring.kw.grew,.ring.st-ring.kw.fell{animation:none}.ring.st-ring>.gain,.ring.st-ring>.lag{display:none}
+.ring.st-ring.grew::before{animation:ring-from var(--t-fill) var(--ease-sys) var(--kd,0s) backwards}
+.st-ped{position:absolute;left:6px;bottom:14px;width:140px;height:24px;border-radius:50%;background:radial-gradient(closest-side,var(--rk-b),transparent);box-shadow:0 0 18px var(--rk-c)}
+.st-spr{position:relative;width:128px;height:128px;image-rendering:pixelated;margin-top:-6px;filter:drop-shadow(0 0 8px var(--line-b))}
+.st-init{position:relative;font:700 56px/1 var(--f-disp);color:var(--ink);text-shadow:0 0 16px var(--rk)}
+.st-lv{display:grid;justify-items:center;margin-top:2px}
+.st-lv b{font:700 44px/1 var(--f-disp);text-shadow:0 0 18px var(--line)}
+.st-lv span{font:600 12px/1 var(--f-disp);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:4px}
+.st-xpt{font:500 12px/1.2 var(--f-disp);letter-spacing:.04em;color:var(--dim)}
+.st-id{margin:0;display:grid;gap:10px;min-width:0}
+.st-id div{display:grid;gap:3px;min-width:0;padding-left:10px;border-left:2px solid var(--line-b)}
 .st-id dt{font:600 12px/1 var(--f-disp);letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
-.st-id dd{margin:0;font-weight:500;min-width:0;overflow-wrap:anywhere}
-.xp{margin:16px 0 0;display:grid;gap:6px}
-.xp small{text-align:right;color:var(--dim);font:500 12px/1 var(--f-disp);font-variant-numeric:tabular-nums;letter-spacing:.04em}
-.vitals{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.st-id dd{margin:0;font:500 16px/1.25 var(--f-disp);letter-spacing:.02em;color:var(--ink);min-width:0;overflow-wrap:anywhere}
+.st-id .sig-img{max-width:100%}
+.st-id .link{display:inline-block;padding:12px 0;margin:-12px 0;border-bottom:0;text-decoration:underline dashed var(--line-a);text-underline-offset:5px}
+.ail .tag{position:relative}.ail .tag::after{content:"";position:absolute;inset:-12px -2px}
+.st-rk{display:inline-flex;align-items:center;gap:8px}
+.st-rk .rk{min-width:28px;height:28px;font-size:16px}
+@media (max-width:359px){.st-hero{grid-template-columns:1fr;justify-items:center}.st-id{width:100%;grid-template-columns:1fr 1fr}}
+.vitals{margin-top:16px;display:grid;grid-template-columns:1fr;gap:10px}
 .meter{display:grid;gap:5px}
 .meter-l{display:flex;justify-content:space-between;font:600 12px/1 var(--f-disp);letter-spacing:.08em;font-variant-numeric:tabular-nums}
 .meter .bar{height:7px}
 .meter.hp .bar i{background:linear-gradient(90deg,#d32b47,var(--red));box-shadow:0 0 10px var(--red)}
 .meter.mp .bar i{background:linear-gradient(90deg,var(--line),var(--glow))}
-.fat{grid-column:1/-1;display:flex;justify-content:space-between;font:600 12px/1 var(--f-disp);letter-spacing:.08em;color:var(--dim)}
-.fat b{color:var(--ink)}
-.stats{margin-top:18px;padding-top:14px;border-top:1px solid var(--line-b);display:grid;grid-template-columns:1fr 1fr;gap:4px 20px}
-.stat{position:relative;display:grid;grid-template-columns:1fr auto 32px;align-items:center;gap:8px;padding:8px 0 10px}
-.st-name{background:none;border:0;padding:0;text-align:left;font:600 16px/1 var(--f-disp);letter-spacing:.12em;color:var(--ink)}
-.stat b{font:700 22px/1 var(--f-disp);font-variant-numeric:tabular-nums}
-.plus{width:30px;height:30px;padding:0;display:grid;place-items:center;border:1px solid var(--glow);border-radius:2px;background:var(--line-b);color:var(--ink);font:700 18px/1 var(--f-disp);box-shadow:0 0 10px var(--line-b)}
-.plus:active{background:var(--line)}
-.plus{position:relative}.plus::after{content:"";position:absolute;inset:-7px}
-.st-x{position:absolute;left:0;right:0;bottom:2px;height:2px;background:var(--line-c)}
-.st-x i{position:relative;display:block;height:100%;background:var(--line-a)}
-.pts{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;font:600 12px/1.2 var(--f-disp);letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
-.stats .pts{grid-column:1/-1}
-.pts b{font-size:22px;color:var(--gold);text-shadow:0 0 12px color-mix(in srgb,var(--gold) 50%,transparent)}
+/* HP/MP: the HUD bar component at 10px with the numbers inside */
+.st-hb{grid-template-columns:26px 1fr;font-size:12px}
+.st-hb i{height:10px;box-shadow:inset 0 0 0 1px var(--line-c)}
+.st-hb i::after{display:none}
+.st-hb.hp i{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 30%,transparent)}
+.st-hb em{position:absolute;right:6px;top:0;z-index:1;font:700 12px/10px var(--f-disp);font-style:normal;letter-spacing:.04em;color:#fff;
+  text-shadow:0 0 2px var(--void),0 0 3px var(--void),0 1px 0 var(--void)}
+.fat{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;font:600 12px/1 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.fat b{color:var(--ink);font-size:14px}.fat b small{font-size:12px;color:var(--dim)}
+.fat-g{display:flex;gap:4px}.fat-g i{flex:1;max-width:36px;height:8px;border:1px solid var(--line-b);transform:skewX(-20deg)}
+.fat-g i.on{background:var(--gold);border-color:var(--gold)}.fat-g i.on.hi{background:var(--red);border-color:var(--red)}
+.radar{display:block;margin:14px auto 4px;overflow:visible}
+.radar .rd-g{fill:none;stroke:var(--line);stroke-opacity:.3;stroke-width:1}
+.radar .rd-v{fill:color-mix(in srgb,var(--glow) 25%,transparent);stroke:var(--glow);stroke-width:1.5;stroke-linejoin:round;filter:drop-shadow(0 0 4px var(--line-b))}
+.radar text{font:600 12px var(--f-disp);letter-spacing:.08em;fill:var(--dim)}
+/* ability points: a gold banner above the grid while there are points; one dim line otherwise. .pts is kept (spec P0) */
+.pts{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:8px 0;font:600 12px/1.3 var(--f-disp);letter-spacing:.08em;color:var(--dim);text-transform:uppercase;border-top:1px solid var(--line-c)}
+.pts b{font:700 18px/1 var(--f-disp);color:var(--dim)}
+.pts.on{padding:12px;border:1px solid var(--gold);border-radius:var(--r2);background:color-mix(in srgb,var(--gold) 8%,transparent);color:var(--gold);box-shadow:0 0 14px color-mix(in srgb,var(--gold) 18%,transparent)}
+.pts.on span{display:grid;gap:4px}.pts.on small{font:500 12px/1.2 var(--f-body);letter-spacing:.02em;text-transform:none;color:var(--ink)}
+.pts.on b{font-size:28px;color:var(--gold);text-shadow:0 0 12px color-mix(in srgb,var(--gold) 50%,transparent)}
+.stats{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat.tile{position:relative;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto auto;align-items:center;gap:6px 8px;min-width:0;padding:10px 10px 8px;
+  border:1px solid var(--line-b);border-radius:var(--r2);background:var(--line-c)}
+.st-name{background:none;border:0;padding:0;text-align:left;font:600 14px/1 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+button.st-name::after{content:"";position:absolute;inset:0}  /* the whole tile opens the stat's details */
+.st-v{grid-column:1;font:700 28px/1 var(--f-disp);color:var(--ink)}
+.stat.tile .plus{grid-column:2;grid-row:1/3;z-index:1}
+.st-p{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
+.st-p small{font:500 12px/1 var(--f-disp);color:var(--dim)}
+.st-x{position:relative;height:3px;background:var(--line-b)}
+.st-x i{position:relative;display:block;height:100%;background:var(--glow);box-shadow:0 0 6px var(--line)}
+.st-tot{background:none;border-style:dashed}.st-tot .st-v{color:var(--dim)}.st-tot small{grid-column:1/-1;font-size:12px;color:var(--dim)}
+.plus{position:relative;width:32px;height:32px;padding:0;display:grid;place-items:center;border:1px solid var(--gold);border-radius:var(--r1);background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold);font:700 20px/1 var(--f-disp);
+  box-shadow:0 0 10px color-mix(in srgb,var(--gold) 35%,transparent);animation:plus-pulse 1.6s ease-in-out var(--pd,0s) 3 backwards}
+.plus::after{content:"";position:absolute;inset:-7px}
+.plus:active{background:var(--gold);color:var(--on-accent)}
+@keyframes plus-pulse{50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 30%,transparent),0 0 18px var(--gold)}}
+.stat.can{border-color:color-mix(in srgb,var(--gold) 35%,transparent)}
+.float{position:absolute;right:12px;top:-4px;z-index:2;font:700 18px/1 var(--f-disp);color:var(--gold);text-shadow:0 0 10px var(--gold);pointer-events:none;opacity:0;animation:st-float .9s var(--ease-sys) var(--fd,0s) both}
+@keyframes st-float{0%{opacity:0;transform:translateY(8px) scale(.8)}20%{opacity:1;transform:scale(1.15)}100%{opacity:0;transform:translateY(-22px)}}
+.st-note{margin-top:12px;font-size:14px}
 .debuff{margin:12px 0 0;padding:8px 10px;border:1px solid color-mix(in srgb,var(--red) 60%,transparent);color:var(--red);font:600 14px/1.3 var(--f-disp);letter-spacing:.06em;text-align:center}
 .effects{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
 .effects li{padding:5px 8px;border:1px solid var(--line-b);font:500 12px/1 var(--f-disp);letter-spacing:.04em;color:var(--glow)}
@@ -415,6 +456,12 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .li p{margin:0;grid-column:1/-1;font-size:14px;color:var(--dim)}
 .li.locked h4{color:var(--dim)}
 .li .tag{justify-self:end}
+.sk.on{padding-left:12px;border-left:3px solid var(--ok);background:linear-gradient(90deg,color-mix(in srgb,var(--ok) 8%,transparent),transparent 70%)}
+.sk.on p{color:var(--ink)}
+.sk h4{display:flex;align-items:center;gap:6px}
+.sk-lock .i{width:16px;height:16px;color:var(--dim);display:block}
+.sk-pg{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;margin-top:2px}
+.sk-pg small{font:500 12px/1 var(--f-disp);color:var(--dim)}
 
 /* gates */
 /* gates tab (spec 4.5): rift poster cards. The stage has a horizon line, the portal and the boss in front of it. */
@@ -608,12 +655,38 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .swatch::before,.swatch::after{content:"";position:absolute;width:6px;height:6px;border:2px solid var(--sw2)}
 .swatch::before{left:-2px;top:-2px;border-right:0;border-bottom:0}.swatch::after{right:-2px;bottom:-2px;border-left:0;border-top:0}
 
-/* records */
-.streak{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
-.streak-n{display:grid;justify-items:center;gap:2px;color:var(--gold)}
-.streak-n .i{width:30px;height:30px;filter:drop-shadow(0 0 8px var(--gold))}
-.streak-n b{font:700 40px/1 var(--f-disp);font-variant-numeric:tabular-nums;color:var(--ink)}
-.streak-n span{font:600 12px/1 var(--f-disp);letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+/* records (spec 4.8): streak flame by tier, freeze pips, best bar; totals lead with four tiles */
+.streak{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}
+.streak-n{display:grid;justify-items:center;gap:2px;min-width:96px}
+.streak-n b{font:700 40px/1 var(--f-disp);color:var(--ink);margin-top:-4px}
+.streak-n>span:last-child{font:600 12px/1 var(--f-disp);letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+/* the flame: stacked shapes on one element (glow ellipse, teardrop body, teardrop core); tiers recolour them */
+.flame{--f2:color-mix(in srgb,var(--dim) 30%,transparent);--f3:color-mix(in srgb,var(--dim) 70%,#000);--f4:var(--dim);--fe:transparent;position:relative;display:block;width:48px;height:60px;transform-origin:50% 100%;animation:flick 1.6s ease-in-out var(--fl-d,0s) infinite}
+.flame i{position:absolute;inset:6px -2px 0;border-radius:50%;background:radial-gradient(50% 50% at 50% 62%,var(--f2),transparent)}
+.flame::before,.flame::after{content:"";position:absolute;left:50%;border-radius:50% 0 50% 50%;transform:translateX(-50%) scaleY(1.3) rotate(-45deg)}
+.flame::before{bottom:8px;width:30px;height:30px;background:radial-gradient(circle at 40% 60%,var(--f4),var(--f3) 75%);box-shadow:0 0 0 2px var(--fe),0 0 12px var(--f2)}
+.flame::after{bottom:8px;width:14px;height:14px;background:radial-gradient(circle at 40% 60%,#fff,var(--f4) 85%);opacity:.95}
+.flame[data-tier="0"]{animation:none}.flame[data-tier="0"]::after{background:var(--f3);opacity:.8}
+.flame[data-tier="1"]{--f2:color-mix(in srgb,var(--glow) 40%,transparent);--f3:var(--line);--f4:var(--glow)}
+.flame[data-tier="2"]{--f2:color-mix(in srgb,var(--gold) 45%,transparent);--f3:#ff8a3c;--f4:var(--gold)}
+.flame[data-tier="3"]{--f2:color-mix(in srgb,var(--violet) 50%,transparent);--f3:#6a3fd6;--f4:var(--violet);--fe:var(--gold)}
+@keyframes flick{0%,100%{transform:scale(1,1)}30%{transform:scale(.96,1.05) skewX(-2deg)}60%{transform:scale(1.03,.97) skewX(2deg)}}
+.streak-r{display:grid;gap:14px;min-width:0}
+.frz{display:grid;gap:6px}
+.frz-h{display:flex;justify-content:space-between;gap:8px;font:600 12px/1 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.frz-h b{font-size:14px;color:#9fe3ff;white-space:nowrap}
+.frz-p{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.frz-p i{height:10px;border:1px solid color-mix(in srgb,#7fd8ff 45%,transparent);transform:skewX(-20deg)}
+.frz-p i.on{background:#7fd8ff;border-color:#bfeeff;box-shadow:0 0 6px color-mix(in srgb,#7fd8ff 60%,transparent)}
+.frz small,.sbest small{font-size:12px;line-height:1.3;color:var(--dim)}
+.sbest{display:grid;gap:6px}
+.sbest .bar i{background:linear-gradient(90deg,var(--gold),#ffe39a);box-shadow:0 0 8px color-mix(in srgb,var(--gold) 50%,transparent)}
+.kv.sk-kv{margin-top:18px}
+.tiles.tot{list-style:none;margin:0 0 14px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tiles.tot li{display:grid;align-content:start;gap:6px;min-width:0;padding:10px 12px;border:1px solid var(--line-b);border-radius:var(--r2);background:var(--line-c)}
+.tiles.tot span{font:600 12px/1.1 var(--f-disp);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.tiles.tot b{font:700 28px/1 var(--f-disp);color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+.tiles.tot small{font-size:12px;color:var(--dim)}
 .kv{margin:0;display:grid;gap:8px}
 .kv div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line-c);padding-bottom:6px}
 .kv dt{color:var(--dim);font-size:14px}
@@ -655,7 +728,7 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .pbt th{font:600 12px/1.2 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-align:right;padding:6px 4px;border-bottom:1px solid var(--line-b)}
 .pbt th:first-child,.pbt td:first-child{text-align:left}
 .pbt td{text-align:right;padding:7px 4px;border-bottom:1px solid color-mix(in srgb,var(--line-b) 50%,transparent);font-variant-numeric:tabular-nums}
-.c.today{outline:1.5px solid var(--glow);outline-offset:-1.5px}
+.c.today{outline:2px solid var(--glow);outline-offset:-2px}
 .c.fut{background:none}
 .legend{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--dim)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
@@ -840,6 +913,7 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .tog[aria-checked=true] .tog-s::after{transform:translateX(20px);background:var(--glow);box-shadow:0 0 10px var(--line)}
 .win p{text-wrap:pretty}
 .about p{margin:0 0 10px;color:var(--dim);font-size:14px}
+.about a{display:inline-block;padding:13px 0;margin:-13px 0}
 
 /* onboarding */
 .aw{min-height:100%;display:grid;align-content:center;gap:16px;max-width:460px;margin:0 auto;padding-block:20px}
@@ -852,7 +926,7 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .diff small{color:var(--dim);font-size:14px}
 .diff.on{border-color:var(--glow);background:var(--line-c);box-shadow:0 0 14px var(--line-b)}
 .preview{margin:14px 0 0;padding:10px 12px;border:1px dashed var(--line-a);font:500 14px/1.5 var(--f-disp);letter-spacing:.02em;text-align:center}
-.brand{text-align:center;font:700 14px/1 var(--f-disp);letter-spacing:.6em;color:var(--dim);text-indent:.6em}
+.brand{margin:0;text-align:center;font:700 28px/1 var(--f-disp);letter-spacing:.5em;text-indent:.5em;color:var(--ink);text-shadow:0 0 18px var(--line),0 0 2px var(--glow)}
 
 .army{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:12px}
 .army-head{display:flex;align-items:center;gap:14px;margin:0 0 4px}
@@ -1000,7 +1074,8 @@ body.locked .toast.stat{border-left-color:var(--gold)}body.locked .toast.bad{bor
   .view.enter>.win,.ntf .win-head .win-ico,.ring::before,.bump,.kw,.kt::before{animation:none!important}.gain,.lag{display:none}
   .ntf .rewards.loot li,.ntf .ntf-stamp{opacity:1!important;animation:none!important}
   .clock.urgent span,.goal.just,.goal.just .chk,.pq.ready .btn,.stamp.q-clear{animation:none!important}.goal.just{background:color-mix(in srgb,var(--ok) 18%,transparent)}
-  .btn:active{transform:none}}
+  .btn:active,.rec-t:active{transform:none}
+  .flame,.plus,.ring.st-ring::before{animation:none!important}.float{display:none}}
 /* recovery */
 .joints{list-style:none;margin:0;padding:0;display:grid}
 .joint{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line-c)}
@@ -1018,16 +1093,40 @@ body.locked .toast.stat{border-left-color:var(--gold)}body.locked .toast.bad{bor
 .adapt li span{color:var(--dim)}
 .adapt li b{font:600 14px/1.3 var(--f-disp);letter-spacing:.02em;text-align:right}
 .recs{display:grid;gap:10px}
-.rec{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:12px;border:1px solid var(--line-b);border-radius:3px;background:var(--line-c)}
+.rec{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:12px;border:1px solid var(--line-b);border-radius:var(--r2);background:var(--line-c)}
 .rec.hot{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent)}
 .rec h3{margin:0;font:600 16px/1.2 var(--f-disp);letter-spacing:.03em}
 .rec p{margin:0;grid-column:1/-1;color:var(--dim);font-size:14px}
-.rec .btn{grid-row:1/3;grid-column:2}
+.rec .btn{grid-row:1;grid-column:2;min-height:44px}
+.rec-ov{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+.rec-c{display:flex;flex-wrap:wrap;gap:6px}
+.rec-c .gc{display:inline-flex;align-items:center;height:24px;padding:0 8px;border:1px solid var(--line-b);border-radius:var(--r1);font:600 12px/1 var(--f-disp);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
+.rec-c .tag{display:inline-flex;align-items:center;height:24px;padding:0 8px}
+.rec-g{display:grid;grid-template-columns:1fr;gap:8px}
+@media (min-width:360px){.rec-g{grid-template-columns:1fr 1fr}}
+.rec-t{display:grid;align-content:start;justify-items:start;gap:4px;min-width:0;min-height:44px;padding:10px 12px;border:1px solid var(--line-b);border-radius:var(--r2);background:var(--line-c);color:var(--ink);text-align:left;font:inherit}
+.rec-t b{font:600 16px/1.2 var(--f-disp);letter-spacing:.03em;overflow-wrap:anywhere}
+.rec-t small{font:500 12px/1.2 var(--f-disp);letter-spacing:.04em;color:var(--dim)}
+.rec-t .rec-go{margin-top:2px;font:600 12px/1 var(--f-disp);letter-spacing:.1em;text-transform:uppercase;color:var(--glow)}
+.rec-t .tag{margin-top:2px}
+.rec-t:active{transform:scale(.97)}
+.rec-t.done{border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+/* when to get help: 0-10 pain strip */
+.pain{display:grid;grid-template-columns:repeat(11,1fr);gap:2px;margin:4px 0 0}
+.pain i{display:grid;place-items:center;height:26px;font:700 12px/1 var(--f-disp);font-style:normal;color:var(--void)}
+.pain .p-ok{background:var(--ok)}.pain .p-mid{background:var(--gold)}.pain .p-hi{background:var(--red)}
+.pain i:first-child{border-radius:var(--r1) 0 0 var(--r1)}.pain i:last-child{border-radius:0 var(--r1) var(--r1) 0}
+.pain-l{display:grid;grid-template-columns:repeat(11,1fr);margin:6px 0 0;font-size:12px;line-height:1.2;color:var(--dim)}
+.pain-l span:nth-child(1){grid-column:1/4}.pain-l span:nth-child(2){grid-column:2/7;text-align:center}.pain-l span:nth-child(3){grid-column:8/12;text-align:right}
+.pain-l span{grid-row:1}
+.pain-t{margin:10px 0 0;font-size:14px;line-height:1.45;color:var(--ink)}
 .ail{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
 .flag-list{margin:0;padding-left:18px;display:grid;gap:6px;font-size:14px}
 details.help{border-top:1px solid var(--line-b);padding-top:10px;margin-top:12px}
 details.help summary{cursor:pointer;font:600 14px/1.4 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;color:var(--glow)}
 details.help ul{margin:8px 0 0;padding-left:18px;color:var(--dim);font-size:14px;display:grid;gap:4px}
+details.help>p{margin:8px 0 0;color:var(--dim);font-size:14px}
+details.help summary{min-height:44px;padding:12px 0 0;box-sizing:border-box}
 .moves{list-style:none;margin:0;padding:0;display:grid}
 .moves li{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:9px 0;border-bottom:1px solid var(--line-c)}
 .moves li b{font:600 16px/1.2 var(--f-disp)}
@@ -1037,7 +1136,7 @@ details.help ul{margin:8px 0 0;padding-left:18px;color:var(--dim);font-size:14px
 .recbar i{display:block;height:100%;background:linear-gradient(90deg,var(--line),var(--glow));box-shadow:0 0 12px var(--line);transition:width .5s cubic-bezier(.2,.9,.3,1)}
 .tag.teal{color:var(--ok)}
 
-@media (max-width:360px){.vitals{grid-template-columns:1fr}.stats{gap:4px 12px}.timer{font-size:60px}.run-d b{font-size:62px}.tri button{min-width:48px;padding:6px 5px}}
+@media (max-width:360px){.timer{font-size:60px}.run-d b{font-size:62px}.tri button{min-width:48px;padding:6px 5px}}
 @media (max-width:359px){.tab{letter-spacing:0;text-transform:none}}
 </style>
 </head>
@@ -1095,6 +1194,7 @@ const ICONS={
   elixir:'<path d="M12 3.2c3.1 4 6 7.4 6 10.9a6 6 0 0 1-12 0c0-3.5 2.9-6.9 6-10.9z"/><path d="M9.2 14.5a2.9 2.9 0 0 0 2.8 2.8"/>',
   tap:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.2"/>',
   check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  lock:'<rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/>',
   star:'<path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6.1L12 16.8l-5.4 3 1.2-6.1-4.5-4.2 6.1-.7z"/>',
   close:'<path d="M6 6l12 12M18 6L6 18"/>',
   coin:'<path d="M12 3l7 9-7 9-7-9z"/><path d="M12 7.5l3.5 4.5-3.5 4.5-3.5-4.5z"/>',
@@ -1224,15 +1324,15 @@ const TITLES=[
   {id:'healer',name:'Self-Healer',req:'Complete 5 recovery sessions.',b:{all:.03},ok:()=>S.totals.rec>=5},
 ];
 const SKILLS=[
-  {id:'persistence',name:'Persistence',req:'Clear 3 Daily Quests.',b:{all:.05},ok:()=>S.totals.clears>=3},
-  {id:'ironbody',name:'Iron Body',req:'Do 500 push-ups in total.',b:{hp:.1},ok:()=>ex('pushup')>=500},
-  {id:'sprint',name:'Sprint',req:'Run 20 km in total.',b:{run:.1},ok:()=>ex('run')>=20},
-  {id:'instinct',name:'Battle Instinct',req:'Clear 5 gates.',b:{gate:.1},ok:()=>S.totals.gates>=5},
+  {id:'persistence',name:'Persistence',req:'Clear 3 Daily Quests.',b:{all:.05},ok:()=>S.totals.clears>=3,prog:()=>[S.totals.clears,3]},
+  {id:'ironbody',name:'Iron Body',req:'Do 500 push-ups in total.',b:{hp:.1},ok:()=>ex('pushup')>=500,prog:()=>[ex('pushup'),500]},
+  {id:'sprint',name:'Sprint',req:'Run 20 km in total.',b:{run:.1},ok:()=>ex('run')>=20,prog:()=>[ex('run'),20],km:true},
+  {id:'instinct',name:'Battle Instinct',req:'Clear 5 gates.',b:{gate:.1},ok:()=>S.totals.gates>=5,prog:()=>[S.totals.gates,5]},
   {id:'willpower',name:'Willpower',req:'Survive a Penalty Quest.',b:{guard:.5},ok:()=>S.totals.penalties>=1},
-  {id:'secondwind',name:'Second Wind',req:'Clear 15 Daily Quests.',b:{gold:.1},ok:()=>S.totals.clears>=15},
-  {id:'clearmind',name:'Clear Mind',req:'Complete 20 optional quests.',b:{side:.2},ok:()=>S.totals.side>=20},
+  {id:'secondwind',name:'Second Wind',req:'Clear 15 Daily Quests.',b:{gold:.1},ok:()=>S.totals.clears>=15,prog:()=>[S.totals.clears,15]},
+  {id:'clearmind',name:'Clear Mind',req:'Complete 20 optional quests.',b:{side:.2},ok:()=>S.totals.side>=20,prog:()=>[S.totals.side,20]},
   {id:'bloodlust',name:'Bloodlust',req:'Clear a B-Rank gate.',b:{str:.1},ok:()=>S.totals.maxGate>=3},
-  {id:'regen',name:'Regeneration',req:'Complete 10 recovery sessions.',b:{regen:1},ok:()=>S.totals.rec>=10},
+  {id:'regen',name:'Regeneration',req:'Complete 10 recovery sessions.',b:{regen:1},ok:()=>S.totals.rec>=10,prog:()=>[S.totals.rec,10]},
 ];
 const TITLE_BY=Object.fromEntries(TITLES.map(t=>[t.id,t]));
 const SKILL_BY=Object.fromEntries(SKILLS.map(t=>[t.id,t]));
@@ -2685,30 +2785,70 @@ function penaltyWin(){
 
 /* status tab */
 function meter(cls,l,v,m){return `<div class="meter ${cls}"><div class="meter-l"><span>${l}</span><span>${fmt(v)} / ${fmt(m)}</span></div><div class="bar"><i data-k="m-${cls}" style="width:${clamp(v/m,0,1)*100}%"></i></div></div>`}
+// status radar (spec 4.7): a pentagon of the five stats, scaled to the highest one. Decorative: the tiles carry the numbers.
+function statRadar(){
+  const ks=['str','agi','vit','int','per'],vals=ks.map(stat),max=Math.max(1,...vals),C=90,R=52,L=68;
+  const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/5;return [C+r*Math.cos(a),C+r*Math.sin(a)]};
+  const poly=r=>ks.map((_,i)=>pt(i,r).map(n=>n.toFixed(1)).join(',')).join(' ');
+  const grid=[1,.66,.33].map(f=>`<polygon class="rd-g" points="${poly(R*f)}"/>`).join('')+ks.map((_,i)=>{const [x,y]=pt(i,R);return `<line class="rd-g" x1="${C}" y1="${C}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`}).join('');
+  const shape=ks.map((k,i)=>pt(i,R*Math.max(.08,vals[i]/max)).map(n=>n.toFixed(1)).join(',')).join(' ');
+  const labels=ks.map((k,i)=>{const [x,y]=pt(i,L),anc=Math.abs(x-C)<4?'middle':x>C?'start':'end';return `<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="${anc}">${STAT_INFO[k].short}</text>`}).join('');
+  return `<svg class="radar" viewBox="0 0 180 180" width="180" height="180" aria-hidden="true">${grid}<polygon class="rd-v" points="${shape}"/>${labels}</svg>`;
+}
+// a skill's progress to unlock, when it is countable: [cur, need, label]
+function skillProg(s){
+  if(!s.prog) return null;
+  const [c,n]=s.prog(),cur=Math.min(c,n);
+  return [cur,n,s.km?`${trim(r2(toUser(cur)))} / ${trim(r2(toUser(n)))} ${unit()}`:`${fmt(Math.floor(cur))} / ${fmt(n)}`];
+}
 function vStatus(){
   const p=S.player,need=xpNeed(p.level),R=rankOf(),hm=maxHP(),mm=maxMP();
   p.hp=Math.min(p.hp,hm);p.mp=Math.min(p.mp,mm);
-  const cell=k=>{const s=S.stats[k];return `<div class="stat"><button class="st-name" data-a="statInfo" data-x="${k}" aria-label="${STAT_INFO[k].name} details">${STAT_INFO[k].short}:</button><b>${stat(k)}</b>${p.points?`<button class="plus" data-a="alloc" data-x="${k}" aria-label="Add a point to ${STAT_INFO[k].name}">+</button>`:'<span></span>'}<span class="st-x" aria-hidden="true"><i data-k="st-${k}" style="width:${s.x}%"></i></span></div>`};
+  const now=Date.now(),pts=p.points>0;
+  // the + pulse runs 3 times from when points first appear; a re-render continues it instead of restarting it (M17)
+  if(pts){if(!UI.ptsT) UI.ptsT=now}else UI.ptsT=0;
+  const pd=pts?`-${now-UI.ptsT}ms`:'0ms',fl=UI.statFloat&&now-UI.statFloat.t<900?UI.statFloat:null;
+  const tile=k=>{const s=S.stats[k],I=STAT_INFO[k];
+    return `<div class="stat tile${pts?' can':''}"><button class="st-name" data-a="statInfo" data-x="${k}" aria-label="${I.name} details">${I.short}</button>
+      <b class="st-v num" data-cu="st-${k}">${stat(k)}</b>
+      ${pts?`<button class="plus" data-a="alloc" data-x="${k}" aria-label="Add a point to ${I.name}" style="--pd:${pd}">+</button>`:''}
+      ${fl&&fl.k===k?`<b class="float" aria-hidden="true" style="--fd:-${now-fl.t}ms">+1</b>`:''}
+      <span class="st-p"><span class="st-x" aria-hidden="true"><i data-k="st-${k}" style="width:${s.x}%"></i></span><small class="num">${Math.floor(s.x)}%</small></span></div>`};
+  const total=STAT_KEYS.reduce((a,k)=>a+stat(k),0);
   const fx=['all','str','run','gate','side','gold','hp','mp'].map(k=>[k,bonus(k)+statBonus(k)]).filter(([,v])=>v>0.0001);
   const guard=Math.min(.75,bonus('guard'));
   const effects=fx.map(([k,v])=>`<li>+${Math.round(v*100)}% ${BONUS_LABEL[k]}</li>`).join('')+(guard?`<li>Penalty damage −${Math.round(guard*100)}%</li>`:'');
+  const xp=clamp(p.xp/need,0,1),fat=fatigue(),fp=Math.ceil(fat/20);
+  const fig=sprImg('hunter-full','st-spr')||`<b class="st-init" aria-hidden="true">${esc([...(p.name||'H').trim()][0]||'H')}</b>`;
+  const vital=(c,l,v,m)=>`<div class="hb ${c} st-hb" role="meter" aria-label="${l}" aria-valuemin="0" aria-valuemax="${m}" aria-valuenow="${v}" style="--v:${m?clamp(v/m,0,1):0}"><span aria-hidden="true">${l}</span><i data-k="st-${c}"><em class="num" aria-hidden="true">${fmt(v)} / ${fmt(m)}</em></i></div>`;
+  const plate=(l,v)=>`<div><dt>${l}</dt><dd>${v}</dd></div>`;
+  const sk=SKILLS.map(s=>[s,S.skills.includes(s.id)]).sort((a,b)=>b[1]-a[1]);
   return `<section class="win">${winHead('Status')}
-    <div class="st-top"><div class="st-lv"><b data-cu="st-lv">${p.level}</b><span>LEVEL</span></div>
+    <div class="st-hero rk-tone-${R.id}">
+      <div class="st-port">
+        <div class="ring st-ring" data-k="st-xp-${p.level}" style="--sz:152px;--th:6px;--v:${xp}" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="${need}" aria-valuenow="${p.xp}"><span class="st-ped" aria-hidden="true"></span>${fig}</div>
+        <div class="st-lv"><b class="num" data-cu="st-lv">${p.level}</b><span>Level</span></div>
+        <small class="st-xpt num">${fmt(p.xp)} / ${fmt(need)} XP</small>
+      </div>
       <dl class="st-id">
-        <div><dt>Name</dt><dd>${esc(p.name)}${p.sig?`<img class="sig-img" src="${esc(p.sig)}" alt="Your signature">`:''}</dd></div>
-        <div><dt>Job</dt><dd>${p.job?JOBS[p.job].name:'None'}</dd></div>
-        <div><dt>Title</dt><dd><button class="link" data-a="titles">${esc(TITLE_BY[p.title]?.name||'None')}</button></dd></div>
-        <div><dt>Rank</dt><dd><span class="rk rk-${R.id}">${R.id}</span> Hunter</dd></div>
+        ${plate('Name',`${esc(p.name)}${p.sig?`<img class="sig-img" src="${esc(p.sig)}" alt="Your signature">`:''}`)}
+        ${plate('Job',p.job?JOBS[p.job].name:'None')}
+        ${plate('Title',`<button class="link" data-a="titles">${esc(TITLE_BY[p.title]?.name||'None')}</button>`)}
+        ${plate('Rank',`<span class="st-rk"><span class="rk rk-${R.id}">${R.id}</span>Hunter</span>`)}
       </dl></div>
-    <div class="xp"><div class="bar"><i data-k="st-xp-${p.level}" style="width:${p.xp/need*100}%"></i></div><small>${fmt(p.xp)} / ${fmt(need)} XP to level ${p.level+1}</small></div>
-    <div class="vitals">${meter('hp','HP',p.hp,hm)}${meter('mp','MP',p.mp,mm)}<div class="fat"><span>FATIGUE</span><b>${fatigue()}</b></div></div>
-    <div class="stats">${STAT_KEYS.map(cell).join('')}<div class="pts"><span>Available ability points</span><b data-cu="pts">${p.points}</b></div></div>
+    <div class="vitals">${vital('hp','HP',p.hp,hm)}${vital('mp','MP',p.mp,mm)}
+      <div class="fat"><span>Fatigue</span><span class="fat-g" aria-hidden="true">${Array.from({length:5},(_,i)=>`<i${i<fp?` class="on${fp>=4?' hi':''}"`:''}></i>`).join('')}</span><b class="num">${fat}<small> / 100</small></b></div></div>
+    ${statRadar()}
+    <div class="pts${pts?' on':''}">${pts?`<span>Ability points<small>Tap + on a stat to assign</small></span>`:'<span>No ability points · earn them by levelling up</span>'}<b class="num" data-cu="pts">${p.points}</b></div>
+    <div class="stats">${STAT_KEYS.map(tile).join('')}<div class="stat tile st-tot"><span class="st-name">Total</span><b class="st-v num">${total}</b><small>All five stats</small></div></div>
     ${weakened()?'<p class="debuff">Debuff: Weakened (all XP −50%)</p>':''}
     ${soreJoints().length?`<ul class="ail" aria-label="Status ailments">${soreJoints().map(j=>`<li><button class="tag ${soreLv(j)>1?'red':'gold'}" style="background:none" data-a="tab" data-x="recover">${AILMENT(j)}${soreLv(j)>1?' · hurts':''}</button></li>`).join('')}</ul>`:''}
     ${effects?`<ul class="effects" aria-label="Active effects">${effects}</ul>`:''}
-    <p class="note">Stats grow on their own as you train. The thin line under each stat is progress to its next point. Tap a stat name for details.</p>
+    <p class="note st-note">Stats grow as you train. Tap a stat for details.</p>
   </section>
-  <section class="win">${winHead('Skills')}<ul class="list">${SKILLS.map(s=>{const on=S.skills.includes(s.id);return `<li class="li${on?'':' locked'}"><h4>${s.name}</h4><span class="tag ${on?'ok':''}">${on?'Passive':'Locked'}</span><p>${on?bonusText(s.b):'Unlock: '+s.req}</p></li>`}).join('')}</ul></section>`;
+  <section class="win">${winHead('Skills')}<ul class="list skills">${sk.map(([s,on])=>{const pg=on?null:skillProg(s);
+    return `<li class="li sk${on?' on':' locked'}"><h4>${on?'':`<span class="sk-lock">${ico('lock')}</span>`}${s.name}</h4><span class="tag ${on?'ok':''}">${on?'Passive':'Locked'}</span>
+      <p>${on?bonusText(s.b):esc(s.req)}</p>${pg?`<div class="sk-pg"><div class="bar sm" role="progressbar" aria-label="${esc(s.name)} progress" aria-valuemin="0" aria-valuemax="${pg[1]}" aria-valuenow="${pg[0]}"><i style="width:${pg[0]/pg[1]*100}%"></i></div><small class="num">${pg[2]}</small></div>`:''}</li>`}).join('')}</ul></section>`;
 }
 
 /* gates tab */
@@ -2862,7 +3002,7 @@ function progressWin(){
   const y=v=>pt+(H-pt-pb)*(1-v/nice);
   const bar=(x,top,w,h)=>{if(h<=0) return '';const r=Math.min(4,h,w/2);return `M${x},${top+h}V${top+r}Q${x},${top} ${x+r},${top}H${x+w-r}Q${x+w},${top} ${x+w},${top+r}V${top+h}Z`};
   const sel=UI.chartPick;
-  const grid=[0,.5,1].map(f=>`<line x1="${pl}" x2="${W}" y1="${y(nice*f)}" y2="${y(nice*f)}" class="ch-grid"/><text x="${pl-6}" y="${y(nice*f)+4}" class="ch-ax" text-anchor="end">${trim(nice*f)}</text>`).join('');
+  const grid=[0,.5,1].map(f=>`<line x1="${pl}" x2="${W}" y1="${y(nice*f)}" y2="${y(nice*f)}" class="ch-grid"/>${f===.5?'':`<text x="${pl-6}" y="${y(nice*f)+4}" class="ch-ax" text-anchor="end">${trim(nice*f)}</text>`}`).join('');
   const bars=vals.map((v,i)=>{const x=pl+i*bw+bw*.2,w=bw*.6,top=y(v),d=keyDate(weeks[i]);
     return `<g class="ch-b${sel===i?' on':''}" data-a="chartPick" data-x="${i}" role="listitem" aria-label="Week of ${d.getMonth()+1}/${d.getDate()}: ${trim(v)}${u}"><rect x="${pl+i*bw}" y="0" width="${bw}" height="${H}" fill="transparent"/><path d="${bar(x,top,w,H-pb-top)}"/>
       <text x="${x+w/2}" y="${H-6}" class="ch-ax" text-anchor="middle">${i===N-1?'Now':`${d.getMonth()+1}/${d.getDate()}`}</text>${sel===i||(sel==null&&i===N-1&&v>0)?`<text x="${x+w/2}" y="${top-5}" class="ch-v" text-anchor="middle">${trim(v)}</text>`:''}</g>`}).join('');
@@ -2887,17 +3027,30 @@ function testsWin(){
     <p class="note">${retestDue()?'A Reassessment Test is ready on the Quest tab.':`Next Reassessment Test: ${keyDate(next).toLocaleDateString([], {month:'short',day:'numeric'})}.`}</p></section>`;
 }
 function vRecords(){
-  const days=Math.floor((Date.now()-S.created)/864e5)+1;
-  const rows=[['Push-ups',fmt(ex('pushup'))],['Sit-ups',fmt(ex('situp'))],['Squats',fmt(ex('squat'))],['Burpees',fmt(ex('burpee'))],['Distance',`${trim(toUser(ex('run')))} ${unit()}`],
-    ['Gates cleared',`${fmt(S.totals.gates)}${S.totals.red?` (${S.totals.red} red)`:''}`],['Daily Quests cleared',fmt(S.totals.clears)],['Penalties survived',fmt(S.totals.penalties)],['Optional quests',fmt(S.totals.side)],['Recovery sessions',fmt(S.totals.rec)],['Recovery habits',fmt(S.totals.recHabits)],['Calories burned (estimate)',kcal(calTotal())],['Days since awakening',fmt(days)]];
+  const days=Math.floor((Date.now()-S.created)/864e5)+1,st=S.streak,cur=st.cur,best=Math.max(st.best,cur),fz=st.freeze||0;
+  const tier=cur<=0?0:cur<7?1:cur<30?2:3,into=cur%7,left=7-into;
+  const tiles=[['Push-ups',ex('pushup'),''],['Squats',ex('squat'),''],['Gates cleared',S.totals.gates,S.totals.red?`${fmt(S.totals.red)} red`:''],['Quests cleared',S.totals.clears,'Daily Quests']];
+  const rows=[['Sit-ups',fmt(ex('situp'))],['Burpees',fmt(ex('burpee'))],['Distance',`${trim(toUser(ex('run')))} ${unit()}`],
+    ['Penalties survived',fmt(S.totals.penalties)],['Optional quests',fmt(S.totals.side)],['Recovery sessions',fmt(S.totals.rec)],['Recovery habits',fmt(S.totals.recHabits)],['Calories burned (estimate)',kcal(calTotal())],['Days since awakening',fmt(days)]];
   return `<section class="win">${winHead('Streak')}
-    <div class="streak"><div class="streak-n">${ico('flame')}<b data-cu="streak">${S.streak.cur}</b><span>day streak</span></div>
-    <dl class="kv"><div><dt>Best streak</dt><dd>${S.streak.best}</dd></div><div><dt>Streak Freezes</dt><dd>${S.streak.freeze||0} / ${FREEZE_MAX}</dd></div><div><dt>Penalty Wards</dt><dd>${S.inv.ward}</dd></div><div><dt>Rest days</dt><dd>${S.settings.restDays.length?S.settings.restDays.map(i=>DOW[i]).join(', '):'None'}</dd></div></dl></div>
+    <div class="streak">
+      <div class="streak-n"><span class="flame" data-tier="${tier}" style="--fl-d:-${Date.now()%1600}ms" aria-hidden="true"><i></i></span><b class="num" data-cu="streak">${cur}</b><span>day streak</span></div>
+      <div class="streak-r">
+        <div class="frz"><div class="frz-h"><span>Freezes</span><b class="num">${fz} / ${FREEZE_MAX}</b></div>
+          <span class="frz-p" aria-hidden="true">${Array.from({length:7},(_,i)=>`<i${i<into?' class="on"':''}></i>`).join('')}</span>
+          <small>${fz>=FREEZE_MAX?'Freezes full. A missed day uses one.':`${left} more day${left===1?'':'s'} for a Streak Freeze`}</small></div>
+        <div class="sbest"><div class="bar md" role="progressbar" aria-label="Current streak against your best" aria-valuemin="0" aria-valuemax="${best}" aria-valuenow="${cur}"><i data-k="streak-best" style="width:${best?cur/best*100:0}%"></i></div>
+          <small class="num">${cur>=best&&cur>0?`Best ${best} · new record`:`Best ${best}`}</small></div>
+      </div>
+    </div>
+    <dl class="kv sk-kv"><div><dt>Penalty Wards</dt><dd>${S.inv.ward}</dd></div><div><dt>Rest days</dt><dd>${S.settings.restDays.length?S.settings.restDays.map(i=>DOW[i]).join(', '):'None'}</dd></div></dl>
+    <p class="note">Every 7-day streak earns a Streak Freeze. It covers one missed day before a Penalty Ward is used.</p>
   </section>
-  <p class="note" style="margin:-6px 0 14px;text-align:center">Every 7-day streak earns a Streak Freeze. It covers one missed day before a Penalty Ward is used.</p>
   <section class="win">${winHead('Quest Log')}${calendar()}</section>
   ${progressWin()}${pbWin()}${testsWin()}
-  <section class="win">${winHead('Totals')}<dl class="kv">${rows.map(([a,b])=>`<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl></section>
+  <section class="win">${winHead('Totals')}
+    <ul class="tiles tot">${tiles.map(([l,v,sub],i)=>`<li><span>${l}</span><b class="num" data-cu="tot-${i}">${fmt(v)}</b>${sub?`<small>${sub}</small>`:''}</li>`).join('')}</ul>
+    <dl class="kv">${rows.map(([a,b])=>`<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl></section>
   <section class="win">${winHead('System Log')}${S.log.length?`<ul class="log">${S.log.slice(0,15).map(l=>`<li><time>${clockTime(l.t)}</time><span><b>${esc(l.h)}</b> ${esc(l.l)}</span></li>`).join('')}</ul>`:emptyState('records','No messages yet. System messages appear here.')}</section>
   <button class="btn block" data-a="settings">${ico('gear')}Settings</button>`;
 }
@@ -2916,24 +3069,30 @@ function vRecover(){
     return `<li class="joint"><h4>${esc(REC_BY[j].name)}</h4><div class="tri" role="group" aria-label="${esc(REC_BY[j].name)}">${['OK','Sore','Hurts'].map((l,i)=>`<button class="l${i}" data-a="joint" data-x="${j}:${i}" aria-pressed="${lv===i}">${l}</button>`).join('')}</div>${note}</li>`;
   }).join('');
   const rows=adaptLines();
-  const cards=[...sore,...JOINT_IDS.filter(j=>!sore.includes(j)),'general'].map(id=>{
-    const R=REC_BY[id],plan=recPlan(id),done=(d.recDone||[]).includes(id);
-    return `<article class="rec${soreLv(id)?' hot':''}"><h3>${esc(R.name)}${done?' <span class="tag ok">Done today</span>':''}</h3>
-      <button class="btn sm${soreLv(id)?' pri':''}" data-a="recInfo" data-x="${id}">View</button>
-      <p>${esc(R.overview)}</p><p>About ${plan.est} min · ${plan.exs.length} moves</p></article>`;
-  }).join('');
+  // sore joints and the full-body session as full cards; the rest as compact tiles (spec 4.9)
+  const card=id=>{const R=REC_BY[id],plan=recPlan(id),done=(d.recDone||[]).includes(id),hot=soreLv(id)>0;
+    return `<article class="rec${hot?' hot':''}"><h3>${esc(R.name)}</h3>
+      <button class="btn sm${hot?' pri':''}" data-a="recInfo" data-x="${id}">View</button>
+      <p class="rec-ov">${esc(R.overview)}</p>
+      <p class="rec-c">${hot?'<span class="tag gold">Recommended</span>':''}<span class="gc num">${plan.est} min</span><span class="gc num">${plan.exs.length} moves</span>${done?'<span class="tag ok">Done today</span>':''}</p></article>`};
+  const tileR=id=>{const R=REC_BY[id],plan=recPlan(id),done=(d.recDone||[]).includes(id);
+    return `<button class="rec-t${done?' done':''}" data-a="recInfo" data-x="${id}"><b>${esc(R.name)}</b><small class="num">${plan.est} min · ${plan.exs.length} moves</small>${done?'<span class="tag ok">Done</span>':'<span class="rec-go" aria-hidden="true">View ›</span>'}</button>`};
+  const cards=[...sore,'general'].map(card).join('')+`<div class="rec-g">${JOINT_IDS.filter(j=>!sore.includes(j)).map(tileR).join('')}</div>`;
+  const pr=RECOVERY.painRule,prRest=pr.replace(/^Rate pain[^.]*\.\s*/,'');
   const habits=(d.rh||[]).map((q,i)=>`<li><button class="side-q${q.done?' done':''}" data-a="recHabit" data-x="${i}" aria-pressed="${q.done}"><span class="box">${q.done?ico('check'):''}</span><span class="side-n">${esc(recHabit(q).text)}</span><span class="side-r">+10 XP · VIT</span></button></li>`).join('');
   return `<section class="win">${winHead('Joint Check-in','+')}
     <p class="sys">[How do your joints feel today?]</p>
     <ul class="joints">${joints}</ul>
     ${rows.length?`<ul class="adapt" aria-label="What the System changed">${rows.map(([a,b])=>`<li><span>${esc(a)}</span><b>${esc(b)}</b></li>`).join('')}</ul>`:''}
-    <p class="note">Gates and the Penalty Quest always avoid a sore joint. The Daily Quest only changes if you allow it: Sore swaps exercises that load the joint; Hurts makes its recovery session the day's main task, with no penalty. Flags last 3 days, then the System asks again.</p>
+    <details class="help"><summary>How flags work</summary><p>Gates and the Penalty Quest always avoid a sore joint. The Daily Quest only changes if you allow it: Sore swaps exercises that load the joint; Hurts makes its recovery session the day's main task, with no penalty. Flags last 3 days, then the System asks again.</p></details>
   </section>
   <section class="win tone-ok">${winHead('Recovery Sessions')}<div class="recs">${cards}</div></section>
   <section class="win tone-ok">${winHead('Recovery Habits')}<ul class="side">${habits}</ul>
     <p class="note">${sore.length?'Picked for your sore joints.':'General habits that help you recover.'} New ones arrive at every reset.</p></section>
   <section class="win">${winHead('When to Get Help','!')}
-    <p class="sys" style="font-size:14px">${esc(RECOVERY.painRule)}</p>
+    <div class="pain" role="img" aria-label="Pain scale from 0 to 10: 0 to 3 is fine while you move, 4 to 6 means ease off, 7 to 10 means stop">${Array.from({length:11},(_,i)=>`<i class="${i<4?'p-ok':i<7?'p-mid':'p-hi'}">${i}</i>`).join('')}</div>
+    <p class="pain-l" aria-hidden="true"><span>None</span><span>Easy to ignore</span><span>Worst ever</span></p>
+    <p class="pain-t">${esc(prRest===pr?pr:prRest)}</p>
     <details class="help"${sore.length?' open':''}><summary>Stop and get checked if</summary><ul>${RECOVERY.generalRedFlags.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></details>
     <p class="note">${esc(RECOVERY.disclaimer)}</p>
   </section>`;
@@ -3545,7 +3704,7 @@ const ACT={
   titles(){UI.sheet={kind:'titles'};refresh()},
   equip(x){if(S.titles.includes(x)){S.player.title=x;toast(`Title equipped: ${TITLE_BY[x].name}`);save();refresh()}},
   statInfo(x){UI.sheet={kind:'stat',k:x};refresh()},
-  alloc(x){if(S.player.points>0){S.player.points--;S.stats[x].a++;Sfx.tick();buzz(15);save();refresh()}},
+  alloc(x){if(S.player.points>0){S.player.points--;S.stats[x].a++;UI.statFloat={k:x,t:Date.now()};Sfx.tick();buzz(15);save();refresh()}},
   gateInfo(x){UI.sheet={kind:'gate',id:x,tone:findGate(x)?.red};refresh()},
   enterGate(x){enterGate(x)},
   adj(x){const s=S.session;s.adj=clamp(s.adj+(+x),0,999);const o=$('#adj');if(o) o.textContent=s.adj;save()},
