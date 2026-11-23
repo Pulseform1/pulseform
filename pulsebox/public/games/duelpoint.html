@@ -4511,7 +4511,7 @@ const GAME = {
     const letT = canvasTex(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = 'rgba(255,138,61,.92)'; g.fillRect(18, 18, w - 36, h - 36); g.fillStyle = 'rgba(20,18,16,.92)'; g.font = '900 190px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.k, w / 2, h / 2 + 10); });
     const letM = new THREE.MeshBasicMaterial({ map: letT, transparent: true, polygonOffset: true, polygonOffsetFactor: -2 }); X.siteTex.push(letT);
     for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      for (let d = 1; d < 16; d += .5) { const x = P.x + dx * d, z = P.z + dz * d; if (chAt(Math.floor(x / CS), Math.floor(z / CS)) !== '#') continue;
+      for (let d = 1; d < 16; d += .5) { const x = P.x + dx * d, z = P.z + dz * d; const wc = chAt(Math.floor(x / CS), Math.floor(z / CS)); if (wc !== '#' && wc !== 'w') continue;   // (a window counts: the letter goes on the wall over it, not through it onto the room behind)
         const fx = dx ? (dx > 0 ? Math.floor(x / CS) * CS : Math.floor(x / CS) * CS + CS) : x, fz = dz ? (dz > 0 ? Math.floor(z / CS) * CS : Math.floor(z / CS) * CS + CS) : z;
         const ceil = CEIL[idx(Math.floor((fx - dx * .5) / CS), Math.floor((fz - dz * .5) / CS))] || 0, y = ceil ? Math.min(3.6, ceil - 1) : 3.6;
         const p = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), letM); p.position.set(fx - dx * .02, y, fz - dz * .02); p.rotation.y = Math.atan2(-dx, -dz); W.add(p); (X.wallMarks || (X.wallMarks = [])).push([fx, fz, y]); break; }
