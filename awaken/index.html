@@ -108,7 +108,7 @@ h1,h2,h3,h4{text-wrap:balance}
 .who-n{display:flex;align-items:center;gap:8px;min-width:0}
 .nm{font:600 18px/1.1 var(--f-disp);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .xpbar,.bar{height:5px;background:var(--line-c);border-radius:1px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line-c)}
-.xpbar i,.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--line),var(--glow));box-shadow:0 0 10px var(--line)}
+.xpbar i,.bar i{position:relative;display:block;height:100%;background:linear-gradient(90deg,var(--line),var(--glow));box-shadow:0 0 10px var(--line)}
 .coin{display:flex;align-items:center;gap:5px;color:var(--gold);font:600 16px/1 var(--f-disp);font-variant-numeric:tabular-nums}
 .coin .i{width:16px;height:16px}
 .icon-btn{flex:none;width:44px;height:44px;display:grid;place-items:center;background:none;border:1px solid var(--line-b);border-radius:3px;color:var(--ink)}
@@ -142,6 +142,22 @@ h1,h2,h3,h4{text-wrap:balance}
 @media (max-width:359px){.hud-tag{position:absolute;width:1px;height:1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.hud.weak .hb.hp span::after{content:"!"}}
 .tag{display:inline-block;padding:2px 6px;border:1px solid currentColor;border-radius:2px;font:600 12px/1.2 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
 .tag.red{color:var(--red)}.tag.gold{color:var(--gold)}.tag.ok{color:var(--ok)}
+/* reward engine (spec 3.5): afterRender() diffs every [data-k] bar and [data-cu] number against the last render.
+   .kw = the element is the fill (its width is the value), .kt = the element is the track (fill painted by ::before at --v).
+   --kd is a negative delay so a re-render mid-animation continues instead of restarting. */
+.kw.grew,.kw.fell{animation:fillw var(--t-fill) var(--ease-sys) var(--kd,0s) both}
+.kt.grew::before{animation:fill var(--t-fill) var(--ease-sys) var(--kd,0s) both}
+@keyframes fill{from{transform:scaleX(var(--p0,var(--v)))}}
+@keyframes fillw{from{width:calc(var(--p0)*100%)}}
+.gain,.lag{position:absolute;top:0;bottom:0;pointer-events:none}
+.gain{background:#fff;opacity:0;animation:gain 1.1s ease-out var(--kd,0s)}
+.kt>.gain{left:calc(var(--p0)*100%);width:calc((var(--v) - var(--p0))*100%)}
+.kw>.gain{left:calc(var(--p0) / var(--v) * 100%);right:0}
+@keyframes gain{0%,30%{opacity:.85}to{opacity:0}}
+.kt>.lag{left:calc(var(--v)*100%);width:0;background:rgba(255,255,255,.55);animation:klag .5s ease-in calc(.25s + var(--kd,0s)) backwards}
+@keyframes klag{from{width:calc((var(--p0) - var(--v))*100%)}}
+:where(.bump){display:inline-block}.bump{animation:bump .35s var(--ease-pop)}
+@keyframes bump{40%{transform:scale(1.18);text-shadow:0 0 16px var(--glow)}}
 
 /* ---------- tab bar ---------- */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:color-mix(in srgb,var(--void) 90%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:0;
@@ -172,6 +188,12 @@ h1,h2,h3,h4{text-wrap:balance}
 
 /* ---------- system window ---------- */
 .view{display:grid;gap:18px;padding-top:2px}
+/* M1 materialise: only on the render where the tab changed (refresh() sets .enter for 700ms; --enter-d keeps the phase across re-renders) */
+.view.enter>.win{transform-origin:50% 50%;animation:materialise var(--t-win) var(--ease-sys) var(--enter-d,0s) both}
+.view.enter>.win:nth-child(2){animation-delay:calc(var(--enter-d,0s) + .05s)}
+.view.enter>.win:nth-child(3){animation-delay:calc(var(--enter-d,0s) + .1s)}
+.view.enter>.win:nth-child(n+4){animation-delay:calc(var(--enter-d,0s) + .14s)}
+@keyframes materialise{0%{transform:scaleY(.03);filter:brightness(2.2);opacity:0}55%{transform:scaleY(1.015);opacity:1}100%{transform:none;filter:none;opacity:1}}
 .win{position:relative;padding:18px 16px 16px;border:1px solid var(--line-a);border-radius:3px;
   background:linear-gradient(180deg,color-mix(in srgb,var(--deep) 90%,transparent),color-mix(in srgb,var(--void) 84%,transparent));
   box-shadow:0 0 0 1px var(--line-c),0 0 24px var(--line-b),inset 0 0 32px var(--line-c),inset 0 1px 0 color-mix(in srgb,var(--glow) 18%,transparent);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
@@ -220,7 +242,10 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .sys{margin:0 0 14px;text-align:center;font:500 16px/1.4 var(--f-disp);letter-spacing:.02em;text-wrap:balance}
 .note,.hint{margin:10px 0 0;font-size:14px;color:var(--dim)}
 .eyebrow{margin:0 0 2px;font:600 12px/1.2 var(--f-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--glow)}
-.empty{margin:4px 0;text-align:center;color:var(--dim)}
+.empty{display:grid;justify-items:center;gap:8px;margin:0;padding:24px 12px;border:1px dashed var(--line-b);border-radius:var(--r2);text-align:center;font-size:14px;line-height:1.4;color:var(--dim);text-wrap:balance}
+.empty>.i{width:32px;height:32px;color:var(--line-a);filter:drop-shadow(0 0 6px var(--line-b))}
+.empty p{margin:0;max-width:32ch}
+.empty .btn{margin-top:4px}
 
 /* daily quest */
 .goal-h{margin:0 0 4px;text-align:center;font:600 14px/1 var(--f-disp);letter-spacing:.34em;color:var(--glow)}
@@ -308,7 +333,7 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .plus:active{background:var(--line)}
 .plus{position:relative}.plus::after{content:"";position:absolute;inset:-7px}
 .st-x{position:absolute;left:0;right:0;bottom:2px;height:2px;background:var(--line-c)}
-.st-x i{display:block;height:100%;background:var(--line-a)}
+.st-x i{position:relative;display:block;height:100%;background:var(--line-a)}
 .pts{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;font:600 12px/1.2 var(--f-disp);letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
 .stats .pts{grid-column:1/-1}
 .pts b{font-size:22px;color:var(--gold);text-shadow:0 0 12px color-mix(in srgb,var(--gold) 50%,transparent)}
@@ -413,7 +438,7 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .rewards.tiles .rt-xp b{color:var(--glow)}.rewards.tiles .rt-gold b{color:var(--gold)}
 .rewards.tiles b small{margin-left:3px;font-size:12px;letter-spacing:.06em}
 .rewards.tiles .rt-drop small{font:600 12px/1.15 var(--f-disp);letter-spacing:.04em;color:var(--ink)}
-.ntf-art{display:grid;place-items:center;margin:4px 0 -6px}.ntf-art .spr{width:128px;height:128px;filter:drop-shadow(0 0 14px var(--violet))}
+.ntf-art{display:grid;place-items:center;margin:4px 0 -6px}.ntf-art::after{content:"";position:absolute;left:50%;bottom:2px;width:120px;height:20px;margin-left:-60px;border-radius:50%;background:radial-gradient(closest-side,var(--line-b),transparent);z-index:-1}.ntf-art .spr{width:128px;height:128px;filter:drop-shadow(0 0 14px var(--violet))}
 .ntf-art.beaten .spr{filter:saturate(.35) brightness(.75) drop-shadow(0 0 10px rgba(255,62,90,.5));transform:rotate(-8deg)}
 .rw-spr{display:inline-block;width:32px;height:32px;vertical-align:middle;margin:-6px 6px -6px 0}
 .it-b{min-width:0}
@@ -703,7 +728,10 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 /* notifications */
 .ntf-layer{position:fixed;inset:0;z-index:60;background:var(--scrim);display:grid;place-items:center;animation:fade .2s;
   padding:24px max(18px,env(safe-area-inset-right,0px)) 24px max(18px,env(safe-area-inset-left,0px))}
-.ntf{width:100%;max-width:420px;max-height:calc(100vh - 48px);overflow-y:auto;animation:unfold .5s cubic-bezier(.2,.9,.25,1) both}
+.ntf{width:100%;max-width:420px;max-height:calc(100vh - 48px);overflow-y:auto;animation:unfold .5s cubic-bezier(.2,.9,.25,1) both,ntf-flash .5s ease-out}
+@keyframes ntf-flash{0%{box-shadow:0 0 0 1px #fff,0 0 40px var(--glow)}}
+.ntf .win-head .win-ico{animation:ntf-blink .4s steps(2,jump-none) .35s 2 backwards}
+@keyframes ntf-blink{from{opacity:.15}to{opacity:1}}
 .lines p{margin:0 0 8px;text-align:center;font:500 16px/1.45 var(--f-disp);letter-spacing:.01em}
 .lines .ghost{visibility:hidden}
 .ntf .big{margin:0 0 14px;text-align:center;font:700 40px/1 var(--f-disp);letter-spacing:.06em;text-shadow:0 0 20px var(--line)}
@@ -712,6 +740,34 @@ body.locked #app .win-fx::after{display:none}  /* no sweep behind an open sheet 
 .rewards li span{color:var(--dim);font-weight:500}
 .ntf-foot{margin:12px 0 0;text-align:center;font-size:14px;color:var(--dim)}
 .ntf .btn.block{margin-top:16px}
+/* loot rows (spec 3.8): a rarity slot, the label and the value; they pop in one by one once the typing is done */
+.rewards.loot{gap:2px}
+.rewards.loot li{display:grid;grid-template-columns:40px minmax(72px,1fr) auto;gap:10px;align-items:center;min-height:44px}
+.rewards.loot .lk{display:grid}
+.rewards.loot .ll{min-width:0;font:500 14px/1.25 var(--f-disp);letter-spacing:.03em;color:var(--dim);overflow-wrap:anywhere}
+.rewards.loot .lv-v{font:700 18px/1.15 var(--f-disp);letter-spacing:.02em;color:var(--ink);text-align:right;overflow-wrap:anywhere}
+.rewards.loot .lv-v.long{font-size:14px;letter-spacing:.01em}
+.rewards.loot .lv-v.au{color:var(--gold)}.rewards.loot .lv-v.neg{color:var(--red-glow)}
+.ntf .rewards.loot li,.ntf .ntf-stamp{opacity:0}
+.ntf.done .rewards.loot li{animation:rpop .4s var(--ease-pop) calc(var(--i)*80ms) both}
+.ntf.done .ntf-stamp{animation:stampin-r .45s var(--ease-pop) calc(var(--n,0)*80ms + .2s) both}
+.ntf-stamp{margin-top:14px;padding:9px 20px 8px;font-size:26px;letter-spacing:.3em;text-indent:.3em}
+@keyframes stampin-r{0%{transform:scale(2.2) rotate(-2deg);opacity:0}100%{transform:rotate(-2deg);opacity:1}}
+/* confirm guard: a stray second tap right after the loot appears does not dismiss it */
+.ntf .btn.wait{pointer-events:none;color:var(--dim);box-shadow:none}
+/* level up: the big number inside a 120px ring that fills once */
+@property --rv{syntax:'<number>';inherits:false;initial-value:1}
+.ring{--sz:120px;--th:6px;position:relative;width:var(--sz);height:var(--sz);display:grid;place-items:center;margin:0 auto 14px;border-radius:50%;
+  background:radial-gradient(circle,var(--line-c),transparent 70%)}
+.ring::before{content:"";position:absolute;inset:0;border-radius:50%;--rv:var(--v,1);background:conic-gradient(var(--glow) calc(var(--rv)*1turn),var(--line-c) 0);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - var(--th)),#000 calc(100% - var(--th) + .5px));mask:radial-gradient(farthest-side,transparent calc(100% - var(--th)),#000 calc(100% - var(--th) + .5px));
+  filter:drop-shadow(0 0 6px var(--line));animation:ring-fill .9s var(--ease-sys) .15s backwards}
+@keyframes ring-fill{from{--rv:0}}
+.ntf .ring .big{position:relative;margin:0;font-size:clamp(18px,calc(144px / var(--len,6)),30px);letter-spacing:.04em;white-space:nowrap}
+.ntf-kick{margin:0 0 8px;text-align:center;font:600 12px/1 var(--f-disp);letter-spacing:.2em;text-indent:.2em;text-transform:uppercase;color:var(--glow)}
+/* penalty: a hazard band across the top edge */
+.ntf-hz{position:absolute;left:0;right:0;top:0;height:6px;pointer-events:none;background:repeating-linear-gradient(-45deg,var(--red) 0 8px,transparent 8px 16px);opacity:.9}
+.ntf.kind-penalty{padding-top:24px}
 .choices{display:grid;gap:8px;margin-top:14px}
 .choice{display:grid;gap:3px;padding:12px 14px;border:1px solid var(--line-a);border-radius:3px;background:var(--line-c);text-align:left}
 .choice b{font:600 16px/1.2 var(--f-disp);letter-spacing:.06em}
@@ -764,6 +820,8 @@ body.locked .toast.stat{border-left-color:var(--gold)}body.locked .toast.bad{bor
   .foe-rift,.hpbar.fell i{animation:none!important}
   .win-fx::after,.bwarn.sys,.rf.new,.hud.weak .hb.hp i{animation:none!important}.win-fx::after{display:none}
   .hud.weak .hb.hp i{box-shadow:0 0 8px var(--red)}
+  .view.enter>.win,.ntf .win-head .win-ico,.ring::before,.bump,.kw,.kt::before{animation:none!important}.gain,.lag{display:none}
+  .ntf .rewards.loot li,.ntf .ntf-stamp{opacity:1!important;animation:none!important}
   .btn:active{transform:none}}
 /* recovery */
 .joints{list-style:none;margin:0;padding:0;display:grid}
@@ -859,6 +917,7 @@ const ICONS={
   elixir:'<path d="M12 3.2c3.1 4 6 7.4 6 10.9a6 6 0 0 1-12 0c0-3.5 2.9-6.9 6-10.9z"/><path d="M9.2 14.5a2.9 2.9 0 0 0 2.8 2.8"/>',
   tap:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.2"/>',
   check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  star:'<path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6.1L12 16.8l-5.4 3 1.2-6.1-4.5-4.2 6.1-.7z"/>',
   close:'<path d="M6 6l12 12M18 6L6 18"/>',
   coin:'<path d="M12 3l7 9-7 9-7-9z"/><path d="M12 7.5l3.5 4.5-3.5 4.5-3.5-4.5z"/>',
   flame:'<path d="M12 3c1 4 5.2 5.6 5.2 10.2a5.2 5.2 0 0 1-10.4 0c0-2.6 1.4-4.2 2.6-5.2.3 2 1.2 3.1 2.3 3.4C11 8.9 11 6 12 3z"/>',
@@ -2187,18 +2246,26 @@ function nextNotify(){
   S.log.unshift({t:Date.now(),h:n.head,l:n.big&&n.kind!=='quest'?n.big:(n.lines||[])[0]||''});
   S.log.length=Math.min(S.log.length,60);save();
   const tone=n.kind==='penalty'?' tone-red':'';
-  $('#ntf').innerHTML=`<div class="ntf-layer" data-a="ntfSkip"><div class="win ntf${tone}" role="alertdialog" aria-modal="true" aria-labelledby="ntf-t">
+  const rw=n.rewards&&n.rewards.length?n.rewards:null;
+  // level up: the big value sits inside a ring that fills once (short values only; long names keep the plain headline)
+  const kick=n.head==='Level Up'?'Level up':/^[A-Z]-RANK$/.test(n.big||'')?'Rank up':'',ring=n.kind==='level'&&kick&&n.big.length<=8;
+  const stamp=n.kind==='quest'&&(n.head==='Quest Complete'||n.head==='Full Discipline');
+  const big=!n.big?'':ring?`${kick?`<p class="ntf-kick">${kick}</p>`:''}<div class="ring" style="--v:1;--len:${n.big.length}"><div class="big">${esc(n.big)}</div></div>`:`<div class="big">${esc(n.big)}</div>`;
+  $('#ntf').innerHTML=`<div class="ntf-layer" data-a="ntfSkip"><div class="win ntf kind-${esc(n.kind||'info')}${tone}" role="alertdialog" aria-modal="true" aria-labelledby="ntf-t">
+    ${n.kind==='penalty'?'<i class="ntf-hz" aria-hidden="true"></i>':''}
     <div class="win-head"><span class="win-ico">!</span><h2 class="win-ttl" id="ntf-t">${esc(n.head||'Notification')}</h2></div>
     ${n.art&&sprURL(n.art,n.artVariant)?`<div class="ntf-art ${n.artClass||''}">${sprImg(n.art,'',n.artVariant)}</div>`:''}
-    ${n.big?`<div class="big">${esc(n.big)}</div>`:''}
+    ${big}
     <div class="lines">${(n.lines||[]).map(l=>`<p data-tw="${esc(l)}"><span></span><span class="ghost">${esc(l)}</span></p>`).join('')}</div>
-    ${n.rewards&&n.rewards.length?`<ul class="rewards">${n.rewards.map(([a,b,sp])=>`<li><span>${sp?sprImg(sp,'rw-spr'):''}${esc(a)}</span><b>${esc(b)}</b></li>`).join('')}</ul>`:''}
+    ${rw?`<ul class="rewards loot">${rw.map(([a,b,sp],i)=>lootRow(a,b,sp,i,n.kind)).join('')}</ul>`:''}
+    ${stamp?`<div class="stamp ntf-stamp" style="--n:${rw?rw.length:0}">CLEAR</div>`:''}
     ${n.foot?`<p class="ntf-foot">${esc(n.foot)}</p>`:''}
     ${n.choices?`<div class="choices">${n.choices.map(c=>`<button class="choice" data-a="ntfChoose" data-x="${c.id}"><b>${esc(c.name)}</b><small>${esc(c.desc)}</small>${c.rec?'<span class="tag gold">Fits your training</span>':''}</button>`).join('')}</div>`
       :`<button class="btn pri block" data-a="ntfOk">${esc(n.btn||'Confirm')}</button>`}
   </div></div>`;
   chrome($('#ntf'));
   typewrite($('#ntf'));
+  afterRender($('#ntf'));
   Sfx[{penalty:'alarm',level:'level',quest:'clear'}[n.kind]||'notify']();
   buzz(n.kind==='penalty'?[120,80,120,80,200]:[40,40,40]);
   setTimeout(()=>{const b=$('#ntf .btn, #ntf .choice');b&&b.focus({preventScroll:true})},60);
@@ -2208,26 +2275,110 @@ function typewrite(root){
   clearInterval(twTimer);
   const ps=$$('[data-tw]',root);
   const set=(p,c)=>{const full=p.dataset.tw;p.firstChild.textContent=full.slice(0,c);p.lastChild.textContent=full.slice(c)};
-  if(reduceMotion){ps.forEach(p=>set(p,p.dataset.tw.length));return}
+  if(reduceMotion||!ps.length){ps.forEach(p=>set(p,p.dataset.tw.length));twDone(root);return}
   let i=0,c=0;
-  twTimer=setInterval(()=>{const p=ps[i];if(!p){clearInterval(twTimer);return}c+=2;set(p,c);if(c>=p.dataset.tw.length){i++;c=0}},16);
+  twTimer=setInterval(()=>{const p=ps[i];if(!p){clearInterval(twTimer);twDone(root);return}c+=2;set(p,c);if(c>=p.dataset.tw.length){i++;c=0}},16);
 }
-function twFinish(root){clearInterval(twTimer);$$('[data-tw]',root).forEach(p=>{p.firstChild.textContent=p.dataset.tw;p.lastChild.textContent=''})}
+function twFinish(root){clearInterval(twTimer);$$('[data-tw]',root).forEach(p=>{p.firstChild.textContent=p.dataset.tw;p.lastChild.textContent=''});twDone(root)}
+// typing finished (or skipped): the loot rows pop in, and Confirm ignores taps for 400ms so a second skip tap cannot dismiss them unseen
+function twDone(root){
+  const w=root&&root.querySelector('.ntf');if(!w||w.classList.contains('done')) return;
+  w.classList.add('done');
+  const b=w.querySelector('[data-a=ntfOk]');
+  if(b&&!navigator.webdriver){b.classList.add('wait');setTimeout(()=>b.classList.remove('wait'),400)}
+}
+// one loot row: rarity slot (sprite, else an icon picked from the label), label, value
+function lootRow(a,b,sp,i,kind){
+  const l=String(a),v=String(b==null?'':b),it=Object.keys(ITEMS).find(id=>ITEMS[id].name===l||l.startsWith(ITEMS[id].name+' ')),
+    gid=sp&&GEAR[sp]?sp:Object.keys(GEAR).find(id=>GEAR[id].name===l);
+  let s;
+  if(gid) s=slot(gid,GEAR[gid].rank,40,{icon:GEAR[gid].slot==='weapon'?'sword':GEAR[gid].slot==='armor'?'ward':'elixir'});
+  else if(sp) s=slot(sp,0,40,{icon:'box'});
+  else if(it) s=slot(it,0,40,{icon:ITEMS[it].icon});
+  else if(/^gold$/i.test(l)) s=slot('coin16',5,40,{icon:'coin'});
+  else if(/\bXP\b|^Clear bonus/.test(l)) s=slot('xp16',0,40,{icon:'star'});
+  else s=slot('',0,40,{icon:/^HP$|Recovery/.test(l)?'recover':/^MP$/.test(l)?'elixir':/Ability|crystal/i.test(l)?'status':/Streak|Calories/.test(l)?'flame':
+    /Training|Distance/.test(l)?'run':/Wave/.test(l)?'sword':/Clear time/.test(l)?'clock':kind==='quest'?'quest':'shadow'});
+  const tone=/^[−-]/.test(v)?' neg':/\bXP$|gold$/i.test(v)||/^(XP|Gold)$|XP/.test(l)?' au':'';
+  return `<li style="--i:${i}"><span class="lk">${s}</span><span class="ll">${esc(l)}</span><b class="lv-v num${tone}${v.length>12?' long':''}">${esc(v)}</b></li>`;
+}
 function toast(msg,kind=''){const t=document.createElement('div');t.className='toast '+kind;t.textContent=msg;$('#toasts').append(t);setTimeout(()=>t.remove(),2400)}
 
 /* ---------- rendering ---------- */
+// empty state (spec 3.10): a dashed panel, a 32px icon, one line, and at most one way forward (existing actions only)
+const emptyState=(icon,text,btn='')=>`<div class="empty">${ico(icon)}<p>${text}</p>${btn}</div>`;
 const winHead=(t,i)=>`<div class="win-head">${i?`<span class="win-ico">${i}</span>`:''}<h2 class="win-ttl">${t}</h2></div>`;
 // window chrome v2: every .win (views, sheets, screens, battle, notifications) gets one decorative .win-fx layer
 function chrome(root=document){root.querySelectorAll('.win').forEach(w=>{if(!w.querySelector(':scope>.win-fx')) w.insertAdjacentHTML('afterbegin','<span class="win-fx" aria-hidden="true"></span>')})}
+/* reward engine (spec 3.5). refresh() rebuilds the HTML with final values; afterRender() compares each keyed bar
+   ([data-k]) and number ([data-cu]) with the last render and animates only what changed. A re-render during an
+   animation continues it (negative delay) instead of restarting it. Off on first sight of a key, under reduced
+   motion and under automation: the final values simply show. */
+const ENG={kf:{},cu:{}};
+const engineOn=()=>!reduceMotion&&!navigator.webdriver;
+const easeOut=x=>1-Math.pow(1-x,3);
+// the bar's value (0-1) and whether the element is the track (the fill is painted at --v) or the fill itself
+function kVal(el){
+  const own=el.style,par=el.parentElement&&el.parentElement.style;
+  const o=own.getPropertyValue('--v')||own.getPropertyValue('--p');if(o!=='') return [+o,false];
+  if(/%$/.test(own.width)) return [parseFloat(own.width)/100,false];
+  const q=par&&(par.getPropertyValue('--v')||par.getPropertyValue('--p'));if(q) return [+q,true];
+  return [NaN,false];
+}
+function afterRender(root=document){
+  const live=engineOn(),now=performance.now();
+  root.querySelectorAll('[data-k]:not(#sheet):not(#screen)').forEach(el=>{
+    const k=el.dataset.k,[v,track]=kVal(el);if(!(v>=0)) return;
+    const pv=ENG.kf[k];let a=null;
+    // the battle HP bar runs its own drop-and-drain; only remember its value
+    if(live&&pv&&Math.abs(pv.v-v)>1e-4&&!el.parentElement.matches('.fell,.grew')) a=ENG.kf[k]={v,p0:pv.v,t:now};
+    else if(live&&pv&&pv.t&&Math.abs(pv.v-v)<=1e-4&&now-pv.t<1100) a=pv;
+    else ENG.kf[k]={v,t:0};
+    if(!a) return;
+    const up=v>a.p0;
+    el.style.setProperty('--v',v);el.style.setProperty('--p0',a.p0);el.style.setProperty('--kd',`${-Math.round(now-a.t)}ms`);
+    el.classList.add(track?'kt':'kw',up?'grew':'fell');
+    if(up) el.insertAdjacentHTML('beforeend','<b class="gain" aria-hidden="true"></b>');
+    else if(track) el.insertAdjacentHTML('beforeend','<b class="lag" aria-hidden="true"></b>');
+  });
+  root.querySelectorAll('[data-cu]').forEach(el=>{
+    const k=el.dataset.cu,m=/^(\D*?)(-?[\d,]+)(\D*)$/.exec(el.textContent);if(!m) return;
+    const to=+m[2].replace(/,/g,''),pv=ENG.cu[k];let a=null;
+    if(live&&pv&&pv.to!==to) a=ENG.cu[k]={from:pv.t?cuAt(pv,now):pv.to,to,t:now};
+    else if(live&&pv&&pv.t&&pv.to===to&&now-pv.t<700) a=pv;
+    else ENG.cu[k]={to,t:0};
+    if(a) countUp(el,a,m[1],m[3]);
+  });
+}
+const cuAt=(a,now)=>Math.round(a.from+(a.to-a.from)*easeOut(Math.min(1,(now-a.t)/700)));
+// count a number from a.from to a.to over 700ms (easeOutCubic), then pop it; stops if the element is re-rendered
+function countUp(el,a,pre,suf){
+  const step=()=>{
+    if(!el.isConnected) return;
+    const x=Math.min(1,(performance.now()-a.t)/700);
+    el.textContent=pre+fmt(x<1?a.from+(a.to-a.from)*easeOut(x):a.to)+suf;
+    if(x<1) requestAnimationFrame(step); else el.classList.add('bump');
+  };
+  step();
+}
+// M1: windows materialise once when the tab changes; a re-render inside the 700ms window keeps the phase
+function materialise(v){
+  const now=performance.now();
+  if(UI.tab!==UI.lastTab){UI.lastTab=UI.tab;UI.enterT=engineOn()?now:0}
+  const el=UI.enterT?now-UI.enterT:1e9,on=el<700;
+  v.classList.toggle('enter',on);clearTimeout(UI.enterTo);
+  if(on){v.style.setProperty('--enter-d',`${-Math.round(el)}ms`);UI.enterTo=setTimeout(()=>v.classList.remove('enter'),700-el)}
+}
 function refresh(){
   const on=S.awakened;
   $('#app').hidden=!on;$('#tabs').hidden=!on;
-  if(on){renderTop();$('#view').innerHTML=VIEWS[UI.tab]();renderTabs()}
+  if(on){renderTop();$('#view').innerHTML=VIEWS[UI.tab]();materialise($('#view'));renderTabs()}
   renderSheet();renderScreen();
   document.body.classList.toggle('locked',!!(UI.screen||UI.sheet));
   // the scan sweep keeps its phase across re-renders (negative delay from the wall clock)
   const d=`-${Date.now()%9000}ms`;$('#view').style.setProperty('--scan-d',d);$('#screen').style.setProperty('--scan-d',d);
   chrome();
+  afterRender();
 }
 document.addEventListener('visibilitychange',()=>document.body.classList.toggle('bg-hidden',document.hidden));
 function renderTop(){
@@ -2237,7 +2388,7 @@ function renderTop(){
   const tag=weak?['Weakened','red']:soreJoints().length?['Recovering','gold']:null;
   const top=$('#top');top.className=`top hud rk-tone-${R.id}${weak?' weak':''}`;
   top.innerHTML=`<button class="lv hud-port" data-a="tab" data-x="status" style="--xp:${xp}" aria-label="Level ${lv}, ${pct}% to level ${lv+1}. Open status">
-      <span class="hud-ring" aria-hidden="true"></span>${face?`<i class="hud-face" aria-hidden="true" style="background-image:url('${face}')"></i>`:`<b class="hud-init" aria-hidden="true">${esc(init)}</b>`}<b class="hud-lv num" aria-hidden="true">${lv}</b></button>
+      <span class="hud-ring" aria-hidden="true"></span>${face?`<i class="hud-face" aria-hidden="true" style="background-image:url('${face}')"></i>`:`<b class="hud-init" aria-hidden="true">${esc(init)}</b>`}<b class="hud-lv num" aria-hidden="true" data-cu="lv">${lv}</b></button>
     <div class="who"><div class="who-n"><span class="rk rk-${R.id}" title="${R.id}-Rank">${R.id}</span><span class="nm">${esc(name)}</span>${tag?`<span class="tag ${tag[1]} hud-tag">${tag[0]}</span>`:''}</div>
       <div class="hud-bars">
         <div class="hb hp" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="${hpM}" aria-valuenow="${hp}" style="--v:${hpM?hp/hpM:0}"><span aria-hidden="true">HP</span><i data-k="hud-hp"></i></div>
@@ -2245,7 +2396,7 @@ function renderTop(){
       </div></div>
     <div class="coin" aria-label="${fmt(p.gold)} gold">${ico('coin')}<b class="num" data-cu="gold">${fmt(p.gold)}</b></div>
     <button class="icon-btn" data-a="settings" aria-label="Settings">${ico('gear')}</button>
-    <div class="xpbar" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="${need}" aria-valuenow="${p.xp}"><i data-k="xp" style="width:${xp*100}%"></i></div>`;
+    <div class="xpbar" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="${need}" aria-valuenow="${p.xp}"><i data-k="xp-${lv}" style="width:${xp*100}%"></i></div>`;
 }
 function renderTabs(){
   const d=S.daily,dots={quest:(d&&!d.cleared&&!d.rest)||weakened(),status:S.player.points>0,gates:!!trialGate(),
@@ -2256,7 +2407,7 @@ function renderTabs(){
 }
 function goalRow(act,x,name,val,tg,label,done){
   const p=tg?Math.min(1,val/tg):0;
-  return `<li><button class="goal${done?' done':''}" data-a="${act}" data-x="${x}"><span class="g-name">${name}</span><span class="g-val">[${label}]</span><span class="chk">${done?ico('check'):''}</span><span class="g-bar" style="--p:${p}"></span></button></li>`;
+  return `<li><button class="goal${done?' done':''}" data-a="${act}" data-x="${x}"><span class="g-name">${name}</span><span class="g-val">[${label}]</span><span class="chk">${done?ico('check'):''}</span><span class="g-bar" data-k="g-${act}-${x}" style="--p:${p}"></span></button></li>`;
 }
 
 /* quest tab */
@@ -2299,7 +2450,7 @@ function vQuest(){
 function calMeter(d){
   const today=calDay(d.date),quest=Object.keys(d.targets).reduce((a,id)=>a+calOf(taskEx(id),d.targets[id]),0);
   return `<div class="burn" role="group" aria-label="Calories burned today"><div class="burn-t">${ico('flame')}<b>${kcal(today)}</b><span>burned today</span></div>
-    <div class="bar" role="progressbar" aria-label="Calories toward the full Daily Quest" aria-valuemin="0" aria-valuemax="${Math.round(quest)}" aria-valuenow="${Math.round(Math.min(today,quest))}"><i style="width:${quest?clamp(today/quest,0,1)*100:0}%"></i></div>
+    <div class="bar" role="progressbar" aria-label="Calories toward the full Daily Quest" aria-valuemin="0" aria-valuemax="${Math.round(quest)}" aria-valuenow="${Math.round(Math.min(today,quest))}"><i data-k="burn" style="width:${quest?clamp(today/quest,0,1)*100:0}%"></i></div>
     <small>The full Daily Quest burns about ${kcal(quest)}. Estimate${S.settings.weight?'':` for ${S.settings.units==='mi'?'154 lb':'70 kg'}: set your weight in Settings`}.</small></div>`;
 }
 function periodWin(kind){
@@ -2307,7 +2458,7 @@ function periodWin(kind){
   const left=daysBetween(S.daily.date,periodEnd(kind,P.key)),rw=pqReward(kind);
   const rows=P.list.map((q,i)=>{const def=pqDef(kind,q),v=Math.min(q.target,pqProg(q)),done=v>=q.target,dist=q.id==='dist';
     const lbl=dist?`${trim(toUser(v))}/${trim(toUser(q.target))}`:`${fmt(Math.floor(v))}/${fmt(q.target)}`;
-    return `<li class="pq${q.claimed?' claimed':''}"><div class="pq-t"><span>${def.name(q.target)}</span><b>${q.claimed?'Claimed':lbl}</b></div><span class="g-bar" style="--p:${v/q.target}"></span>
+    return `<li class="pq${q.claimed?' claimed':''}"><div class="pq-t"><span>${def.name(q.target)}</span><b>${q.claimed?'Claimed':lbl}</b></div><span class="g-bar" data-k="pq-${kind}-${i}" style="--p:${v/q.target}"></span>
       ${done&&!q.claimed?`<button class="btn sm pri" data-a="claimPQ" data-x="${kind}:${i}">Claim</button>`:''}</li>`}).join('');
   const bonus=PQ_INFO[kind].bonus.map(([id,n])=>`${ITEMS[id].name}${n>1?' ×'+n:''}`).join(' + ');
   return `<section class="win">${winHead(PQ_INFO[kind].name)}<ul class="pqs">${rows}</ul>
@@ -2327,25 +2478,25 @@ function penaltyWin(){
 }
 
 /* status tab */
-function meter(cls,l,v,m){return `<div class="meter ${cls}"><div class="meter-l"><span>${l}</span><span>${fmt(v)} / ${fmt(m)}</span></div><div class="bar"><i style="width:${clamp(v/m,0,1)*100}%"></i></div></div>`}
+function meter(cls,l,v,m){return `<div class="meter ${cls}"><div class="meter-l"><span>${l}</span><span>${fmt(v)} / ${fmt(m)}</span></div><div class="bar"><i data-k="m-${cls}" style="width:${clamp(v/m,0,1)*100}%"></i></div></div>`}
 function vStatus(){
   const p=S.player,need=xpNeed(p.level),R=rankOf(),hm=maxHP(),mm=maxMP();
   p.hp=Math.min(p.hp,hm);p.mp=Math.min(p.mp,mm);
-  const cell=k=>{const s=S.stats[k];return `<div class="stat"><button class="st-name" data-a="statInfo" data-x="${k}" aria-label="${STAT_INFO[k].name} details">${STAT_INFO[k].short}:</button><b>${stat(k)}</b>${p.points?`<button class="plus" data-a="alloc" data-x="${k}" aria-label="Add a point to ${STAT_INFO[k].name}">+</button>`:'<span></span>'}<span class="st-x" aria-hidden="true"><i style="width:${s.x}%"></i></span></div>`};
+  const cell=k=>{const s=S.stats[k];return `<div class="stat"><button class="st-name" data-a="statInfo" data-x="${k}" aria-label="${STAT_INFO[k].name} details">${STAT_INFO[k].short}:</button><b>${stat(k)}</b>${p.points?`<button class="plus" data-a="alloc" data-x="${k}" aria-label="Add a point to ${STAT_INFO[k].name}">+</button>`:'<span></span>'}<span class="st-x" aria-hidden="true"><i data-k="st-${k}" style="width:${s.x}%"></i></span></div>`};
   const fx=['all','str','run','gate','side','gold','hp','mp'].map(k=>[k,bonus(k)+statBonus(k)]).filter(([,v])=>v>0.0001);
   const guard=Math.min(.75,bonus('guard'));
   const effects=fx.map(([k,v])=>`<li>+${Math.round(v*100)}% ${BONUS_LABEL[k]}</li>`).join('')+(guard?`<li>Penalty damage −${Math.round(guard*100)}%</li>`:'');
   return `<section class="win">${winHead('Status')}
-    <div class="st-top"><div class="st-lv"><b>${p.level}</b><span>LEVEL</span></div>
+    <div class="st-top"><div class="st-lv"><b data-cu="st-lv">${p.level}</b><span>LEVEL</span></div>
       <dl class="st-id">
         <div><dt>Name</dt><dd>${esc(p.name)}${p.sig?`<img class="sig-img" src="${esc(p.sig)}" alt="Your signature">`:''}</dd></div>
         <div><dt>Job</dt><dd>${p.job?JOBS[p.job].name:'None'}</dd></div>
         <div><dt>Title</dt><dd><button class="link" data-a="titles">${esc(TITLE_BY[p.title]?.name||'None')}</button></dd></div>
         <div><dt>Rank</dt><dd><span class="rk rk-${R.id}">${R.id}</span> Hunter</dd></div>
       </dl></div>
-    <div class="xp"><div class="bar"><i style="width:${p.xp/need*100}%"></i></div><small>${fmt(p.xp)} / ${fmt(need)} XP to level ${p.level+1}</small></div>
+    <div class="xp"><div class="bar"><i data-k="st-xp-${p.level}" style="width:${p.xp/need*100}%"></i></div><small>${fmt(p.xp)} / ${fmt(need)} XP to level ${p.level+1}</small></div>
     <div class="vitals">${meter('hp','HP',p.hp,hm)}${meter('mp','MP',p.mp,mm)}<div class="fat"><span>FATIGUE</span><b>${fatigue()}</b></div></div>
-    <div class="stats">${STAT_KEYS.map(cell).join('')}<div class="pts"><span>Available ability points</span><b>${p.points}</b></div></div>
+    <div class="stats">${STAT_KEYS.map(cell).join('')}<div class="pts"><span>Available ability points</span><b data-cu="pts">${p.points}</b></div></div>
     ${weakened()?'<p class="debuff">Debuff: Weakened (all XP −50%)</p>':''}
     ${soreJoints().length?`<ul class="ail" aria-label="Status ailments">${soreJoints().map(j=>`<li><button class="tag ${soreLv(j)>1?'red':'gold'}" style="background:none" data-a="tab" data-x="recover">${AILMENT(j)}${soreLv(j)>1?' · hurts':''}</button></li>`).join('')}</ul>`:''}
     ${effects?`<ul class="effects" aria-label="Active effects">${effects}</ul>`:''}
@@ -2371,8 +2522,8 @@ function vGates(){
   <section class="win">${winHead('Gates Detected')}
     ${soreJoints().length?`<p class="note" style="margin:-4px 0 12px;text-align:center">Gates leave out exercises that load your sore joints. <button class="link" data-a="tab" data-x="recover">Recovery</button></p>`:''}
     ${list.length?`<div class="gates">${list.map(gateCard).join('')}</div>`
-      :S.gates.done.length?`<p class="empty">Every gate is cleared for today. New gates open in <span data-live="reset">${hms(nextReset()-Date.now())}</span>.</p>`
-      :`<p class="empty">Your sore joints rule out every gate exercise today. Try a recovery session instead.</p>`}
+      :S.gates.done.length?emptyState('gate',`Every gate is cleared for today. New gates open in <span data-live="reset">${hms(nextReset()-Date.now())}</span>.`,`<button class="btn sm ghost" data-a="runOpen" data-x="gps">${ico('run')}Start a run</button>`)
+      :emptyState('recover','Your sore joints rule out every gate exercise today. Try a recovery session instead.',`<button class="btn sm ghost" data-a="tab" data-x="recover">Recovery</button>`)}
     <div class="mp-row"><span>MP ${fmt(p.mp)} / ${fmt(maxMP())} · 10 MP per gate</span>${S.inv.key?`<button class="btn sm" data-a="use" data-x="key">${ico('key')}Use key (${S.inv.key})</button>`:''}</div>
   </section>
   <section class="win">${winHead('Hunter Rank')}
@@ -2387,7 +2538,7 @@ function vItems(){
   const p=S.player,tab=UI.itemsTab||'inv';
   const segs=[['inv','Inventory'],['gear','Equipment'],['shop','Shop'],['army','Shadows']];
   const head=`<div class="seg" role="tablist">${segs.map(([id,l])=>`<button class="seg-b${tab===id?' on':''}" data-a="itemsTab" data-x="${id}" role="tab" aria-selected="${tab===id}">${l}</button>`).join('')}</div>`;
-  const gold=`<div class="gold-big">${ico('coin')}${fmt(p.gold)} <small style="font-size:14px;letter-spacing:.1em">GOLD</small></div>`;
+  const gold=`<div class="gold-big">${ico('coin')}<b class="num" data-cu="gold-big">${fmt(p.gold)}</b> <small style="font-size:14px;letter-spacing:.1em">GOLD</small></div>`;
   const gearRow=(id,btn)=>{const g=GEAR[id],R=RANKS[g.rank];return `<li class="item"><div class="it-ico gear-ico">${gearIcon(id)}</div><div class="it-b"><h4>${esc(g.name)}</h4><p>${SLOTS[g.slot]} · ${bonusText(g.b)}</p></div>${btn}</li>`};
   if(tab==='gear'){
     const owned=S.gear.owned.filter(id=>GEAR[id]);
@@ -2396,7 +2547,7 @@ function vItems(){
     </section>
     <section class="win">${winHead('Owned Gear')}
       ${owned.length?`<ul class="list">${owned.map(id=>gearRow(id,S.gear.eq[GEAR[id].slot]===id?`<button class="btn sm" data-a="equip2" data-x="${id}">Unequip</button>`:`<button class="btn sm pri" data-a="equip2" data-x="${id}">Equip</button>`)).join('')}</ul>`
-        :'<p class="empty">No gear yet. Buy it in the Shop, or find it in gates and Random Boxes.</p>'}
+        :emptyState('sword','No gear yet. Buy it in the Shop, or find it in gates and Random Boxes.',`<button class="btn sm ghost" data-a="itemsTab" data-x="shop">${ico('coin')}Visit the Shop</button>`)}
     </section>`;
   }
   if(tab==='shop'){
@@ -2410,7 +2561,7 @@ function vItems(){
       <ul class="list">${Object.entries(ITEMS).filter(([,it])=>it.price).map(([id,it])=>`<li class="item"><div class="it-ico">${ico(it.icon)}</div><div class="it-b"><h4>${it.name}</h4><p>${it.desc} <span class="price">${ico('coin')}${fmt(it.price)}</span></p></div>
         <button class="btn sm" data-a="buy" data-x="${id}" ${p.gold<it.price?'disabled':''}>Buy</button></li>`).join('')}</ul></section>
     <section class="win">${winHead('Gear')}
-      ${stock.length?`<ul class="list">${stock.map(id=>gearRow(id,`<button class="btn sm" data-a="buyGear" data-x="${id}" ${p.gold<GEAR[id].price?'disabled':''}>${fmt(GEAR[id].price)}</button>`)).join('')}</ul>`:'<p class="empty">You own everything available at your rank. Rank up for more.</p>'}
+      ${stock.length?`<ul class="list">${stock.map(id=>gearRow(id,`<button class="btn sm" data-a="buyGear" data-x="${id}" ${p.gold<GEAR[id].price?'disabled':''}>${fmt(GEAR[id].price)}</button>`)).join('')}</ul>`:emptyState('check','You own everything available at your rank. Rank up for more.')}
       <p class="note">Stock up to one rank above yours.</p></section>
     <section class="win">${winHead('System Skins')}
       <ul class="list">${Object.entries(SKINS).map(([id,sk])=>{const own=S.skins.includes(id),on=S.settings.skin===id;return `<li class="item"><div class="swatch" style="--sw1:${sk.c[0]};--sw2:${sk.c[1]}" aria-hidden="true"></div><div class="it-b"><h4>${sk.name}</h4><p>${own?(on?'In use':'Owned'):`<span class="price">${ico('coin')}${fmt(sk.price)}</span>`}</p></div>
@@ -2420,7 +2571,8 @@ function vItems(){
     const ids=Object.keys(SHADOWS),have=ids.filter(id=>S.shadows[id]);
     const totals=ARMY_KEYS.map(k=>[k,armyBonus(k)]).filter(([,v])=>v>0);
     return `${head}<section class="win tone-violet">${winHead('Shadow Army')}
-      <p class="sys">${have.length} / ${ids.length} shadows</p>
+      <p class="sys"><b data-cu="army">${have.length}</b> / ${ids.length} shadows</p>
+      ${have.length?'':emptyState('shadow','No shadows yet. Defeat a gate boss, then choose Arise.')}
       ${totals.length?`<ul class="effects" aria-label="Army bonus">${totals.map(([k,v])=>`<li>+${Math.round(v*100)}% ${BONUS_LABEL[k]}</li>`).join('')}</ul>`:''}
       <div class="army">${ids.map(id=>{const sh=SHADOWS[id],v=S.shadows[id];return `<div class="sh${v?' got':''}" title="${esc(sh.name)}"><div class="sh-ico">${sprImg(id,'sh-spr',v?'shadow':'dark')||ico('shadow')}</div>
         <b>${v?esc(sh.name):'???'}</b><small>${RANKS[sh.rank].id} · ${sh.grade}${v?` · Lv ${v.lv}`:''}</small>${v?`<small>${bonusText({[sh.key]:sh.v*(1+.5*(v.lv-1))})}</small>`:''}</div>`}).join('')}</div>
@@ -2475,7 +2627,7 @@ function progressWin(){
 function pbWin(){
   const ids=Object.keys(S.pb).filter(id=>EX[id]&&EX[id].kind!=='rec'&&S.pb[id].set>0).sort((a,b)=>(ex(b)-ex(a)));
   return `<section class="win">${winHead('Personal Bests')}${ids.length?`<table class="pbt"><thead><tr><th>Exercise</th><th>Best set</th><th>Best day</th></tr></thead><tbody>${ids.map(id=>`<tr><td>${esc(EX[id].name)}</td><td>${pbFmt(id,S.pb[id].set)}</td><td>${pbFmt(id,S.pb[id].day)}</td></tr>`).join('')}</tbody></table>`
-    :'<p class="empty">Log a set and your bests appear here.</p>'}</section>`;
+    :emptyState('records','Log a set and your bests appear here.')}</section>`;
 }
 function testsWin(){
   const T=S.tests;if(!T.length) return '';
@@ -2490,14 +2642,14 @@ function vRecords(){
   const rows=[['Push-ups',fmt(ex('pushup'))],['Sit-ups',fmt(ex('situp'))],['Squats',fmt(ex('squat'))],['Burpees',fmt(ex('burpee'))],['Distance',`${trim(toUser(ex('run')))} ${unit()}`],
     ['Gates cleared',`${fmt(S.totals.gates)}${S.totals.red?` (${S.totals.red} red)`:''}`],['Daily Quests cleared',fmt(S.totals.clears)],['Penalties survived',fmt(S.totals.penalties)],['Optional quests',fmt(S.totals.side)],['Recovery sessions',fmt(S.totals.rec)],['Recovery habits',fmt(S.totals.recHabits)],['Calories burned (estimate)',kcal(calTotal())],['Days since awakening',fmt(days)]];
   return `<section class="win">${winHead('Streak')}
-    <div class="streak"><div class="streak-n">${ico('flame')}<b>${S.streak.cur}</b><span>day streak</span></div>
+    <div class="streak"><div class="streak-n">${ico('flame')}<b data-cu="streak">${S.streak.cur}</b><span>day streak</span></div>
     <dl class="kv"><div><dt>Best streak</dt><dd>${S.streak.best}</dd></div><div><dt>Streak Freezes</dt><dd>${S.streak.freeze||0} / ${FREEZE_MAX}</dd></div><div><dt>Penalty Wards</dt><dd>${S.inv.ward}</dd></div><div><dt>Rest days</dt><dd>${S.settings.restDays.length?S.settings.restDays.map(i=>DOW[i]).join(', '):'None'}</dd></div></dl></div>
   </section>
   <p class="note" style="margin:-6px 0 14px;text-align:center">Every 7-day streak earns a Streak Freeze. It covers one missed day before a Penalty Ward is used.</p>
   <section class="win">${winHead('Quest Log')}${calendar()}</section>
   ${progressWin()}${pbWin()}${testsWin()}
   <section class="win">${winHead('Totals')}<dl class="kv">${rows.map(([a,b])=>`<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl></section>
-  <section class="win">${winHead('System Log')}${S.log.length?`<ul class="log">${S.log.slice(0,15).map(l=>`<li><time>${clockTime(l.t)}</time><span><b>${esc(l.h)}</b> ${esc(l.l)}</span></li>`).join('')}</ul>`:'<p class="empty">No messages yet.</p>'}</section>
+  <section class="win">${winHead('System Log')}${S.log.length?`<ul class="log">${S.log.slice(0,15).map(l=>`<li><time>${clockTime(l.t)}</time><span><b>${esc(l.h)}</b> ${esc(l.l)}</span></li>`).join('')}</ul>`:emptyState('records','No messages yet. System messages appear here.')}</section>
   <button class="btn block" data-a="settings">${ico('gear')}Settings</button>`;
 }
 /* recover tab */
@@ -2932,8 +3084,8 @@ function battleWin(s,hit){
     <div class="hpbar${fell?' fell':''}" role="progressbar" aria-label="${esc(foe.name)} HP" aria-valuemin="0" aria-valuemax="${hp}" aria-valuenow="${left}" style="--v:${v}${fell?`;--p0:${pv}`:''}"><i data-k="foe-hp-${w}" style="width:${v*100}%"></i>${fell?'<b class="lag"></b>':''}<span class="hp-n hp-in num">${fmt(left)} / ${fmt(hp)}</span></div>
     <div class="hunter-strip">${slot('hunter-full',p.rank,40,{icon:'shadow'})}
       <div class="hud-bars">
-        <div class="hb hp" role="meter" aria-label="Your HP" aria-valuemin="0" aria-valuemax="${hpM}" aria-valuenow="${php}" style="--v:${hpM?php/hpM:0}"><span aria-hidden="true">HP</span><i></i></div>
-        <div class="hb mp" role="meter" aria-label="Your MP" aria-valuemin="0" aria-valuemax="${mpM}" aria-valuenow="${pmp}" style="--v:${mpM?pmp/mpM:0}"><span aria-hidden="true">MP</span><i></i></div>
+        <div class="hb hp" role="meter" aria-label="Your HP" aria-valuemin="0" aria-valuemax="${hpM}" aria-valuenow="${php}" style="--v:${hpM?php/hpM:0}"><span aria-hidden="true">HP</span><i data-k="b-hp"></i></div>
+        <div class="hb mp" role="meter" aria-label="Your MP" aria-valuemin="0" aria-valuemax="${mpM}" aria-valuenow="${pmp}" style="--v:${mpM?pmp/mpM:0}"><span aria-hidden="true">MP</span><i data-k="b-mp"></i></div>
       </div>
       ${(s.combo||0)>=2&&!dying?`<span class="combo num${hitNow?' pop':''}"><span class="sr">Combo </span>×${s.combo}</span>`:''}${summon}
       ${!dying&&shadow?`<p class="summoned">${ico('shadow')}${esc(SHADOWS[s.summon.id].name)} fights beside you · +${s.summon.pct}% clear rewards</p>`:''}
@@ -3187,7 +3339,7 @@ const ACT={
   buyGear(x){buyGear(x)},
   buyDeal(){buyDeal()},
   skin(x){skinAct(x)},
-  ntfOk(){closeNotify()},
+  ntfOk(x,a){if(a&&a.classList.contains('wait')) return;closeNotify()},
   ntfSkip(){twFinish($('#ntf'))},
   ntfChoose(x){const n=curN;n&&n.onChoose&&n.onChoose(x);closeNotify()},
   remindOn(){remindOn(3)},
