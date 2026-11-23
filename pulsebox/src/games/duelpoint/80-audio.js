@@ -387,7 +387,36 @@
       o => tone(o, 80, 2, 'sine', .05, 6),   // the station's hum
       o => tone(o, 520, .5, 'triangle', .02, -300)],
   };
+  // the bed: a quiet, steady sound under all that, one for each theme (surf, the city and its rain, wind over the ice and the
+  // sand, insects and a river, the caldera, dry leaves, the station's air), duller when you are under a roof. Each layer is
+  // noise through a filter [kind, Hz, Q, level, swell in Hz, how deep the swell goes]; DRONE adds a low steady note.
+  const BED = {
+    harbor: [['lowpass', 420, .7, .05, .11, .7], ['highpass', 3800, .7, .005, .13, .9]],
+    neon: [['lowpass', 170, .7, .06, .05, .25], ['highpass', 5200, .7, .007, .3, .3]],
+    snow: [['bandpass', 430, .9, .05, .07, .8], ['bandpass', 900, 1.4, .011, .19, .9]],
+    desert: [['bandpass', 620, .8, .04, .06, .8], ['highpass', 4200, .7, .004, .23, .9]],
+    jungle: [['bandpass', 5400, 9, .011, 7.3, .6], ['lowpass', 700, .7, .026, .09, .4], ['bandpass', 3100, 6, .005, 11, .7]],
+    lava: [['lowpass', 90, .7, .15, .08, .5], ['bandpass', 2300, 1.2, .005, .31, .8]],
+    autumn: [['highpass', 2400, .7, .011, .1, .85], ['bandpass', 380, .8, .028, .06, .7]],
+    space: [['lowpass', 240, .7, .045, .04, .25], ['bandpass', 1900, 6, .004, .5, .5]],
+  }, DRONE = { space: [55, .012], neon: [100, .004], lava: [38, .028] };
+  function bedTick() {
+    const ac = K.ac; if (!ac) return; const want = canHear() && M && screen === 'play' && !M.over ? MAP.theme : null; let B = AMB.bed;
+    if (B && (B.theme !== want || B.ac !== ac)) { const t = ac.currentTime; try { B.g.gain.cancelScheduledValues(t); B.g.gain.setTargetAtTime(0, t, .25); for (const s of B.src) s.stop(t + 1.5); } catch (e) {} AMB.bed = B = null; }
+    if (want && !B && BED[want]) {
+      if (!noiseBuf) { noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const c = noiseBuf.getChannelData(0); for (let i = 0; i < c.length; i++) c[i] = Math.random() * 2 - 1; }
+      const t = ac.currentTime, g = ac.createGain(), lpf = ac.createBiquadFilter(), src = []; g.gain.setValueAtTime(0, t); g.gain.setTargetAtTime(1, t, 1.2); lpf.type = 'lowpass'; lpf.frequency.value = 16000; g.connect(lpf).connect(bus());
+      BED[want].forEach(([kind, hz, q, v, sw, deep], n) => { const s = ac.createBufferSource(), fl = ac.createBiquadFilter(), a = ac.createGain(), lfo = ac.createOscillator(), la = ac.createGain();
+        s.buffer = noiseBuf; s.loop = true; s.playbackRate.value = 1 - n * .13; fl.type = kind; fl.frequency.value = hz; fl.Q.value = q; a.gain.value = v * (1 - deep / 2); lfo.frequency.value = sw; la.gain.value = v * deep / 2;
+        lfo.connect(la).connect(a.gain); s.connect(fl).connect(a).connect(g); s.start(t, Math.random() * .9); lfo.start(t); src.push(s, lfo); });
+      if (DRONE[want]) { const o = ac.createOscillator(), a = ac.createGain(); o.frequency.value = DRONE[want][0]; a.gain.value = DRONE[want][1]; o.connect(a).connect(g); o.start(t); src.push(o); }
+      AMB.bed = B = { theme: want, ac, g, lpf, src, inside: false };
+    }
+    if (B && M) { const P = me(), k = P ? idx(Math.floor(P.x / CS), Math.floor(P.z / CS)) : -1, inside = k >= 0 && CEIL[k] > 0;
+      if (inside !== B.inside) { B.inside = inside; const t = ac.currentTime; B.lpf.frequency.setTargetAtTime(inside ? 900 : 16000, t, .35); B.g.gain.setTargetAtTime(inside ? .65 : 1, t, .35); } }
+  }
   function ambTick(dt) {
+    bedTick();
     if (!canHear() || !M || screen !== 'play' || M.over) return; AMB.t -= dt; if (AMB.t > 0) return;
     AMB.t = 4 + Math.random() * 7; const L = LIFE[MAP.theme]; if (!L) return; L[Math.floor(Math.random() * L.length)](ambOut(.9));
   }
