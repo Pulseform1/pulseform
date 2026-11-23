@@ -10481,10 +10481,10 @@ const GAME = {
         if (rdy) { const gr = g.createLinearGradient(0, -62, 0, 0); gr.addColorStop(0, op.col + '00'); gr.addColorStop(1, op.col + '55'); g.fillStyle = gr; g.fillRect(x + 2, -60, w - 4, 58); }
         abIcon(g, ABICON[P.op + k] || 'orb', x + w / 2, -40, 13, on ? (rdy ? '#ffffff' : BONE) : '#5a6272', on ? op.col : '#3c4250');
         if (ult) for (let q = 0; q < c2; q++) { const a0 = -Math.PI / 2 + q * TAU / c2 + .1, a1 = -Math.PI / 2 + (q + 1) * TAU / c2 - .1; g.strokeStyle = q < pts ? op.col : 'rgba(255,255,255,.18)'; g.lineWidth = 3.5; g.beginPath(); g.arc(x + w / 2, -40, 19, a0, a1); g.stroke(); }
-        if (k === 'e' && !n) { const E = op.e, q = E.rech ? (P.eT || 0) / E.rech : E.kills ? (P.eK | 0) / E.kills : 0; if (q > 0) { g.strokeStyle = op.col; g.lineWidth = 3; g.beginPath(); g.arc(x + w / 2, -40, 18, -Math.PI / 2, -Math.PI / 2 + TAU * q); g.stroke(); } }
+        if (k === 'e' && n < (op.e.max || 1)) { const E = op.e, q = E.rech ? (P.eT || 0) / E.rech : E.kills ? (P.eK | 0) / E.kills : 0; if (q > 0) { g.strokeStyle = op.col; g.lineWidth = 3; g.beginPath(); g.arc(x + w / 2, -40, 18, -Math.PI / 2, -Math.PI / 2 + TAU * q); g.stroke(); } }
         // the key, and the charges
         rr(g, x + 5, -19, 15, 14, 3, on ? op.col : 'rgba(255,255,255,.12)'); tx(g, key, x + 12.5, -12, 10, on ? INK : '#5a6272', 'center', 900);
-        if (!ult && k !== 'e') { const mx = A.max; for (let c = 0; c < mx; c++) { g.fillStyle = c < n ? op.col : 'rgba(255,255,255,.18)'; g.fillRect(x + w - 8 - (mx - c) * 9, -15, 7, 7); } }
+        if (!ult && (k !== 'e' || (A.max || 1) > 1)) { const mx = A.max || 1; for (let c = 0; c < mx; c++) { g.fillStyle = c < n ? op.col : 'rgba(255,255,255,.18)'; g.fillRect(x + w - 8 - (mx - c) * 9, -15, 7, 7); } }
         if (ult) tx(g, have ? 'READY' : `${pts}/${c2}`, x + w - 6, -12, 9.5, have ? op.col : '#5a6272', 'right', 900);
         if (rdy) tx(g, A.n.toUpperCase(), x + w / 2, -74, 11, op.col, 'center', 900);
         g.restore(); };
