@@ -4,7 +4,7 @@
      mode (one site or two), the team size, whether bots fill empty seats and how good they are, moves players between
      teams, and starts once everyone is ready. Lobby messages ride the room relay: 'lprof' (my operative, rating, ready),
      'lteam' (the host's teams and settings), 'lswap' (please move me). */
-  const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, bd: 1, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null, qs: null };   // qs: the host's world search, as the rest of the party sees it   // want: who asked to switch sides; pick: the host's first pick of a trade
+  const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, bd: 1, map: null, win: 5, ranked: false }, kicked: new Set(), kickArm: null, status: '', ready: false, sent: '', joinOpen: false, want: new Set(), pick: null, qs: null };   // qs: the host's world search, as the rest of the party sees it   // want: who asked to switch sides; pick: the host's first pick of a trade
   const myId = () => MP.id;
   // view: 'join' opens straight on the join screen (just a code to type); anything else, the create-or-join choice
   function openParty(view) { if (!QUE.found) queueStop(); screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; PARTY.view = view === 'join' ? 'join' : view === 'creating' ? 'creating' : 'create'; PARTY.focused = false; if (view === 'creating') { if (!MP.name || MP.name === 'You') { let n = ''; try { n = (JSON.parse(localStorage.getItem('pbx-profile') || '{}').name || ''); } catch (e) {} MP.setName(n || 'Player' + Math.floor(1000 + Math.random() * 9000)); } MP.create(); } }   // (no name yet: your Pulsebox name, or a placeholder you can change)
@@ -29,9 +29,11 @@
   // lobby messages; anything else is the match's
   function partyMsg(m) {
     if (typeof selMsg === 'function' && selMsg(m)) return true;   // agent select's picks (95-select)
+    if (m.t === 'lprof' && MP.isHost() && PARTY.kicked.has(nameKey(m.from))) { MP.to(m.from, { t: 'lkick' }); return true; }   // someone the host removed, back again
     if (m.t === 'lprof') { const rk = {}; if (m.rk && typeof m.rk === 'object') for (const k of RQ) rk[k] = cl(+m.rk[k] || 0, 0, 4000); PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd, rk, rkp: typeof m.rkp === 'string' ? m.rkp.slice(0, 5) : '', cd: typeof m.cd === 'string' ? m.cd.slice(0, 40) : '', qt: typeof m.qt === 'string' ? m.qt.slice(0, 16) : '' }); return true; }
     if (m.t === 'lteam') { if (m.from === MP.hostId) { PARTY.teams = m.teams || {}; PARTY.set = Object.assign(PARTY.set, m.set || {}); if (Array.isArray(m.want)) PARTY.want = new Set(m.want.map(String).slice(0, 10)); } return true; }
     if (m.t === 'lswap') { if (MP.isHost()) { swapTeam(m.from, true); } return true; }
+    if (m.t === 'lkick') { if (m.from === MP.hostId && !MP.isHost()) { MP.leave(); PARTY.ready = false; PARTY.status = 'The host removed you from the party.'; MP.opts.onRoster(); } return true; }   // the host removed you
     // the host searching the world for a match for the whole party, and the match it found
     if (m.t === 'qstat') { if (m.from === MP.hostId) PARTY.qs = m.on ? { mode: cl(m.mode | 0, 1, 5), t0: performance.now() } : null; return true; }
     if (m.t === 'qgo') { if (m.from === MP.hostId) qFollow(m); return true; }
@@ -59,6 +61,14 @@
   function tradeTeams(a, b) { const T2 = PARTY.teams, ta = T2[a] || 0, tb = T2[b] || 0; if (ta === tb) return; T2[a] = tb; T2[b] = ta; PARTY.want.delete(String(a)); PARTY.want.delete(String(b)); MP.send({ t: 'lteam', teams: T2, set: PARTY.set, want: [...PARTY.want] }); }
   // the host clicks a player: across if there is room (or someone over there wants to come back), else that player is
   // picked and the next click on someone on the other side trades the two
+  // the host removes someone: they are told to leave, and if the same name comes back this session they are sent away again
+  const nameKey = id => { const p = MP.players().find(q => String(q.id) === String(id)); return p ? String(p.name || '').trim().toLowerCase() : ''; };
+  function kickPlayer(id) {
+    if (!MP.isHost() || String(id) === String(myId())) return; const nk = nameKey(id); if (nk) PARTY.kicked.add(nk);
+    MP.to(id, { t: 'lkick' }); delete PARTY.teams[id]; PARTY.want.delete(String(id)); PARTY.prof.delete(id); if (PARTY.pick === id) PARTY.pick = null; PARTY.kickArm = null;
+    PARTY.status = (nk ? nk.toUpperCase() : 'They') + ' was removed from the party.'; MP.send({ t: 'lteam', teams: PARTY.teams, set: PARTY.set, want: [...PARTY.want] }); hostTeams(); click();
+  }
+  const THEME_COL = { neon: '#b46bff', snow: '#bfe3ff', desert: '#e8b56a', jungle: '#5fc464', lava: '#ff6a2a', space: '#5a8cff', harbor: '#35c7d8', autumn: '#e8873a' };
   function hostClick(id) {
     const T2 = PARTY.teams, pk = PARTY.pick;
     if (pk != null) { PARTY.pick = null; if (pk === id) return; if ((T2[pk] || 0) !== (T2[id] || 0)) { tradeTeams(pk, id); return; } }
@@ -74,7 +84,7 @@
   // the room tells the match who is where: teams, operatives and ratings from the lobby
   MP.opts.max = 10; MP.opts.min = 1;   // up to ten people: 5v5
   const baseConfig = MP.opts.config;
-  MP.opts.config = () => { const c = baseConfig(); c.map = pick(mapPool(PARTY.set.sites)); c.sites = PARTY.set.sites; c.teams = Object.assign({}, PARTY.teams); c.size = PARTY.set.size; c.fill = PARTY.set.fill; c.win = PARTY.set.ranked ? 5 : winOf(PARTY.set.win); c.ranked = !!PARTY.set.ranked; if (UI.noSel) c.noSel = 1;   // (a test that is not about agent select goes straight in)
+  MP.opts.config = () => { const c = baseConfig(), pool = mapPool(PARTY.set.sites), want = MAPS.findIndex(m => m.k === PARTY.set.map); c.map = pool.includes(want) && !PARTY.set.ranked ? want : pick(pool); c.sites = PARTY.set.sites; c.teams = Object.assign({}, PARTY.teams); c.size = PARTY.set.size; c.fill = PARTY.set.fill; c.win = PARTY.set.ranked ? 5 : winOf(PARTY.set.win); c.ranked = !!PARTY.set.ranked; if (UI.noSel) c.noSel = 1;   // (a test that is not about agent select goes straight in)
     c.rks = {}; c.rkps = {}; for (const [id, p] of PARTY.prof) { c.rks[id] = (p.rk || {})[String(PARTY.set.size)] || 0; c.rkps[id] = (p.rkp || '')[PARTY.set.size - 1] === '1' ? 1 : 0; } c.rks[myId()] = Math.round(rankStrength(PARTY.set.size)); c.rkps[myId()] = placed(rankedOf(PARTY.set.size)) ? 1 : 0;
     if (PARTY.set.bd != null) c.botDiff = cl(PARTY.set.bd | 0, 0, DIFF.length - 1);   // the host's pick for the bots
     if (c.ranked) { const v = Object.values(c.rks); c.botDiff = botLevelFor(v.reduce((s, x) => s + x, 0) / Math.max(1, v.length)); }
@@ -181,6 +191,9 @@
         if (cd.lv) { g.font = `900 ${fitPx(g, npx)}px ${FONT}`; const nw = g.measureText(nm0).width; if (nx + nw + 70 * u < cx + colW - 150 * u) lvChip(g, nx + nw + 10 * u, y + 26 * u * k, cd.lv, 10.5 * u); else lvChip(g, nx + (p.id === MP.hostId ? 44 * u : 0), y + 70 * u * k, cd.lv, 9.5 * u); }   // (a long name: on the line under the operative)
         { const clash = opClash(p, ps); tx(g, (OPS[pr.op] || OPS.vex).n + (clash ? (p.id === me2 ? '  ·  TAKEN, PICK ANOTHER' : '  ·  TAKEN') : cd.title ? '  ·  ' + cd.title.toUpperCase() : ''), nx, y + 48 * u * k, 12 * u, clash ? WARN : (OPS[pr.op] || OPS.vex).col, 'left', 800); }
         if (isHost) tx(g, 'HOST', nx, y + 70 * u * k, 10 * u, GOLD, 'left', 900);
+        if (host && p.id !== me2) { const armed = PARTY.kickArm && PARTY.kickArm.id === p.id && performance.now() - PARTY.kickArm.t < 3000, kw = armed ? 70 * u : 26 * u, kh = Math.min(26 * u, cardH * .4), kx = cx + 6 * u, ky = y + 4 * u;   // remove them: tap, then tap again within 3 s
+          const kh2 = zone(kx, ky, kw, kh, () => { if (armed) kickPlayer(p.id); else { PARTY.kickArm = { id: p.id, t: performance.now() }; click(); } });
+          rr(g, kx, ky, kw, kh, 6, armed ? FOE : kh2 ? 'rgba(255,90,90,.35)' : 'rgba(8,10,16,.82)', armed || kh2 ? FOE : 'rgba(239,233,220,.3)', 1.2); tx(g, armed ? 'KICK?' : '✕', kx + kw / 2, ky + kh / 2, (armed ? 11 : 13) * u, armed ? INK : BONE, 'center', 900); }
         { const mine = p.id === me2, rv = mine ? rankedOf(S2.size).rv : (pr.rk || {})[String(S2.size)] || 0, on = mine ? placed(rankedOf(S2.size)) : (pr.rkp || '')[S2.size - 1] === '1';   // the rank at this team size
           tierBadge(g, cx + colW - 30 * u, y + 30 * u * k, 13 * u * Math.max(.8, k), rv, on); tx(g, on ? rankLabel(rv).toUpperCase() : 'UNRANKED', cx + colW - 52 * u, y + 26 * u * k, 11 * u, on ? rankOf(rv).T.col : DIM, 'right', 800); tx(g, vsLabel(S2.size) + (on ? '  ' + rankOf(rv).rp + ' RP' : ''), cx + colW - 52 * u, y + 44 * u * k, 11 * u, BONE, 'right', 700); }
         tx(g, ready ? '✓ READY' : 'NOT READY', cx + colW - 14 * u, y + cardH - 16 * u * k, 11 * u, ready ? YOU : DIM, 'right', 900);
@@ -191,6 +204,7 @@
     });
     // what you can do while you wait
     const by = V.y1 - 150 * u, bw = 150 * u;
+    if (host) { const mk = MAPS.find(m => m.k === S2.map); btn(g, 640 - bw * 1.5 - 12 * u - bw - 12 * u, by, bw, 46 * u, 'MAP', () => { UI.mapPick = true; click(); }, { px: 15 * u, sub: S2.ranked ? 'random (ranked)' : mk ? mk.n.toLowerCase() : 'random' }); }
     btn(g, 640 - bw * 1.5 - 12 * u, by, bw, 46 * u, 'AGENT', () => { UI.returnTo = 'party'; openSelect(null); }, { px: 15 * u, sub: (OPS[CFG.op] || OPS.vex).n });
     btn(g, 640 - bw / 2, by, bw, 46 * u, 'LOCKER', () => { UI.returnTo = 'party'; screen = 'menu'; UI.panel = 'locker'; }, { px: 15 * u, sub: 'skins' });
     if (!host) btn(g, 640 + bw / 2 + 12 * u, by, bw, 46 * u, PARTY.ready ? 'READY ✓' : 'READY', () => { PARTY.ready = !PARTY.ready; click(); }, { on: true, fill: YOU, solid: PARTY.ready, col: PARTY.ready ? INK : BONE, px: 16 * u });
@@ -205,10 +219,20 @@
     const sy = V.y1 - 92 * u;
     if (host) {
       const sx = 640 - 543 * u, cs = (opts, val, fn, w) => { choice(g, sx2, sy, w, tapH(34), opts, val, v => { fn(v); MP.send({ t: 'lteam', teams: PARTY.teams, set: S2, want: [...PARTY.want] }); hostTeams(); }); sx2 += w + 10 * u; }; let sx2 = sx;
-      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 200 * u); cs([[1, '1V1'], [2, '2V2'], [3, '3V3'], [4, '4V4'], [5, '5V5']], S2.size, v => { S2.size = Math.max(v, teamSize(Math.ceil(ps.length / 2))); }, 236 * u); { const bd = S2.bd == null ? 1 : S2.bd, lab = !S2.fill ? 'NO BOTS' : 'BOTS: ' + (S2.ranked ? 'BY RANK' : DIFF[bd].n.toUpperCase());   // one button: no bots, or which level the bots play at
+      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; if (S2.map && !mapPool(v).includes(MAPS.findIndex(m => m.k === S2.map))) S2.map = null; }, 200 * u); cs([[1, '1V1'], [2, '2V2'], [3, '3V3'], [4, '4V4'], [5, '5V5']], S2.size, v => { S2.size = Math.max(v, teamSize(Math.ceil(ps.length / 2))); }, 236 * u); { const bd = S2.bd == null ? 1 : S2.bd, lab = !S2.fill ? 'NO BOTS' : 'BOTS: ' + (S2.ranked ? 'BY RANK' : DIFF[bd].n.toUpperCase());   // one button: no bots, or which level the bots play at
         btn(g, sx2, sy, 170 * u, tapH(34), lab, () => { if (!S2.fill) { S2.fill = true; S2.bd = 0; } else if (S2.ranked || bd >= DIFF.length - 1) S2.fill = false; else S2.bd = bd + 1; MP.send({ t: 'lteam', teams: PARTY.teams, set: S2, want: [...PARTY.want] }); hostTeams(); click(); }, { on: S2.fill, fill: YOU, px: 11 * u, sub: 'tap to change' }); sx2 += 180 * u; } if (S2.ranked) { rr(g, sx2, sy, 230 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED · FIRST TO 5', sx2 + 115 * u, sy + tapH(34) / 2, 12 * u, GOLD, 'center', 900); sx2 += 240 * u; } else cs(MATCH_LENS.map(w => [w, 'TO ' + w]), winOf(S2.win), v => { S2.win = v; }, 300 * u);
       const ok = readyAll(); btn(g, sx2, sy - 6 * u, 200 * u, 48 * u, 'START MATCH', startParty, { on: ok, fill: FOE, solid: ok, col: ok ? INK : DIM, px: 17 * u, sub: ok ? '' : 'waiting for ready' });
-    } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S2.size)}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS (' + (S2.ranked ? 'BY RANK' : DIFF[S2.bd == null ? 1 : S2.bd].n.toUpperCase()) + ')' : 'NO BOTS'}  ·  ${S2.ranked ? 'RANKED  ·  FIRST TO 5' : 'FIRST TO ' + winOf(S2.win)}  ·  SIDES SWAP AT THE HALF  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
+    } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S2.size)}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS (' + (S2.ranked ? 'BY RANK' : DIFF[S2.bd == null ? 1 : S2.bd].n.toUpperCase()) + ')' : 'NO BOTS'}  ·  ${S2.ranked ? 'RANKED  ·  FIRST TO 5' : 'FIRST TO ' + winOf(S2.win)}  ·  ${(MAPS.find(m => m.k === S2.map) || { n: 'RANDOM MAP' }).n.toUpperCase()}  ·  SIDES SWAP AT THE HALF  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
     const waiting = ps.filter(p => p.id !== MP.hostId && !(p.id === me2 ? PARTY.ready : (PARTY.prof.get(p.id) || {}).rd)).length;
     tx(g, ps.length < 2 ? 'Share the code, or start with bots.' : waiting ? `Waiting for ${waiting} to ready up` : 'Everyone is ready', 640, by - 22 * u, 13 * u, waiting ? DIM : YOU, 'center', 800);
+    // the host's map picker: Random, or one of the maps for this many sites
+    if (host && UI.mapPick) { const list = [-1, ...mapPool(S2.sites)], cols = 3, cw = 250 * u, ch = 74 * u, gp = 12 * u, rows = Math.ceil(list.length / cols), pw = cols * cw + (cols - 1) * gp + 48 * u, ph = rows * ch + (rows - 1) * gp + 92 * u, px0 = 640 - pw / 2, py0 = Math.max(V.y0 + 8 * u, (V.y0 + V.y1) / 2 - ph / 2);
+      zone(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0, () => { UI.mapPick = false; }); g.fillStyle = 'rgba(4,6,10,.74)'; g.fillRect(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0);
+      zone(px0, py0, pw, ph, () => {}); rr(g, px0, py0, pw, ph, 14, 'rgba(14,18,26,.97)', 'rgba(239,233,220,.25)', 1.5);
+      tx(g, 'CHOOSE THE MAP', px0 + 24 * u, py0 + 34 * u, 20 * u, BONE, 'left', 900); tx(g, S2.ranked ? 'RANKED MATCHES ALWAYS USE A RANDOM MAP' : S2.sites === 2 ? 'TWO- AND THREE-SITE MAPS' : 'ONE-SITE MAPS', px0 + pw - 24 * u, py0 + 34 * u, 11 * u, S2.ranked ? GOLD : DIM, 'right', 900);
+      list.forEach((mi, i) => { const x = px0 + 24 * u + (i % cols) * (cw + gp), y = py0 + 60 * u + Math.floor(i / cols) * (ch + gp), m = mi < 0 ? null : MAPS[mi], on = (m ? m.k : null) === (S2.map || null), col = m ? THEME_COL[m.theme] || GOLD : GOLD;
+        const hov = zone(x, y, cw, ch, () => { S2.map = m ? m.k : null; UI.mapPick = false; MP.send({ t: 'lteam', teams: PARTY.teams, set: S2, want: [...PARTY.want] }); click(); });
+        rr(g, x, y, cw, ch, 10, on ? 'rgba(255,214,102,.14)' : hov ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.03)', on ? GOLD : hov ? col : 'rgba(239,233,220,.14)', on ? 2 : 1); g.fillStyle = col; g.fillRect(x, y, 5 * u, ch);
+        tx(g, m ? m.n.toUpperCase() : 'RANDOM', x + 18 * u, y + 27 * u, 17 * u, on ? GOLD : BONE, 'left', 900);
+        tx(g, m ? m.theme.toUpperCase() + '  ·  ' + ((m.sites || 1) > 1 ? m.sites + ' SITES' : '1 SITE') : 'A DIFFERENT MAP EACH MATCH', x + 18 * u, y + 51 * u, 11 * u, m ? col : DIM, 'left', 800); }); }
   }
