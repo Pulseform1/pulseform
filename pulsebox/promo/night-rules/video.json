@@ -1,0 +1,19 @@
+{"voice": "af_sky+bf_emma", "start": 0.15, "tail": 3.5,
+ "hot": ["note", "3:07", "rules.", "pump", "4.", "eyes", "human.", "voice", "answer", "dolls.", "repeating,", "fuses", "elevator", "floor", "out.", "ping", "hears", "flicker,", "hunting.", "last", "NEVER.", "PLAY.", "ALONE.", "tapped", "shoulder.", "friends.", "snacks.", "code.", "together.", "9", "horror", "PULSEBOX.", "box.pulseform.org", "dare."],
+ "lines": [
+  {"say": "If you find this note taped to your laptop at three oh seven AM, follow the rules.", "cap": "If you find this note taped to your laptop at 3:07 AM... follow the rules.", "speed": 0.98},
+  {"say": "Rule one. At the Starlite gas station, never turn on pump four.", "cap": "Rule 1. At the Starlite gas station, never turn on pump 4.", "gap": 1.0, "speed": 0.98},
+  {"say": "Rule two. At the Pinewood Motel, check their eyes before you hand over a key. Not every guest is human.", "cap": "Rule 2. At the Pinewood Motel, check their eyes before you hand over a key. Not every guest is human.", "gap": 1.0, "speed": 1.02},
+  {"say": "Rule three. If something at the cabin door uses a voice you know, don't answer it.", "cap": "Rule 3. If something at the cabin door uses a voice you know... don't answer it.", "gap": 1.0, "speed": 0.98},
+  {"say": "Rule four. In Saint Verity Hospital, never stop looking at the dolls.", "cap": "Rule 4. In Saint Verity Hospital, never stop looking at the dolls.", "gap": 1.0, "speed": 0.98},
+  {"say": "Rule five. If the office starts repeating, find three fuses, and keep going down.", "cap": "Rule 5. If the office starts repeating, find 3 fuses, and keep going down.", "gap": 1.0, "speed": 1.0},
+  {"say": "Rule six. If the elevator stops at a floor the building doesn't have, don't get out.", "cap": "Rule 6. If the elevator stops at a floor the building doesn't have... don't get out.", "gap": 1.0, "speed": 0.98},
+  {"say": "Rule seven. Under the sea, don't ping too much. Something down there hears every one.", "cap": "Rule 7. Under the sea, don't ping too much. Something down there hears every one.", "gap": 1.0, "speed": 1.0},
+  {"say": "Rule eight. In the haunted house, when the lights flicker, it's hunting.", "cap": "Rule 8. In the haunted house, when the lights flicker... it's hunting.", "gap": 1.0, "speed": 0.98},
+  {"say": "And the last rule, scribbled at the very bottom.", "cap": "And the last rule... scribbled at the very bottom.", "gap": 1.1, "speed": 0.95},
+  {"say": "Never. Play. Alone.", "cap": "NEVER. PLAY. ALONE.", "gap": 0.6, "speed": 0.82},
+  {"say": "Then something tapped your shoulder.", "gap": 1.2, "speed": 0.95},
+  {"say": "It was your friends. With snacks. And a room code.", "cap": "It was your friends. With snacks. And a room code.", "gap": 1.0, "speed": 1.05},
+  {"say": "Still Here, The Hollow and Dead Air let up to four of you play together.", "cap": "Still Here, The Hollow and Dead Air let up to 4 of you play together.", "gap": 0.6, "speed": 1.08},
+  {"say": "Nine horror games, free on Pulsebox. Box dot pulseform dot org. If you dare.", "cap": "9 horror games, free on PULSEBOX. box.pulseform.org If you dare.", "gap": 0.6, "speed": 1.0}
+ ]}

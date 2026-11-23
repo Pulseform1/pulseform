@@ -17,6 +17,7 @@ so there are no samples or licences to track.
 | `rage-games/` | "Do NOT play these games if you rage easily." Facecam, rage meter, cracked screen | `rage-games/out/pulsebox-rage-games.mp4` |
 | `pick-a-door/` | "Pick a door. 1, 2, or 3. No switching." Game show: doors and suitcases hide games | `pick-a-door/out/pulsebox-pick-a-door.mp4` |
 | `pulsebox-secrets/` | "5 things nobody tells you about Pulsebox. #5 isn't even out yet." Real features as top-secret files | `pulsebox-secrets/out/pulsebox-pulsebox-secrets.mp4` |
+| `night-rules/` | "If you find this note taped to your laptop at 3:07 AM... follow the rules." A creepypasta through all 9 horror games (art in `lib/horror.js`) | `night-rules/out/pulsebox-night-rules.mp4` |
 
 ### Stuck in Pulsebox (story series)
 

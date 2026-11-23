@@ -74,7 +74,11 @@ def buzz(): t = tt(.45); return np.sign(np.sin(2 * np.pi * 110 * t)) * .4 * np.e
 def bird(): t = tt(.25); f = 2600 + 900 * np.sin(2 * np.pi * 14 * t); return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.sin(np.pi * t / .25) * .5
 def cheer(d=1.6): t = tt(d); x = sweep(noise(len(t)), np.full(len(t), .12)); return x * np.sin(np.pi * t / d) * 1.5
 def splash(): t = tt(.6); return sweep(noise(len(t)), np.linspace(.5, .03, len(t))) * np.exp(-t * 5) * 1.5
-FX = {"whoosh": whoosh, "thud": thud, "bonk": bonk, "scratch": scratch, "sting": sting, "pop": pop_, "ding": ding, "tick": tick, "buzz": buzz,
+def knock(): return np.concatenate([thud()[:int(.18 * SR)] * 1.2, np.zeros(int(.12 * SR)), thud()[:int(.18 * SR)] * 1.2, np.zeros(int(.12 * SR)), thud()[:int(.18 * SR)] * 1.4])
+def ping(): t = tt(1.6); x = np.sin(2 * np.pi * 1180 * t) * np.exp(-t * 6); return x + np.concatenate([np.zeros(int(.35 * SR)), x[:-int(.35 * SR)] * .35])
+def static(): t = tt(.7); return (noise(len(t)) - lp(noise(len(t)), .3)) * .5 * np.sin(np.pi * t / .7)
+def creak(): t = tt(1.1); f = 180 + 60 * np.sin(2 * np.pi * 3 * t) + 40 * t; return lp(np.sign(np.sin(2 * np.pi * np.cumsum(f) / SR)), .08) * np.sin(np.pi * t / 1.1) * .7
+FX = {"knock": knock, "ping": ping, "static": static, "creak": creak, "whoosh": whoosh, "thud": thud, "bonk": bonk, "scratch": scratch, "sting": sting, "pop": pop_, "ding": ding, "tick": tick, "buzz": buzz,
       "bird": bird, "cheer": cheer, "splash": splash, "click": click}
 fx = np.zeros(N)
 for c in CU.get("cuts", []): put(fx, whoosh(), c - .15, .55)
@@ -94,6 +98,10 @@ for l in TL["lines"]:
     a, sr = sf.read(l["file"], dtype="float32")
     a = np.interp(np.arange(0, len(a), sr / SR), np.arange(len(a)), a)
     put(vo, a / (np.abs(a).max() + 1e-6) * .9, l["at"])
+if CU.get("voFx") == "creepy":   # a dark room around the narrator: a soft reverb tail
+    ir_t = tt(.9); ir = noise(len(ir_t)) * np.exp(-ir_t * 5.5); ir[0] = 0
+    from scipy.signal import fftconvolve
+    wet = fftconvolve(vo, ir)[:len(vo)]; vo = vo * .9 + wet / (np.abs(wet).max() + 1e-6) * .18
 e = np.abs(vo); w = int(.15 * SR); e = np.convolve(e, np.ones(w) / w, "same"); duck = 1 - .55 * np.clip(e / .08, 0, 1)
 mix = music * .55 * duck + fx * .5 + vo
 mix = np.tanh(mix * 1.1) / np.tanh(1.1); mix = mix / np.abs(mix).max() * .92

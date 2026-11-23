@@ -1,0 +1,101 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../lib/stage.css">
+<style>#cap span.hot { color: #ff2d55; }</style></head>
+<body>
+<script src="timeline.js"></script>
+<script src="../lib/art.js"></script>
+<script src="../lib/more.js"></script>
+<script src="../lib/games3.js"></script>
+<script src="../lib/story.js"></script>
+<script src="../lib/horror.js"></script>
+<script>
+/* PULSEBOX NIGHT RULES: a creepypasta through Pulsebox's nine horror games. */
+const A = i => VO[i - 1], E_ = i => TIMELINE.lines[i - 1].at + TIMELINE.lines[i - 1].dur, W_ = (l, re) => wordT(l, re);
+const RULES = ['never turn on pump 4', 'check their eyes', "don't answer the door", 'never stop looking', 'find 3 fuses. go down', "don't get out", "don't ping too much", 'when lights flicker...'];
+function roomDark(t, o = {}) {        // your desk at 3:07 AM, the laptop with the note taped to it
+  let s = R(-20, -20, 1120, 1960, 0, '#07070c', 0) + C(540, 900, 700, '#3a4a8a', 0, 'opacity=".35" filter="url(#blur30)"');
+  s += R(-20, 1420, 1120, 540, 0, '#1a1410', 0) + L(-20, 1420, 1100, 1420, 6);
+  s += laptopFront(120, 560, 840, 540, R(0, 0, 840, 540, 0, '#10162e', 0) + logoMark(360, 210, 5) + (o.cam ? `<rect width="840" height="540" fill="#000" opacity=".5"/>` + G('translate(640 540) scale(.9)', P('M-120 0 Q-120 -260 0 -300 Q120 -260 120 0Z', '#0a0a10', 0) + C(0, -330, 70, '#0a0a10', 0) + C(-22, -335, 6, '#fff', 0) + C(22, -335, 6, '#fff', 0)) : ''));
+  if (o.cam) s += C(540, 540, 10, '#3dff8f', 0) + C(540, 540, 22, '#3dff8f', 0, 'opacity=".4" filter="url(#blur8)"');
+  s += G('translate(800 1380)', R(-120, -60, 240, 110, 14, '#0c0f24', 6) + T(0, 26, '3:07', 70, HRED, 'middle', 'DejaVu Sans Mono', 'font-weight="bold"'));
+  return s;
+}
+function ruleScene(n, draw) { return (t, lt) => draw(t, lt) + ruleStrip(n, RULES[n - 1], pop(lt, .05, .3)); }
+const SC = [
+  [0, (t, lt) => {                         // HOOK: the note on the laptop
+    const z = lerp(1.3, 1.05, eOut(prog(lt, 0, .4))) + prog(lt, 1, 4.6) * .5, fl = (lt % 2.3) > 2.15;
+    let s = roomDark(t) + G('translate(540 830)', rulesNote(t, .62, { lines: ['1. never turn on pump 4', '2. check their eyes', '3. don\'t answer the door', '4. never stop looking', '5. ...'] }));
+    s = G(`translate(540 830) scale(${z}) translate(-540 -830)`, s);
+    return s + (fl ? R(-20, -20, 1120, 1960, 0, '#000', 0, 'opacity=".8"') : '');
+  }, 1540],
+  [A(2) - .1, ruleScene(1, (t, lt) => nightShiftScene(t, { pump4: t > W_(2, /^4/) + .25, flick: t > W_(2, /^4/) + .25 && t < W_(2, /^4/) + .7 })), 1560],
+  [A(3) - .1, ruleScene(2, (t, lt) => motelScene(t, { zoom: eIO(prog(t, W_(3, /eyes/) - .3, W_(3, /eyes/) + .6)) * (t < W_(3, /human/) + 1 ? 1 : 1), eyes: t > W_(3, /human/) - .15 ? 'wrong' : 'normal' }) +
+     (t > W_(3, /human/) - .15 && t < W_(3, /human/) + .25 ? staticFill(1080, 1920, 3, t) : '')), 1560],
+  [A(4) - .1, ruleScene(3, (t, lt) => cabinScene(t, { say: t > W_(4, /voice/) - .2 ? "It's me. Open up." : '', sayK: pop(t, W_(4, /voice/) - .2, .3), fingers: t > W_(4, /answer/) - .3, shake: (lt % 1.3) < .25 })), 1600],
+  [A(5) - .1, ruleScene(4, (t, lt) => {
+    const cyc = Math.floor(lt / 1.3), away = (lt % 1.3) > .75, pos = [[1000, .45], [1130, .75], [1300, 1.1], [1520, 1.6]][Math.min(3, cyc)];
+    return corridor(t) + doll(540, pos[0], pos[1], { glow: cyc >= 2 }) + flashlight(away ? 150 : 540, 950, 340, .95);
+  }), 1640],
+  [A(6) - .1, ruleScene(5, (t, lt) => endlessHallsScene(t, { loop: lt * .45, fuses: t > W_(6, /fuses/) ? Math.min(3, 1 + Math.floor((t - W_(6, /fuses/)) * 3)) : 0, man: lt > 2.6, manK: .35 + prog(lt, 2.6, 4.6) * .3, manY: 1100 }) +
+     (t > W_(6, /down/) - .2 ? G(`translate(540 1500) scale(${pop(t, W_(6, /down/) - .2, .3)})`, P('M-40 -80 L40 -80 L40 0 L90 0 L0 100 L-90 0 L-40 0Z', '#2fd36a', 8) + T(0, 170, 'EXIT', 60, '#2fd36a', 'middle', 'Luckiest', `stroke="${INK}" stroke-width="8" paint-order="stroke"`)) : '')), 1700],
+  [A(7) - .1, ruleScene(6, (t, lt) => {
+    const el = t > W_(7, /elevator/) - .2, fig = t > W_(7, /out/) - .35, z = fig ? lerp(1, 2.4, eOut(prog(t, W_(7, /out/) - .35, W_(7, /out/) + .5))) : 1;
+    return G(`translate(540 640) scale(${z}) translate(-540 -640)`, nightwatchScene(t, { elevator: el, figure: fig, chair: prog(lt, .3, 1.5), panel: el && !fig, clock: '4:09 AM' }));
+  }), 1720],
+  [A(8) - .1, ruleScene(7, (t, lt) => {
+    const tp = W_(8, /ping/), th = W_(8, /hears/);
+    return deepSignalScene(t, { ping: t > tp ? ((t - tp) % 1.1) / 1.1 : -1, stalker: t > th - .4 ? eOut(prog(t, th - .4, E_(8) + .8)) : 0 });
+  }), 1600],
+  [A(9) - .1, ruleScene(8, (t, lt) => deadAirScene(t, { flick: t > W_(9, /flicker/) - .2 && t < W_(9, /hunting/), ghost: t > W_(9, /hunting/) - .1 ? eOut(prog(t, W_(9, /hunting/) - .1, W_(9, /hunting/) + .5)) : 0 })), 1600],
+  [A(10) - .1, (t, lt) => {                // the last rule
+    const k = lerp(.62, 1.25, eIO(prog(lt, 0, 2.4))), y = lerp(830, 560, eIO(prog(lt, 0, 2.4)));
+    return roomDark(t) + G(`translate(540 ${y})`, rulesNote(t, k, { lines: ['1. never turn on pump 4', '2. check their eyes', '3. don\'t answer the door', '4. never stop looking', '5. find 3 fuses. go down', '6. don\'t get out', '7. don\'t ping too much', '8. when lights flicker...'], last: '9. NEVER PLAY ALONE', lastK: prog(lt, 1.4, 2.6) }));
+  }, 1600],
+  [A(11) - .1, (t, lt) => {                // NEVER. PLAY. ALONE.
+    const words = ['NEVER.', 'PLAY.', 'ALONE.'];
+    let s = roomDark(t, { cam: lt > 1.2 });
+    s += R(-20, -20, 1120, 1960, 0, '#000', 0, 'opacity=".6"');
+    words.forEach((w, i) => { const tw = W_(11, new RegExp('^' + w.replace('.', '\\.'))); if (t >= tw - .05) s += G(`translate(540 ${300 + i * 200}) scale(${lerp(1.8, 1, eOut(prog(t, tw - .05, tw + .12)))})`, T(0, 0, w, 190, HRED, 'middle', 'Creepster', `stroke="#000" stroke-width="10" paint-order="stroke"`)); });
+    return G(`translate(${Math.sin(t * 50) * 3} 0)`, s);
+  }, null],
+  [A(12) - .1, (t, lt) => {                // something tapped your shoulder
+    const k = eOut(prog(t, W_(12, /tapped/) - .2, W_(12, /shoulder/) + .1)), fl = t > W_(12, /shoulder/) + .15 ? 1 - prog(t, W_(12, /shoulder/) + .15, W_(12, /shoulder/) + .7) : 0;
+    let s = R(-20, -20, 1120, 1960, 0, '#07070c', 0) + laptopFront(140, 520, 800, 500, R(0, 0, 800, 500, 0, '#10162e', 0) + logoMark(340, 190, 5)) + kidBack(540, 2040, 1.6, { t, hoodie: '#4a4f66', noPhones: true });
+    s += G(`translate(${lerp(1300, 860, k)} ${lerp(1500, 1450, k)}) rotate(-30)`, P('M0 0 L320 160', 'none', 0, `stroke="${INK}" stroke-width="90" stroke-linecap="round"`) + P('M0 0 L320 160', 'none', 0, `stroke="#7457ff" stroke-width="74" stroke-linecap="round"`) + E(-20, -6, 70, 52, SKIN));
+    return s + R(-20, -20, 1120, 1960, 0, '#fff', 0, `opacity="${fl}"`);
+  }, 300],
+  [A(13) - .1, (t, lt) => {                // it was your friends
+    let s = bedroomFloor(t, { clock: '3:08' }) + R(-20, -20, 1120, 1960, 0, '#ffcf8a', 0, 'opacity=".12"');
+    s += kidFront(320, 1250, 1.05, who(MILO, { t, mouth: 'grin', brow: 'up', phone: true, phoneScreen: '#c6ff3d' })) + kidFront(770, 1250, 1.05, who(JAY, { t: t + 1, mouth: 'grin', armsUp: t > W_(13, /snacks/) }));
+    if (t > W_(13, /snacks/) - .2) s += G(`translate(770 ${1030 - pop(t, W_(13, /snacks/) - .2, .3) * 40}) rotate(-12)`, R(-70, -100, 140, 180, 20, '#ff4f6e', 6) + T(0, 0, 'CHIPS', 34, '#fff', 'middle', 'Luckiest') + R(90, -60, 60, 100, 14, '#3ddc84', 5));
+    if (t > W_(13, /code/) - .3) s += G(`translate(320 760) rotate(-4) scale(${pop(t, W_(13, /code/) - .3, .3)})`, R(-190, -60, 380, 110, 22, '#fff', 7) + T(0, 22, 'ROOM K7QX', 56, INK, 'middle', 'Luckiest'));
+    return s;
+  }, 300],
+  [A(14) - .1, (t, lt) => {                // the co-op three
+    let s = R(-20, -20, 1120, 1960, 0, '#0b0d14', 0) + rays(540, 960, 24, 1600, HRED, .06, t * .2);
+    [['still-here', 'STILL HERE', /Still/], ['the-hollow', 'THE HOLLOW', /Hollow/], ['dead-air-house', 'DEAD AIR', /Dead/]].forEach(([id, n, re], i) => { const k = pop(t, W_(14, re) - .2, .3), y = 330 + i * 430;
+      s += G(`translate(540 ${y + 200}) scale(${k}) translate(-540 ${-y - 200})`, R(90, y, 900, 400, 26, '#171a2b', 7) + nest(110, y + 20, 560, 360, GAMES[id][1](t, 560, 360)) + R(110, y + 20, 560, 360, 16, 'none', 5) + T(830, y + 170, n, 52, '#fff', 'middle', 'Creepster') + R(710, y + 220, 240, 70, 35, LIME, 5) + T(830, y + 268, '1-4 PLAYERS', 32, INK, 'middle', 'Luckiest')); });
+    return s;
+  }, 1700],
+  [A(15) - .1, (t, lt) => {                // nine horror games, if you dare
+    const te = W_(15, /dare/) + .4;
+    if (t > te) return endCard(t, t - te, 'if you dare...');
+    let s = R(-20, -20, 1120, 1960, 0, '#07070c', 0) + rays(540, 960, 24, 1600, HRED, .07, t * .2);
+    const ids = ['night-shift', 'lights-out-motel', 'one-more-night', 'still-here', 'endless-halls', 'nightwatch', 'deep-signal', 'dead-air-house', 'the-hollow'];
+    ids.forEach((id, i) => { const x = 50 + (i % 3) * 330, y = 480 + Math.floor(i / 3) * 360, k = pop(lt, i * .07, .25);
+      s += G(`translate(${x + 155} ${y + 160}) scale(${k}) translate(${-x - 155} ${-y - 160})`, R(x, y, 310, 330, 20, '#171a2b', 6) + nest(x + 8, y + 8, 294, 260, GAMES[id][1](t, 294, 260)) + T(x + 155, y + 310, GAMES[id][0], 30, '#fff', 'middle', 'Creepster')); });
+    s += G(`translate(540 300) scale(${pop(lt, .1, .3)})`, T(0, 0, '9 HORROR GAMES', 120, HRED, 'middle', 'Creepster', `stroke="#000" stroke-width="10" paint-order="stroke"`)) + pulseboxLogo(540, 1620, pop(t, W_(15, /PULSEBOX/), .3) * .8);
+    return s;
+  }, t => t > wordT(15, /dare/) + .4 ? 1560 : 1760],
+];
+const CUES = { bpm: 80, key: 'minor', voFx: 'creepy',
+  music: [[0, A(13) - .1, 'tense'], [A(13) - .1, A(14) - .1, 'calm'], [A(14) - .1, TIMELINE.end, 'hard']],
+  fx: [[0.1, 'static', .6], [2.3 - .1, 'buzz', .3], [W_(2, /^4/) + .25, 'sting', .8], [W_(2, /^4/) + .25, 'buzz', .6], [W_(3, /human/) - .15, 'static', .9], [W_(3, /human/) - .15, 'sting', .7],
+       [A(4) + .1, 'knock', .9], [A(4) + 2.6, 'knock', 1], [W_(4, /answer/) - .3, 'creak', .7], [A(5) + 1.0, 'sting', .4], [A(5) + 2.3, 'sting', .5], [A(5) + 3.6, 'sting', .8],
+       [W_(6, /fuses/), 'pop', .4], [W_(6, /fuses/) + .33, 'pop', .4], [W_(6, /fuses/) + .66, 'pop', .4], [W_(7, /elevator/), 'ding', .5], [W_(7, /out/) - .35, 'sting', .9], [W_(7, /out/) - .35, 'thud', .8],
+       [W_(8, /ping/), 'ping', .8], [W_(8, /ping/) + 1.1, 'ping', .6], [W_(8, /hears/) - .4, 'thud', .7], [W_(9, /flicker/) - .2, 'buzz', .6], [W_(9, /hunting/) - .1, 'scratch', .9], [W_(9, /hunting/) - .1, 'thud', 1],
+       ...[/^NEVER/, /^PLAY/, /^ALONE/].map(re => [W_(11, re) - .05, 'thud', 1]), [A(11) + 1.2, 'static', .5], [W_(12, /shoulder/) + .1, 'sting', 1], [W_(12, /shoulder/) + .15, 'thud', 1],
+       [W_(13, /snacks/) - .2, 'pop', .5], [W_(13, /code/) - .3, 'ding', .5], [W_(15, /dare/) + .4, 'pop', .5]] };
+startVideo(SC, CUES);
+</script>
+</body></html>

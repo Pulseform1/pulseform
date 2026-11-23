@@ -11,3 +11,5 @@ svg { position: absolute; inset: 0; }
 #cap span.hot { color: #c6ff3d; }
 #cap span.wM { color: #c6ff3d; }
 #cap span.wJ { color: #ffb547; }
+@font-face { font-family: Creepster; src: url(../lib/fonts/Creepster.ttf); }
+@font-face { font-family: Marker; src: url(../lib/fonts/PermanentMarker.ttf); }

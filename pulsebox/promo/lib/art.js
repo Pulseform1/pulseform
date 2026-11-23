@@ -107,7 +107,7 @@ function kidBack(x, y, k, o = {}) {  // seen from behind at the desk. o.t time, 
       P(`M${-r} ${r * .1} C${-r * 1.15} ${-r * .9} ${-r * .5} ${-r * 1.15} 0 ${-r * 1.12} C${r * .6} ${-r * 1.15} ${r * .95} ${-r * .8} ${r * .6} ${-r * .55} C${r * .2} ${-r * .3} ${-r * .3} ${r * .2} ${-r * .55} ${r * .55} Z`, '#3b2416') +
       P(`M${-r * .5} ${-r * 1.05} L${-r * .62} ${-r * 1.38} L${-r * .2} ${-r * 1.1} L${-r * .05} ${-r * 1.45} L${r * .25} ${-r * 1.08} L${r * .5} ${-r * 1.3} L${r * .55} ${-r * .95}`, '#3b2416');
   }
-  s += G(`translate(0 -330) rotate(${(o.tilt || 0)})`, head + phonesBand(r) + R(-r * 1.15, -r * .25, 34, 70, 14, LIME, 6) + R(r * 1.15 - 34, -r * .25, 34, 70, 14, LIME, 6));
+  s += G(`translate(0 -330) rotate(${(o.tilt || 0)})`, head + (o.noPhones ? '' : phonesBand(r) + R(-r * 1.15, -r * .25, 34, 70, 14, LIME, 6) + R(r * 1.15 - 34, -r * .25, 34, 70, 14, LIME, 6)));
   // facepalm hand drawn over head
   if ((o.facepalm || 0) > .5) s += G('translate(40 -330)', E(0, 0, 40, 34, SKIN) + L(-20, -10, 25, -18, 5) + L(-18, 8, 28, 2, 5));
   // lime rim light from the screen

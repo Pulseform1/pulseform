@@ -8,6 +8,7 @@
 <script src="../lib/more.js"></script>
 <script src="../lib/games3.js"></script>
 <script src="../lib/story.js"></script>
+<script src="../lib/horror.js"></script>
 <script>
 const t = 1.7;   // the moment every animated piece is frozen at
 // ---------- art pieces, each drawn in a 1000 x 1000 box ----------
@@ -80,6 +81,9 @@ const ART = {
     raftSide(330, 1420, 1.25, -3, { sail: true, lantern: true, kids: { milo: { t, mouth: 'o', lookX: 1, brow: 'up' }, jay: { t, mouth: 'o', lookX: 1, brow: 'up' } } }) + fin(880, 1560, 1.4, -1, t) + '</svg>',
   'stuck-ep3-heist-crew': () => `<svg viewBox="40 700 1000 1000" width="1000" height="1000">` + mansionNight(t, 1080, 1920) + policeLights(.1, .7) + idol(540, 1330, 1.5) +
     kidFront(290, 1500, 1.05, who(MILO_H, { t, mouth: 'grin', brow: 'up' })) + kidFront(790, 1500, 1.05, who(JAY_H, { t, mouth: 'grin', brow: 'mad' })) + '</svg>',
+  'night-rules': () => `<svg viewBox="40 320 1000 1000" width="1000" height="1000">` + R(-20, -20, 1120, 1960, 0, '#07070c', 0) + C(540, 820, 700, '#3a4a8a', 0, 'opacity=".3" filter="url(#blur30)"') +
+    laptopFront(120, 560, 840, 540, R(0, 0, 840, 540, 0, '#10162e', 0) + `<rect width="840" height="540" fill="#000" opacity=".4"/>` + G('translate(640 540) scale(.9)', P('M-120 0 Q-120 -260 0 -300 Q120 -260 120 0Z', '#0a0a10', 0) + C(0, -330, 70, '#0a0a10', 0) + C(-22, -335, 7, '#fff', 0) + C(22, -335, 7, '#fff', 0))) +
+    C(540, 540, 12, '#3dff8f', 0) + G('translate(470 860) rotate(-4)', rulesNote(1.7, .7, { lines: ['1. never turn on pump 4', '2. check their eyes', "3. don't answer the door", '4. never stop looking'], last: '9. NEVER PLAY ALONE' })) + '</svg>',
 };
 // ---------- each thumbnail: background, art, the big words ----------
 const THUMBS = {
@@ -92,6 +96,7 @@ const THUMBS = {
   'rage-games': { bg: '#3a0812', ray: '#ff2d55', lines: [["DON'T PLAY IF", '#fff'], ['YOU RAGE', '#ff2d55']], sticker: ['RAGE 100%', '#ffd84d'] },
   'pick-a-door': { bg: '#1c1240', ray: '#ffd84d', lines: [['PICK A', '#fff'], ['DOOR', '#ffd84d']], sticker: ['NO SWITCHING', '#ff4f6e'] },
   'pulsebox-secrets': { bg: '#2b2238', ray: '#e5484d', lines: [['5 SECRETS', '#ffd84d'], ['NOBODY TELLS YOU', '#fff']], sticker: ['#5 ISN\'T OUT YET', LIME] },
+  'night-rules': { bg: '#07070c', ray: '#ff2d55', lines: [['FOLLOW THE', '#fff'], ['NIGHT RULES', '#ff2d55']], sticker: ['9 HORROR GAMES', '#ffd84d'] },
   'stuck-ep1-still-here': { bg: '#140808', ray: '#ff2d55', lines: [['PULLED INTO A', '#fff'], ['HORROR GAME', '#ff2d55']], sticker: ['EP 1 · STILL HERE', '#ffd84d'] },
   'stuck-ep2-blackwater': { bg: '#071226', ray: '#4fa3ff', lines: [['STRANDED IN', '#fff'], ['HIS OWN GAME', '#4fe3ff']], sticker: ['EP 2 · BLACKWATER DRIFT', '#ffd84d'] },
   'stuck-ep3-heist-crew': { bg: '#0c1230', ray: '#ffd84d', lines: [['A HEIST', '#fff'], ['INSIDE A GAME', '#ffd84d']], sticker: ['EP 3 · HEIST CREW', '#ff8a3d'] },
