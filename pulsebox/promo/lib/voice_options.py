@@ -1,4 +1,4 @@
-# Sample pack of character voices for Milo and Jay: python voice_options.py OUTDIR
+# Sample pack of character voices for Milo and Jay: python voice_options.py OUTDIR [main|cartoon]
 # Every option reads the same four lines so they can be compared by ear. All engines are free and run locally:
 # Kokoro (KOKORO_DIR), Piper (PIPER_DIR, voices from huggingface.co/rhasspy/piper-voices), Flite and eSpeak-ng (apt).
 import os, sys, subprocess, tempfile, numpy as np, soundfile as sf
@@ -28,6 +28,8 @@ def fx(a, chain):        # run audio through an ffmpeg filter chain
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", i, "-af", chain, "-ar", str(SR), "-ac", "1", o], check=True); return load(o)
 ROBOT = "asplit[a][b];[b]aeval='val(0)*sin(2*PI*70*t)'[r];[a][r]amix=inputs=2:weights='0.8 0.6',acrusher=bits=10:mix=0.25,aecho=0.8:0.5:12:0.35,volume=2"
 PITCH = lambda semis: f"rubberband=pitch={2 ** (semis / 12):.4f}"
+KID = lambda semis: f"rubberband=pitch={2 ** (semis / 12):.4f}:formant=preserved"   # higher, but keeps the voice's shape
+WOBBLE = "vibrato=f=7:d=0.18"
 LINES = [("J", "Milo... where are we?"), ("M", "Saint Verity Hospital. My game."), ("J", "Milo. Did you code that?"), ("M", "I don't remember coding that.")]
 OPTIONS = [   # name, label read by the narrator, Milo voice, Jay voice
   ("1-classic-tts", "Option one. Classic text to speech.", lambda s: piper("en_US-ryan-medium", s), lambda s: piper("en_US-joe-medium", s)),
@@ -37,6 +39,16 @@ OPTIONS = [   # name, label read by the narrator, Milo voice, Jay voice
   ("5-game-bots", "Option five. Game bots.", lambda s: fx(kokoro("am_puck", s), ROBOT), lambda s: fx(kokoro("am_echo", s), PITCH(3) + "," + ROBOT)),
   ("6-cartoon", "Option six. Cartoon.", lambda s: fx(kokoro("am_puck", s, 1.1), PITCH(5)), lambda s: fx(kokoro("am_echo", s, 1.1), PITCH(7))),
 ]
+CARTOON = [  # more takes on the cartoon voice
+  ("c1-chipmunk", "Cartoon one. Chipmunk.", lambda s: fx(kokoro("am_puck", s, 1.12), PITCH(9)), lambda s: fx(kokoro("am_echo", s, 1.12), PITCH(11))),
+  ("c2-young-toon", "Cartoon two. Young toon.", lambda s: fx(kokoro("am_puck", s, 1.08), KID(4)), lambda s: fx(kokoro("am_liam", s, 1.08), KID(6))),
+  ("c3-squeaky-sidekick", "Cartoon three. Squeaky sidekick.", lambda s: fx(kokoro("am_puck", s, 1.05), PITCH(3)), lambda s: fx(kokoro("am_echo", s, 1.15), PITCH(10))),
+  ("c4-goofy-duo", "Cartoon four. Goofy duo.", lambda s: fx(kokoro("am_puck", s, .95), PITCH(-3)), lambda s: fx(kokoro("am_echo", s, 1.12), PITCH(7))),
+  ("c5-wobbly", "Cartoon five. Wobbly.", lambda s: fx(kokoro("am_puck", s, 1.05), PITCH(5) + "," + WOBBLE), lambda s: fx(kokoro("am_echo", s, 1.05), PITCH(7) + "," + WOBBLE)),
+  ("c6-tiny-heroes", "Cartoon six. Tiny heroes.", lambda s: fx(kokoro("am_eric", s, 1.15), PITCH(12)), lambda s: fx(kokoro("am_liam", s, 1.15), PITCH(12))),
+  ("c7-toon-tts", "Cartoon seven. Toon text to speech.", lambda s: fx(piper("en_US-ryan-medium", s, .9), PITCH(6)), lambda s: fx(piper("en_US-joe-medium", s, .9), PITCH(8))),
+]
+if len(sys.argv) > 2 and sys.argv[2] == "cartoon": OPTIONS = CARTOON
 gap = np.zeros(int(SR * .45), dtype="float32")
 norm = lambda a: a / (np.abs(a).max() + 1e-6) * .9
 for name, label, milo, jay in OPTIONS:
