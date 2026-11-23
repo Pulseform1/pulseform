@@ -1,0 +1,132 @@
+{
+  "title": "The Car Never Stops",
+  "genre": "adventure",
+  "duration": 60,
+  "hook": "Five stars. Every cop in the city. And my car can't stop",
+  "outro": "How long can you last?",
+  "clock": "9:41",
+  "group": false,
+  "characters": [
+    {
+      "id": "me",
+      "name": "Jay",
+      "avatar": "initials",
+      "color": "#ff8a3d",
+      "voice": "am_fenrir"
+    },
+    {
+      "id": "dispatch",
+      "name": "Dispatch",
+      "avatar": "star",
+      "color": "#2a5aff",
+      "voice": "am_eric"
+    }
+  ],
+  "messages": [
+    {
+      "type": "scene",
+      "scene": "gh-heli",
+      "text": "Neon Night. Five stars. Every cop in the city on his tail. And in Getaway Heat... your car never stops.",
+      "label": "NEON NIGHT"
+    },
+    {
+      "type": "voice",
+      "from": "dispatch",
+      "mood": "radio",
+      "text": "All units, orange coupe heading north. Box him in!"
+    },
+    {
+      "type": "scene",
+      "scene": "gh-street",
+      "text": "Two patrol cars, one on each side. Jay waited... waited... then swerved. And they smashed right into each other.",
+      "figure": true,
+      "figureAt": 0.8
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "panic",
+      "text": "Yes! Combo! Did you see that?!"
+    },
+    {
+      "type": "scene",
+      "scene": "gh-swat",
+      "text": "Then the SWAT trucks showed up. Bigger. Faster. And they don't brake for anything.",
+      "figure": true,
+      "figureAt": 0.6,
+      "effect": "shake"
+    },
+    {
+      "type": "scene",
+      "scene": "gh-alley",
+      "text": "Jay cut into an alley barely wider than his car. Sparks on both doors. The trucks couldn't follow. He was almost clear..."
+    },
+    {
+      "type": "scene",
+      "scene": "gh-tank",
+      "text": "Until the end of the alley. Where a tank was waiting.",
+      "figure": true,
+      "figureAt": 1.75,
+      "effect": "shake"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "scream",
+      "text": "A TANK?! Since when are there TANKS?!"
+    },
+    {
+      "type": "scene",
+      "scene": "gh-jump",
+      "text": "Your car never stops. So Jay didn't. He floored it under the barrel... and the shot flew over him. Straight into every cop behind him.",
+      "figure": true,
+      "figureAt": 0.8
+    },
+    {
+      "type": "scene",
+      "scene": "gh-escape",
+      "text": "Combo times twelve. The sun came up over Palm Beach, and Jay was finally free. Or was he? Because the helicopter... was back.",
+      "label": "PALM BEACH · 6:02 AM",
+      "figure": true,
+      "figureAt": 0.86
+    },
+    {
+      "type": "scene",
+      "scene": "cta-game",
+      "text": "This is Getaway Heat. Free on Pulsebox. box.pulseform.org. It's a computer game, so play it on a computer. How long can you last?",
+      "label": "Getaway Heat",
+      "say": "This is Getaway Heat. Free on Pulsebox. Box dot pulseform dot org. It's a computer game, so play it on a computer. How long can you last?"
+    }
+  ],
+  "look": {
+    "background": "scifi",
+    "chatTheme": "violet",
+    "hookStyle": "banner",
+    "cut": "hard"
+  },
+  "captions": {
+    "style": "pop",
+    "font": "Luckiest Guy",
+    "size": 1,
+    "position": 0.79,
+    "highlight": "#ffd23d"
+  },
+  "narration": {
+    "enabled": true,
+    "speed": 1.1,
+    "includeImages": false,
+    "narrator": "af_heart",
+    "narratorSpeed": 1.05,
+    "narratorFx": "none",
+    "systemNotes": false
+  },
+  "audio": {
+    "music": "action",
+    "musicVolume": 0.5,
+    "sfxVolume": 0.9
+  },
+  "pacing": {
+    "fit": true,
+    "speed": 1
+  }
+}

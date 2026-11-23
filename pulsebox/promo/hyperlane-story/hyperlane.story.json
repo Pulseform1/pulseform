@@ -1,0 +1,149 @@
+{
+  "title": "Last Lap",
+  "genre": "adventure",
+  "duration": 60,
+  "hook": "Final lap. 400 km/h. And he's 0.1 seconds behind the best racer in Hyperlane",
+  "outro": "Rematch?",
+  "clock": "9:41",
+  "group": false,
+  "characters": [
+    {
+      "id": "me",
+      "name": "Jay",
+      "avatar": "initials",
+      "color": "#ff8a3d",
+      "voice": "am_fenrir"
+    },
+    {
+      "id": "vex",
+      "name": "Vex",
+      "avatar": "skull",
+      "color": "#7a2aff",
+      "voice": "am_onyx"
+    },
+    {
+      "id": "milo",
+      "name": "Milo",
+      "avatar": "initials",
+      "color": "#7c5cff",
+      "voice": "am_puck"
+    }
+  ],
+  "messages": [
+    {
+      "type": "scene",
+      "scene": "hl-side",
+      "text": "Final lap. Four hundred kilometers an hour. And Jay was one tenth of a second behind the best racer in Hyperlane.",
+      "label": "LAP 3/3 · P2",
+      "effect": "shake"
+    },
+    {
+      "type": "voice",
+      "from": "vex",
+      "mood": "radio",
+      "text": "Nice try, rookie. Nobody passes me on the last lap."
+    },
+    {
+      "type": "scene",
+      "scene": "hl-grid",
+      "text": "Three minutes earlier, nobody even knew his name. Six racers. One neon city. And Jay started dead last.",
+      "label": "3 MINUTES EARLIER"
+    },
+    {
+      "type": "scene",
+      "scene": "hl-drift",
+      "text": "So he did what the pros do. He drifted every corner. Blue boost. Orange boost. Purple boost.",
+      "label": "LAP 1/3 · P6"
+    },
+    {
+      "type": "voice",
+      "from": "milo",
+      "mood": "radio",
+      "text": "Jay, you're up to fourth! Keep filling that Overdrive!"
+    },
+    {
+      "type": "scene",
+      "scene": "hl-aurora",
+      "text": "Into the ice valley, under a living aurora. Through every light gate, until his Overdrive was full. Only Vex was ahead. And Vex... plays dirty.",
+      "label": "LAP 2/3 · P3"
+    },
+    {
+      "type": "scene",
+      "scene": "hl-block",
+      "text": "Vex swerved right across his nose. Jay clipped the wall. Sparks everywhere. And the finish line was coming up fast.",
+      "label": "LAP 3/3 · P2",
+      "figure": true,
+      "figureAt": 0.5,
+      "effect": "shake"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "panic",
+      "text": "Come on, come on, come on!"
+    },
+    {
+      "type": "scene",
+      "scene": "hl-slip",
+      "text": "He tucked in right behind Vex. Slipstream. Closer... closer... and then he hit Overdrive.",
+      "figure": true,
+      "figureAt": 0.86
+    },
+    {
+      "type": "scene",
+      "scene": "hl-finish",
+      "text": "They crossed the line side by side. The screen froze... photo finish.",
+      "figure": true,
+      "figureAt": 0.62
+    },
+    {
+      "type": "scene",
+      "scene": "hl-result",
+      "text": "And the winner was... Jay. By three thousandths of a second."
+    },
+    {
+      "type": "voice",
+      "from": "vex",
+      "mood": "radio",
+      "text": "Rematch. Right now."
+    },
+    {
+      "type": "scene",
+      "scene": "cta-game",
+      "text": "This is Hyperlane. Free on Pulsebox. box.pulseform.org. It's a computer game, so play it on a computer. Think you can beat Vex?",
+      "label": "Hyperlane",
+      "say": "This is Hyperlane. Free on Pulsebox. Box dot pulseform dot org. It's a computer game, so play it on a computer. Think you can beat Vex?"
+    }
+  ],
+  "look": {
+    "background": "scifi",
+    "chatTheme": "violet",
+    "hookStyle": "banner",
+    "cut": "hard"
+  },
+  "captions": {
+    "style": "pop",
+    "font": "Luckiest Guy",
+    "size": 1,
+    "position": 0.79,
+    "highlight": "#ff3df0"
+  },
+  "narration": {
+    "enabled": true,
+    "speed": 1.1,
+    "includeImages": false,
+    "narrator": "af_heart",
+    "narratorSpeed": 1.05,
+    "narratorFx": "none",
+    "systemNotes": false
+  },
+  "audio": {
+    "music": "scifi",
+    "musicVolume": 0.5,
+    "sfxVolume": 0.9
+  },
+  "pacing": {
+    "fit": true,
+    "speed": 1
+  }
+}

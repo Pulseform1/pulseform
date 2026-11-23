@@ -2,6 +2,8 @@
 // Every sound is synthesized here (oscillators, filtered noise), so the audio is original and needs no licences.
 import { rng } from "./util.js";
 import { EVENTS } from "./scenes2.js";
+import { EVENTS3 } from "./scenes3.js";
+import { EVENTS4 } from "./scenes4.js";
 
 export const SAMPLE_RATE = 48000;
 const GENRE_MUSIC = { horror: "horror", mystery: "mystery", comedy: "comedy", drama: "drama", twist: "mystery", suspense: "suspense", school: "lofi", scifi: "scifi", adventure: "adventure" };
@@ -60,6 +62,8 @@ function music(ctx, bus, id, dur, seed) {
     drama: { bpm: 72, chords: [[57, 60, 64], [53, 57, 60], [60, 64, 67], [55, 59, 62]], drums: "none", lead: "piano" },
     scifi: { bpm: 108, chords: [[50, 53, 57], [46, 50, 53], [48, 52, 55], [45, 48, 52]], drums: "electro", lead: "arp" },
     adventure: { bpm: 104, chords: [[62, 66, 69], [59, 62, 66], [55, 59, 62], [57, 61, 64]], drums: "groove", lead: "strum" },
+    action: { bpm: 140, chords: [[45, 48, 52], [41, 45, 48], [43, 47, 50], [40, 43, 47]], drums: "drive", lead: "arp" },
+    epic: { bpm: 96, chords: [[50, 53, 57], [46, 50, 53], [48, 52, 55], [45, 49, 52]], drums: "toms", lead: "strum" },
     lofi: { bpm: 82, chords: [[60, 64, 67, 71], [57, 60, 64, 67], [62, 65, 69, 72], [55, 59, 62, 65]], drums: "lofi", lead: "keys" },
   }[id];
   if (!P) return;
@@ -81,6 +85,8 @@ function music(ctx, bus, id, dur, seed) {
     for (let k = 0; k < 4; k++) {
       const tt = t + k * beat, swing = P.drums === "lofi" ? 0.03 : 0;
       if (P.drums === "none") continue;
+      if (P.drums === "drive") { kick(ctx, bus, tt, 0.5); if (k === 1 || k === 3) snare(ctx, bus, tt, 0.22); hat(ctx, bus, tt + beat / 2, 0.05); tone(ctx, bus, { t: tt, dur: beat * 0.45, freq: mtof(ch[0] - 12), type: "sawtooth", gain: 0.06, cutoff: 500 }); tone(ctx, bus, { t: tt + beat / 2, dur: beat * 0.45, freq: mtof(ch[0] - 12), type: "sawtooth", gain: 0.05, cutoff: 500 }); continue; }
+      if (P.drums === "toms") { tone(ctx, bus, { t: tt, dur: 0.5, freq: k % 2 ? 110 : 82, glideTo: 55, gain: 0.35, release: 0.4 }); if (k === 3) tone(ctx, bus, { t: tt + beat / 2, dur: 0.4, freq: 130, glideTo: 70, gain: 0.25 }); if (k === 0) hiss(ctx, bus, { t: tt, dur: 1.2, gain: 0.04, type: "highpass", freq: 5000, attack: 0.01 }); continue; }
       if (P.drums === "soft") { if (k === 0) kick(ctx, bus, tt, 0.35); hat(ctx, bus, tt + beat / 2, 0.035); continue; }
       if (k === 0 || (P.drums !== "lofi" && k === 2)) kick(ctx, bus, tt, P.drums === "lofi" ? 0.45 : 0.55);
       if (P.drums === "lofi" && k === 2) kick(ctx, bus, tt + beat / 2, 0.35);
@@ -210,6 +216,78 @@ function sfx(ctx, bus, cue, r) {
       (e.knocks || []).forEach((x) => { tone(ctx, bus, { t: t0 + x, dur: 0.16, freq: 150, glideTo: 70, gain: 0.7 }); hiss(ctx, bus, { t: t0 + x, dur: 0.08, gain: 0.35, type: "lowpass", freq: 1100 }); });
       break;
     }
+    // ---- Hyperlane
+    case "amb-hl-side": case "amb-hl-grid": case "amb-hl-drift": case "amb-hl-aurora": case "amb-hl-block": case "amb-hl-slip": case "amb-hl-finish": case "amb-hl-result": {
+      const id = cue.type.slice(4), t0 = cue.t0 ?? t, e = EVENTS3[id] || {};
+      const go = id === "hl-grid" ? t0 + e.go[0] : t;
+      if (id !== "hl-result") { tone(ctx, bus, { t: go, dur: Math.max(0.3, t + cue.dur - go), freq: 92, glideTo: 128, type: "sawtooth", gain: 0.05, cutoff: 900, attack: 0.3 }); hiss(ctx, bus, { t: go, dur: Math.max(0.3, t + cue.dur - go), gain: 0.08, type: "bandpass", freq: 900, q: 0.4, attack: 0.3 }); }
+      if (id === "hl-grid" || id === "hl-side" || id === "hl-drift" || id === "hl-finish") hiss(ctx, bus, { t, dur: cue.dur, gain: 0.035, type: "highpass", freq: 5000, attack: 0.3 });
+      (e.lights || []).forEach((x) => tone(ctx, bus, { t: t0 + x, dur: 0.22, freq: 660, gain: 0.14 })); (e.go || []).forEach((x) => tone(ctx, bus, { t: t0 + x, dur: 0.6, freq: 1320, gain: 0.16, release: 0.4 }));
+      if (id === "hl-drift") for (let x = t + 0.3; x < t + cue.dur; x += 2.2) tone(ctx, bus, { t: x, dur: 0.5, freq: 500, glideTo: 1400, type: "triangle", gain: 0.06 });
+      if (id === "hl-side") for (let x = t; x < t + cue.dur; x += 0.11 + r() * 0.1) hiss(ctx, bus, { t: x, dur: 0.05, gain: 0.08, type: "bandpass", freq: 3500 + r() * 2000, q: 2 });
+      if (cue.figT && id === "hl-block") { tone(ctx, bus, { t: cue.figT, dur: 0.6, freq: 110, glideTo: 40, gain: 0.7 }); hiss(ctx, bus, { t: cue.figT, dur: 1.2, gain: 0.2, type: "bandpass", freq: 3000, q: 1.5 }); }
+      if (cue.figT && id === "hl-slip") { hiss(ctx, bus, { t: cue.figT - 0.6, dur: 0.7, gain: 0.25, type: "bandpass", freq: 300, freqTo: 6000, q: 1, attack: 0.6 }); tone(ctx, bus, { t: cue.figT, dur: 1.5, freq: 70, glideTo: 35, gain: 0.7 }); tone(ctx, bus, { t: cue.figT, dur: cue.dur, freq: 140, glideTo: 240, type: "sawtooth", gain: 0.05, cutoff: 1400 }); }
+      if (id === "hl-finish") { hiss(ctx, bus, { t, dur: cue.dur, gain: 0.07, type: "bandpass", freq: 1100, q: 0.3, attack: 0.5 }); if (cue.figT) { hiss(ctx, bus, { t: cue.figT, dur: 0.08, gain: 0.3, type: "highpass", freq: 3000 }); tone(ctx, bus, { t: cue.figT, dur: 2, freq: 55, gain: 0.25, attack: 0.05 }); } }
+      if (id === "hl-result") { hiss(ctx, bus, { t, dur: cue.dur, gain: 0.1, type: "bandpass", freq: 1200, q: 0.3, attack: 0.2 }); for (let x = t + 0.3; x < t + cue.dur; x += 0.35 + r() * 0.4) { tone(ctx, bus, { t: x, dur: 0.3, freq: 90, glideTo: 40, gain: 0.3 }); for (let k = 0; k < 6; k++) hiss(ctx, bus, { t: x + 0.1 + k * 0.05, dur: 0.03, gain: 0.08, type: "highpass", freq: 4000 }); } }
+      break;
+    }
+    // ---- Getaway Heat
+    case "amb-gh-heli": case "amb-gh-street": case "amb-gh-swat": case "amb-gh-alley": case "amb-gh-tank": case "amb-gh-jump": case "amb-gh-escape": {
+      const id = cue.type.slice(4);
+      tone(ctx, bus, { t, dur: cue.dur, freq: 78, type: "sawtooth", gain: 0.06, cutoff: 600, attack: 0.2 });
+      if (id !== "gh-escape") for (let x = t; x < t + cue.dur; x += 1.2) { tone(ctx, bus, { t: x, dur: 0.6, freq: 720, glideTo: 1020, type: "square", gain: 0.022, cutoff: 2200 }); tone(ctx, bus, { t: x + 0.6, dur: 0.6, freq: 1020, glideTo: 720, type: "square", gain: 0.022, cutoff: 2200 }); }
+      const rotor = (a, b) => { for (let x = a; x < b; x += 0.085) hiss(ctx, bus, { t: x, dur: 0.06, gain: 0.07, type: "lowpass", freq: 420 }); };
+      if (id === "gh-heli") rotor(t, t + cue.dur); if (id === "gh-escape" && cue.figT) rotor(cue.figT, t + cue.dur);
+      if (id === "gh-escape") for (let x = t + 0.5; x < t + cue.dur; x += 0.8 + r() * 0.8) tone(ctx, bus, { t: x, dur: 0.12, freq: 3300 + r() * 1200, glideTo: 4600, gain: 0.02 });
+      if (id === "gh-alley") hiss(ctx, bus, { t, dur: cue.dur, gain: 0.07, type: "bandpass", freq: 3200, q: 1.2, attack: 0.1 });
+      if (cue.figT && (id === "gh-street" || id === "gh-swat")) { tone(ctx, bus, { t: cue.figT, dur: 0.7, freq: 100, glideTo: 35, gain: 0.8 }); hiss(ctx, bus, { t: cue.figT, dur: 0.8, gain: 0.35, type: "bandpass", freq: 2200, q: 0.6 }); }
+      if (cue.figT && id === "gh-tank") { tone(ctx, bus, { t: cue.figT, dur: 1.6, freq: 60, glideTo: 25, gain: 1 }); hiss(ctx, bus, { t: cue.figT, dur: 1, gain: 0.45, type: "lowpass", freq: 1200 }); }
+      if (id === "gh-tank") tone(ctx, bus, { t: t + 0.2, dur: 2.3, freq: 55, glideTo: 70, type: "square", gain: 0.05, cutoff: 200 });
+      if (id === "gh-jump") { const t0 = cue.t0 ?? t; tone(ctx, bus, { t: t0 + 0.8, dur: 0.9, freq: 1600, glideTo: 380, gain: 0.08 }); if (cue.figT) { tone(ctx, bus, { t: cue.figT, dur: 1.8, freq: 55, glideTo: 25, gain: 1 }); hiss(ctx, bus, { t: cue.figT, dur: 1.4, gain: 0.5, type: "lowpass", freq: 1600 }); } }
+      break;
+    }
+    // ---- Penalty Shootout
+    case "amb-ps-stadium": case "amb-ps-walk": case "amb-ps-keeper-jay": case "amb-ps-dive": case "amb-ps-dive-result": case "amb-ps-spot": case "amb-ps-chip": case "amb-ps-net": {
+      const id = cue.type.slice(4), t0 = cue.t0 ?? t;
+      const level = { "ps-stadium": 0.12, "ps-walk": 0.03, "ps-keeper-jay": 0.1, "ps-dive": 0.02, "ps-dive-result": 0.16, "ps-spot": 0.025, "ps-chip": 0.015, "ps-net": 0.03 }[id];
+      hiss(ctx, bus, { t, dur: cue.dur, gain: level, type: "bandpass", freq: 900, q: 0.3, attack: 0.3 });
+      if (id === "ps-stadium" || id === "ps-keeper-jay") for (let x = t + 0.4; x < t + cue.dur; x += 1.4) hiss(ctx, bus, { t: x, dur: 0.9, gain: level * 0.7, type: "bandpass", freq: 600, q: 1.2, attack: 0.3 });
+      if (id === "ps-walk" || id === "ps-spot" || id === "ps-chip") for (let x = t + 0.3; x < t + cue.dur; x += 0.95) { tone(ctx, bus, { t: x, dur: 0.18, freq: 60, glideTo: 40, gain: 0.32 }); tone(ctx, bus, { t: x + 0.22, dur: 0.15, freq: 55, glideTo: 38, gain: 0.22 }); }
+      if (id === "ps-spot") for (let k = 0; k < 8; k++) tone(ctx, bus, { t: t + 0.2 + k * 0.04, dur: 0.04, freq: k % 2 ? 2800 : 3100, gain: 0.05 });
+      if (id === "ps-dive" || id === "ps-chip") hiss(ctx, bus, { t, dur: cue.dur, gain: 0.06, type: "lowpass", freq: 400, freqTo: 150, attack: 0.5 });
+      if (id === "ps-dive-result") { tone(ctx, bus, { t: t0, dur: 1.4, freq: 1180, gain: 0.12, release: 1.2 }); tone(ctx, bus, { t: t0, dur: 1.2, freq: 2360, gain: 0.05, release: 1 }); }
+      if (id === "ps-net") { const g = t0 + EVENTS3["ps-net"].goal[0]; hiss(ctx, bus, { t: g, dur: 0.4, gain: 0.2, type: "bandpass", freq: 2000, q: 0.8 }); hiss(ctx, bus, { t: g + 0.1, dur: Math.max(1, t + cue.dur - g), gain: 0.2, type: "bandpass", freq: 1000, q: 0.3, attack: 0.15 }); for (let x = g + 0.4; x < t + cue.dur; x += 0.45) tone(ctx, bus, { t: x, dur: 0.3, freq: 90, glideTo: 40, gain: 0.25 }); }
+      break;
+    }
+    // ---- Safecracker
+    case "amb-sc-vault": case "amb-sc-dial": case "amb-sc-drill": case "amb-sc-keypad": case "amb-sc-alarm": case "amb-sc-charge": case "amb-sc-open": {
+      const id = cue.type.slice(4), t0 = cue.t0 ?? t, e = EVENTS4[id] || {};
+      tone(ctx, bus, { t, dur: cue.dur, freq: 50, gain: 0.06, attack: 0.4 });
+      (e.clicks || []).forEach((x, i) => { tone(ctx, bus, { t: t0 + x, dur: 0.03, freq: 2600, gain: 0.08 + i * 0.012 }); hiss(ctx, bus, { t: t0 + x, dur: 0.025, gain: 0.06 + i * 0.01, type: "highpass", freq: 3000 }); });
+      if (id === "sc-dial" && cue.figT) { tone(ctx, bus, { t: cue.figT, dur: 0.4, freq: 130, glideTo: 60, gain: 0.85 }); hiss(ctx, bus, { t: cue.figT, dur: 0.15, gain: 0.25, type: "lowpass", freq: 900 }); }
+      if (id === "sc-drill") { const end = cue.figT || t + cue.dur; tone(ctx, bus, { t, dur: end - t, freq: 820, glideTo: 980, type: "sawtooth", gain: 0.05, cutoff: 3000 }); tone(ctx, bus, { t, dur: end - t, freq: 1640, glideTo: 1960, type: "square", gain: 0.012, cutoff: 4000 }); hiss(ctx, bus, { t, dur: end - t, gain: 0.08, type: "bandpass", freq: 5000, q: 0.6 }); }
+      (e.flashes || []).forEach((x, i) => tone(ctx, bus, { t: t0 + x, dur: 0.3, freq: [523, 659, 659, 784, 1046][i], type: "triangle", gain: 0.12 }));
+      if (id === "sc-keypad" && cue.figT) tone(ctx, bus, { t: cue.figT, dur: 0.7, freq: 150, type: "square", gain: 0.09, cutoff: 800 });
+      if (id === "sc-alarm" || id === "sc-charge") for (let x = t; x < t + cue.dur; x += 0.9) tone(ctx, bus, { t: x, dur: 0.8, freq: 600, glideTo: 1100, type: "sawtooth", gain: 0.035, cutoff: 2500 });
+      if (id === "sc-alarm" && cue.figT) for (let x = cue.figT; x < t + cue.dur; x += 0.55) tone(ctx, bus, { t: x, dur: 0.18, freq: 80, glideTo: 45, gain: 0.45 });
+      if (id === "sc-charge") { const b = cue.figT || t + cue.dur; for (let x = t; x < b; x += 0.04) hiss(ctx, bus, { t: x, dur: 0.03, gain: 0.03 + r() * 0.05, type: "highpass", freq: 4000 }); if (cue.figT) { tone(ctx, bus, { t: b, dur: 2.2, freq: 55, glideTo: 22, gain: 1 }); hiss(ctx, bus, { t: b, dur: 1.8, gain: 0.55, type: "lowpass", freq: 1800 }); } }
+      if (id === "sc-open") { tone(ctx, bus, { t: t + 0.3, dur: 2.2, freq: 120, glideTo: 80, type: "sawtooth", gain: 0.06, cutoff: 500 }); [262, 330, 392, 523, 659].forEach((f) => tone(ctx, bus, { t: t + 1, dur: cue.dur - 0.8, freq: f, type: "triangle", gain: 0.035, attack: 1, release: 1 })); }
+      break;
+    }
+    // ---- Deep Signal
+    case "amb-ds-black": case "amb-ds-part": case "amb-ds-stalker": case "amb-ds-drift": case "amb-ds-lurkers": case "amb-ds-hatch": case "amb-ds-log": {
+      const id = cue.type.slice(4), t0 = cue.t0 ?? t, e = EVENTS4[id] || {};
+      tone(ctx, bus, { t, dur: cue.dur, freq: 38, gain: 0.16, attack: 0.6 }); hiss(ctx, bus, { t, dur: cue.dur, gain: 0.04, type: "lowpass", freq: 300, attack: 0.5 });
+      const ping = (x) => { tone(ctx, bus, { t: x, dur: 1.6, freq: 1420, gain: 0.12, release: 1.5 }); tone(ctx, bus, { t: x + 0.45, dur: 1.2, freq: 1420, gain: 0.04, release: 1.1 }); };
+      (e.pings || []).forEach((x) => ping(t0 + x));
+      if (id === "ds-stalker" && cue.figT) { ping(cue.figT - 0.15); tone(ctx, bus, { t: cue.figT + 0.3, dur: 2.5, freq: 48, glideTo: 36, type: "sawtooth", gain: 0.2, cutoff: 260, attack: 0.4 }); }
+      if (id === "ds-drift") { for (let x = t + 0.5; x < t + cue.dur; x += 0.9) { tone(ctx, bus, { t: x, dur: 0.16, freq: 58, glideTo: 40, gain: 0.3 }); tone(ctx, bus, { t: x + 0.2, dur: 0.14, freq: 54, glideTo: 38, gain: 0.2 }); } if (cue.figT) { tone(ctx, bus, { t: cue.figT, dur: 1.4, freq: 320, glideTo: 190, type: "sawtooth", gain: 0.09, cutoff: 1500 }); hiss(ctx, bus, { t: cue.figT, dur: 1.4, gain: 0.15, type: "bandpass", freq: 2600, q: 2 }); } }
+      if (id === "ds-lurkers") (e.pings || []).forEach((x) => { for (let k = 0; k < 18; k++) tone(ctx, bus, { t: t0 + x + 0.4 + k * 0.07 + r() * 0.05, dur: 0.04, freq: 2200 + r() * 2200, gain: 0.03 }); });
+      if (id === "ds-hatch") { tone(ctx, bus, { t, dur: cue.dur, freq: 60, glideTo: 110, type: "sawtooth", gain: 0.1, cutoff: 400 }); for (let x = t + 0.4; x < t + cue.dur; x += 0.8) tone(ctx, bus, { t: x, dur: 0.25, freq: 90, glideTo: 30, gain: 0.5 }); }
+      if (id === "ds-log") hiss(ctx, bus, { t, dur: cue.dur, gain: 0.06, type: "bandpass", freq: 2500, q: 0.5 });
+      break;
+    }
+    case "amb-cta-game": tone(ctx, bus, { t, dur: cue.dur, freq: 110, gain: 0.02, attack: 0.4 }); break;
     case "amb-computer": tone(ctx, bus, { t, dur: cue.dur, freq: 110, gain: 0.025, attack: 0.4 }); hiss(ctx, bus, { t, dur: cue.dur, gain: 0.025, type: "lowpass", freq: 600, attack: 0.4 }); break;
     default: break;
   }

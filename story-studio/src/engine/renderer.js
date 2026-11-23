@@ -3,6 +3,8 @@ import { clamp, lerp, prog, easeOut, easeInOut, easeBack, roundRect, wrapText, s
 import { drawBackground, drawHandsBack, drawHandsFront, drawAvatar, drawAttachment } from "./art.js";
 import { drawScene } from "./scenes.js";
 import "./scenes2.js";   // registers the game-world scenes
+import "./scenes3.js";
+import "./scenes4.js";
 import { SCENE_IN, SCENE_OUT } from "./timeline.js";   // fallback durations
 import { CHAT_THEMES } from "../story/model.js";
 
@@ -137,7 +139,7 @@ function drawFrame(ctx, compiled, t, layout, track, imgCache) {
   if (sc && sc.q < 0.5 && sc.toBlack) { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); drawOverlays(ctx, compiled, t, fx, fxk); return; }
   if (sc && sc.q >= 0.5) {
     const it = sc.it, base = it.tStart;
-    drawScene(ctx, it.msg.scene, t - base, it.sceneEnd - base, { figT: it.figureT != null ? it.figureT - base : null, label: it.msg.label, nEnd: (it.nEnd ?? it.sceneEnd) - base });
+    drawScene(ctx, it.msg.scene, t - base, it.sceneEnd - base, { figT: it.figureT != null ? it.figureT - base : null, label: it.msg.label, nEnd: (it.nEnd ?? it.sceneEnd) - base, hard: compiled.story.look.cut === "hard" });
     if (dark) { ctx.fillStyle = `rgba(0,0,0,${0.55 * dark})`; ctx.fillRect(0, 0, W, H); }
     if (sc.q < 1) { ctx.fillStyle = `rgba(0,0,0,${(1 - sc.q) * 2})`; ctx.fillRect(0, 0, W, H); }
     drawOverlays(ctx, compiled, t, fx, fxk);

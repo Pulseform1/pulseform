@@ -1,0 +1,138 @@
+{
+  "title": "Sudden Death",
+  "genre": "adventure",
+  "duration": 60,
+  "hook": "World Cup final. 4-4. Sudden death. And the last kick is his",
+  "outro": "Would you chip it?",
+  "clock": "9:41",
+  "group": false,
+  "characters": [
+    {
+      "id": "me",
+      "name": "Jay",
+      "avatar": "initials",
+      "color": "#ff8a3d",
+      "voice": "am_fenrir"
+    },
+    {
+      "id": "tv",
+      "name": "Commentator",
+      "avatar": "star",
+      "color": "#2a8cff",
+      "voice": "am_michael"
+    }
+  ],
+  "messages": [
+    {
+      "type": "scene",
+      "scene": "ps-stadium",
+      "text": "The World Cup final. Four goals each. Sudden death. And the last kick of the night... belongs to Jay.",
+      "label": "WORLD CUP FINAL · SUDDEN DEATH"
+    },
+    {
+      "type": "voice",
+      "from": "tv",
+      "mood": "radio",
+      "text": "Eighty thousand people, and you could hear a pin drop."
+    },
+    {
+      "type": "scene",
+      "scene": "ps-keeper-jay",
+      "text": "But first, Jay had to stop theirs. Their best striker. Top corner, all night long.",
+      "label": "THEIR KICK"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "whisper",
+      "text": "Watch the hips. Not the ball. The hips."
+    },
+    {
+      "type": "scene",
+      "scene": "ps-dive",
+      "text": "The striker swung. Jay dove..."
+    },
+    {
+      "type": "scene",
+      "scene": "ps-dive-result",
+      "text": "Fingertips! Off the post! Saved!"
+    },
+    {
+      "type": "voice",
+      "from": "tv",
+      "mood": "radio",
+      "text": "WHAT A SAVE! One kick from glory!"
+    },
+    {
+      "type": "scene",
+      "scene": "ps-walk",
+      "text": "Now it was his turn. Score this, and they're world champions. Miss... and it's over.",
+      "label": "THE LAST KICK"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "whisper",
+      "text": "Breathe. Just breathe."
+    },
+    {
+      "type": "scene",
+      "scene": "ps-spot",
+      "text": "Go left, and the keeper's waiting. Swipe too hard, and it flies over the bar. So Jay tried something nobody expected."
+    },
+    {
+      "type": "scene",
+      "scene": "ps-chip",
+      "text": "A soft little chip... right down the middle... as the keeper dove the wrong way."
+    },
+    {
+      "type": "scene",
+      "scene": "ps-net",
+      "text": "It dropped... and dropped... GOAL! World champions!"
+    },
+    {
+      "type": "voice",
+      "from": "tv",
+      "mood": "radio",
+      "text": "HE CHIPPED IT! IN A WORLD CUP FINAL!"
+    },
+    {
+      "type": "scene",
+      "scene": "cta-game",
+      "text": "This is Penalty Shootout. Free on Pulsebox. box.pulseform.org. It's a computer game, so play it on a computer. Would you chip it?",
+      "label": "Penalty Shootout",
+      "say": "This is Penalty Shootout. Free on Pulsebox. Box dot pulseform dot org. It's a computer game, so play it on a computer. Would you chip it?"
+    }
+  ],
+  "look": {
+    "background": "scifi",
+    "chatTheme": "violet",
+    "hookStyle": "banner",
+    "cut": "hard"
+  },
+  "captions": {
+    "style": "pop",
+    "font": "Luckiest Guy",
+    "size": 1,
+    "position": 0.79,
+    "highlight": "#3dff7a"
+  },
+  "narration": {
+    "enabled": true,
+    "speed": 1.1,
+    "includeImages": false,
+    "narrator": "af_heart",
+    "narratorSpeed": 1.05,
+    "narratorFx": "none",
+    "systemNotes": false
+  },
+  "audio": {
+    "music": "epic",
+    "musicVolume": 0.5,
+    "sfxVolume": 0.9
+  },
+  "pacing": {
+    "fit": true,
+    "speed": 1
+  }
+}

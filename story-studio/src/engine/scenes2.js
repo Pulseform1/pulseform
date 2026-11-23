@@ -30,8 +30,9 @@ export const mixc = (a, b, k) => { const A = rgbOf(a), B = rgbOf(b); return `rgb
 const JAY = { hood: "#ff8a3d", hoodD: "#c45a1a", jeans: "#33446a", jeansD: "#212c48", shoe: "#ececf2", skin: "#f0c09a", skinD: "#cf9a74", hair: "#f2d27a", hairD: "#c8a24a", ink: "#14101c" };
 // o: view side|back|front, facing 1|-1, pose stand|walk|run|hammer|reach|cower|wave|sit, phase (walk cycle), light 0..1, tint
 export function drawJay(ctx, x, footY, h, o = {}) {
-  const { view = "side", facing = 1, pose = "stand", phase = 0, light: L = 1, tint = "#0b0a16", t = 0, shake = 0, alpha = 1 } = o;
-  const c = (k) => mixc(JAY[k], tint, 1 - L);
+  const { view = "side", facing = 1, pose = "stand", phase = 0, light: L = 1, tint = "#0b0a16", t = 0, shake = 0, alpha = 1, palette = null, number = null } = o;
+  const P = palette ? { ...JAY, ...palette } : JAY;
+  const c = (k) => mixc(P[k], tint, 1 - L);
   const sw = pose === "run" ? 0.9 : pose === "walk" ? 0.45 : 0;
   ctx.save(); ctx.globalAlpha *= alpha;
   ctx.translate(x + (shake ? Math.sin(t * 57) * shake : 0), footY + (sw ? -Math.abs(Math.sin(phase)) * h * (pose === "run" ? 0.03 : 0.012) : 0));
@@ -48,7 +49,7 @@ export function drawJay(ctx, x, footY, h, o = {}) {
       const a = Math.sin(p) * sw, b = sw ? Math.max(0, -Math.cos(p)) * sw * 1.6 : pose === "cower" ? 0.5 : 0;
       const k = [hip[0] + Math.sin(a) * 24, hip[1] + Math.cos(a) * 24], f = [k[0] + Math.sin(a - b) * 23, k[1] + Math.cos(a - b) * 23];
       seg(hip, k, 10.5, near ? c("jeans") : c("jeansD")); seg(k, f, 9.5, near ? c("jeans") : c("jeansD"));
-      ctx.fillStyle = near ? c("shoe") : mixc(JAY.shoe, tint, 0.45 + (1 - L) * 0.5); ctx.beginPath(); ctx.ellipse(f[0] + 3.5, f[1] + 0.5, 7, 3.4, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = near ? c("shoe") : mixc(P.shoe, tint, 0.45 + (1 - L) * 0.5); ctx.beginPath(); ctx.ellipse(f[0] + 3.5, f[1] + 0.5, 7, 3.4, 0, 0, TAU); ctx.fill();
     };
     const arm = (p, near) => {
       let ua = -Math.sin(p) * sw * 0.9, fa = ua + (pose === "run" ? 1.5 : 0.35);
@@ -95,7 +96,8 @@ export function drawJay(ctx, x, footY, h, o = {}) {
     }
     ctx.fillStyle = c("hood"); roundRect(ctx, -11, -81, 22, 38, 7); ctx.fill();
     ctx.fillStyle = c("hoodD"); roundRect(ctx, -11, -50, 22, 7, 3); ctx.fill();
-    if (!front) { ctx.fillStyle = c("hoodD"); ctx.beginPath(); ctx.ellipse(0, -76, 8, 6, 0, 0, TAU); ctx.fill(); }
+    if (!front && number == null) { ctx.fillStyle = c("hoodD"); ctx.beginPath(); ctx.ellipse(0, -76, 8, 6, 0, 0, TAU); ctx.fill(); }
+    if (!front && number != null) { ctx.fillStyle = c("shoe"); ctx.font = "700 15px 'Chakra Petch', Inter, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(number), 0, -64); }
     else { seg([-2.6, -78], [-2.6, -69], 1, c("shoe")); seg([2.6, -78], [2.6, -69], 1, c("shoe")); ctx.fillStyle = c("hoodD"); roundRect(ctx, -7, -60, 14, 7, 3); ctx.fill(); }
     if (pose === "cower" && front) { /* arms over the face, drawn after the head below */ }
     dot(0, -90, 9, front ? c("skin") : c("hair"));

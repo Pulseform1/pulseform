@@ -554,10 +554,11 @@ export function drawScene(ctx, id, lt, dur, o = {}) {
   const game = id.startsWith("endless-");
   const st = STYLE[id] || (game ? { grade: "yellow", hud: true } : {});
   ctx.save();
+  const punch = o.hard && lt >= 0 ? Math.pow(clamp(1 - lt / 0.4), 2) * 0.09 : 0;   // hard cuts land with a quick punch-in
   if (st.drift !== false) {   // handheld camera: slow push in, a little drift
-    const push = 1.03 + 0.07 * clamp(lt / Math.max(1, dur)), ox = Math.sin(lt * 0.9) * 9, oy = Math.sin(lt * 1.3 + 1) * 7;
+    const push = 1.03 + 0.07 * clamp(lt / Math.max(1, dur)) + punch, ox = Math.sin(lt * 0.9) * 9, oy = Math.sin(lt * 1.3 + 1) * 7;
     ctx.translate(W / 2 + ox, H / 2 + oy); ctx.scale(push, push); ctx.translate(-W / 2, -H / 2);
-  }
+  } else if (punch) { ctx.translate(W / 2, H / 2); ctx.scale(1 + punch, 1 + punch); ctx.translate(-W / 2, -H / 2); }
   fn(ctx, lt, { ...o, dur });
   ctx.restore();
   const grade = GRADES[st.grade || "purple"];
@@ -565,7 +566,8 @@ export function drawScene(ctx, id, lt, dur, o = {}) {
   if (st.grain !== false) grain(ctx, lt, game ? 0.045 : 0.035);
   if (st.vignette !== false) vignette(ctx, 0.55);
   if (st.hud) endlessHud(ctx, lt, BATTERY[id] ?? 0.5);
-  if (o.label) {   // a location stamp / game HUD label, top left
+  if (typeof st.overlay === "function") st.overlay(ctx, lt, { ...o, dur });
+  if (o.label && !st.noLabel) {   // a location stamp / game HUD label, top left
     ctx.save(); ctx.font = "700 34px 'Chakra Petch', Inter, sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "left";
     const tw = ctx.measureText(o.label).width;
     const ly = 270;   // below a two-line hook headline

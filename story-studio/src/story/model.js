@@ -1,6 +1,8 @@
 // The story document: everything the editor changes and the renderer draws.
 import { newId } from "../engine/util.js";
 import { NEW_SCENES } from "../engine/scenes2.js";
+import { NEW_SCENES_3 } from "../engine/scenes3.js";
+import { NEW_SCENES_4 } from "../engine/scenes4.js";
 
 export const GENRES = [
   { id: "horror", label: "Horror", blurb: "Creepy messages, strangers, things in the dark", color: "#7c5cff" },
@@ -69,7 +71,7 @@ export const SCENES = [
   { id: "endless-halls", label: "The Endless Halls: yellow halls (figure: the Hollow Man)" }, { id: "endless-crawler", label: "The Endless Halls: the Crawler" },
   { id: "endless-watcher", label: "The Endless Halls: the Watcher" }, { id: "endless-grin", label: "The Endless Halls: lights out, the Grin" },
   { id: "endless-fusebox", label: "The Endless Halls: fuse box (3 fuses)" }, { id: "endless-exit", label: "The Endless Halls: EXIT door, sunrise" },
-  ...NEW_SCENES,
+  ...NEW_SCENES, ...NEW_SCENES_3, ...NEW_SCENES_4,
 ];
 
 // Kokoro voices (free, run locally by the Studio server).
@@ -91,7 +93,7 @@ export const CAPTION_FONTS = [
 export const MUSIC = [
   { id: "auto", label: "Match the genre" }, { id: "horror", label: "Horror drone" }, { id: "mystery", label: "Mystery pulse" }, { id: "comedy", label: "Bouncy comedy" },
   { id: "drama", label: "Emotional keys" }, { id: "suspense", label: "Ticking suspense" }, { id: "scifi", label: "Synth arps" }, { id: "adventure", label: "Adventure groove" },
-  { id: "lofi", label: "Lo-fi chill" }, { id: "none", label: "No music" },
+  { id: "lofi", label: "Lo-fi chill" }, { id: "action", label: "Action (driving beat)" }, { id: "epic", label: "Epic (stadium drums)" }, { id: "none", label: "No music" },
 ];
 export const SKINS = ["#f2c4a0", "#e0a37c", "#c68a5f", "#9c6644", "#6e4630", "#4a2f22"];
 

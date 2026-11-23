@@ -97,7 +97,8 @@ export function compileTimeline(story, narration = {}) {
       // (or, when another scene comes next, it cuts straight to it through black)
       it.chainIn = n > 0 && items[n - 1].side === "scene" || (items[n - 1]?.side === "voice" && items[n - 1].scene);
       cues.push({ t, type: it.chainIn ? "scene-cut" : "scene-in" });
-      it.inDur = it.chainIn ? SCENE_CUT : SCENE_IN;
+      const cut = story.look.cut === "hard" ? 0.02 : SCENE_CUT;
+      it.inDur = it.chainIn ? cut : SCENE_IN;
       t += it.inDur;
       it.tAppear = t;
       it.readDur = readFor(it, k);
@@ -108,7 +109,7 @@ export function compileTimeline(story, narration = {}) {
       while (items[n + 1]?.side === "voice") { n++; items[n].scene = it; t = voiceLine(items[n], t); items[n].tEnd = t; }
       const spokenEnd = t;
       it.chainOut = items[n + 1]?.side === "scene";
-      it.outDur = it.chainOut ? SCENE_CUT : SCENE_OUT;
+      it.outDur = it.chainOut ? cut : SCENE_OUT;
       t += it.outDur + it.pause;
       it.sceneEnd = t;
       if (m.figure) {

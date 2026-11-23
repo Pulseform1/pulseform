@@ -1,0 +1,136 @@
+{
+  "title": "The Impossible Vault",
+  "genre": "adventure",
+  "duration": 60,
+  "hook": "Nobody has ever cracked the Impossible Vault. He has 5 minutes",
+  "outro": "Can you crack it?",
+  "clock": "9:41",
+  "group": false,
+  "characters": [
+    {
+      "id": "me",
+      "name": "Jay",
+      "avatar": "initials",
+      "color": "#ff8a3d",
+      "voice": "am_fenrir"
+    }
+  ],
+  "messages": [
+    {
+      "type": "scene",
+      "scene": "sc-vault",
+      "text": "Nobody has ever cracked the Impossible Vault. Four locks. Five minutes. And if the alarm fills up... you leave with nothing.",
+      "label": "JOB 12 · THE IMPOSSIBLE VAULT"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "whisper",
+      "text": "Okay. Quiet. Nice and quiet."
+    },
+    {
+      "type": "scene",
+      "scene": "sc-dial",
+      "text": "Lock one: a dial with no guide. You turn it, and you listen. The clicks get louder when you're close. Click. Click. Click...",
+      "label": "LOCK 1/4 · DIAL",
+      "figure": true,
+      "figureAt": 0.97
+    },
+    {
+      "type": "scene",
+      "scene": "sc-drill",
+      "text": "Lock two: a steel plate. Drill too fast and the bit burns. Too loud, and the alarm climbs.",
+      "label": "LOCK 2/4 · DRILL",
+      "figure": true,
+      "figureAt": 1.7
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "panic",
+      "text": "Too hot, too hot... come on, come on!"
+    },
+    {
+      "type": "scene",
+      "scene": "sc-keypad",
+      "text": "Lock three flashed a colour code. Once. Red. Blue. Blue. Yellow... and one more he didn't catch.",
+      "label": "LOCK 3/4 · KEYPAD",
+      "figure": true,
+      "figureAt": 0.97
+    },
+    {
+      "type": "scene",
+      "scene": "sc-alarm",
+      "text": "Wrong colour. The alarm jumped to ninety two percent. And then... footsteps. In the hallway.",
+      "label": "ALARM 92%",
+      "figure": true,
+      "figureAt": 0.7,
+      "effect": "shake"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "whisper",
+      "text": "No, no, no, no..."
+    },
+    {
+      "type": "scene",
+      "scene": "sc-charge",
+      "text": "Twenty one seconds left. One lock. He stuck a charge on the weak point, lit the fuse... and ran.",
+      "label": "LOCK 4/4 · CHARGE",
+      "figure": true,
+      "figureAt": 0.99,
+      "effect": "shake"
+    },
+    {
+      "type": "scene",
+      "scene": "sc-open",
+      "text": "BOOM. The Impossible Vault swung open... and inside was more gold than anyone had ever seen.",
+      "label": "JOB 12 · COMPLETE"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "panic",
+      "text": "Three stars. THREE STARS!"
+    },
+    {
+      "type": "scene",
+      "scene": "cta-game",
+      "text": "This is Safecracker. Free on Pulsebox. box.pulseform.org. It's a computer game, so play it on a computer. Can you crack it before the alarm?",
+      "label": "Safecracker",
+      "say": "This is Safecracker. Free on Pulsebox. Box dot pulseform dot org. It's a computer game, so play it on a computer. Can you crack it before the alarm?"
+    }
+  ],
+  "look": {
+    "background": "scifi",
+    "chatTheme": "violet",
+    "hookStyle": "banner",
+    "cut": "hard"
+  },
+  "captions": {
+    "style": "pop",
+    "font": "Luckiest Guy",
+    "size": 1,
+    "position": 0.79,
+    "highlight": "#ffd23d"
+  },
+  "narration": {
+    "enabled": true,
+    "speed": 1.1,
+    "includeImages": false,
+    "narrator": "af_heart",
+    "narratorSpeed": 1.05,
+    "narratorFx": "none",
+    "systemNotes": false
+  },
+  "audio": {
+    "music": "suspense",
+    "musicVolume": 0.5,
+    "sfxVolume": 0.9
+  },
+  "pacing": {
+    "fit": true,
+    "speed": 1
+  }
+}

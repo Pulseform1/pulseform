@@ -1,0 +1,131 @@
+{
+  "title": "Don't Ping",
+  "genre": "horror",
+  "duration": 60,
+  "hook": "My sonar is the only way to see down here. Every time I use it, something hears me",
+  "outro": "Don't go deeper",
+  "clock": "9:41",
+  "group": false,
+  "characters": [
+    {
+      "id": "me",
+      "name": "Jay",
+      "avatar": "initials",
+      "color": "#ff8a3d",
+      "voice": "am_fenrir"
+    },
+    {
+      "id": "crew",
+      "name": "Halcyon",
+      "avatar": "unknown",
+      "color": "#3a3f55",
+      "voice": "bm_lewis"
+    }
+  ],
+  "messages": [
+    {
+      "type": "scene",
+      "scene": "ds-black",
+      "text": "Twelve hundred meters down, your screen only shows what your sonar touches. Every ping lights up the cave... and tells everything in it exactly where you are.",
+      "label": "DEPTH 1,240 M"
+    },
+    {
+      "type": "scene",
+      "scene": "ds-part",
+      "text": "Jay needed one last part to get home. It was right there, at the mouth of a tunnel."
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "whisper",
+      "text": "One ping. Just one more."
+    },
+    {
+      "type": "scene",
+      "scene": "ds-stalker",
+      "text": "He pinged. The cave lit up... and so did something enormous. Right beside the hull.",
+      "figure": true,
+      "figureAt": 0.55,
+      "effect": "shake"
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "panic",
+      "text": "Don't move. Don't move. Don't move."
+    },
+    {
+      "type": "scene",
+      "scene": "ds-drift",
+      "text": "Engines off. No pings. He drifted through the dark, completely blind, while something circled the sub. Then... a scrape. Along the hull.",
+      "figure": true,
+      "figureAt": 0.85
+    },
+    {
+      "type": "scene",
+      "scene": "ds-lurkers",
+      "text": "He grabbed the part with the claw. Three of three. But the claw was loud... and the lurkers heard it.",
+      "label": "PARTS 3/3"
+    },
+    {
+      "type": "scene",
+      "scene": "ds-hatch",
+      "text": "Full throttle. Every engine roar was a dinner bell. The hatch was fifty meters up, and the stalker was right behind him."
+    },
+    {
+      "type": "voice",
+      "from": "me",
+      "mood": "scream",
+      "text": "Go! GO! GO!"
+    },
+    {
+      "type": "scene",
+      "scene": "ds-log",
+      "text": "He made it. But inside the hatch, the Halcyon's black box was still playing..."
+    },
+    {
+      "type": "voice",
+      "from": "crew",
+      "mood": "radio",
+      "text": "If anyone hears this... do not go deeper."
+    },
+    {
+      "type": "scene",
+      "scene": "cta-game",
+      "text": "This is Deep Signal. Free on Pulsebox. box.pulseform.org. It's a computer game, so play it on a computer. And wear headphones.",
+      "label": "Deep Signal",
+      "say": "This is Deep Signal. Free on Pulsebox. Box dot pulseform dot org. It's a computer game, so play it on a computer. And wear headphones."
+    }
+  ],
+  "look": {
+    "background": "scifi",
+    "chatTheme": "violet",
+    "hookStyle": "banner",
+    "cut": "hard"
+  },
+  "captions": {
+    "style": "pop",
+    "font": "Luckiest Guy",
+    "size": 1,
+    "position": 0.79,
+    "highlight": "#3de0ff"
+  },
+  "narration": {
+    "enabled": true,
+    "speed": 1.1,
+    "includeImages": false,
+    "narrator": "af_heart",
+    "narratorSpeed": 1.05,
+    "narratorFx": "none",
+    "systemNotes": false
+  },
+  "audio": {
+    "music": "horror",
+    "musicVolume": 0.5,
+    "sfxVolume": 0.9
+  },
+  "pacing": {
+    "fit": true,
+    "speed": 1
+  }
+}
