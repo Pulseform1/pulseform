@@ -4,9 +4,6 @@ WebSite structured data, which is what search engines use for the site name in r
 import sys
 p = sys.argv[1] if len(sys.argv) > 1 else 'public/index.html'
 s = open(p, encoding='utf-8').read()
-VERIFY = '<meta name="google-site-verification" content="_75yEUJpOOoWCy9jTrpenQ5VQhqACcNBzGOF0mHYbhI" />'   # Google Search Console (the owner's account)
-if 'google-site-verification' not in s:
-    i = s.index('</title>') + len('</title>'); s = s[:i] + '\n' + VERIFY + s[i:]; open(p, 'w', encoding='utf-8').write(s); print('verification tag added to', p)
 if 'application/ld+json' not in s:
     i = s.index('</title>') + len('</title>')
     tags = ('\n<link rel="canonical" href="https://box.pulseform.org/">'
