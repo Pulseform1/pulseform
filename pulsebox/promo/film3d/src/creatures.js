@@ -87,3 +87,54 @@ export function makeDrone() {
     },
   };
 }
+
+// The Endless Halls' Watcher as a tall, pale man: a smooth grey-white mannequin with ball joints, arms that hang
+// past its knees, long fingers, and a small featureless head with two dark hollows. It faces +z. pose(p) sets it.
+export function makePaleMan() {
+  const root = new THREE.Group();
+  const skin = new THREE.MeshPhysicalMaterial({ color: 0xe4e0d8, roughness: 0.62, metalness: 0.0, sheen: 0.5, sheenColor: new THREE.Color(0xfff4ea), emissive: 0x14130f });   // pale even in the dark
+  const joint = new THREE.MeshPhysicalMaterial({ color: 0xd8d3ca, roughness: 0.6, emissive: 0x100f0c });
+  const hollow = new THREE.MeshBasicMaterial({ color: 0x050403 });
+  const seg = (r, len, m = skin) => new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 6, 14), m);
+  const ball = (r, m = joint) => new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), m);
+  const J = {};
+  const add = (parent, name, x, y, z) => { const g = new THREE.Group(); g.position.set(x, y, z); parent.add(g); J[name] = g; return g; };
+  const hips = add(root, "hips", 0, 1.32, 0);
+  const pelvis = seg(0.13, 0.08); pelvis.scale.set(1.25, 1, 0.75); hips.add(pelvis);
+  const spine = add(hips, "spine", 0, 0.08, 0);
+  const torso = seg(0.135, 0.62); torso.position.y = 0.4; torso.scale.set(1.12, 1, 0.6); spine.add(torso);
+  const chest = seg(0.15, 0.16); chest.position.y = 0.62; chest.scale.set(1.2, 1, 0.62); spine.add(chest);
+  const neck = add(spine, "neck", 0, 0.84, 0.02);
+  const nm = seg(0.058, 0.12); nm.position.y = 0.08; neck.add(nm);
+  const head = add(neck, "head", 0, 0.27, 0.03);
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.13, 32, 24), skin); skull.scale.set(0.88, 1.42, 1.0); head.add(skull);
+  for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.034, 16, 12), hollow); e.position.set(0.047 * s, 0.03, 0.112); e.scale.set(1.05, 1.7, 0.55); head.add(e); }
+  const mouth = new THREE.Mesh(new THREE.SphereGeometry(0.02, 14, 10), hollow); mouth.position.set(0, -0.1, 0.112); mouth.scale.set(1.0, 2.4, 0.5); head.add(mouth);
+  for (const s of [-1, 1]) {
+    const sh = add(spine, "shoulder" + s, 0.215 * s, 0.7, 0); sh.add(ball(0.06));
+    const up = seg(0.046, 0.5); up.position.y = -0.3; sh.add(up);
+    const el = add(sh, "elbow" + s, 0, -0.6, 0); el.add(ball(0.046));
+    const fo = seg(0.04, 0.5); fo.position.y = -0.3; el.add(fo);
+    const wr = add(el, "wrist" + s, 0, -0.6, 0); wr.add(ball(0.034));
+    const palm = seg(0.035, 0.08); palm.position.y = -0.08; palm.scale.set(1, 1, 0.5); wr.add(palm);
+    for (let f = 0; f < 4; f++) { const fi = seg(0.011, 0.19); fi.position.set((f - 1.5) * 0.019, -0.25, 0.005); fi.rotation.x = 0.12; wr.add(fi); }
+    const hp = add(hips, "hip" + s, 0.1 * s, -0.06, 0); hp.add(ball(0.065));
+    const th = seg(0.066, 0.5); th.position.y = -0.33; hp.add(th);
+    const kn = add(hp, "knee" + s, 0, -0.64, 0); kn.add(ball(0.055));
+    const sn = seg(0.054, 0.5); sn.position.y = -0.31; kn.add(sn);
+    const ft = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.14, 4, 10), skin); ft.rotation.x = Math.PI / 2; ft.position.set(0, -0.62, 0.07); ft.scale.set(1, 1, 0.6); kn.add(ft);
+  }
+  root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  const set = {
+    root, J, skin,
+    // tilt/turn the head, reach (0..1) the right arm forward, hunch, a frozen "mannequin" pose
+    pose({ tilt = 0.18, turn = 0, reach = 0, hunch = 0.12, arms = 0 } = {}) {
+      J.spine.rotation.x = hunch; J.neck.rotation.x = 0.15 + hunch * 0.5; J.head.rotation.set(0.05, turn, tilt);
+      for (const s of [-1, 1]) { J["shoulder" + s].rotation.set(0, 0, 0.06 * s + arms * 0.1 * s); J["elbow" + s].rotation.set(-0.08, 0, 0); J["wrist" + s].rotation.set(0.1, 0, 0); }
+      J.shoulder1.rotation.x = -reach * 1.25; J.elbow1.rotation.x = -0.08 - reach * 0.25;
+      for (const s of [-1, 1]) { J["hip" + s].rotation.set(0, 0, 0.03 * s); J["knee" + s].rotation.set(0.02, 0, 0); }
+    },
+  };
+  set.pose();
+  return set;
+}

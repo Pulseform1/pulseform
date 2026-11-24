@@ -1,0 +1,279 @@
+{
+ "title": "Unknown Number",
+ "voices": {
+  "N": {
+   "ref": "narrator.wav",
+   "ex": 0.45,
+   "cfg": 0.5
+  },
+  "J": {
+   "ref": "jay.wav",
+   "ex": 0.55,
+   "cfg": 0.45
+  }
+ },
+ "moods": {
+  "eerie": {
+   "ex": 0.4,
+   "cfg": 0.55
+  },
+  "whisper": {
+   "ex": 0.35,
+   "cfg": 0.5
+  },
+  "scared": {
+   "ex": 0.7,
+   "cfg": 0.35
+  },
+  "panic": {
+   "ex": 0.9,
+   "cfg": 0.3
+  }
+ },
+ "duck": {
+  "music": 0.35,
+  "sfx": 0.6
+ },
+ "lines": [
+  {
+   "id": "h01",
+   "who": "N",
+   "shot": "hook",
+   "text": "At two forty-seven in the morning, a number he didn't know sent him a text.",
+   "cap": "At *2:47 AM,* a number he didn't know sent him a *text.*",
+   "gap": 0,
+   "mood": "eerie",
+   "prompt": "",
+   "fx": "",
+   "dur": 3.424
+  },
+  {
+   "id": "n01",
+   "who": "N",
+   "shot": "bed-play",
+   "text": "Jay was playing The Endless Halls. The game where the tall man only moves when you look away.",
+   "cap": "Jay was playing *The Endless Halls.* The game where the tall man only moves when you *look away.*",
+   "gap": 0.6,
+   "mood": "eerie",
+   "prompt": "",
+   "fx": "",
+   "dur": 4.724
+  },
+  {
+   "id": "j01",
+   "who": "J",
+   "shot": "txt1",
+   "text": "Who is this?",
+   "cap": "Who is this?",
+   "gap": 3.6,
+   "mood": "whisper",
+   "prompt": "",
+   "fx": "",
+   "dur": 1.023
+  },
+  {
+   "id": "e01",
+   "who": "N",
+   "shot": "txt1-face",
+   "text": "Would you text back? Comment yes or no.",
+   "cap": "Would you text back? Comment *yes or no.*",
+   "gap": 2.4,
+   "mood": "",
+   "prompt": "WOULD YOU TEXT BACK?",
+   "fx": "",
+   "dur": 2.547
+  },
+  {
+   "id": "n02",
+   "who": "N",
+   "shot": "txt2",
+   "text": "Five minutes later.",
+   "cap": "*Five minutes later.*",
+   "gap": 0.8,
+   "mood": "eerie",
+   "prompt": "",
+   "fx": "",
+   "dur": 1.056
+  },
+  {
+   "id": "j02",
+   "who": "J",
+   "shot": "txt2",
+   "text": "That's my street.",
+   "cap": "That's... *my street.*",
+   "gap": 2.4,
+   "mood": "whisper",
+   "prompt": "",
+   "fx": "",
+   "dur": 1.059
+  },
+  {
+   "id": "n03",
+   "who": "N",
+   "shot": "wait",
+   "text": "Then nothing. For ten whole minutes.",
+   "cap": "Then *nothing.* For ten whole minutes.",
+   "gap": 6.5,
+   "mood": "eerie",
+   "prompt": "",
+   "fx": "",
+   "dur": 1.966
+  },
+  {
+   "id": "n04",
+   "who": "N",
+   "shot": "txt3",
+   "text": "At three-oh-two, his phone lit up again.",
+   "cap": "At *3:02,* his phone lit up again.",
+   "gap": 1.4,
+   "mood": "eerie",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.449
+  },
+  {
+   "id": "j03",
+   "who": "J",
+   "shot": "txt3",
+   "text": "That's my house. No. No, no, no.",
+   "cap": "That's my *house.* No. No, no, no.",
+   "gap": 2.3,
+   "mood": "panic",
+   "prompt": "",
+   "fx": "",
+   "dur": 3.07
+  },
+  {
+   "id": "e02",
+   "who": "N",
+   "shot": "panic",
+   "text": "Run, or hide? Comment it.",
+   "cap": "*Run, or hide?* Comment it.",
+   "gap": 0.6,
+   "mood": "",
+   "prompt": "RUN OR HIDE?",
+   "fx": "",
+   "dur": 2.695
+  },
+  {
+   "id": "n05",
+   "who": "N",
+   "shot": "prep",
+   "text": "He locked the door. Killed the lights. Grabbed the bat.",
+   "cap": "He locked the door. Killed the lights. Grabbed the *bat.*",
+   "gap": 3.0,
+   "mood": "eerie",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.64
+  },
+  {
+   "id": "j04",
+   "who": "J",
+   "shot": "txt4",
+   "text": "The kitchen.",
+   "cap": "The *kitchen...*",
+   "gap": 4.4,
+   "mood": "whisper",
+   "prompt": "",
+   "fx": "",
+   "dur": 0.994
+  },
+  {
+   "id": "j05",
+   "who": "J",
+   "shot": "kitchen",
+   "text": "Hello? Is someone there?",
+   "cap": "Hello? Is someone *there?*",
+   "gap": 3.4,
+   "mood": "scared",
+   "prompt": "",
+   "fx": "",
+   "dur": 1.753
+  },
+  {
+   "id": "n06",
+   "who": "N",
+   "shot": "kitchen",
+   "text": "The pans were on the floor. The kitchen was empty.",
+   "cap": "The pans were on the floor. The kitchen was *empty.*",
+   "gap": 1.2,
+   "mood": "eerie",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.718
+  },
+  {
+   "id": "j06",
+   "who": "J",
+   "shot": "txt5",
+   "text": "No. No, no.",
+   "cap": "No. *No, no.*",
+   "gap": 2.6,
+   "mood": "panic",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.015
+  },
+  {
+   "id": "n07",
+   "who": "N",
+   "shot": "freeze",
+   "text": "He forgot the only rule of The Endless Halls.",
+   "cap": "He forgot the only rule of *The Endless Halls...*",
+   "gap": 7.2,
+   "mood": "eerie",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.792
+  },
+  {
+   "id": "n08",
+   "who": "N",
+   "shot": "freeze",
+   "text": "Never look away.",
+   "cap": "*Never look away.*",
+   "gap": 0.5,
+   "mood": "eerie",
+   "prompt": "",
+   "fx": "",
+   "dur": 1.343
+  },
+  {
+   "id": "e03",
+   "who": "N",
+   "shot": "freeze",
+   "text": "What happens next? Comment it.",
+   "cap": "What happens *next?* Comment it.",
+   "gap": 0.8,
+   "mood": "",
+   "prompt": "WHAT HAPPENS NEXT?",
+   "fx": "",
+   "dur": 1.892
+  },
+  {
+   "id": "n09",
+   "who": "N",
+   "shot": "freeze",
+   "text": "The Endless Halls is one of seventy-seven free games on Pulsebox.",
+   "cap": "*The Endless Halls* is one of 77 free games on Pulsebox.",
+   "gap": 0.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 3.668
+  },
+  {
+   "id": "n10",
+   "who": "N",
+   "shot": "freeze",
+   "text": "Free at box dot pulseform dot org. Play it on a computer... with the lights on.",
+   "cap": "Free at... *box.pulseform.org.* Play it on a *computer...* with the lights on.",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 4.307
+  }
+ ]
+}

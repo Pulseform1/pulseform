@@ -166,6 +166,16 @@ function drawCta(g, t, c) {
   }
 }
 
+// a paused video: a big pause button that settles, "PAUSED" in the corner, a frozen progress bar
+function drawPaused(g, t, k) {
+  g.save(); g.globalAlpha = clamp(k);
+  const big = 0.9 - 0.55 * clamp((k - 0.15) / 1); g.fillStyle = `rgba(0,0,0,${0.45 * big + 0.1})`; g.beginPath(); g.arc(W / 2, H * 0.47, 120, 0, 7); g.fill();
+  g.fillStyle = `rgba(255,255,255,${big + 0.1})`; rr(g, W / 2 - 46, H * 0.47 - 56, 30, 112, 8); g.fill(); rr(g, W / 2 + 16, H * 0.47 - 56, 30, 112, 8); g.fill();
+  g.fillStyle = "rgba(0,0,0,.55)"; rr(g, 50, 150, 230, 64, 14); g.fill(); g.fillStyle = "#fff"; g.font = "700 34px 'Chakra Petch', sans-serif"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText("❚❚ PAUSED", 72, 184);
+  g.fillStyle = "rgba(255,255,255,.25)"; g.fillRect(60, H - 330, W - 120, 6); g.fillStyle = "#ff2a3a"; g.fillRect(60, H - 330, (W - 120) * 0.83, 6); g.beginPath(); g.arc(60 + (W - 120) * 0.83, H - 327, 14, 0, 7); g.fill();
+  g.restore();
+}
+
 export function drawOverlay(g, tl, t, fx = {}, state = {}) {
   if (fx.chroma) { /* drawn by caller */ }
   grain(g, t); vignette(g, fx.vignette ?? 0.55);
@@ -173,6 +183,8 @@ export function drawOverlay(g, tl, t, fx = {}, state = {}) {
   if (fx.flash) { g.fillStyle = `rgba(255,255,255,${clamp(fx.flash) * 0.82})`; g.fillRect(0, 0, W, H); }
   if (fx.red) { g.fillStyle = `rgba(255,20,60,${clamp(fx.red)})`; g.fillRect(0, 0, W, H); }
   if (fx.rewind) { drawRewind.text = fx.rewindText; drawRewind(g, t, fx.rewind); }
+  if (fx.gray) { g.save(); g.globalCompositeOperation = "saturation"; g.fillStyle = `rgba(128,128,128,${clamp(fx.gray)})`; g.fillRect(0, 0, W, H); g.restore(); }
+  if (fx.paused) drawPaused(g, t, fx.paused);
   drawHud(g, tl, t, state);
   if (state.cta) drawCta(g, t, state.cta);
   drawPrompt(g, tl, t);

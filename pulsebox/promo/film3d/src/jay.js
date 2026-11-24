@@ -108,6 +108,18 @@ export function pose(rig, name, t = 0, p = {}) {
       J["shoulder-1"].rotation.x = -0.9; J["elbow-1"].rotation.x = -0.8; J["shoulder1"].rotation.set(-2.55, 0, -0.35); J["elbow1"].rotation.x = -2.4;
       look(p.yaw ?? 0, p.pitch ?? 0); break;
     }
+    case "text": {   // holding a phone at chest height in both hands, looking down at it (sitting or standing)
+      if (p.sit) { J.hips.position.y = 0.62; for (const s of [-1, 1]) { J["hip" + s].rotation.x = -1.45; J["knee" + s].rotation.x = 1.5; } }
+      J.spine.rotation.x = 0.12 + (p.lean ?? 0) + breathe;
+      for (const s of [-1, 1]) { J["shoulder" + s].rotation.set(-0.75, 0, -0.32 * s); J["elbow" + s].rotation.x = -1.55; }
+      look(p.yaw ?? 0, p.pitch ?? 0.42); break;
+    }
+    case "torch": {   // walking or standing with the phone held out ahead (flashlight on), the bat in the other hand
+      for (const s of [-1, 1]) J["shoulder" + s].rotation.z = 0.1 * s;
+      J.shoulder1.rotation.x = -1.35; J.elbow1.rotation.x = -0.25; J["shoulder-1"].rotation.x = -0.3; J["elbow-1"].rotation.x = -0.5;
+      if (p.walk) { const ph = p.walk, q = Math.sin(ph); J.hips.position.y = 0.86 - Math.abs(q) * 0.03; for (const s of [-1, 1]) { const qq = Math.sin(ph + (s > 0 ? 0 : Math.PI)); J["hip" + s].rotation.x = -qq * 0.5; J["knee" + s].rotation.x = Math.max(0, -Math.cos(ph + (s > 0 ? 0 : Math.PI))) * 0.8 + 0.05; } }
+      look(p.yaw ?? 0, p.pitch ?? 0.05); break;
+    }
     case "jump": {   // mid-air leap: arms thrown forward, legs split
       const k = p.k ?? 1; J.spine.rotation.x = 0.3 * k;
       J["shoulder1"].rotation.x = -2.6 * k; J["shoulder-1"].rotation.x = -2.2 * k; J["elbow1"].rotation.x = -0.3; J["elbow-1"].rotation.x = -0.4;

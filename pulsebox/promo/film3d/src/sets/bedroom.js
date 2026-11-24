@@ -4,6 +4,7 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { makeJay } from "../jay.js";
 import { PulseboxScreen, gameTile, radialGlow } from "../textures.js";
+import { glowSprite } from "./common.js";
 
 RectAreaLightUniformsLib.init();
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, ...o });
@@ -13,7 +14,7 @@ function planks() {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 3); return t;
 }
 
-export function createBedroom({ headset = false } = {}) {
+export function createBedroom({ headset = false, lamp = false } = {}) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x07060e); scene.fog = new THREE.Fog(0x0a0816, 4, 14);
   const camera = new THREE.PerspectiveCamera(42, 1080 / 1920, 0.05, 60);
@@ -64,6 +65,16 @@ export function createBedroom({ headset = false } = {}) {
   const pillow = new THREE.Mesh(new RoundedBoxGeometry(0.8, 0.14, 0.4, 4, 0.07), std(0xd8d4e8)); pillow.position.set(1.85, 0.53, -0.25); scene.add(pillow);
   // Jay
   const jay = makeJay({ headset }); jay.root.rotation.y = Math.PI; jay.root.position.set(0, 0, -0.45); jay.root.scale.setScalar(0.78); scene.add(jay.root);
+  const deskLamp = new THREE.Group(); deskLamp.position.set(-0.85, 0.79, -1.7); deskLamp.visible = lamp; scene.add(deskLamp);
+  { const base = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.03, 16), std(0x1a1a20, { metalness: 0.6 })); deskLamp.add(base);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.42), std(0x1a1a20)); arm.position.set(0, 0.21, 0); deskLamp.add(arm);
+    const shade = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.12, 20, 1, true), std(0x1a1a20, { side: THREE.DoubleSide })); shade.position.set(0.05, 0.42, 0.04); shade.rotation.z = -0.5; deskLamp.add(shade); }
+  const lampLight = new THREE.PointLight(0xffc890, 0, 4, 1.6); lampLight.position.set(-0.8, 1.15, -1.6); scene.add(lampLight);
+  const lampBulb = glowSprite(0xffd8a0, 0.25, 0.9); lampBulb.position.set(-0.8, 1.18, -1.64); lampBulb.visible = false; scene.add(lampBulb);
+  const bat = new THREE.Group(); bat.position.set(2.42, 0.02, 1.9); bat.rotation.z = 0.18; scene.add(bat);
+  { const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.014, 0.82, 16), std(0xb8925a, { roughness: 0.5 })); shaft.position.y = 0.41; bat.add(shaft);
+    const knobB = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.02, 12), std(0x3a2a1a)); knobB.position.y = 0.0; bat.add(knobB);
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.22, 12), std(0x1a1a1e)); grip.position.y = 0.11; bat.add(grip); bat.traverse((o) => { if (o.isMesh) o.castShadow = true; }); }
   // light: a dim fill, a purple rim from behind
   const hemi = new THREE.HemisphereLight(0x3a3a7a, 0x120a10, 0.35); scene.add(hemi);
   const rim = new THREE.PointLight(0xa24aff, 6, 6, 2); rim.position.set(0.8, 2.2, 1.2); scene.add(rim);
@@ -76,9 +87,11 @@ export function createBedroom({ headset = false } = {}) {
   const phoneFace = new THREE.Mesh(new THREE.PlaneGeometry(0.072, 0.148), phoneScr); phoneFace.rotation.x = -Math.PI / 2; phoneFace.position.y = 0.007; phone.add(phoneFace);
   const phoneGlow = new THREE.PointLight(0x9a8aff, 0, 1.2, 2); phoneGlow.position.y = 0.1; phone.add(phoneGlow);
   const doorG = new THREE.Group(); doorG.position.set(2.59, 0, -1.3); doorG.rotation.y = -Math.PI / 2; scene.add(doorG);
-  const doorP = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.05, 0.05), std(0xd8d0c8, { roughness: 0.7 })); doorP.position.y = 1.04; doorG.add(doorP);
+  const hinge = new THREE.Group(); hinge.position.set(-0.45, 0, 0); doorG.add(hinge);
+  const doorP = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.05, 0.05), std(0xd8d0c8, { roughness: 0.7 })); doorP.position.set(0.45, 1.04, 0); doorP.castShadow = doorP.receiveShadow = true; hinge.add(doorP);
+  const lock = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.05, 0.015), std(0xc8a24a, { metalness: 0.9, roughness: 0.25 })); lock.position.set(0.79, 1.12, 0.06); hinge.add(lock);
   for (const [w, h, x, y] of [[0.08, 2.2, -0.49, 1.1], [0.08, 2.2, 0.49, 1.1], [1.06, 0.08, 0, 2.15]]) { const f = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.08), std(0xbab0a6)); f.position.set(x, y, 0.01); doorG.add(f); }
-  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 8), std(0xc8a24a, { metalness: 0.9, roughness: 0.25 })); knob.position.set(0.34, 1.0, 0.05); doorG.add(knob);
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 8), std(0xc8a24a, { metalness: 0.9, roughness: 0.25 })); knob.position.set(0.79, 1.0, 0.05); hinge.add(knob);
   const gapM = new THREE.MeshBasicMaterial({ color: 0xffe2b0 }); const gap = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.025), gapM); gap.position.set(0, 0.012, 0.03); doorG.add(gap);
   const feet = [-1, 1].map((s) => { const f = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.03), new THREE.MeshBasicMaterial({ color: 0x050302 })); f.position.set(0.12 * s, 0.013, 0.031); doorG.add(f); return f; });
   const gapLight = new THREE.PointLight(0xffd8a0, 0, 2.2, 2); gapLight.position.set(2.2, 0.3, -1.3); scene.add(gapLight);
@@ -89,7 +102,7 @@ export function createBedroom({ headset = false } = {}) {
   const dust = new THREE.Points(dustG, new THREE.PointsMaterial({ size: 0.012, map: radialGlow(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xaab8ff, opacity: 0.8 })); scene.add(dust);
 
   return {
-    scene, camera, jay, screen, phone, door: doorG, bloom: { strength: 0.55, radius: 0.5, threshold: 0.7 },
+    scene, camera, jay, screen, phone, door: doorG, hinge, lock, chair, bat, scrMat, screenLight, deskLamp, bloom: { strength: 0.55, radius: 0.5, threshold: 0.7 },
     update(lt, p = {}) {
       dust.rotation.y = lt * 0.01; dust.position.y = Math.sin(lt * 0.3) * 0.05;
       const dawn = p.dawn ?? 0;
@@ -98,7 +111,9 @@ export function createBedroom({ headset = false } = {}) {
       scene.fog.color.setRGB(0.04 + dawn * 0.12, 0.03 + dawn * 0.07, 0.09);
       screenLight.intensity = (p.screenBright ?? 1) * 4; scrMat.emissiveIntensity = 1.25 * (p.screenBright ?? 1);
       screenLight.color.set(p.screenRed ? 0xff4a6a : 0x9aa8ff);
-      screen.draw({ t: lt, ...p.screen });
+      if (!p.screenTex) { scrMat.emissiveMap = screen.texture; screen.draw({ t: lt, ...p.screen }); } else scrMat.emissiveMap = p.screenTex;
+      hinge.rotation.y = (p.doorOpen ?? 0) * 1.5; lock.rotation.z = p.locked ? Math.PI / 2 : 0;
+      lampLight.intensity = lamp ? (p.lampOn ?? 1) * 2.4 : 0; lampBulb.visible = lamp && (p.lampOn ?? 1) > 0.5;
       const room = p.room ?? 1; hemi.intensity = 0.35 * room; rim.intensity = 6 * room; moon.intensity *= room;   // "his room went dark"
       const ring = p.ring ?? 0; phoneScr.emissiveIntensity = ring * 1.2; phoneGlow.intensity = ring * 1.5 * (Math.sin(lt * 10) > 0 ? 1 : 0.6);
       const dg = p.doorGap ?? 0; gap.visible = dg > 0; gapM.color.setRGB(dg, dg * 0.88, dg * 0.7); gapLight.intensity = dg * 0.12; feet.forEach((f) => (f.visible = (p.feet ?? 0) > 0));
