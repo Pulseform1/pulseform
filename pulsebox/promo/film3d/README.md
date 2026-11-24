@@ -1,7 +1,7 @@
 # Pulsebox 3D films
 
-Two-minute vertical 3D short films for TikTok, Reels and Shorts (1080x1920, 30 fps), built with Three.js and rendered
-in headless Chromium. Both end on Pulsebox (77 free games, box.pulseform.org, play it on a computer) and stop for
+Vertical 3D short films (about 1:30 to 2:00) for TikTok, Reels and Shorts (1080x1920, 30 fps), built with Three.js and rendered
+in headless Chromium. Each ends on Pulsebox (77 free games, box.pulseform.org, play it on a computer) and stop for
 comment prompts ("COMMENT BELOW") along the way.
 
 | Film | Output | Thumbnails |
@@ -9,6 +9,7 @@ comment prompts ("COMMENT BELOW") along the way.
 | **The 78th Game** (1:59.6) | `out/pulsebox-the-78th-game.mp4` | `out/the-78th-game-9x16.png`, `out/the-78th-game-16x9.png` |
 | **One Life** (1:58.0) | `out/pulsebox-one-life.mp4` | `out/one-life-9x16.png`, `out/one-life-16x9.png` |
 | **Five Stars** | `out/pulsebox-five-stars.mp4` | `out/five-stars-9x16.png`, `out/five-stars-16x9.png` |
+| **Unknown Number** (1:34) | `out/pulsebox-unknown-number.mp4` | `out/unknown-number-9x16.png`, `out/unknown-number-16x9.png` |
 
 **The 78th Game.** At 3:07 AM a 78th tile appears on Pulsebox: "PLAYER ONE. WE'VE BEEN WAITING." Jay clicks it, falls
 into a coliseum of 77 game doors, and has to take three keys from Hyperlane, Deep Signal and The Endless Halls. A copy
@@ -30,23 +31,34 @@ whole film while the game escalates the way it really does: cruisers, a near mis
 stars (an EMP takes it down), an army tank, the record, and then a second tank. A police dispatcher on the radio calls
 each escalation.
 
+**Unknown Number.** A horror short. At 2:47 AM Jay is playing The Endless Halls when a number he doesn't know texts
+him a photo of his town's sign: "I'm in your town." Five minutes later, his street sign: "I'm on your street." Then ten
+minutes of nothing (he checks the street through the blinds; the phone's clock creeps from 2:53 to 3:01). At 3:02, a
+photo of his own front porch with the house number on it: "I'm at your front porch." He wedges a chair under the door
+handle, locks the door, kills the lights, grabs a bat and hides behind the bed. "I'm in your house." The pans crash in
+the kitchen; he goes down with his phone's flashlight and finds nothing. "I'm in your room." He runs back up and
+shuts his door, and the tall pale man from The Endless Halls is standing right behind him. The video pauses there
+("What happens next? Comment it."). The number (555), the town (Cedar Hollow) and the address (1407) are made up.
+
 ## Layout
 
 - `src/main.js`: timeline, renderer, exporter. Pick a film with `?film=<id>` (default `the-78th-game`).
 - `src/films/<id>/shots.js` (every shot: set, camera, animation, overlay state) and `score.js` (music and sound effects).
 - `public/films/<id>/script.json` (the voice lines: `text` is spoken, `cap` is the caption, `gap` the pause before it,
   `shot` the shot it plays over, `prompt` a comment card) and `public/films/<id>/vo/` (the recorded lines).
-- `src/sets/`: bedroom, hub + tunnel, Hyperlane, Deep Signal, The Endless Halls, the Getaway Heat street (plus
+- `src/sets/`: bedroom, the night street and Jay's house from outside (`outside.js`), the kitchen, stairs and
+  landing (`house.js`), hub + tunnel, Hyperlane, Deep Signal, The Endless Halls, the Getaway Heat street (plus
   `getaway.js`: SWAT trucks, a roadblock and ramp, a helicopter, tanks, traffic, power-ups, explosions), the Lights
   Out Motel booth, the Rooftop Rush roofs, and the Pulsebox ending. `src/jay.js` (Jay, Maya, the copy; poses),
-  `src/creatures.js` (the crawler, the drone), `src/overlay.js` (captions, comment cards, HUDs, ending text),
+  `src/creatures.js` (the crawler, the drone, the pale man), `src/phoneui.js` (a phone with a lock screen and a
+  message thread, drawn live as a texture), `src/overlay.js` (captions, comment cards, HUDs, ending text),
   `src/audio.js` (instruments, voice treatment, the mix).
 
 ## Voices
 
 - **The 78th Game**: Kokoro (`af_heart` narrator, `am_fenrir` Jay; the game and the copy are slowed and ring-modulated).
   `node tools/voices.mjs the-78th-game` regenerates them through the Story Studio TTS server.
-- **One Life** and **Five Stars**: [Chatterbox](https://github.com/resemble-ai/chatterbox) (MIT), which sounds like real people talking.
+- **One Life**, **Five Stars** and **Unknown Number**: [Chatterbox](https://github.com/resemble-ai/chatterbox) (MIT), which sounds like real people talking.
   Each speaker is steered by a short reference clip in `voices/refs/` made with Kokoro's built-in voices (deep male
   narrator from `am_onyx`, Jay from `am_eric`, Maya from `af_heart`, the dispatcher from `af_bella`), so no real person's voice is copied. Every take
   is transcribed and checked against the script; a take that doesn't match is redone. Chatterbox marks everything

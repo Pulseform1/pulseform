@@ -26,7 +26,7 @@ export function score({ ctx, music, sfx, big, tl, dur }) {
     for (let t = w.t0 + w.L("n03"), k = 0; t < w.t1; t += 0.5, k++) tone(ctx, sfx, { t, dur: 0.04, freq: k % 2 ? 2000 : 1700, type: "square", gain: 0.012, release: 0.03, pan: -0.4 }); }
   // ===== 3:02: his porch
   { const s = shot("txt3"), bz = s.t0 + s.L("n04") + 0.4, grab = s.t0 + s.L("n04") + 2.2; vibrate(bz, 3); ding(bz + 0.15); stinger(grab + 0.25, 0.22); drone(s.t0, E("panic"), 33, 0.13);
-    for (let t = grab; t < E("prep"); t += 0.45) heartbeat(ctx, sfx, t, 0.32); for (let t = grab + 0.6; t < E("panic"); t += 0.7) breath(ctx, sfx, t, 0.4, 0.07); }
+    for (let t = grab; t < E("prep"); t += 0.45) heartbeat(ctx, sfx, t, 0.32); for (let t = grab + 0.6; t < E("panic"); t += 0.7) breath(t, 0.4, 0.07); }
   // ===== barricading
   { const p = shot("prep"), lockAt = p.t0 + 3.1, offAt = p.t0 + 4.05, grabAt = p.t0 + 4.95;   // matches the shot: chair, lock, lights, bat
     hiss(ctx, sfx, { t: p.t0 + 0.1, dur: 1.35, gain: 0.12, freq: 900, freqTo: 600, q: 2, attack: 0.05 }); impact(ctx, sfx, p.t0 + 1.45, 0.25);   // the chair across the floor, against the door
@@ -49,7 +49,7 @@ export function score({ ctx, music, sfx, big, tl, dur }) {
   // ===== up the stairs, the door, the reveal, the freeze
   { const f = shot("freeze"), F = f.t0 + f.lead - 0.35, shut = f.t0 + 2.4 + 0.55;
     for (let t = f.t0 + 0.1; t < f.t0 + 2.4; t += 0.2) step(ctx, sfx, t, 0.13, true);
-    impact(ctx, sfx, shut, 0.45); click(ctx, sfx, shut + 0.05, 0.4); breath(ctx, sfx, shut + 0.2, 0.9, 0.1); breath(ctx, sfx, shut + 1.2, 0.9, 0.08);
+    impact(ctx, sfx, shut, 0.45); click(ctx, sfx, shut + 0.05, 0.4); breath(shut + 0.2, 0.9, 0.1); breath(shut + 1.2, 0.9, 0.08);
     tone(ctx, music, { t: shut, dur: F - shut, freq: mtof(31), gain: 0.16, attack: F - shut, release: 0.05 });
     // the freeze: a tape stop, then a thin high ring over a low hum
     tone(ctx, sfx, { t: F - 0.05, dur: 0.6, freq: 300, glideTo: 30, type: "sawtooth", gain: 0.12, cutoff: 1200, release: 0.5 }); impact(ctx, big, F, 0.4);
