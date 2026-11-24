@@ -1,0 +1,15 @@
+{
+  "name": "pulsebox-film3d",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A 3D promo film for Pulsebox, rendered frame by frame in the browser with Three.js",
+  "scripts": {
+    "dev": "vite --port 5300"
+  },
+  "dependencies": {
+    "mp4-muxer": "^5.2.2",
+    "three": "^0.170.0",
+    "vite": "^6.4.6"
+  }
+}

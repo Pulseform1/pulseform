@@ -1,0 +1,297 @@
+{
+ "voices": {
+  "N": [
+   "af_heart",
+   1.05
+  ],
+  "J": [
+   "am_fenrir",
+   1.06
+  ],
+  "G": [
+   "am_onyx",
+   0.92
+  ],
+  "C": [
+   "am_fenrir",
+   0.95
+  ]
+ },
+ "lines": [
+  {
+   "id": "n01",
+   "who": "N",
+   "shot": "bed-wide",
+   "text": "Pulsebox has seventy-seven free games.",
+   "cap": "Pulsebox has 77 free games.",
+   "dur": 2.925
+  },
+  {
+   "id": "n02",
+   "who": "N",
+   "shot": "bed-wide",
+   "gap": 0.35,
+   "text": "At three oh seven last night... it had seventy-eight.",
+   "cap": "At 3:07 last night... it had *78*.",
+   "dur": 3.3
+  },
+  {
+   "id": "j01",
+   "who": "J",
+   "shot": "bed-face",
+   "mood": "whisper",
+   "gap": 0.5,
+   "text": "That wasn't there before.",
+   "dur": 1.7
+  },
+  {
+   "id": "g00",
+   "who": "G",
+   "shot": "bed-screen",
+   "gap": 0.3,
+   "text": "Player one. We've been waiting.",
+   "cap": "PLAYER ONE. WE'VE BEEN *WAITING*.",
+   "dur": 2.775
+  },
+  {
+   "id": "e01",
+   "who": "N",
+   "shot": "bed-screen",
+   "text": "Be honest... would you click it?",
+   "gap": 0.3,
+   "cap": "Be honest... would *you* click it?",
+   "prompt": "COMMENT: YES OR NO",
+   "dur": 2.225
+  },
+  {
+   "id": "n03",
+   "who": "N",
+   "shot": "bed-dive",
+   "text": "Jay clicked it... and the screen pulled him in.",
+   "gap": 0.3,
+   "cap": "Jay clicked it... and the screen *pulled him in*.",
+   "dur": 2.95
+  },
+  {
+   "id": "g02",
+   "who": "G",
+   "shot": "hub-land",
+   "text": "Welcome to the seventy-eighth game. Three keys. Three worlds. Find them before the lights go out... or stay here forever.",
+   "gap": 1.2,
+   "cap": "Welcome to the *78th* game. Three keys. Three worlds. Find them before the lights go out... or stay here *forever*.",
+   "dur": 7.825
+  },
+  {
+   "id": "n04",
+   "who": "N",
+   "shot": "hub-dark",
+   "text": "Then, one by one, the doors started going dark.",
+   "gap": 0.3,
+   "cap": "Then, one by one, the doors started going *dark*.",
+   "dur": 3.45
+  },
+  {
+   "id": "e02",
+   "who": "N",
+   "shot": "hub-dark",
+   "text": "Seventy-seven doors. Which game would you run into first? Comment it.",
+   "gap": 0.3,
+   "cap": "77 doors. Which game would *you* run into first? Comment it.",
+   "prompt": "WHICH GAME FIRST?",
+   "dur": 4.425
+  },
+  {
+   "id": "n05",
+   "who": "N",
+   "shot": "hl-chase",
+   "text": "Key one: the end of Hyperlane. Four hundred kilometers an hour.",
+   "gap": 0.5,
+   "cap": "Key one: the end of *Hyperlane*. 400 km/h.",
+   "dur": 4.45
+  },
+  {
+   "id": "j02",
+   "who": "J",
+   "shot": "hl-rival",
+   "mood": "panic",
+   "gap": 0.3,
+   "text": "Come on... come on!",
+   "dur": 1.575
+  },
+  {
+   "id": "n06",
+   "who": "N",
+   "shot": "hl-key",
+   "gap": 0.2,
+   "text": "Overdrive. He shot through the last gate and grabbed the key.",
+   "cap": "*Overdrive.* He shot through the last gate and grabbed the key.",
+   "dur": 3.75
+  },
+  {
+   "id": "n07",
+   "who": "N",
+   "shot": "hl-cliff",
+   "gap": 0.3,
+   "text": "Then the road just... ended.",
+   "cap": "Then the road just... *ended*.",
+   "dur": 2.175
+  },
+  {
+   "id": "n08",
+   "who": "N",
+   "shot": "ds-dark",
+   "text": "Key two: the bottom of Deep Signal, where your sonar is the only light.",
+   "gap": 0.7,
+   "cap": "Key two: the bottom of *Deep Signal*, where your sonar is the only light.",
+   "dur": 4.55
+  },
+  {
+   "id": "j03",
+   "who": "J",
+   "shot": "ds-ping",
+   "mood": "whisper",
+   "gap": 0.3,
+   "text": "One more ping. Just one.",
+   "dur": 1.975,
+   "prompt": "WOULD YOU PING AGAIN?"
+  },
+  {
+   "id": "n09",
+   "who": "N",
+   "shot": "ds-eye",
+   "gap": 0.5,
+   "text": "There was the key. And right behind him... an eye the size of a house.",
+   "cap": "There was the key. And right behind him... an eye the size of a *house*.",
+   "dur": 4.275
+  },
+  {
+   "id": "n10",
+   "who": "N",
+   "shot": "eh-hall",
+   "text": "Key three: The Endless Halls, where the Watcher only moves when you look away.",
+   "gap": 0.6,
+   "cap": "Key three: *The Endless Halls*, where the Watcher only moves when you look away.",
+   "dur": 4.85
+  },
+  {
+   "id": "j04",
+   "who": "J",
+   "shot": "eh-hall",
+   "mood": "whisper",
+   "gap": 0.3,
+   "text": "Don't blink. Don't blink.",
+   "dur": 1.875,
+   "prompt": "HOW LONG COULD YOU GO WITHOUT BLINKING?"
+  },
+  {
+   "id": "n11",
+   "who": "N",
+   "shot": "eh-flicker",
+   "gap": 0.3,
+   "text": "The lights flickered. Once. Twice...",
+   "cap": "The lights flickered. Once. Twice...",
+   "dur": 2.675
+  },
+  {
+   "id": "n12",
+   "who": "N",
+   "shot": "hub-return",
+   "text": "Three keys. Every door was dark... except one.",
+   "gap": 0.8,
+   "cap": "Three keys. Every door was dark... except *one*.",
+   "dur": 3.575
+  },
+  {
+   "id": "n13",
+   "who": "N",
+   "shot": "hub-copy",
+   "gap": 0.3,
+   "text": "And waiting by the exit... was Jay.",
+   "cap": "And waiting by the exit... was *Jay*.",
+   "dur": 2.75
+  },
+  {
+   "id": "j05",
+   "who": "J",
+   "shot": "hub-copy",
+   "mood": "panic",
+   "gap": 0.3,
+   "text": "Who are you?",
+   "dur": 1.15
+  },
+  {
+   "id": "c01",
+   "who": "C",
+   "shot": "hub-copy",
+   "gap": 0.35,
+   "text": "The last player who clicked.",
+   "cap": "The last player who *clicked*.",
+   "dur": 1.9
+  },
+  {
+   "id": "e03",
+   "who": "N",
+   "shot": "hub-copy",
+   "text": "Who do you think he is? Drop your theory below.",
+   "gap": 0.35,
+   "cap": "Who do you think he is? Drop your *theory* below.",
+   "prompt": "YOUR THEORY?",
+   "dur": 3.025
+  },
+  {
+   "id": "n14",
+   "who": "N",
+   "shot": "hub-escape",
+   "text": "Jay ran. The keys burned white... and the door blew open.",
+   "gap": 0.3,
+   "cap": "Jay ran. The keys burned white... and the door *blew open*.",
+   "dur": 3.85
+  },
+  {
+   "id": "n15",
+   "who": "N",
+   "shot": "bed-dawn",
+   "text": "He woke up at his desk. The tile was gone. Until tonight... when it came back with a new name.",
+   "gap": 0.5,
+   "cap": "He woke up at his desk. The tile was gone. Until tonight... when it came back with a *new name*.",
+   "dur": 5.9
+  },
+  {
+   "id": "g03",
+   "who": "G",
+   "shot": "bed-two",
+   "gap": 0.3,
+   "text": "Player two... we've been waiting.",
+   "cap": "PLAYER TWO... WE'VE BEEN *WAITING*.",
+   "dur": 2.825
+  },
+  {
+   "id": "n17",
+   "who": "N",
+   "shot": "cta",
+   "text": "Pulsebox. Seventy-seven free games: racing, horror, heists, sports, and more.",
+   "gap": 0.5,
+   "cap": "*Pulsebox.* 77 free games: racing, horror, heists, sports and more.",
+   "dur": 5.575
+  },
+  {
+   "id": "n18",
+   "who": "N",
+   "shot": "cta",
+   "gap": 0.3,
+   "text": "Free at box dot pulseform dot org. Play it on a computer.",
+   "cap": "Free at... *box.pulseform.org.* Play it on a *computer.*",
+   "dur": 4.1
+  },
+  {
+   "id": "n19",
+   "who": "N",
+   "shot": "cta",
+   "text": "So... would you click the seventy-eighth game? Tell me in the comments... and tag the friend who definitely would.",
+   "gap": 0.3,
+   "cap": "So... would you click the 78th game? Tell me in the *comments*... and tag the friend who definitely would.",
+   "prompt": "TAG A FRIEND WHO'D CLICK IT",
+   "dur": 6.45
+  }
+ ]
+}
