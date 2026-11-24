@@ -39,6 +39,8 @@ node tools/render.mjs http://localhost:5301/ out/pulsebox-the-78th-game.mp4   # 
 node thumb.mjs                        # thumbnails
 ```
 
-`tools/render.mjs` renders the soundtrack and all 3,587 frames in the page (WebCodecs H.264), then ffmpeg re-encodes
-with x264 and AAC at -14 LUFS. Render from the built page (`vite preview`), not the dev server, so a file change
+`tools/render.mjs` renders the soundtrack and all 3,587 frames in the page (WebCodecs H.264) in 10-second pieces
+(`out/seg/`), then joins them and re-encodes with x264 and AAC at -14 LUFS. If a render is interrupted, run the same
+command again: finished pieces are kept (randomness is seeded, so every page load draws the same world). Delete
+`out/seg/` and `out/*.wav` after changing the film. Render from the built page (`vite preview`), not the dev server, so a file change
 can't reload the page halfway through.

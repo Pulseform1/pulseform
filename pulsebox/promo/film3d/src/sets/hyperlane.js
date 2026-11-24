@@ -87,7 +87,7 @@ export function createHyperlane() {
   const endG = new THREE.Group(); scene.add(endG); endG.visible = false;
   { const m = new THREE.MeshStandardMaterial({ color: 0x1a1426, roughness: 0.5, metalness: 0.4 });
     for (let i = 0; i < 9; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.6 + Math.random() * 1.4, 0.7, 0.5 + Math.random() * 1.2), m); b.position.set(-3.2 + i * 0.8, -0.35 - Math.random() * 0.4, -Math.random() * 0.9); b.rotation.set(Math.random() * 0.5, Math.random() * 0.6, Math.random() * 0.4); endG.add(b); }
-    for (let i = 0; i < 14; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.2 + Math.random() * 0.6, 0.2 + Math.random() * 0.4, 0.2 + Math.random() * 0.6), m); b.position.set(-3 + Math.random() * 6, -2 - Math.random() * 14, -1 - Math.random() * 6); b.rotation.set(Math.random() * 3, Math.random() * 3, 0); b.userData.spin = Math.random() * 2; endG.add(b); }
+    for (let i = 0; i < 14; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.2 + Math.random() * 0.6, 0.2 + Math.random() * 0.4, 0.2 + Math.random() * 0.6), m); b.position.set(-3 + Math.random() * 6, -2 - Math.random() * 14, -1 - Math.random() * 6); b.rotation.set(Math.random() * 3, Math.random() * 3, 0); b.userData.spin = Math.random() * 2; b.userData.y0 = b.position.y; b.userData.rx0 = b.rotation.x; endG.add(b); }
     const spark = glowSprite(0xff7a3d, 3, 0.8); spark.position.set(2.5, -0.2, 0); endG.add(spark); }
 
   // the city far below
@@ -141,7 +141,8 @@ export function createHyperlane() {
       rt.offset.y = (dist / ROAD_L) * 30;
       if (endZ === null) { roadG.position.z = -ROAD_L / 2 + 60; roadG.scale.z = 1; endG.visible = false; }
       else { const len = 400; roadG.scale.z = len / ROAD_L; roadG.position.z = endZ + len / 2; endG.visible = true; endG.position.set(0, 0, endZ);
-        endG.children.forEach((b) => { if (b.userData.spin) { b.rotation.x += 0.02 * b.userData.spin; b.position.y -= 0.03; } }); }
+        const fall = Math.max(0, t - 11);   // seconds into the last shot (shots.js passes T = lt + 11)
+        endG.children.forEach((b) => { if (b.userData.spin) { b.rotation.x = b.userData.rx0 + 0.6 * b.userData.spin * fall; b.position.y = b.userData.y0 - 0.9 * fall; } }); }
       // the city and pillars move with the road
       const m4 = new THREE.Matrix4();
       cityItems.forEach((c) => { const z = wrap(c.z + dist, 900, 800); m4.compose(new THREE.Vector3(c.x, -120 + c.h / 2, z), new THREE.Quaternion(), new THREE.Vector3(c.w, c.h, c.w)); inst[c.mesh].setMatrixAt(c.idx, m4); });

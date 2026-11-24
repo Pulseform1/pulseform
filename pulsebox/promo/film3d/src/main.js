@@ -14,6 +14,8 @@ const W = 1080, H = 1920, FPS = 30;
 export const RATE = { G: 0.9, C: 0.93 };   // the 78th game and the copy are pitched down (and so take longer)
 
 async function boot() {
+  // seeded randomness: every page load builds exactly the same world, so a render can resume part-way
+  { let s = 20241123; Math.random = () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646; }
   await Promise.all(["900 40px Inter", "700 40px 'Chakra Petch'", "400 40px 'Luckiest Guy'", "600 40px Inter"].map((f) => document.fonts.load(f)));
   const script = await (await fetch("./script.json")).json();
   // ---- timeline
@@ -58,20 +60,21 @@ async function boot() {
     if (!window.noOverlay) drawOverlay(g, tl, time, r.fx || {}, r.state || {});
   }
 
-  async function exportVideo(onProgress = () => {}) {
+  // encode frames [from, to) into an MP4 (timestamps start at 0, first frame is a keyframe)
+  async function exportVideo(onProgress = () => {}, from = 0, to = Infinity) {
     const target = new ArrayBufferTarget();
     const muxer = new Muxer({ target, video: { codec: "avc", width: W, height: H, frameRate: FPS }, fastStart: "in-memory" });
     let err = null;
     const enc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: (e) => (err = e) });
     enc.configure({ codec: "avc1.640028", width: W, height: H, bitrate: 16_000_000, framerate: FPS, latencyMode: "quality", avc: { format: "avc" } });
-    const n = Math.ceil(duration * FPS), t0 = performance.now();
-    for (let i = 0; i < n; i++) {
+    const n = Math.ceil(duration * FPS), t0 = performance.now(), end = Math.min(to, n);
+    for (let i = from; i < end; i++) {
       if (err) throw err;
       frame(i / FPS);
-      const vf = new VideoFrame(out, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
-      enc.encode(vf, { keyFrame: i % (FPS * 2) === 0 }); vf.close();
+      const vf = new VideoFrame(out, { timestamp: Math.round((i - from) * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+      enc.encode(vf, { keyFrame: (i - from) % (FPS * 2) === 0 }); vf.close();
       while (enc.encodeQueueSize > 4) await new Promise((res) => setTimeout(res, 1));
-      if (i % 30 === 0) { onProgress(i, n, (performance.now() - t0) / 1000); await new Promise((res) => setTimeout(res, 0)); }
+      if (i % 30 === 0) { onProgress(i, n, (performance.now() - t0) / 1000, i - from); await new Promise((res) => setTimeout(res, 0)); }
     }
     await enc.flush(); muxer.finalize();
     return new Blob([target.buffer], { type: "video/mp4" });
@@ -79,7 +82,7 @@ async function boot() {
   async function exportAudio() { const buf = await renderAudio(tl); return new Blob([toWav(buf)], { type: "audio/wav" }); }
   const download = (blob, name) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); };
 
-  window.film = { tl, duration, frame, sets: route.sets, exportVideo, exportAudio, download, info: () => shots.map((s) => `${s.id} ${s.t0.toFixed(2)}-${s.t1.toFixed(2)}`) };
+  window.film = { tl, duration, frames: Math.ceil(duration * FPS), frame, sets: route.sets, exportVideo, exportAudio, download, info: () => shots.map((s) => `${s.id} ${s.t0.toFixed(2)}-${s.t1.toFixed(2)}`) };
   window.ready = true;
 }
 boot().catch((e) => { console.error(e); window.bootError = String(e && e.stack || e); });
