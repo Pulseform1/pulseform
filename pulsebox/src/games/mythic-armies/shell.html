@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Mythic Armies</title>
+<meta name="description" content="Rip open shimmering 3D packs, collect mythical creatures from six factions, build an army and watch it fight.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Nunito:ital,wght@0,600;0,800;0,900;1,600&display=swap" rel="stylesheet">
+<!--STYLE-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="loading"><div class="ld-inner"><div class="ld-sigil"></div><div class="ld-title">MYTHIC ARMIES</div><div class="ld-bar"><i></i></div><div class="ld-msg">Summoning the armies…</div></div></div>
+<div id="ui">
+  <header id="top">
+    <button class="brand" id="btnHome" aria-label="Home"><span class="brand-sigil"></span><span class="brand-t">MYTHIC<br><b>ARMIES</b></span></button>
+    <div class="cur">
+      <span class="chip coin" title="Coins"><i class="ico-coin"></i><b id="cCoins">0</b></span>
+      <span class="chip ess" title="Essence: spent to train and ascend units"><i class="ico-ess"></i><b id="cEss">0</b></span>
+    </div>
+    <div class="tb-btns">
+      <button class="ib" id="btnSfx" title="Sound effects" aria-label="Sound effects"></button>
+      <button class="ib" id="btnMusic" title="Music" aria-label="Music"></button>
+    </div>
+  </header>
+  <section class="screen" id="s-hub"></section>
+  <section class="screen" id="s-shop"></section>
+  <section class="screen" id="s-packs"></section>
+  <section class="screen" id="s-open"></section>
+  <section class="screen" id="s-binder"></section>
+  <section class="screen" id="s-army"></section>
+  <section class="screen" id="s-map"></section>
+  <section class="screen" id="s-battle"></section>
+  <section class="screen" id="s-quests"></section>
+</div>
+<div id="labels"></div>
+<div id="viewer" hidden></div>
+<div id="modal" hidden></div>
+<div id="flash"></div>
+<div id="toasts"></div>
+<div id="guide" hidden></div>
+<!--SCRIPT-->
+</body>
+</html>
