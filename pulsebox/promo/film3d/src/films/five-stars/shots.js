@@ -37,7 +37,7 @@ export function makeShots(renderer, tl) {
   }
   const dist = (t, extra = 0) => t * 46 + extra;
   function clearView() { gw.traffic.forEach((c) => { if (c.position.distanceTo(cam.position) < 8) c.visible = false; }); }
-  const carCam = (h, fov = 46) => aim(cam, V(h.x + 0.2, h.y + 0.13, h.z - 0.8), V(h.x, h.y - 0.04, h.z), fov);
+  const carCam = (h, fov = 30) => aim(cam, V(h.x + 0.35, h.y + 0.3, h.z - 2.2), V(h.x + 0.05, h.y - 0.03, h.z), fov);   // over the hood, through the windshield
   const driverHead = () => gw.driver.J.head.getWorldPosition(new THREE.Vector3());
 
   // ---- the tank shot (the hook, and again for real near the end)
@@ -66,8 +66,10 @@ export function makeShots(renderer, tl) {
       if (lt < 0.9) { const hs = shot("hook"), back = Math.max(0, hs.dur - lt * 3.2); const r = S.hook(back, hs, hs.t0 + back); return { ...r, fx: { rewind: 1, rewindText: "2 MINUTES EARLIER", chroma: 0.7 }, state: {} }; }
       const u = lt - 0.9, k = ease(clamp(u / (s.dur - 0.9)));
       base(t, { jx: lerp(1.75, -1.75, ease(clamp((u - 2.5) / 1.2))), steer: Math.sin(u * 2) * 0.5 }); gw.update(t, { dist: dist(t), siren: 1 });
-      const j = gw.jayCar.position;
-      place(cam, V(j.x + 6, 7.5, j.z - 14), V(j.x + 1.6, 1.6, j.z + 7.5), k, V(j.x, 0.6, j.z), V(j.x, 0.9, j.z - 12), 54); shake(cam, 0.01, t);
+      const j = gw.jayCar.position, cut = s.L("n02") - 0.3 - 0.9;
+      if (u < cut) { const kk = ease(clamp(u / cut)); place(cam, V(j.x + 6, 7.5, j.z - 14), V(j.x + 1.6, 1.6, j.z + 7.5), kk, V(j.x, 0.6, j.z), V(j.x, 0.9, j.z - 12), 54); }
+      else { const kk = clamp((u - cut) / (s.dur - 0.9 - cut)); aim(cam, V(j.x - 2.6, 0.55, j.z + lerp(2.5, -1.5, kk)), V(j.x + 0.4, 0.8, j.z + lerp(4, -2, kk)), 56); }
+      shake(cam, 0.012, t);
       clearView();
       return { set: gw, fx: { flash: clamp(1 - u / 0.3) * 0.6 }, state: hud(t, { world: "Getaway Heat", worldColor: "#ff7a3d", worldT: s.t0 + 0.95 }) };
     },
@@ -88,8 +90,10 @@ export function makeShots(renderer, tl) {
       gw.cops[0].position.set(1.75, 0, lerp(8, 4.7, clamp(lt / ram)) + (lt > ram ? (lt - ram) * 2.5 : 0));
       gw.update(t, { dist: dist(t), spark: hit ? 1 : 0, nitro: lt > ram + 0.2 && lt < ram + 1.4 ? 0.7 : 0 });
       const h = driverHead();
-      if (lt < s.lead - 0.15) { const j = gw.jayCar.position; aim(cam, V(j.x + 2.6, 0.7, j.z + 3.2), V(j.x, 0.8, j.z + 4), 50); shake(cam, hit ? 0.08 : 0.015, t); }
-      else carCam(h);
+      const j = gw.jayCar.position;
+      if (lt < s.lead - 0.15) { aim(cam, V(j.x + 2.6, 0.7, j.z + 3.2), V(j.x, 0.8, j.z + 4), 50); shake(cam, hit ? 0.08 : 0.015, t); }
+      else if (lt < s.lead + 2.4) carCam(h);
+      else { const kk = ease(clamp((lt - s.lead - 2.4) / (s.dur - s.lead - 2.4))); aim(cam, V(j.x + lerp(-3, 3, kk), lerp(16, 12, kk), j.z + lerp(10, 4, kk)), V(j.x, 0, j.z + 6), 52); }
       clearView();
       return { set: gw, state: hud(t) };
     },
@@ -123,8 +127,11 @@ export function makeShots(renderer, tl) {
       const k = ease(clamp(lt / s.dur)), bz = lerp(-120, -46, k);
       base(t, { jx: 1.75, cops: 1.3 }); gw.block.position.set(0, 0, bz); gw.ramp.position.set(5.0, 0, bz + 10);
       gw.update(t, { dist: dist(t), shield: 0.35 });
-      const j = gw.jayCar.position;
-      aim(cam, V(j.x - 0.6, 6.5, j.z + 9), V(1.5, 0, bz + 6), 54); shake(cam, 0.01, t);
+      const j = gw.jayCar.position, c1 = s.L("n05") - 0.1, c2 = s.L("e02") - 0.1, h = driverHead();
+      if (lt < c1) { const kk = ease(clamp(lt / c1)); aim(cam, V(lerp(-4, 4, kk), 14, bz + 22), V(0.5, 0, bz + 2), 52); }
+      else if (lt < c2) { const kk = clamp((lt - c1) / (c2 - c1)); aim(cam, V(lerp(-6, 6.4, kk), 0.6, bz + 9 - kk * 3), V(lerp(-2, 5, kk), 0.8, bz + 2), 50); }
+      else { pose(gw.driver, "sit", t, { lean: 0.15, yaw: 0.35, pitch: -0.05 }); carCam(h); }
+      shake(cam, 0.01, t);
       clearView();
       return { set: gw, state: hud(t) };
     },
@@ -154,8 +161,11 @@ export function makeShots(renderer, tl) {
       const heli = gw.heli; heli.position.set(lerp(14, 3.5, ease(clamp(lt / 2.2))), lerp(22, 10, ease(clamp(lt / 2.2))), lerp(-30, 6, ease(clamp(lt / 2.6)))); heli.rotation.set(0.18, Math.PI + 0.3, Math.sin(lt) * 0.1);
       heli.userData.aim(gw.jayCar.position.clone().add(V(0, 0.5, 0)));
       gw.update(t, { dist: dist(t) });
-      const j = gw.jayCar.position;
-      place(cam, V(j.x - 3, 0.7, j.z - 9), V(j.x - 2.2, 0.9, j.z - 7), k, V(j.x + 1, 6, j.z), V(heli.position.x * 0.6, heli.position.y * 0.6, heli.position.z * 0.5), 60); shake(cam, 0.02, t);
+      const j = gw.jayCar.position, c1 = s.L("d03") + 1.2, c2 = s.L("n07") - 0.1;
+      if (lt < c1) { const kk = ease(clamp(lt / c1)); place(cam, V(j.x - 3, 0.7, j.z - 9), V(j.x - 2.2, 0.9, j.z - 7), kk, V(j.x + 1, 6, j.z), V(heli.position.x * 0.6, heli.position.y * 0.6, heli.position.z * 0.5), 60); }
+      else if (lt < c2) { const hp = heli.position; aim(cam, V(hp.x - 0.4, hp.y - 1.6, hp.z - 1.2), V(j.x, 0, j.z - 2), 50); }
+      else aim(cam, V(j.x - 5.5, 2.2, j.z + 1.5), V(j.x + 1, 3.5, j.z + 2), 58);
+      shake(cam, 0.02, t);
       clearView();
       return { set: gw, state: hud(t) };
     },
@@ -207,7 +217,7 @@ export function makeShots(renderer, tl) {
       gw.update(t, { dist: dist(t, 0), nitro: won ? 0.6 : 0 });
       const h = driverHead(), j = gw.jayCar.position, k = ease(clamp(lt / s.dur));
       if (lt < s.L("n12") - 0.1) aim(cam, V(j.x + lerp(3.5, 2.5, k), 1.3, j.z - 6.5), V(j.x, 1.0, j.z), 50);
-      else aim(cam, V(h.x + 0.3, h.y + 0.05, h.z - 1.0), V(h.x, h.y, h.z), 48);
+      else carCam(h);
       const slams = won ? [{ text: "NEW RECORD", t: rec + 0.9, color: "#ffd23d", y: 620, px: 140 }] : [];
       clearView();
       return { set: gw, fx: { flash: t > rec + 0.85 && t < rec + 1.0 ? 0.5 : 0 }, state: hud(t, { slams }) };

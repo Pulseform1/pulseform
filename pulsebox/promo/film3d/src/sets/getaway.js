@@ -95,7 +95,7 @@ export function createGetaway() {
   const jc = st.jayCar; if (jc.userData.head) jc.userData.head.visible = false;
   const driver = makeJay(); driver.root.scale.setScalar(0.52); driver.root.position.set(-0.42, 0.12, 0.35); driver.root.rotation.y = Math.PI; jc.userData.chassis.add(driver.root);
   jc.traverse((o) => { if (o.isMesh && o.material.transparent && o.material.opacity === 0.55) { o.material = o.material.clone(); o.material.opacity = 0.22; } });
-  const sw = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.022, 8, 24), std(0x101014)); sw.position.set(-0.42, 0.98, -0.25); sw.rotation.x = -0.5; jc.userData.chassis.add(sw);
+  const sw = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.02, 8, 24), std(0x101014)); sw.position.set(-0.42, 0.83, -0.12); sw.rotation.x = -1.0; jc.userData.chassis.add(sw);
   const dashGlow = new THREE.PointLight(0x7ac8ff, 2.5, 1.6, 1.6); dashGlow.position.set(-0.3, 1.0, -0.6); jc.userData.chassis.add(dashGlow);
   // nitro flames and the shield bubble on Jay's car
   const flames = [-1, 1].map((s) => { const f = new THREE.Mesh(new THREE.ConeGeometry(0.13, 1.4, 14, 1, true), new THREE.MeshBasicMaterial({ color: 0x5ab8ff, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending })); f.rotation.x = Math.PI / 2; f.position.set(0.45 * s, 0.42, 2.9); jc.userData.chassis.add(f); return f; });
@@ -108,6 +108,8 @@ export function createGetaway() {
   const blockCops = [-3.2, 0, 3.2].map((x, i) => { const c = makeStreetCar({ police: true }); c.position.set(x + (i === 0 ? -1.2 : 0), 0, 0); c.rotation.y = Math.PI / 2 + (i - 1) * 0.2; block.add(c); return c; });
   const barrierM = new THREE.MeshStandardMaterial({ map: (() => { const c = document.createElement("canvas"); c.width = 256; c.height = 32; const x = c.getContext("2d"); for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? "#ffffff" : "#ff3a2a"; x.beginPath(); x.moveTo(i * 32, 32); x.lineTo(i * 32 + 16, 0); x.lineTo(i * 32 + 48, 0); x.lineTo(i * 32 + 32, 32); x.fill(); } const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })(), roughness: 0.5 });
   for (const x of [-5.5, 5.5]) { const b = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.35, 0.15), barrierM); b.position.set(x, 1.0, 1.2); block.add(b); for (const dx of [-1, 1]) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.0, 0.5), std(0xdadada)); leg.position.set(x + dx, 0.5, 1.2); block.add(leg); } }
+  for (const x of [-4.5, 4.5]) { const flood = new THREE.PointLight(0xfff0d8, 70, 26, 1.4); flood.position.set(x, 4.5, -2); block.add(flood); const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 4.5), std(0x2a2a30)); pole.position.set(x, 2.25, -2.5); block.add(pole); const lamp = glowSprite(0xfff0d8, 1.4, 0.7); lamp.position.set(x, 4.6, -2.3); block.add(lamp); }
+  for (let i = 0; i < 7; i++) { const flare = glowSprite(0xff3a2a, 0.9, 0.8); flare.position.set(-6 + i * 2, 0.15, 6 + (i % 2) * 1.5); block.add(flare); }
   const spikes = new THREE.Group(); spikes.position.set(0, 0.02, 4.2); block.add(spikes);
   const band = new THREE.Mesh(new THREE.BoxGeometry(12, 0.04, 0.35), std(0x1a1a1e)); spikes.add(band);
   for (let i = 0; i < 48; i++) { const sp = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.16, 5), std(0xc8c8d0, { metalness: 0.9, roughness: 0.25 })); sp.position.set(-5.8 + i * 0.245, 0.1, 0); spikes.add(sp); }
@@ -152,7 +154,7 @@ export function createGetaway() {
         b.fire.forEach((f, j) => { const a = clamp(1 - k / (0.7 + hash(j, 1) * 0.5)); f.visible = a > 0; const r = s * (1.2 + k * (3 + hash(j, 2) * 3)); f.scale.setScalar(r); f.position.set((hash(j, 3) - 0.5) * s * 2 * (0.3 + k), s * (0.6 + k * (1 + hash(j, 4) * 2)), (hash(j, 5) - 0.5) * s * 2 * (0.3 + k)); f.material.opacity = a; f.material.color.setRGB(1, 0.45 + 0.4 * a, 0.15 + 0.3 * a * a); });
         b.smoke.forEach((m, j) => { const a = clamp((k - 0.15) / 0.3) * clamp(1 - (k - 0.4) / 3.0) * 0.8; m.visible = a > 0; m.scale.setScalar(s * (2 + k * (2.5 + hash(j, 6) * 2))); m.position.set((hash(j, 7) - 0.5) * s * 4, s * (1 + k * (1.6 + hash(j, 8))), (hash(j, 9) - 0.5) * s * 4); m.material.opacity = a; });
         b.debris.forEach((d, j) => { const vx = (hash(j, 10) - 0.5) * 14 * s, vy = (4 + hash(j, 11) * 9) * s, vz = (hash(j, 12) - 0.5) * 14 * s, tt = Math.min(k, 2.5); d.position.set(vx * tt, Math.max(0, 0.5 + vy * tt - 9.8 * tt * tt), vz * tt); d.rotation.set(tt * 8 * hash(j, 13), tt * 6, tt * 7 * hash(j, 14)); });
-        b.light.intensity = 900 * s * clamp(1 - k / 0.6); b.light.position.set(0, 1.5 * s, 0);
+        b.light.intensity = 140 * s * clamp(1 - k / 0.6); b.light.position.set(0, 1.5 * s, 0);
       });
       const sm = p.smoke ?? 0; smokeSprites.forEach((s, i) => { const life = ((t * 1.3 + i / SM) % 1), side = i % 2 ? 1 : -1; s.position.set(st.jayCar.position.x + side * 0.9 + (hash(i, 1) - 0.5) * life * 3, 0.3 + life * 1.6, st.jayCar.position.z + 1.8 + life * 7); s.scale.setScalar(0.6 + life * 3.2); s.material.opacity = sm * 0.45 * (1 - life); s.visible = sm > 0.01; });
       const strobe = Math.sin(t * 22) > 0; swat.forEach((s) => { s.userData.red.material.color.setRGB(strobe ? 1 : 0.15, 0.05, 0.08); s.userData.blue.material.color.setRGB(0.05, 0.15, strobe ? 0.15 : 1); });
