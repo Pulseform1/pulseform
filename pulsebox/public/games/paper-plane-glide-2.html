@@ -357,6 +357,7 @@
   .scroll-y { max-height: min(56vh, 520px); overflow-y: auto; padding-right: 4px; }
   @media (max-height: 520px) { .scroll-y { max-height: 52vh; } }
   @media (max-height: 430px) { .title-card .tag { display: none; } .pilot { margin: 0 0 6px; } .title-card .logo .a { font-size: 32px; } .title-card .logo .b { font-size: 40px; } .title-card .scribble { margin-top: 6px; } .title-card .menu { gap: 8px; } .lvl { min-width: 32px; height: 32px; font-size: 16px; } }
+  @media (max-width: 560px) and (min-height: 600px) { .course { top: calc(max(12px, env(safe-area-inset-top)) + 70px); width: 62vw; } .combo { top: calc(max(12px, env(safe-area-inset-top)) + 118px); } .hint { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 104px); } .banner { top: 30%; } .pops { top: 40%; } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }
 </style>
 </head><body>
@@ -580,10 +581,10 @@ const ZONES = [
   { id: 'jungle', name: 'Jungle Isle', at: 4100, cm: 8, isNew: true },
   { id: 'volcano', name: 'Volcano Peak', at: 4950, cm: 10, isNew: true },
   { id: 'glacier', name: 'Glacier Peaks', at: 5850, cm: 12, isNew: true },
-  { id: 'storm', name: 'Storm Front', at: 6800, cm: 14, isNew: true },
-  { id: 'clouds', name: 'Cloud Kingdom', at: 7800, cm: 17, isNew: true },
-  { id: 'stars', name: 'Starfield', at: 8850, cm: 20, isNew: true, g: 0.62 },
-  { id: 'moon', name: 'The Moon', at: 9900, cm: 24, isNew: true, g: 0.5 }
+  { id: 'storm', name: 'Storm Front', at: 6800, cm: 11, isNew: true },
+  { id: 'clouds', name: 'Cloud Kingdom', at: 7800, cm: 12.5, isNew: true },
+  { id: 'stars', name: 'Starfield', at: 8850, cm: 14, isNew: true, g: 0.72 },
+  { id: 'moon', name: 'The Moon', at: 9900, cm: 16, isNew: true, g: 0.62 }
 ];
 const LIGHTHOUSE = 3300;  // the first game's goal is now the halfway mark
 const FINAL = 10800;      // the Moon Gate: the end of the journey
@@ -926,23 +927,23 @@ const DAILY = [
 
 /* ---------- the prize wheel ---------- */
 const WHEEL = [
-  { id: 'pouch', name: 'Coin Pouch', r: 0, w: 20, coins: 0.5, col: '#c7d1de' },
+  { id: 'pouch', name: 'Coin Pouch', r: 0, w: 20, coins: 0.4, col: '#c7d1de' },
   { id: 'pack', name: 'Power-up Pack', r: 0, w: 14, power: 2, col: '#e6ecf3' },
-  { id: 'sack', name: 'Coin Sack', r: 1, w: 14, coins: 1.2, col: '#5aa8ff' },
+  { id: 'sack', name: 'Coin Sack', r: 1, w: 14, coins: 1, col: '#5aa8ff' },
   { id: 'xp', name: 'XP Burst', r: 1, w: 10, xp: 0.6, col: '#3f86ef' },
   { id: 'rarelook', name: 'Rare Look', r: 1, w: 10, look: 1, col: '#6fb6ff' },
   { id: 'again', name: 'Spin Again', r: 1, w: 6, tokens: 1, col: '#2f7fe0' },
-  { id: 'chest', name: 'Coin Chest', r: 2, w: 9, coins: 3, col: '#b57aff' },
+  { id: 'chest', name: 'Coin Chest', r: 2, w: 9, coins: 2.5, col: '#b57aff' },
   { id: 'epiclook', name: 'Epic Look', r: 2, w: 7, look: 2, col: '#9a52ff' },
   { id: 'leglook', name: 'Legendary Treasure', r: 3, w: 4, look: 3, col: '#ffc21f' },
-  { id: 'jackpot', name: 'Golden Jackpot', r: 3, w: 3, coins: 10, tokens: 1, col: '#ffd84a' },
+  { id: 'jackpot', name: 'Golden Jackpot', r: 3, w: 3, coins: 8, tokens: 1, col: '#ffd84a' },
   { id: 'mythic', name: 'Mythic Relic', r: 4, w: 2.2, look: 4, col: '#ff3d93' },
   { id: 'celestial', name: 'Celestial Wonder', r: 5, w: 0.8, look: 5, col: '#9ff6ff' }
 ];
 const FREE_SPIN_MS = 8 * 3600 * 1000;
 const LUCK_MAX = 10;
 // a coin prize that keeps up with how far you have got
-const coinScale = () => Math.max(60, Math.round((S.avgRun || 60) / 5) * 5); // about one typical flight's coins
+const coinScale = () => clamp(Math.round((S.avgRun || 60) / 5) * 5, 60, 40000); // about one typical flight's coins
 
 
 /* ============================================================
@@ -1800,8 +1801,9 @@ function drawGate(g, o, t) {
   const X = sx(o.x), Y = sy(o.r * 1.3), R = o.r * CAM.s;
   drawGlow(g, X, Y, R * 2.4, '200,240,255', 0.55 + 0.1 * Math.sin(t * 2));
   // a giant crescent moon standing on its tip, with a glowing ring to fly through
-  g.save(); g.fillStyle = '#fff6d0'; g.beginPath(); g.arc(X, Y, R, 0, Math.PI * 2); g.arc(X + R * 0.45, Y - R * 0.12, R * 0.86, 0, Math.PI * 2, true); g.fill('evenodd');
-  g.restore();
+  g.fillStyle = '#fff6d0'; g.beginPath(); g.arc(X, Y, R, 0, 7); g.fill();
+  g.fillStyle = 'rgba(200,190,150,.35)'; for (const [cx, cy, cr] of [[-0.55, 0.3, 0.12], [-0.7, -0.25, 0.08], [-0.35, 0.65, 0.07]]) { g.beginPath(); g.arc(X + cx * R, Y + cy * R, cr * R, 0, 7); g.fill(); }
+  g.fillStyle = '#100c2c'; g.beginPath(); g.arc(X + R * 0.42, Y - R * 0.1, R * 0.84, 0, 7); g.fill();
   g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = Math.max(3, 0.25 * CAM.s);
   const rr2 = R * 0.55 * (1 + 0.04 * Math.sin(t * 4));
   g.beginPath(); g.ellipse(X + R * 0.15, Y, rr2 * 0.35, rr2, 0, 0, 7); g.stroke();
@@ -1929,23 +1931,26 @@ function skyFor(x) {
 function mixHex(a, b, f) { const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16); const r = (A >> 16) + (((B >> 16) - (A >> 16)) * f), g2 = ((A >> 8) & 255) + ((((B >> 8) & 255) - ((A >> 8) & 255)) * f), bb = (A & 255) + (((B & 255) - (A & 255)) * f); return '#' + [r, g2, bb].map(v => Math.round(v).toString(16).padStart(2, '0')).join(''); }
 const CLOUDS = []; { const r = seeded(99); for (let i = 0; i < 40; i++) CLOUDS.push({ x: r() * 4000, y: 6 + r() * 60, s: 0.6 + r() * 1.4, p: 0.3 + r() * 0.5 }); }
 let STARFIELD = null;
+const STARS = []; { const r = seeded(7); for (let i = 0; i < 150; i++) STARS.push(r() * 512, r() * 512, r() < 0.88 ? 1 : 2); }
 function starTile() { return STARFIELD || (STARFIELD = mk(512, 512, g => { const r = seeded(7); for (let i = 0; i < 160; i++) { const a = 0.3 + r() * 0.7; g.fillStyle = 'rgba(255,255,255,' + a + ')'; const sz = r() < 0.9 ? 1 : 2; g.fillRect(r() * 512, r() * 512, sz, sz); } for (let i = 0; i < 6; i++) { const X = r() * 512, Y = r() * 512; g.fillStyle = 'rgba(255,255,230,.9)'; g.fillRect(X - 2, Y, 5, 1); g.fillRect(X, Y - 2, 1, 5); } })); }
 let SKYGRAD = null, SKYKEY = '';
 function drawOutdoorBack(g, t) {
   const W = CAM.W, H = CAM.H;
   const col = skyFor(CAM.x);
-  const key = col[0] + col[1] + H;
-  if (key !== SKYKEY) { SKYKEY = key; SKYGRAD = g.createLinearGradient(0, 0, 0, H); SKYGRAD.addColorStop(0, col[0]); SKYGRAD.addColorStop(1, col[1]); }
-  g.fillStyle = SKYGRAD; g.fillRect(0, 0, W, H);
-  const zone = zoneAt(CAM.x).id;
+  const zone = zoneAt(CAM.x).id, space = zone === 'stars' || zone === 'moon';
+  // sky gradient (and the nebula glow in space) baked into a small cached canvas
+  const key = col[0] + col[1] + W + 'x' + H + space;
+  if (key !== SKYKEY) { SKYKEY = key; const w4 = Math.max(8, W >> 2), h4 = Math.max(8, H >> 2); SKYGRAD = mk(w4, h4, c => { const gr = c.createLinearGradient(0, 0, 0, h4); gr.addColorStop(0, col[0]); gr.addColorStop(1, col[1]); c.fillStyle = gr; c.fillRect(0, 0, w4, h4); if (space) { const sp = glowSprite('160,90,255', 64); c.globalAlpha = 0.25; c.drawImage(sp, w4 * 0.72 - h4 * 0.5, h4 * 0.25 - h4 * 0.5, h4, h4); } }); }
+  g.drawImage(SKYGRAD, 0, 0, W, H);
   // stars at night (and a little in the storm and over the volcano)
   if (_skyNight > 0.05) {
-    const tile = starTile(), off = (CAM.x * CAM.s * 0.02) % 512, offY = (CAM.y * CAM.s * 0.05) % 512;
-    g.globalAlpha = _skyNight;
-    for (let x = -off - 512; x < W; x += 512) for (let y = offY - 512; y < H; y += 512) g.drawImage(tile, x, y);
+    // stars as one batch of tiny squares (much cheaper than blending big tiles)
+    const ox = ((CAM.x * CAM.s * 0.02) % 512 + 512) % 512, oy = ((-CAM.y * CAM.s * 0.05) % 512 + 512) % 512, sz = Math.max(1, Math.round(DPR));
+    g.globalAlpha = _skyNight; g.fillStyle = '#ffffff'; g.beginPath();
+    for (let tx = -ox; tx < W; tx += 512) for (let ty = -oy; ty < H; ty += 512) for (let i = 0; i < STARS.length; i += 3) { const X = tx + STARS[i], Y = ty + STARS[i + 1]; if (X >= 0 && X <= W && Y >= 0 && Y <= H) g.rect(X, Y, STARS[i + 2] * sz, STARS[i + 2] * sz); }
+    g.fill();
     g.globalAlpha = 1;
     if (zone === 'stars' || zone === 'moon') { // a far planet and a nebula glow
-      drawGlow(g, W * 0.72 - (CAM.x % 2000) * 0.05, H * 0.25, H * 0.5, '160,90,255', 0.25);
       const PX = W * 0.2 + ((-CAM.x * 0.6) % (W * 1.6) + W * 1.6) % (W * 1.6) - W * 0.3, PY = H * 0.22, PR = H * 0.09;
       if (zone === 'moon') { g.fillStyle = '#3a7fd0'; g.beginPath(); g.arc(PX, PY, PR, 0, 7); g.fill(); g.fillStyle = '#4ad07a'; g.beginPath(); g.arc(PX - PR * 0.3, PY - PR * 0.1, PR * 0.45, 0, 7); g.arc(PX + PR * 0.35, PY + PR * 0.35, PR * 0.3, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.6)'; g.beginPath(); g.ellipse(PX + PR * 0.2, PY - PR * 0.5, PR * 0.5, PR * 0.12, 0, 0, 7); g.fill(); drawGlow(g, PX, PY, PR * 1.6, '120,180,255', 0.35); }
       else { g.fillStyle = '#e0a070'; g.beginPath(); g.arc(PX, PY, PR, 0, 7); g.fill(); g.strokeStyle = 'rgba(255,230,200,.7)'; g.lineWidth = PR * 0.12; g.beginPath(); g.ellipse(PX, PY, PR * 1.8, PR * 0.4, -0.3, 0, 7); g.stroke(); }
@@ -2646,7 +2651,7 @@ function camera(dt) {
 }
 
 /* ---------- effects ---------- */
-const PART_MAX = 240;
+const PART_MAX = 180;
 function addPart(x, y, vx, vy, life, r, col, opt) {
   if (!F) return;
   if (F.parts.length >= PART_MAX) F.parts.shift();
@@ -2698,6 +2703,7 @@ function draw(t, alpha) {
   ctx.drawImage(VIG, 0, 0);
   CAM.x = sx0; CAM.y = sy0; CAM.s = ss0; CAM.px = sp0;
 }
+let LASTPX = 0;
 const VIS = [], HB = { kind: 'hoopBack', x: 0, y: 0, r: 0, got: false };
 let VIG = null;
 const byLayer = (a, b) => layer(a) - layer(b);
@@ -2717,6 +2723,7 @@ const GHOST_LOOK = { plane: 'dart', pattern: 'sky', sticker: 'none', shine: 0 };
 function drawPlaneNow(t, X0, Y0, TH) {
   if (F.phase === 'done' && F.crash <= 0 && F.bonks > 0 && F.hp <= 0) return;
   const X = sx(X0), Y = sy(Y0);
+  LASTPX = X;
   const size = planeSize();
   if (F.phase === 'crash') { // a crumpled ball of paper
     ctx.save(); ctx.translate(X, Y); ctx.rotate(TH); const r = 0.07 * size;
@@ -2788,19 +2795,22 @@ function drawTrail(t, RX, RY) {
   }
   ctx.restore();
 }
+// stars come from small cached sprites; additive ones are drawn together in one pass
+function starSprite(col) { const k = 'st' + col; return SPR[k] || (SPR[k] = mk(32, 32, g => { star(g, 16, 16, 15, col); })); }
 function drawParts() {
   const P = F.parts;
-  for (let i = 0; i < P.length; i++) {
-    const p = P[i];
-    const a = clamp(p.life / p.max, 0, 1), X = sx(p.x), Y = sy(p.y), r = Math.max(1.5 * DPR, p.r * CAM.s);
-    if (X < -20 || X > W + 20 || Y < -20 || Y > H + 20) continue;
-    ctx.globalAlpha = a;
-    if (p.add) ctx.globalCompositeOperation = 'lighter';
-    if (p.st) star(ctx, X, Y, r * 1.6, p.col);
-    else { ctx.fillStyle = p.col; if (p.sq) { ctx.save(); ctx.translate(X, Y); ctx.rotate(p.rot + F.t * 5); ctx.fillRect(-r, -r * 0.6, r * 2, r * 1.2); ctx.restore(); } else { ctx.beginPath(); ctx.arc(X, Y, r, 0, 7); ctx.fill(); } }
-    ctx.globalCompositeOperation = 'source-over';
+  for (let pass = 0; pass < 2; pass++) {
+    if (pass) ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i]; if (p.add !== (pass === 1)) continue;
+      const a = clamp(p.life / p.max, 0, 1), X = sx(p.x), Y = sy(p.y), r = Math.max(1.5 * DPR, p.r * CAM.s);
+      if (X < -20 || X > W + 20 || Y < -20 || Y > H + 20) continue;
+      ctx.globalAlpha = a;
+      if (p.st) { const R = r * 1.6; ctx.drawImage(starSprite(p.col), X - R, Y - R, R * 2, R * 2); }
+      else { ctx.fillStyle = p.col; if (p.sq) { ctx.save(); ctx.translate(X, Y); ctx.rotate(p.rot + F.t * 5); ctx.fillRect(-r, -r * 0.6, r * 2, r * 1.2); ctx.restore(); } else { ctx.beginPath(); ctx.arc(X, Y, r, 0, 7); ctx.fill(); } }
+    }
   }
-  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
 }
 function drawLauncher(t) {
   if (F.demo || Math.abs(CAM.x - LAUNCH_X) > 40) return;
@@ -2942,7 +2952,7 @@ function toTitle() {
   renderPilot($('pilot'));
   updateBadges();
   syncToggles();
-  if (typeof RV !== 'undefined') flushLater();
+  if (typeof RV !== 'undefined') { if (RV.endingLater) { showEnding(); return; } flushLater(); }
 }
 function renderPilot(el) {
   const need = xpNeed(S.level), t = itemDef('title', S.title) || TITLES[0];
@@ -2959,6 +2969,8 @@ function updateBadges() {
 }
 function startThrow() {
   audioOn(); sfx.click();
+  // anything still waiting to be revealed is kept for the next menu screen
+  if (typeof RV !== 'undefined' && (RV.cur || RV.q.length)) { clearTimeout(RV.timer); clearInterval(RV.chargeT); if (RV.cur) RV.later.push(RV.cur); RV.later.push(...RV.q); RV.q.length = 0; RV.cur = null; RV.phase = ''; $('reveal').hidden = true; }
   newFlight(false); mode = 'launch';
   show(null); $('hud').hidden = false; $('banner').hidden = true; $('pops').innerHTML = '';
   buildCourseBar(); setSong(flySong());
@@ -2982,7 +2994,7 @@ function endFlight() {
   if (lightB) S.won = true;
   if (ended) S.moonRuns++;
   S.coins += total; S.flights++; S.totalDist += flown; S.best = Math.max(S.best, dist);
-  S.avgRun = S.avgRun ? S.avgRun * 0.7 + total * 0.3 : total;
+  S.avgRun = S.avgRun ? S.avgRun * 0.82 + Math.min(total, S.avgRun * 3 + 500) * 0.18 : total;
   // lifetime counters and records
   const C = S.cnt; C.hoops = (C.hoops || 0) + F.hoops; C.rings = (C.rings || 0) + F.rings; C.coinsPicked = (C.coinsPicked || 0) + F.coinN;
   const R = S.rec; R.air = Math.max(R.air || 0, F.air); R.height = Math.max(R.height || 0, F.maxY); R.coins = Math.max(R.coins || 0, coinsPicked); R.hoops = Math.max(R.hoops || 0, F.hoops + F.rings); R.combo = Math.max(R.combo || 0, F.comboMax); R.clean = Math.max(R.clean || 0, F.cleanBest); R.flown = Math.max(R.flown || 0, flown);
@@ -3003,7 +3015,7 @@ function endFlight() {
   for (let i = 0; i < 1 + Math.min(3, F.gifts); i++) gifts.push(rollGift(score + (i ? 0.3 : 0), !!F.power.clover && i === 0));
   // spin tokens for flying
   S.flightTok = (S.flightTok || 0) + 1; let tokNow = false;
-  if (S.flightTok >= 3) { S.flightTok = 0; S.tokens++; tokNow = true; }
+  if (S.flightTok >= 4) { S.flightTok = 0; S.tokens++; tokNow = true; }
   for (const rw of won) grant(rw);
   const mis = checkMissions(false);
   for (const rw of checkTrophies()) won.push(rw);
@@ -3037,7 +3049,7 @@ function endFlight() {
   const step = () => { const p = Math.min(1, (performance.now() - t0) / 900); for (const b of bs) b.textContent = '+' + fmt(+b.dataset.v * (1 - Math.pow(1 - p, 3))); if (p < 1) { if (Math.random() < 0.5) sfx.count(); requestAnimationFrame(step); } };
   requestAnimationFrame(step);
   // xp and pass level
-  const xe = $('resXp'); renderPilot(xe); const tag = document.createElement('span'); tag.style.cssText = 'font-family:var(--big);font-size:18px;color:#8a4dff'; tag.textContent = '+' + fmt(xpGain) + ' XP' + (S.level > lv0 ? '  ·  LEVEL UP!' : '') + (tokNow ? '  ·  +1 spin token!' : '  ·  ' + (3 - S.flightTok) + ' more flight' + (3 - S.flightTok > 1 ? 's' : '') + ' to a spin token'); xe.append(tag);
+  const xe = $('resXp'); renderPilot(xe); const tag = document.createElement('span'); tag.style.cssText = 'font-family:var(--big);font-size:18px;color:#8a4dff'; tag.textContent = '+' + fmt(xpGain) + ' XP' + (S.level > lv0 ? '  ·  LEVEL UP!' : '') + (tokNow ? '  ·  +1 spin token!' : '  ·  ' + (4 - S.flightTok) + ' more flight' + (4 - S.flightTok > 1 ? 's' : '') + ' to a spin token'); xe.append(tag);
   // gift box
   RES.gifts = gifts; RES.won = won;
   const gb = $('resGift'); gb.hidden = false; drawGiftIcon($('resGiftCv').getContext('2d'), Math.max(...gifts.map(g => g.r)));
@@ -3106,14 +3118,14 @@ function updateHUD(force) {
   if (hudC.extra !== ek || force) { hudC.extra = ek; const e = $('hudExtra'); e.innerHTML = ''; if (F.gifts) { const p = document.createElement('span'); p.className = 'pill'; p.textContent = '🎁 ' + F.gifts; e.append(p); } if (F.origami.length) { const p = document.createElement('span'); p.className = 'pill'; p.textContent = '🦢 ' + F.origami.length; e.append(p); } }
   // combo meter
   const cm = F.phase === 'fly' && F.combo >= 3 ? comboMult() : 0;
-  $('combo').hidden = !cm;
-  if (cm) { setT('comboX', cm > 1 ? 'x' + cm + ' COMBO' : F.combo + ' CHAIN'); $('comboBar').style.width = clamp(F.comboT / F.st.comboT, 0, 1) * 100 + '%'; $('combo').classList.toggle('hot', cm >= 3); }
+  if (hudC.cmh !== !cm) { hudC.cmh = !cm; $('combo').hidden = !cm; }
+  if (cm) { setT('comboX', cm > 1 ? 'x' + cm + ' COMBO' : F.combo + ' CHAIN'); const cw = Math.round(clamp(F.comboT / F.st.comboT, 0, 1) * 50) * 2 + '%'; if (hudC.cw !== cw) { hudC.cw = cw; $('comboBar').style.width = cw; } $('combo').classList.toggle('hot', cm >= 3); }
   // actions
   const flying = F.phase === 'fly';
   $('bFlap').hidden = F.st.flaps <= 0 && F.flaps <= 0; $('bRocket').hidden = F.st.fuel <= 0;
   setT('flapN', F.flaps + ' left'); $('bFlap').classList.toggle('empty', F.flaps <= 0);
-  $('fuel').style.height = (F.fuel / F.fuelMax * 100) + '%'; setT('fuelTxt', F.fuel > 0 ? F.fuel.toFixed(1) + 's' : 'empty'); $('bRocket').classList.toggle('empty', F.fuel <= 0);
-  $('actions').style.visibility = flying ? 'visible' : 'hidden';
+  const fh = Math.round(F.fuel / F.fuelMax * 100) + '%'; if (hudC.fh !== fh) { hudC.fh = fh; $('fuel').style.height = fh; } setT('fuelTxt', F.fuel > 0 ? F.fuel.toFixed(1) + 's' : 'empty'); $('bRocket').classList.toggle('empty', F.fuel <= 0);
+  const av = flying ? 'visible' : 'hidden'; if (hudC.av !== av) { hudC.av = av; $('actions').style.visibility = av; }
   // launch meter
   $('power').hidden = F.phase !== 'power'; $('powerLabel').hidden = F.phase !== 'power';
   if (F.phase === 'power') { const [a, b] = perfectZone(); $('powZone').style.bottom = a * 100 + '%'; $('powZone').style.height = (b - a) * 100 + '%'; $('powMark').style.bottom = 'calc(' + F.pow * 100 + '% - 2px)'; }
@@ -3992,6 +4004,8 @@ function renderRewards() {
 
 /* ---------- the ending ---------- */
 function showEnding() {
+  if (mode === 'fly' || mode === 'launch' || mode === 'paused') { RV.endingLater = true; return; }
+  RV.endingLater = false;
   mode = 'ending'; S.endingSeen = true; save();
   $('hud').hidden = true; show('scrEnding'); setSong('cosmic');
   const st = $('endStats'); st.innerHTML = '';
@@ -4007,7 +4021,7 @@ requestAnimationFrame(frame);
 if (dailyReady() && S.flights > 0) setTimeout(() => toast('Your daily gift is ready! Open Rewards to claim it.'), 1200);
 
 /* test hooks */
-window.__ppg = { get S() { return S; }, get F() { return F; }, get mode() { return mode; }, input, startThrow, launchTap, update, draw, toHangar, toTitle, toWheel, toRewards, renderShop, endFlight, stats, setTab: t => { tab = t; renderShop(); }, setRTab: t => { rtab = t; renderRewards(); }, get world() { return world; }, save, spinWheel, grant, queueReveals, revealTap, rollGift, addXP, checkTrophies, claimDaily, showEnding, openGifts, PERF, QUAL, RV, WH, newFlight, setMode: m => { mode = m; }, setS: o => { S = o; } };
+window.__ppg = { get S() { return S; }, get F() { return F; }, get mode() { return mode; }, input, startThrow, launchTap, update, draw, toHangar, toTitle, toWheel, toRewards, renderShop, endFlight, stats, setTab: t => { tab = t; renderShop(); }, setRTab: t => { rtab = t; renderRewards(); }, get world() { return world; }, save, spinWheel, grant, queueReveals, revealTap, rollGift, addXP, checkTrophies, claimDaily, showEnding, openGifts, PERF, QUAL, RV, WH, get lastPX() { return LASTPX; }, get cam() { return CAM; }, newFlight, setMode: m => { mode = m; }, setS: o => { S = o; } };
 
 </script>
 </body></html>
