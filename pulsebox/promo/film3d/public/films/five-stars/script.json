@@ -1,0 +1,388 @@
+{
+ "title": "Five Stars",
+ "voices": {
+  "N": {
+   "ref": "narrator.wav",
+   "ex": 0.55,
+   "cfg": 0.45
+  },
+  "J": {
+   "ref": "jay.wav",
+   "ex": 0.6,
+   "cfg": 0.4
+  },
+  "D": {
+   "ref": "dispatcher.wav",
+   "ex": 0.4,
+   "cfg": 0.5
+  }
+ },
+ "moods": {
+  "intense": {
+   "ex": 0.75,
+   "cfg": 0.35
+  },
+  "panic": {
+   "ex": 0.9,
+   "cfg": 0.3
+  },
+  "hype": {
+   "ex": 0.85,
+   "cfg": 0.3
+  }
+ },
+ "duck": {
+  "music": 0.3,
+  "sfx": 0.55
+ },
+ "lines": [
+  {
+   "id": "h01",
+   "who": "N",
+   "shot": "hook",
+   "text": "He's seventeen seconds from the record... and that's a tank.",
+   "cap": "He's *17 seconds* from the record... and that's a *tank.*",
+   "gap": 0,
+   "mood": "intense",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.719
+  },
+  {
+   "id": "n01",
+   "who": "N",
+   "shot": "gh-intro",
+   "text": "Two minutes earlier. Getaway Heat: the longer you survive, the worse it gets.",
+   "cap": "*Two minutes earlier.* Getaway Heat: the longer you survive, the *worse it gets.*",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 3.999
+  },
+  {
+   "id": "n02",
+   "who": "N",
+   "shot": "gh-intro",
+   "text": "Maya's record: four minutes, fifty-seven seconds. Jay is at three twenty.",
+   "cap": "Maya's record: *4:57.* Jay is at *3:20.*",
+   "gap": 0.25,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 4.138
+  },
+  {
+   "id": "e01",
+   "who": "N",
+   "shot": "gh-drift",
+   "text": "What's your record? Comment it before he beats hers.",
+   "cap": "What's *your* record? Comment it before he beats hers.",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "WHAT'S YOUR RECORD?",
+   "fx": "",
+   "dur": 2.547
+  },
+  {
+   "id": "d01",
+   "who": "D",
+   "shot": "gh-radio",
+   "text": "All units, suspect northbound on Fifth. Four stars. Send in SWAT.",
+   "cap": "All units, suspect northbound on Fifth. *Four stars.* Send in *SWAT.*",
+   "gap": 2.2,
+   "mood": "",
+   "prompt": "",
+   "fx": "radio",
+   "dur": 5.918
+  },
+  {
+   "id": "j01",
+   "who": "J",
+   "shot": "gh-swat",
+   "text": "SWAT? Come on!",
+   "cap": "SWAT? *Come on!*",
+   "gap": 0.25,
+   "mood": "panic",
+   "prompt": "",
+   "fx": "",
+   "dur": 1.697
+  },
+  {
+   "id": "n03",
+   "who": "N",
+   "shot": "gh-swat",
+   "text": "SWAT trucks don't chase you. They ram you.",
+   "cap": "SWAT trucks don't chase you. They *ram you.*",
+   "gap": 0.25,
+   "mood": "intense",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "n04",
+   "who": "N",
+   "shot": "gh-shield",
+   "text": "Unless you've got a shield.",
+   "cap": "Unless you've got a *shield.*",
+   "gap": 1.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "d02",
+   "who": "D",
+   "shot": "gh-block",
+   "text": "Roadblock on the bridge. Spike strips are down.",
+   "cap": "*Roadblock* on the bridge. Spike strips are down.",
+   "gap": 1.4,
+   "mood": "",
+   "prompt": "",
+   "fx": "radio",
+   "dur": 0
+  },
+  {
+   "id": "n05",
+   "who": "N",
+   "shot": "gh-block",
+   "text": "Cars, barriers, spikes. Two ways out: the gap on the left... or that ramp.",
+   "cap": "Cars, barriers, spikes. Two ways out: the gap on the left... or that *ramp.*",
+   "gap": 0.25,
+   "mood": "intense",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "e02",
+   "who": "N",
+   "shot": "gh-block",
+   "text": "Left or ramp? Comment it.",
+   "cap": "*Left or ramp?* Comment it.",
+   "gap": 0.25,
+   "mood": "",
+   "prompt": "LEFT OR RAMP?",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "j02",
+   "who": "J",
+   "shot": "gh-ramp",
+   "text": "Ramp. Obviously.",
+   "cap": "Ramp. *Obviously.*",
+   "gap": 0.3,
+   "mood": "hype",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "n06",
+   "who": "N",
+   "shot": "gh-air",
+   "text": "Nitro... and over all of them.",
+   "cap": "*Nitro...* and over *all of them.*",
+   "gap": 1.3,
+   "mood": "intense",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "d03",
+   "who": "D",
+   "shot": "gh-heli",
+   "text": "Five stars. Air support is overhead.",
+   "cap": "*Five stars.* Air support is overhead.",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "radio",
+   "dur": 0
+  },
+  {
+   "id": "n07",
+   "who": "N",
+   "shot": "gh-heli",
+   "text": "Five stars means a helicopter. And it doesn't lose you.",
+   "cap": "Five stars means a *helicopter.* And it doesn't lose you.",
+   "gap": 0.25,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "j03",
+   "who": "J",
+   "shot": "gh-emp",
+   "text": "EMP. Let's see what this does.",
+   "cap": "*EMP.* Let's see what this does.",
+   "gap": 1.2,
+   "mood": "hype",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "n08",
+   "who": "N",
+   "shot": "gh-crash",
+   "text": "It does that.",
+   "cap": "It does *that.*",
+   "gap": 2.2,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "n09",
+   "who": "N",
+   "shot": "gh-tank",
+   "text": "Four forty. Seventeen seconds to Maya's record. And then the army showed up.",
+   "cap": "*4:40.* Seventeen seconds to Maya's record. And then the *army* showed up.",
+   "gap": 1.0,
+   "mood": "intense",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "j04",
+   "who": "J",
+   "shot": "gh-tank",
+   "text": "Is that a tank?",
+   "cap": "Is that a *tank?!*",
+   "gap": 0.2,
+   "mood": "panic",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "e03",
+   "who": "N",
+   "shot": "gh-tank",
+   "text": "Nitro or brake? You have one second. Comment it.",
+   "cap": "*Nitro or brake?* You have one second. Comment it.",
+   "gap": 0.25,
+   "mood": "intense",
+   "prompt": "NITRO OR BRAKE?",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "n10",
+   "who": "N",
+   "shot": "gh-blast",
+   "text": "Nitro.",
+   "cap": "*Nitro.*",
+   "gap": 1.4,
+   "mood": "intense",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "n11",
+   "who": "N",
+   "shot": "gh-record",
+   "text": "Four fifty-five... fifty-six... fifty-seven...",
+   "cap": "4:55... 56... *57...*",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "n12",
+   "who": "N",
+   "shot": "gh-record",
+   "text": "New record.",
+   "cap": "*New record.*",
+   "gap": 0.3,
+   "mood": "intense",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "j05",
+   "who": "J",
+   "shot": "gh-record",
+   "text": "Maya is going to lose it!",
+   "cap": "Maya is going to *lose it!*",
+   "gap": 0.3,
+   "mood": "hype",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "n13",
+   "who": "N",
+   "shot": "gh-tank2",
+   "text": "And then... the second tank showed up.",
+   "cap": "And then... the *second tank* showed up.",
+   "gap": 0.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "e04",
+   "who": "N",
+   "shot": "gh-tank2",
+   "text": "How long would you last? Comment your time.",
+   "cap": "How long would *you* last? Comment your time.",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "HOW LONG WOULD YOU LAST?",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "n14",
+   "who": "N",
+   "shot": "cta",
+   "text": "Getaway Heat is one of seventy-seven free games on Pulsebox: racing, horror, heists, sports, and more.",
+   "cap": "*Getaway Heat* is one of 77 free games on Pulsebox: racing, horror, heists, sports and more.",
+   "gap": 0.8,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "n15",
+   "who": "N",
+   "shot": "cta",
+   "text": "Free at box dot pulseform dot org. Play it on a computer.",
+   "cap": "Free at... *box.pulseform.org.* Play it on a *computer.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 0
+  },
+  {
+   "id": "n16",
+   "who": "N",
+   "shot": "cta",
+   "text": "Tag the friend who thinks they'd beat his record.",
+   "cap": "Tag the friend who thinks they'd *beat his record.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "TAG A FRIEND WHO'D BEAT IT",
+   "fx": "",
+   "dur": 0
+  }
+ ]
+}

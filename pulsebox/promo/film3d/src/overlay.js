@@ -90,10 +90,29 @@ function drawRewind(g, t, k) {
   for (let i = 0; i < 7; i++) { const y = ((t * 900 + i * 331) % (H + 200)) - 100, h = 14 + (i % 3) * 18; g.fillStyle = i % 2 ? "rgba(255,255,255,.22)" : "rgba(120,200,255,.16)"; g.fillRect(0, y, W, h); }
   g.globalCompositeOperation = "source-over"; g.fillStyle = "#ffffff"; g.font = "700 64px 'Chakra Petch', sans-serif"; g.textAlign = "left"; g.textBaseline = "middle"; g.shadowColor = "#000"; g.shadowBlur = 10;
   g.fillText("◀◀ REWIND", 70, 170); g.textAlign = "center"; g.font = "400 96px 'Luckiest Guy', sans-serif"; g.lineWidth = 16; g.strokeStyle = "#0b0d1a"; g.lineJoin = "round";
-  g.strokeText("2 HOURS EARLIER", W / 2, H * 0.42); g.fillStyle = "#ffd23d"; g.fillText("2 HOURS EARLIER", W / 2, H * 0.42); g.restore();
+  const label = drawRewind.text || "2 HOURS EARLIER"; g.strokeText(label, W / 2, H * 0.42); g.fillStyle = "#ffd23d"; g.fillText(label, W / 2, H * 0.42); g.restore();
+}
+// Five Stars: wanted level, the run timer against the record, power-up pops, and big words slammed on screen
+const fmt = (x) => { const m = Math.floor(x / 60), sec = x - m * 60; return `${m}:${sec < 10 ? "0" : ""}${sec.toFixed(1)}`; };
+function drawRun(g, t, state) {
+  g.save();
+  if (state.stars != null) { const n = state.starsMax ?? 3, w = 60 + n * 58; g.fillStyle = "rgba(5,5,10,.62)"; rr(g, W - 40 - w, 236, w, 76, 38); g.fill();
+    for (let i = 0; i < n; i++) { const on = i < state.stars, fresh = state.starT != null && i === state.stars - 1 ? clamp((t - state.starT) / 0.4) : 1; g.save(); g.translate(W - 40 - w + 58 + i * 58, 274); g.scale(fresh < 1 ? 1 + (1 - fresh) * 1.2 : 1, fresh < 1 ? 1 + (1 - fresh) * 1.2 : 1);
+      g.fillStyle = on ? (Math.sin(t * 8 + i) > 0 ? "#ffd23d" : "#fff3b0") : "rgba(255,255,255,.18)"; if (on) { g.shadowColor = "#ffd23d"; g.shadowBlur = 16; } star(g, 0, 0, 24); g.restore(); } }
+  if (state.timer) { const { now, record } = state.timer, beat = now >= record;
+    g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "rgba(5,5,10,.62)"; rr(g, W / 2 - 200, 120, 400, 150, 30); g.fill();
+    g.font = "700 88px 'Chakra Petch', sans-serif"; g.fillStyle = beat ? "#ffd23d" : "#ffffff"; if (beat) { g.shadowColor = "#ffd23d"; g.shadowBlur = 30; } g.fillText(fmt(now), W / 2, 182); g.shadowBlur = 0;
+    g.font = "700 26px 'Chakra Petch', sans-serif"; g.fillStyle = beat ? "#ffd23d" : "#9aa3c7"; g.fillText(beat ? "NEW RECORD" : `MAYA'S RECORD ${fmt(record).replace(/\.\d$/, "")}`, W / 2, 240);
+    const k = clamp(now / record); g.fillStyle = "rgba(255,255,255,.15)"; rr(g, W / 2 - 170, 256, 340, 6, 3); g.fill(); g.fillStyle = beat ? "#ffd23d" : k > 0.93 ? "#ff3d5e" : "#c6ff3d"; rr(g, W / 2 - 170, 256, 340 * k, 6, 3); g.fill(); }
+  if (state.pop) { const k = (t - state.pop.t); if (k >= 0 && k < 1.3) { const a = Math.min(clamp(k / 0.12), clamp((1.3 - k) / 0.3)); g.globalAlpha = a; g.translate(W / 2, 760 - k * 40); g.scale(0.6 + 0.4 * easeBack(clamp(k / 0.3)), 0.6 + 0.4 * easeBack(clamp(k / 0.3)));
+      g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round"; g.font = "400 120px 'Luckiest Guy', sans-serif"; g.lineWidth = 18; g.strokeStyle = "#0b0d1a"; g.strokeText(state.pop.text, 0, 0); g.fillStyle = state.pop.color; g.shadowColor = state.pop.color; g.shadowBlur = 30; g.fillText(state.pop.text, 0, 0); } }
+  g.restore();
+  (state.slams || []).forEach((sl) => { const k = t - sl.t; if (k < 0 || (sl.until != null && t > sl.until)) return; const a = sl.until != null ? clamp((sl.until - t) / 0.15) : 1, sc = 1 + 1.4 * Math.pow(clamp(1 - k / 0.16), 2), jit = k < 0.25 ? (Math.sin(k * 140) * 10) : 0;
+    g.save(); g.globalAlpha = a; g.translate(W / 2 + jit, sl.y + jit * 0.5); g.scale(sc, sc); g.rotate(sl.rot || 0); g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round";
+    g.font = `400 ${sl.px || 150}px 'Luckiest Guy', sans-serif`; g.lineWidth = (sl.px || 150) * 0.16; g.strokeStyle = "#0b0d1a"; g.strokeText(sl.text, 0, 0); g.fillStyle = sl.color || "#ffffff"; g.fillText(sl.text, 0, 0); g.restore(); });
 }
 function drawHud(g, tl, t, state) {
-  if (state.lives != null) drawLives(g, t, state);
+  if (state.lives != null) drawLives(g, t, state); else if (state.stars != null || state.timer || state.slams || state.pop) drawRun(g, t, state);
   if (!state.world && state.keys == null) return;
   const since = t - (state.worldT ?? -99);
   if (state.world && since < 2.6) {   // the game's title card as we arrive
@@ -153,7 +172,7 @@ export function drawOverlay(g, tl, t, fx = {}, state = {}) {
   if (fx.black) { g.fillStyle = `rgba(0,0,0,${clamp(fx.black)})`; g.fillRect(0, 0, W, H); }
   if (fx.flash) { g.fillStyle = `rgba(255,255,255,${clamp(fx.flash) * 0.82})`; g.fillRect(0, 0, W, H); }
   if (fx.red) { g.fillStyle = `rgba(255,20,60,${clamp(fx.red)})`; g.fillRect(0, 0, W, H); }
-  if (fx.rewind) drawRewind(g, t, fx.rewind);
+  if (fx.rewind) { drawRewind.text = fx.rewindText; drawRewind(g, t, fx.rewind); }
   drawHud(g, tl, t, state);
   if (state.cta) drawCta(g, t, state.cta);
   drawPrompt(g, tl, t);

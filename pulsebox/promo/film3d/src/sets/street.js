@@ -34,7 +34,7 @@ export function makeStreetCar({ body = 0xff7a1a, police = false, driver = null }
     const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.31, 12), new THREE.MeshStandardMaterial({ color: 0x9a9aa8, metalness: 0.9, roughness: 0.25 })); rim.rotation.z = Math.PI / 2; rim.position.copy(w.position); chassis.add(rim);
   }
   for (const s of [-1, 1]) {
-    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.1, 0.04), new THREE.MeshBasicMaterial({ color: 0xfff6e0 })); hl.position.set(0.62 * s, 0.7, -2.26); chassis.add(hl);
+    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.1, 0.04), new THREE.MeshBasicMaterial({ color: 0xd8d0c0 })); hl.position.set(0.62 * s, 0.7, -2.26); chassis.add(hl);
     const tl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.04), new THREE.MeshBasicMaterial({ color: 0xff1a2a })); tl.position.set(0.6 * s, 0.75, 2.26); chassis.add(tl);
   }
   const userData = { chassis };
@@ -90,7 +90,7 @@ export function createStreet() {
   // cars
   const jayCar = makeStreetCar({ body: 0xff6a1a, driver: "jay" }); scene.add(jayCar);
   const cops = [0, 1, 2].map(() => { const c = makeStreetCar({ police: true }); scene.add(c); return c; });
-  const beams = [-1, 1].map((s) => { const l = new THREE.SpotLight(0xfff2d8, 60, 60, 0.4, 0.5, 1.2); l.position.set(0.62 * s, 0.75, -2.3); l.target.position.set(0.62 * s, 0, -20); jayCar.userData.chassis.add(l, l.target); return l; });
+  const beams = [-1, 1].map((s) => { const l = new THREE.SpotLight(0xfff2d8, 22, 60, 0.4, 0.5, 1.2); l.position.set(0.62 * s, 0.75, -2.3); l.target.position.set(0.62 * s, 0, -20); jayCar.userData.chassis.add(l, l.target); return l; });
   const copRed = new THREE.PointLight(0xff1a2a, 0, 14, 1.6), copBlue = new THREE.PointLight(0x2a5aff, 0, 14, 1.6); scene.add(copRed, copBlue);
   // the semi: a cab and a trailer you can just fit under
   const truck = new THREE.Group(); scene.add(truck);

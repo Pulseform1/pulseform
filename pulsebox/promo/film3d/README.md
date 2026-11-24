@@ -8,6 +8,7 @@ comment prompts ("COMMENT BELOW") along the way.
 |------|--------|------------|
 | **The 78th Game** (1:59.6) | `out/pulsebox-the-78th-game.mp4` | `out/the-78th-game-9x16.png`, `out/the-78th-game-16x9.png` |
 | **One Life** (1:58.0) | `out/pulsebox-one-life.mp4` | `out/one-life-9x16.png`, `out/one-life-16x9.png` |
+| **Five Stars** | `out/pulsebox-five-stars.mp4` | `out/five-stars-9x16.png`, `out/five-stars-16x9.png` |
 
 **The 78th Game.** At 3:07 AM a 78th tile appears on Pulsebox: "PLAYER ONE. WE'VE BEEN WAITING." Jay clicks it, falls
 into a coliseum of 77 game doors, and has to take three keys from Hyperlane, Deep Signal and The Endless Halls. A copy
@@ -21,13 +22,22 @@ is only give keys to humans; at 3 AM "Maya" knocks on the glass while the real M
 me", and the smile keeps getting wider. **Rooftop Rush**: the drone, the crawler, the biggest gap in the game. At
 sunrise Maya calls: she was asleep all night and never on. So who was on his headset? Then a knock on his bedroom door.
 
+**Five Stars.** One game, start to finish: Getaway Heat, where the longer you survive the more stars you get. The
+hook opens on a tank barrel aimed at Jay's car and the shell hitting ("He's seventeen seconds from the record... and
+that's a tank."), then cuts back two minutes. A live timer counts toward his best friend Maya's record (4:57) for the
+whole film while the game escalates the way it really does: cruisers, a near miss with a bus, SWAT trucks that ram
+(he grabs a shield), a roadblock with spike strips (nitro off a ramp, over all of them), a police helicopter at five
+stars (an EMP takes it down), an army tank, the record, and then a second tank. A police dispatcher on the radio calls
+each escalation.
+
 ## Layout
 
 - `src/main.js`: timeline, renderer, exporter. Pick a film with `?film=<id>` (default `the-78th-game`).
 - `src/films/<id>/shots.js` (every shot: set, camera, animation, overlay state) and `score.js` (music and sound effects).
 - `public/films/<id>/script.json` (the voice lines: `text` is spoken, `cap` is the caption, `gap` the pause before it,
   `shot` the shot it plays over, `prompt` a comment card) and `public/films/<id>/vo/` (the recorded lines).
-- `src/sets/`: bedroom, hub + tunnel, Hyperlane, Deep Signal, The Endless Halls, the Getaway Heat street, the Lights
+- `src/sets/`: bedroom, hub + tunnel, Hyperlane, Deep Signal, The Endless Halls, the Getaway Heat street (plus
+  `getaway.js`: SWAT trucks, a roadblock and ramp, a helicopter, tanks, traffic, power-ups, explosions), the Lights
   Out Motel booth, the Rooftop Rush roofs, and the Pulsebox ending. `src/jay.js` (Jay, Maya, the copy; poses),
   `src/creatures.js` (the crawler, the drone), `src/overlay.js` (captions, comment cards, HUDs, ending text),
   `src/audio.js` (instruments, voice treatment, the mix).
@@ -36,12 +46,12 @@ sunrise Maya calls: she was asleep all night and never on. So who was on his hea
 
 - **The 78th Game**: Kokoro (`af_heart` narrator, `am_fenrir` Jay; the game and the copy are slowed and ring-modulated).
   `node tools/voices.mjs the-78th-game` regenerates them through the Story Studio TTS server.
-- **One Life**: [Chatterbox](https://github.com/resemble-ai/chatterbox) (MIT), which sounds like real people talking.
+- **One Life** and **Five Stars**: [Chatterbox](https://github.com/resemble-ai/chatterbox) (MIT), which sounds like real people talking.
   Each speaker is steered by a short reference clip in `voices/refs/` made with Kokoro's built-in voices (deep male
-  narrator from `am_onyx`, Jay from `am_eric`, Maya from `af_heart`), so no real person's voice is copied. Every take
+  narrator from `am_onyx`, Jay from `am_eric`, Maya from `af_heart`, the dispatcher from `af_bella`), so no real person's voice is copied. Every take
   is transcribed and checked against the script; a take that doesn't match is redone. Chatterbox marks everything
   it generates with its inaudible Perth watermark. No pitch effects: Maya's lines get a light headset tone, the phone
-  call a phone tone, and the thing outside the motel is heard through the glass.
+  call a phone tone, the thing outside the motel is heard through the glass, and the dispatcher is on a police radio.
 
 ```bash
 uv venv -p 3.11 .venv-tts && . .venv-tts/bin/activate

@@ -26,9 +26,11 @@ script = json.loads(spath.read_text())
 torch.set_num_threads(4)
 tts = ChatterboxTTS.from_pretrained(device="cpu"); asr = WhisperModel("base.en", device="cpu", compute_type="int8")
 
-NUM = {"three": "3", "ten": "10", "seventy-seven": "77", "seventy seven": "77", "twelve": "12", "one": "1", "two": "2"}
+NUM = {"seventy-seven": "77", "seventy seven": "77", "fifty-five": "55", "fifty-six": "56", "fifty-seven": "57", "seventeen": "17", "twelve": "12", "ten": "10",
+       "forty": "40", "twenty": "20", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5"}
 def norm(s):
-    s = s.lower().replace("box dot pulseform dot org", "boxpulseformorg").replace("box.pulseform.org", "boxpulseformorg")
+    s = s.lower().replace("box dot pulseform dot org", "boxpulseformorg").replace("box.pulseform.org", "boxpulseformorg").replace("get away", "getaway")
+    s = re.sub(r"(\d)[:.](\d\d)", r"\1 \2", s)   # 4:57 / 3.20 -> 4 57
     s = re.sub(r"\b(a\.?m\.?)\b", "am", s)
     for k, v in NUM.items(): s = re.sub(rf"\b{k}\b", v, s)
     return re.sub(r"[^a-z0-9 ]+", " ", s).split()

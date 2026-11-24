@@ -93,6 +93,11 @@ function voiceChain(ctx, src, line, buses) {
   // the way a real voice reaches you: through a headset, a phone, or a window in the rain
   if (line.fx === "headset") { chain(filt(ctx, "highpass", 180)); chain(filt(ctx, "lowpass", 7000)); chain(filt(ctx, "peaking", 2500, 0.9, 3)); }
   if (line.fx === "phone") { chain(filt(ctx, "highpass", 320)); chain(filt(ctx, "lowpass", 3400)); const ws = ctx.createWaveShaper(); ws.curve = softClip(1.6); chain(ws); }
+  if (line.fx === "radio") {   // a police radio: narrow, a little crunchy, with squelch at both ends
+    chain(filt(ctx, "highpass", 420)); chain(filt(ctx, "lowpass", 2900)); chain(filt(ctx, "peaking", 1700, 1, 4)); const ws = ctx.createWaveShaper(); ws.curve = softClip(2.4); chain(ws);
+    hiss(ctx, buses.voice, { t: Math.max(0, t - 0.18), dur: 0.16, gain: 0.08, type: "bandpass", freq: 2200, q: 0.6 }); hiss(ctx, buses.voice, { t: t + dur + 0.02, dur: 0.14, gain: 0.07, type: "bandpass", freq: 2200, q: 0.6 });
+    hiss(ctx, buses.voice, { t: Math.max(0, t - 0.05), dur: dur + 0.1, gain: 0.012, type: "bandpass", freq: 2000, q: 0.5 }); }
+  if (who === "D") { node.connect(buses.voice); return; }
   if (line.fx === "glass") { chain(filt(ctx, "lowpass", 2600)); chain(filt(ctx, "lowshelf", 250, 0.7, 3)); const g = ctx.createGain(); g.gain.value = 1.4; chain(g); node.connect(buses.room); }
   if (who === "M" || who === "X" || who === "P") { if (mood === "whisper") { chain(filt(ctx, "highpass", 260)); } node.connect(buses.voice); return; }
   if (who === "G" || who === "C") {   // low, doubled, a little distorted, in a huge room
