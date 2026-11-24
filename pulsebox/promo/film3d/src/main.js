@@ -7,17 +7,21 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { Muxer, ArrayBufferTarget } from "mp4-muxer";
 import { drawOverlay, captionWords } from "./overlay.js";
-import { makeShots } from "./shots.js";
 import { renderAudio, toWav } from "./audio.js";
 
+// every film lives in src/films/<id>/ (shots.js, score.js) and public/films/<id>/ (script.json, vo/); pick one with ?film=<id>
+const SHOTS = import.meta.glob("./films/*/shots.js"), SCORES = import.meta.glob("./films/*/score.js");
+export const FILM = new URLSearchParams(location.search).get("film") || "the-78th-game";
+
 const W = 1080, H = 1920, FPS = 30;
-export const RATE = { G: 0.9, C: 0.93 };   // the 78th game and the copy are pitched down (and so take longer)
 
 async function boot() {
   // seeded randomness: every page load builds exactly the same world, so a render can resume part-way
   { let s = 20241123; Math.random = () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646; }
   await Promise.all(["900 40px Inter", "700 40px 'Chakra Petch'", "400 40px 'Luckiest Guy'", "600 40px Inter"].map((f) => document.fonts.load(f)));
-  const script = await (await fetch("./script.json")).json();
+  const base = `./films/${FILM}`, script = await (await fetch(`${base}/script.json`)).json();
+  const { makeShots } = await SHOTS[`./films/${FILM}/shots.js`](), { score } = await SCORES[`./films/${FILM}/score.js`]();
+  const RATE = script.rates || {};   // some voices play slowed down (and so take longer)
   // ---- timeline
   let t = 0.15;
   script.lines.forEach((l, i) => { if (i) t += l.gap || 0; l.t = t; l.rate = RATE[l.who] || 1; l.edur = l.dur / l.rate; t += l.edur; });
@@ -30,7 +34,7 @@ async function boot() {
     shots[shots.length - 1].lines.push(l);
   });
   shots.forEach((s, i) => { s.t1 = shots[i + 1] ? shots[i + 1].t0 : duration; s.dur = s.t1 - s.t0; s.lead = s.lines[0].t - s.t0; s.L = (id) => { const l = s.lines.find((x) => x.id === id); return l ? l.t - s.t0 : 0; }; s.E = (id) => { const l = s.lines.find((x) => x.id === id); return l ? l.t + l.edur - s.t0 : 0; }; });
-  const tl = { lines: script.lines, shots, duration };
+  const tl = { lines: script.lines, shots, duration, duck: script.duck };
 
   // ---- renderer
   const out = document.getElementById("out"), g = out.getContext("2d");
@@ -79,7 +83,7 @@ async function boot() {
     await enc.flush(); muxer.finalize();
     return new Blob([target.buffer], { type: "video/mp4" });
   }
-  async function exportAudio() { const buf = await renderAudio(tl); return new Blob([toWav(buf)], { type: "audio/wav" }); }
+  async function exportAudio() { const buf = await renderAudio(tl, { voDir: `${base}/vo`, score }); return new Blob([toWav(buf)], { type: "audio/wav" }); }
   const download = (blob, name) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); };
 
   window.film = { tl, duration, frames: Math.ceil(duration * FPS), frame, sets: route.sets, exportVideo, exportAudio, download, info: () => shots.map((s) => `${s.id} ${s.t0.toFixed(2)}-${s.t1.toFixed(2)}`) };

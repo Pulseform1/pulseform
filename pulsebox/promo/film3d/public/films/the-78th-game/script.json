@@ -293,5 +293,9 @@
    "prompt": "TAG A FRIEND WHO'D CLICK IT",
    "dur": 6.45
   }
- ]
+ ],
+ "rates": {
+  "G": 0.9,
+  "C": 0.93
+ }
 }

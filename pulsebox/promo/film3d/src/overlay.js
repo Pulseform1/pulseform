@@ -70,7 +70,30 @@ function drawPrompt(g, tl, t) {
 }
 
 // which game we're in + keys collected
+function heart(g, x, y, r, col) { g.fillStyle = col; g.beginPath(); g.moveTo(x, y + r * 0.9); g.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.9, y - r * 1.3, x, y - r * 0.45); g.bezierCurveTo(x + r * 0.9, y - r * 1.3, x + r * 1.6, y - r * 0.2, x, y + r * 0.9); g.fill(); }
+function star(g, x, y, r) { g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr2 = i % 2 ? r * 0.45 : r; g.lineTo(x + Math.cos(a) * rr2, y + Math.sin(a) * rr2); } g.closePath(); g.fill(); }
+// One Life's HUD: the life counter (pulses when in danger), wanted stars, which game, and a banner
+function drawLives(g, t, state) {
+  const beat = state.danger ? 1 + 0.12 * Math.max(0, Math.sin(t * 9)) : 1;
+  g.save(); g.fillStyle = "rgba(5,5,10,.6)"; rr(g, W - 330, 236, 280, 76, 38); g.fill();
+  g.save(); g.translate(W - 290, 272); g.scale(beat, beat); g.shadowColor = "#ff2a4a"; g.shadowBlur = state.danger ? 30 : 12; heart(g, 0, 0, 22, "#ff2a4a"); g.restore();
+  g.font = "700 34px 'Chakra Petch', sans-serif"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.fillText(`${state.lives} LIFE`, W - 250, 276);
+  if (state.game) { g.fillStyle = "rgba(5,5,10,.6)"; rr(g, 50, 236, 230, 76, 38); g.fill(); g.fillStyle = "#c6ff3d"; g.textAlign = "center"; g.fillText(state.game, 165, 276); }
+  if (state.stars != null) { g.fillStyle = "rgba(5,5,10,.6)"; rr(g, W - 330, 326, 280, 64, 32); g.fill(); for (let i = 0; i < 3; i++) { g.fillStyle = i < state.stars ? (Math.sin(t * 8 + i) > 0 ? "#ffd23d" : "#fff3b0") : "rgba(255,255,255,.18)"; star(g, W - 258 + i * 70, 358, 24); } }
+  if (state.banner) { const k = clamp((t - state.banner.t) / 0.35); g.globalAlpha = k; g.translate(W / 2, 640); g.scale(0.7 + 0.3 * easeBack(k), 0.7 + 0.3 * easeBack(k)); g.textAlign = "center"; g.lineJoin = "round";
+    g.font = "400 130px 'Luckiest Guy', sans-serif"; g.lineWidth = 20; g.strokeStyle = "#0b0d1a"; g.strokeText(state.banner.text, 0, 0); g.fillStyle = state.banner.color; g.fillText(state.banner.text, 0, 0); }
+  g.restore();
+}
+// "2 hours earlier": a tape rewinding
+function drawRewind(g, t, k) {
+  g.save(); g.globalAlpha = Math.min(1, k * 1.5);
+  for (let i = 0; i < 7; i++) { const y = ((t * 900 + i * 331) % (H + 200)) - 100, h = 14 + (i % 3) * 18; g.fillStyle = i % 2 ? "rgba(255,255,255,.22)" : "rgba(120,200,255,.16)"; g.fillRect(0, y, W, h); }
+  g.globalCompositeOperation = "source-over"; g.fillStyle = "#ffffff"; g.font = "700 64px 'Chakra Petch', sans-serif"; g.textAlign = "left"; g.textBaseline = "middle"; g.shadowColor = "#000"; g.shadowBlur = 10;
+  g.fillText("◀◀ REWIND", 70, 170); g.textAlign = "center"; g.font = "400 96px 'Luckiest Guy', sans-serif"; g.lineWidth = 16; g.strokeStyle = "#0b0d1a"; g.lineJoin = "round";
+  g.strokeText("2 HOURS EARLIER", W / 2, H * 0.42); g.fillStyle = "#ffd23d"; g.fillText("2 HOURS EARLIER", W / 2, H * 0.42); g.restore();
+}
 function drawHud(g, tl, t, state) {
+  if (state.lives != null) drawLives(g, t, state);
   if (!state.world && state.keys == null) return;
   const since = t - (state.worldT ?? -99);
   if (state.world && since < 2.6) {   // the game's title card as we arrive
@@ -80,6 +103,7 @@ function drawHud(g, tl, t, state) {
     g.font = "400 120px 'Luckiest Guy', sans-serif"; g.lineWidth = 18; g.lineJoin = "round"; g.strokeStyle = "#0b0d1a"; g.strokeText(state.world.toUpperCase(), 0, 10); g.fillStyle = state.worldColor; g.fillText(state.world.toUpperCase(), 0, 10);
     g.restore();
   }
+  if (state.keys == null) return;
   g.save(); g.fillStyle = "rgba(5,5,10,.55)"; rr(g, W - 330, 236, 280, 76, 38); g.fill();
   g.font = "700 30px 'Chakra Petch', sans-serif"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.fillText("KEYS", W - 306, 275);
   const pop = state.keyPop != null ? clamp(1 - (t - state.keyPop) / 0.5) : 0;
@@ -129,6 +153,7 @@ export function drawOverlay(g, tl, t, fx = {}, state = {}) {
   if (fx.black) { g.fillStyle = `rgba(0,0,0,${clamp(fx.black)})`; g.fillRect(0, 0, W, H); }
   if (fx.flash) { g.fillStyle = `rgba(255,255,255,${clamp(fx.flash) * 0.82})`; g.fillRect(0, 0, W, H); }
   if (fx.red) { g.fillStyle = `rgba(255,20,60,${clamp(fx.red)})`; g.fillRect(0, 0, W, H); }
+  if (fx.rewind) drawRewind(g, t, fx.rewind);
   drawHud(g, tl, t, state);
   if (state.cta) drawCta(g, t, state.cta);
   drawPrompt(g, tl, t);

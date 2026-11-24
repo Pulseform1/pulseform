@@ -1,0 +1,479 @@
+{
+ "title": "One Life",
+ "voices": {
+  "N": {
+   "ref": "narrator.wav",
+   "ex": 0.5,
+   "cfg": 0.5
+  },
+  "J": {
+   "ref": "jay.wav",
+   "ex": 0.55,
+   "cfg": 0.45
+  },
+  "M": {
+   "ref": "maya.wav",
+   "ex": 0.55,
+   "cfg": 0.45
+  },
+  "X": {
+   "ref": "maya.wav",
+   "ex": 0.3,
+   "cfg": 0.6
+  },
+  "P": {
+   "ref": "maya.wav",
+   "ex": 0.45,
+   "cfg": 0.5
+  }
+ },
+ "moods": {
+  "panic": {
+   "ex": 0.85,
+   "cfg": 0.3
+  },
+  "scared": {
+   "ex": 0.7,
+   "cfg": 0.35
+  },
+  "whisper": {
+   "ex": 0.35,
+   "cfg": 0.5
+  },
+  "calm": {
+   "ex": 0.25,
+   "cfg": 0.65
+  }
+ },
+ "lines": [
+  {
+   "id": "h01",
+   "who": "N",
+   "shot": "hook",
+   "text": "He has one life left... and it's right behind him.",
+   "cap": "He has *one life* left... and it's *right behind him.*",
+   "gap": 0,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.78
+  },
+  {
+   "id": "n01",
+   "who": "N",
+   "shot": "bed-wide",
+   "text": "Two hours earlier, Jay was on Pulsebox with his best friend Maya on the headset.",
+   "cap": "*Two hours earlier,* Jay was on Pulsebox with his best friend Maya on the headset.",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "dur": 4.057
+  },
+  {
+   "id": "m01",
+   "who": "M",
+   "shot": "bed-wide",
+   "text": "One more game, then I'm going to sleep.",
+   "cap": "One more game, then I'm going to sleep.",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.412,
+   "fx": "headset"
+  },
+  {
+   "id": "n02",
+   "who": "N",
+   "shot": "bed-screen",
+   "text": "Then a mode showed up that neither of them had ever seen.",
+   "cap": "Then a mode showed up that neither of them had *ever seen.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.788
+  },
+  {
+   "id": "n03",
+   "who": "N",
+   "shot": "bed-screen",
+   "text": "Three games. One life. No saves.",
+   "cap": "*Three games. One life. No saves.*",
+   "gap": 0.2,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.489
+  },
+  {
+   "id": "j01",
+   "who": "J",
+   "shot": "bed-face",
+   "text": "One life? Easy. Let's go.",
+   "cap": "One life? Easy. Let's go.",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.164
+  },
+  {
+   "id": "e01",
+   "who": "N",
+   "shot": "bed-face",
+   "text": "Would you press start? Comment yes or no.",
+   "cap": "Would you press start? Comment *yes or no.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "WOULD YOU PRESS START?",
+   "dur": 2.631
+  },
+  {
+   "id": "n04",
+   "who": "N",
+   "shot": "bed-dive",
+   "text": "He pressed it. His room went dark... and his screen became a windshield.",
+   "cap": "He pressed it. His room went *dark...* and his screen became a *windshield.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 3.734
+  },
+  {
+   "id": "n05",
+   "who": "N",
+   "shot": "gh-chase",
+   "text": "Game one: Getaway Heat. Three stars. Every cop in the city on his tail.",
+   "cap": "Game one: *Getaway Heat.* Three stars. Every cop in the city on his tail.",
+   "gap": 0.7,
+   "mood": "",
+   "prompt": "",
+   "dur": 3.946
+  },
+  {
+   "id": "m02",
+   "who": "M",
+   "shot": "gh-chase",
+   "text": "Jay, they're right behind you!",
+   "cap": "Jay, they're *right behind you!*",
+   "gap": 0.2,
+   "mood": "panic",
+   "prompt": "",
+   "dur": 2.027,
+   "fx": "headset"
+  },
+  {
+   "id": "n06",
+   "who": "N",
+   "shot": "gh-empty",
+   "text": "Except the cop cars didn't have drivers.",
+   "cap": "Except the cop cars didn't have *drivers.*",
+   "gap": 0.25,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.029
+  },
+  {
+   "id": "n07",
+   "who": "N",
+   "shot": "gh-truck",
+   "text": "Then a truck jackknifed across the road.",
+   "cap": "Then a truck *jackknifed* across the road.",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 1.978
+  },
+  {
+   "id": "j02",
+   "who": "J",
+   "shot": "gh-truck",
+   "text": "Hold on. Hold on!",
+   "cap": "Hold on. *Hold on!*",
+   "gap": 0.2,
+   "mood": "panic",
+   "prompt": "",
+   "dur": 1.234
+  },
+  {
+   "id": "n08",
+   "who": "N",
+   "shot": "gh-under",
+   "text": "So he went under it.",
+   "cap": "So he went *under it.*",
+   "gap": 0.9,
+   "mood": "",
+   "prompt": "",
+   "dur": 1.041
+  },
+  {
+   "id": "n09",
+   "who": "N",
+   "shot": "lm-desk",
+   "text": "Game two: Lights Out Motel. Jay's the night clerk. One rule: only give keys to humans.",
+   "cap": "Game two: *Lights Out Motel.* Jay's the night clerk. One rule: only give keys to *humans.*",
+   "gap": 0.8,
+   "mood": "",
+   "prompt": "",
+   "dur": 5.48
+  },
+  {
+   "id": "n10",
+   "who": "N",
+   "shot": "lm-knock",
+   "text": "At three AM, someone knocked on the glass.",
+   "cap": "At *3 AM,* someone knocked on the glass.",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.357
+  },
+  {
+   "id": "x01",
+   "who": "X",
+   "shot": "lm-window",
+   "text": "Jay? It's me, Maya. It's freezing out here. Give me a key.",
+   "cap": "Jay? It's me, *Maya.* It's freezing out here. Give me a key.",
+   "gap": 0.3,
+   "mood": "calm",
+   "prompt": "",
+   "dur": 4.575,
+   "fx": "glass"
+  },
+  {
+   "id": "j03",
+   "who": "J",
+   "shot": "lm-jay",
+   "text": "Maya... you're on my headset.",
+   "cap": "Maya... you're on my *headset.*",
+   "gap": 0.35,
+   "mood": "whisper",
+   "prompt": "",
+   "dur": 1.73
+  },
+  {
+   "id": "m03",
+   "who": "M",
+   "shot": "lm-jay",
+   "text": "Jay, I'm at home. That's not me.",
+   "cap": "Jay, I'm at home. *That's not me.*",
+   "gap": 0.25,
+   "mood": "scared",
+   "prompt": "",
+   "dur": 2.539,
+   "fx": "headset"
+  },
+  {
+   "id": "n11",
+   "who": "N",
+   "shot": "lm-wrong",
+   "text": "Her smile didn't move. Her eyes didn't blink.",
+   "cap": "Her smile didn't move. Her eyes *didn't blink.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.379
+  },
+  {
+   "id": "e02",
+   "who": "N",
+   "shot": "lm-wrong",
+   "text": "Would you give her the key? Comment it.",
+   "cap": "Would you give her the key? *Comment it.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "WOULD YOU GIVE HER THE KEY?",
+   "dur": 1.667
+  },
+  {
+   "id": "n12",
+   "who": "N",
+   "shot": "lm-shutter",
+   "text": "He slammed the shutter. And her smile... kept getting wider.",
+   "cap": "He slammed the shutter. And her smile... kept getting *wider.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 3.127
+  },
+  {
+   "id": "n13",
+   "who": "N",
+   "shot": "rr-run",
+   "text": "Game three: Rooftop Rush. A drone on his tail...",
+   "cap": "Game three: *Rooftop Rush.* A drone on his tail...",
+   "gap": 0.8,
+   "mood": "",
+   "prompt": "",
+   "dur": 3.318
+  },
+  {
+   "id": "n14",
+   "who": "N",
+   "shot": "rr-crawl",
+   "text": "and the thing from the motel, climbing after him.",
+   "cap": "...and the thing from the motel, *climbing after him.*",
+   "gap": 0.15,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.425
+  },
+  {
+   "id": "m04",
+   "who": "M",
+   "shot": "rr-crawl",
+   "text": "Run, Jay! It's right behind you!",
+   "cap": "Run, Jay! It's *right behind you!*",
+   "gap": 0.25,
+   "mood": "panic",
+   "prompt": "",
+   "dur": 2.236,
+   "fx": "headset"
+  },
+  {
+   "id": "n15",
+   "who": "N",
+   "shot": "rr-gap",
+   "text": "Then came the biggest gap in the game.",
+   "cap": "Then came the *biggest gap* in the game.",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.098
+  },
+  {
+   "id": "e03",
+   "who": "N",
+   "shot": "rr-leap",
+   "text": "Did he make it? Comment before you find out.",
+   "cap": "Did he make it? *Comment before you find out.*",
+   "gap": 0.25,
+   "mood": "",
+   "prompt": "DID HE MAKE IT?",
+   "dur": 2.439
+  },
+  {
+   "id": "n16",
+   "who": "N",
+   "shot": "rr-catch",
+   "text": "His fingers caught the edge.",
+   "cap": "His fingers *caught the edge.*",
+   "gap": 0.85,
+   "mood": "",
+   "prompt": "",
+   "dur": 1.493
+  },
+  {
+   "id": "n17",
+   "who": "N",
+   "shot": "rr-win",
+   "text": "Run complete. One life left.",
+   "cap": "Run complete. *One life left.*",
+   "gap": 0.2,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.272
+  },
+  {
+   "id": "n18",
+   "who": "N",
+   "shot": "bed-dawn",
+   "text": "Jay woke up at his desk. Sunrise. The headset was still on.",
+   "cap": "Jay woke up at his desk. Sunrise. The headset was *still on.*",
+   "gap": 0.7,
+   "mood": "",
+   "prompt": "",
+   "dur": 3.418
+  },
+  {
+   "id": "j04",
+   "who": "J",
+   "shot": "bed-phone",
+   "text": "Maya! You saved me last night.",
+   "cap": "Maya! You saved me last night.",
+   "gap": 0.4,
+   "mood": "",
+   "prompt": "",
+   "dur": 2.351
+  },
+  {
+   "id": "p01",
+   "who": "P",
+   "shot": "bed-phone",
+   "text": "Jay... I went to sleep at ten. I was never on.",
+   "cap": "Jay... I went to sleep at ten. I was *never on.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 3.069,
+   "fx": "phone"
+  },
+  {
+   "id": "n19",
+   "who": "N",
+   "shot": "bed-headset",
+   "text": "So who was on his headset all night?",
+   "cap": "So who was on his headset *all night?*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 1.863
+  },
+  {
+   "id": "e04",
+   "who": "N",
+   "shot": "bed-headset",
+   "text": "Drop your theory below.",
+   "cap": "Drop your *theory* below.",
+   "gap": 0.2,
+   "mood": "",
+   "prompt": "WHO WAS ON THE HEADSET?",
+   "dur": 1.167
+  },
+  {
+   "id": "x02",
+   "who": "X",
+   "shot": "bed-door",
+   "text": "Jay... I'm outside. Open the door.",
+   "cap": "Jay... I'm outside. *Open the door.*",
+   "gap": 0.5,
+   "mood": "calm",
+   "prompt": "",
+   "dur": 2.675,
+   "fx": "headset"
+  },
+  {
+   "id": "n20",
+   "who": "N",
+   "shot": "cta",
+   "text": "Pulsebox. Seventy-seven free games: racing, horror, heists, sports, and more.",
+   "cap": "*Pulsebox.* 77 free games: racing, horror, heists, sports and more.",
+   "gap": 1.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 4.772
+  },
+  {
+   "id": "n21",
+   "who": "N",
+   "shot": "cta",
+   "text": "Free at box dot pulseform dot org. Play it on a computer.",
+   "cap": "Free at... *box.pulseform.org.* Play it on a *computer.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "dur": 3.723
+  },
+  {
+   "id": "n22",
+   "who": "N",
+   "shot": "cta",
+   "text": "Tag the friend you'd trust on your headset... if you still do.",
+   "cap": "Tag the friend you'd trust on your headset... *if you still do.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "TAG YOUR HEADSET FRIEND",
+   "dur": 3.023
+  }
+ ],
+ "duck": {
+  "music": 0.3,
+  "sfx": 0.55
+ }
+}

@@ -1,17 +1,17 @@
 // Render the film: opens the built page in headless Chromium (WebGL through SwiftShader), renders the
 // soundtrack and every frame, then muxes them with ffmpeg (x264 + AAC, loudness -14 LUFS).
 //   npx vite build && npx vite preview --port 5301 --strictPort &
-//   node tools/render.mjs http://localhost:5301/ out/pulsebox-the-78th-game.mp4
-// Frames are encoded in 10-second pieces under out/seg/; a piece that already exists is skipped, so if the
-// render is interrupted, running the same command again carries on where it stopped. Delete out/seg/ (and the
-// .wav) after changing the film.
+//   node tools/render.mjs <film> [http://localhost:5301/]      e.g. node tools/render.mjs one-life
+// Writes out/pulsebox-<film>.mp4. Frames are encoded in 10-second pieces under out/seg/<film>/; a piece that already
+// exists is skipped, so if the render is interrupted, running the same command again carries on where it stopped.
+// Delete out/seg/<film>/ and out/pulsebox-<film>.wav after changing the film.
 import { createRequire } from "module";
 import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
 const { chromium } = createRequire(import.meta.url)("playwright");
-const [url = "http://localhost:5301/", out = "out/pulsebox-the-78th-game.mp4"] = process.argv.slice(2);
-const base = out.replace(/\.mp4$/, ""), segDir = path.join(path.dirname(out), "seg"), SEG = 300;
+const [film = "the-78th-game", host = "http://localhost:5301/"] = process.argv.slice(2);
+const url = `${host}?film=${film}`, out = `out/pulsebox-${film}.mp4`, base = out.replace(/\.mp4$/, ""), segDir = path.join("out", "seg", film), SEG = 300;
 fs.mkdirSync(segDir, { recursive: true });
 
 const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });

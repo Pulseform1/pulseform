@@ -13,7 +13,7 @@ function planks() {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 3); return t;
 }
 
-export function createBedroom() {
+export function createBedroom({ headset = false } = {}) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x07060e); scene.fog = new THREE.Fog(0x0a0816, 4, 14);
   const camera = new THREE.PerspectiveCamera(42, 1080 / 1920, 0.05, 60);
@@ -63,10 +63,25 @@ export function createBedroom() {
   const blanket = new THREE.Mesh(new RoundedBoxGeometry(1.32, 0.12, 1.4, 4, 0.06), std(0x5a2a6a, { roughness: 0.95 })); blanket.position.set(1.85, 0.5, 0.95); blanket.rotation.z = 0.03; blanket.castShadow = true; scene.add(blanket);
   const pillow = new THREE.Mesh(new RoundedBoxGeometry(0.8, 0.14, 0.4, 4, 0.07), std(0xd8d4e8)); pillow.position.set(1.85, 0.53, -0.25); scene.add(pillow);
   // Jay
-  const jay = makeJay(); jay.root.rotation.y = Math.PI; jay.root.position.set(0, 0, -0.45); jay.root.scale.setScalar(0.78); scene.add(jay.root);
+  const jay = makeJay({ headset }); jay.root.rotation.y = Math.PI; jay.root.position.set(0, 0, -0.45); jay.root.scale.setScalar(0.78); scene.add(jay.root);
   // light: a dim fill, a purple rim from behind
-  scene.add(new THREE.HemisphereLight(0x3a3a7a, 0x120a10, 0.35));
+  const hemi = new THREE.HemisphereLight(0x3a3a7a, 0x120a10, 0.35); scene.add(hemi);
   const rim = new THREE.PointLight(0xa24aff, 6, 6, 2); rim.position.set(0.8, 2.2, 1.2); scene.add(rim);
+  // his phone on the desk (it rings at dawn) and the bedroom door on the right wall (light under it)
+  const phoneC = document.createElement("canvas"); phoneC.width = 128; phoneC.height = 256; { const g = phoneC.getContext("2d"); g.fillStyle = "#0b0d1a"; g.fillRect(0, 0, 128, 256); g.fillStyle = "#7a4dff"; g.beginPath(); g.arc(64, 80, 30, 0, 7); g.fill();
+    g.fillStyle = "#fff"; g.font = "700 26px Inter, sans-serif"; g.textAlign = "center"; g.fillText("M", 64, 90); g.fillText("Maya", 64, 150); g.font = "500 14px Inter, sans-serif"; g.fillStyle = "#9aa3c7"; g.fillText("calling...", 64, 172); g.fillStyle = "#28c840"; g.beginPath(); g.arc(64, 218, 18, 0, 7); g.fill(); }
+  const phoneScr = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: new THREE.CanvasTexture(phoneC), emissiveIntensity: 0 }); phoneScr.emissiveMap.colorSpace = THREE.SRGBColorSpace;
+  const phone = new THREE.Group(); phone.position.set(-0.72, 0.795, -1.42); phone.rotation.y = 0.3; scene.add(phone);
+  const phoneBody = new THREE.Mesh(new RoundedBoxGeometry(0.08, 0.012, 0.16, 2, 0.006), std(0x15151c, { roughness: 0.3 })); phone.add(phoneBody);
+  const phoneFace = new THREE.Mesh(new THREE.PlaneGeometry(0.072, 0.148), phoneScr); phoneFace.rotation.x = -Math.PI / 2; phoneFace.position.y = 0.007; phone.add(phoneFace);
+  const phoneGlow = new THREE.PointLight(0x9a8aff, 0, 1.2, 2); phoneGlow.position.y = 0.1; phone.add(phoneGlow);
+  const doorG = new THREE.Group(); doorG.position.set(2.59, 0, -1.3); doorG.rotation.y = -Math.PI / 2; scene.add(doorG);
+  const doorP = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.05, 0.05), std(0xd8d0c8, { roughness: 0.7 })); doorP.position.y = 1.04; doorG.add(doorP);
+  for (const [w, h, x, y] of [[0.08, 2.2, -0.49, 1.1], [0.08, 2.2, 0.49, 1.1], [1.06, 0.08, 0, 2.15]]) { const f = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.08), std(0xbab0a6)); f.position.set(x, y, 0.01); doorG.add(f); }
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 8), std(0xc8a24a, { metalness: 0.9, roughness: 0.25 })); knob.position.set(0.34, 1.0, 0.05); doorG.add(knob);
+  const gapM = new THREE.MeshBasicMaterial({ color: 0xffe2b0 }); const gap = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.025), gapM); gap.position.set(0, 0.012, 0.03); doorG.add(gap);
+  const feet = [-1, 1].map((s) => { const f = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.03), new THREE.MeshBasicMaterial({ color: 0x050302 })); f.position.set(0.12 * s, 0.013, 0.031); doorG.add(f); return f; });
+  const gapLight = new THREE.PointLight(0xffd8a0, 0, 2.2, 2); gapLight.position.set(2.2, 0.3, -1.3); scene.add(gapLight);
   const sun = new THREE.SpotLight(0xffa860, 0, 14, 0.42, 0.4, 1.2); sun.position.set(-5.2, 2.6, -0.5); sun.target.position.set(0.3, 0.6, -0.4); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); scene.add(sun, sun.target);
   // dust in the moonlight
   const N = 400, pos = new Float32Array(N * 3); for (let i = 0; i < N; i++) { pos[i * 3] = -2.2 + Math.random() * 3; pos[i * 3 + 1] = 0.3 + Math.random() * 2.6; pos[i * 3 + 2] = -1.8 + Math.random() * 2.6; }
@@ -74,7 +89,7 @@ export function createBedroom() {
   const dust = new THREE.Points(dustG, new THREE.PointsMaterial({ size: 0.012, map: radialGlow(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xaab8ff, opacity: 0.8 })); scene.add(dust);
 
   return {
-    scene, camera, jay, screen, bloom: { strength: 0.55, radius: 0.5, threshold: 0.7 },
+    scene, camera, jay, screen, phone, door: doorG, bloom: { strength: 0.55, radius: 0.5, threshold: 0.7 },
     update(lt, p = {}) {
       dust.rotation.y = lt * 0.01; dust.position.y = Math.sin(lt * 0.3) * 0.05;
       const dawn = p.dawn ?? 0;
@@ -84,6 +99,10 @@ export function createBedroom() {
       screenLight.intensity = (p.screenBright ?? 1) * 4; scrMat.emissiveIntensity = 1.25 * (p.screenBright ?? 1);
       screenLight.color.set(p.screenRed ? 0xff4a6a : 0x9aa8ff);
       screen.draw({ t: lt, ...p.screen });
+      const room = p.room ?? 1; hemi.intensity = 0.35 * room; rim.intensity = 6 * room; moon.intensity *= room;   // "his room went dark"
+      const ring = p.ring ?? 0; phoneScr.emissiveIntensity = ring * 1.2; phoneGlow.intensity = ring * 1.5 * (Math.sin(lt * 10) > 0 ? 1 : 0.6);
+      const dg = p.doorGap ?? 0; gap.visible = dg > 0; gapM.color.setRGB(dg, dg * 0.88, dg * 0.7); gapLight.intensity = dg * 0.12; feet.forEach((f) => (f.visible = (p.feet ?? 0) > 0));
+      if (jay.J.led) jay.J.led.material.color.set(p.led === 0 ? 0x111111 : p.led === 2 ? 0xff2a3a : 0x3dff7a);
     },
   };
 }

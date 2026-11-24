@@ -1,13 +1,13 @@
 // Every shot of the film: which set, where the camera is, what moves, and the overlay effects / HUD.
 import * as THREE from "three";
-import { createBedroom } from "./sets/bedroom.js";
-import { createHub, createTunnel } from "./sets/hub.js";
-import { createHyperlane } from "./sets/hyperlane.js";
-import { createDeep } from "./sets/deep.js";
-import { createHalls } from "./sets/halls.js";
-import { createCta } from "./sets/cta.js";
-import { makeKey } from "./sets/common.js";
-import { pose } from "./jay.js";
+import { createBedroom } from "../../sets/bedroom.js";
+import { createHub, createTunnel } from "../../sets/hub.js";
+import { createHyperlane } from "../../sets/hyperlane.js";
+import { createDeep } from "../../sets/deep.js";
+import { createHalls } from "../../sets/halls.js";
+import { createCta } from "../../sets/cta.js";
+import { makeKey } from "../../sets/common.js";
+import { pose } from "../../jay.js";
 
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, k) => a + (b - a) * k;

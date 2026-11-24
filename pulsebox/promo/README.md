@@ -32,11 +32,13 @@ the shared story art (running poses, the Hollow, the raft, the mansion...) is in
 | `stuck-ep2-blackwater/` | "Four wooden planks. No land. No boat. Just a rope hook... and a fin." | `stuck-ep2-blackwater/out/pulsebox-stuck-ep2-blackwater.mp4` |
 | `stuck-ep3-heist-crew/` | "Outside a mansion. In masks. Next to a getaway van." | `stuck-ep3-heist-crew/out/pulsebox-stuck-ep3-heist-crew.mp4` |
 
-### The 78th Game (3D film)
+### 3D films (The 78th Game, One Life)
 
-`film3d/` is a 2-minute 3D short made with Three.js instead of 2D SVG: Jay finds a 78th game on Pulsebox, gets pulled
-in, and has to take three keys from Hyperlane, Deep Signal and The Endless Halls, with comment prompts throughout.
-See `film3d/README.md`. Output: `film3d/out/pulsebox-the-78th-game.mp4`; thumbnails are in `film3d/out/`.
+`film3d/` has 2-minute 3D shorts made with Three.js instead of 2D SVG, with comment prompts throughout. **The 78th
+Game**: Jay finds a 78th game on Pulsebox and has to take three keys from Hyperlane, Deep Signal and The Endless Halls.
+**One Life**: a flash-forward hook, then three games and one life (Getaway Heat, Lights Out Motel, Rooftop Rush), a
+thing that copies his best friend's voice, and a twist about who was on his headset; voiced with Chatterbox for natural
+voices and a male narrator. See `film3d/README.md`. Outputs and thumbnails are in `film3d/out/`.
 
 Thumbnails for every video (9:16 covers and 16:9) are in `thumbnails/out/`; `node thumbnails/thumbs.js [id ...]` remakes them
 from `thumbnails/thumbs.html`.

@@ -42,7 +42,7 @@ export function gameTile(name, { w = 256, h = 384, glyph = true } = {}) {
 // the Pulsebox site as seen on Jay's monitor. state: { t, show78 (0..1), message, msgK (0..1 typed), dawn, title78 }
 export class PulseboxScreen {
   constructor() { this.c = document.createElement("canvas"); this.c.width = 1280; this.c.height = 800; this.g = this.c.getContext("2d"); this.texture = tex(this.c); this.tiles = ALL_GAMES.slice(0, 15); }
-  draw({ t = 0, show78 = 0, message = "", msgK = 0, glitch = 0, title78 = "78", focus78 = 0 }) {
+  draw({ t = 0, show78 = 0, message = "", msgK = 0, glitch = 0, title78 = "78", focus78 = 0, mode = 0, press = 0, black = 0 }) {
     const g = this.g, W = 1280, H = 800;
     g.fillStyle = "#0b0d14"; g.fillRect(0, 0, W, H);
     g.fillStyle = "#1b1e2a"; g.fillRect(0, 0, W, 64);
@@ -80,7 +80,18 @@ export class PulseboxScreen {
       if (Math.sin(t * 8) > 0) { const lw = g.measureText(lines[lines.length - 1]).width; g.fillRect(W / 2 + lw / 2 + 8, cy + (lines.length - 1) / 2 * 78 - 26, 22, 52); }
       g.shadowBlur = 0; g.textAlign = "left";
     }
+    if (mode > 0) {   // One Life: a hidden mode pops up (kept to the middle of the screen so a tall crop can read it)
+      g.fillStyle = `rgba(3,2,8,${Math.min(0.92, mode * 1.5)})`; g.fillRect(0, 64, W, H - 64);
+      const k = Math.min(1, mode * 1.6), cx = W / 2; g.save(); g.globalAlpha = k; g.translate(cx, 430); g.scale(0.85 + 0.15 * k, 0.85 + 0.15 * k);
+      g.fillStyle = "#0a0712"; rr(g, -280, -330, 560, 680, 30); g.fill(); g.strokeStyle = "#ff3d5e"; g.lineWidth = 6; g.shadowColor = "#ff3d5e"; g.shadowBlur = 30; rr(g, -280, -330, 560, 680, 30); g.stroke(); g.shadowBlur = 0;
+      g.textAlign = "center"; g.fillStyle = "#ffd23d"; g.font = CHAKRA(30); g.fillText("NEW MODE UNLOCKED", 0, -270);
+      g.fillStyle = "#ffffff"; g.font = "400 100px 'Luckiest Guy', sans-serif"; g.fillText("SPEEDRUN", 0, -180);
+      [["3 GAMES", "#ffffff"], ["1 LIFE", "#ff3d5e"], ["NO SAVES", "#ffffff"]].forEach(([s, col], i) => { g.fillStyle = col; g.font = CHAKRA(62); g.fillText(s, 0, -80 + i * 80); });
+      const pr = press > 0 && Math.sin(t * 30) > 0; g.fillStyle = pr ? "#ffffff" : "#ff3d5e"; g.shadowColor = "#ff3d5e"; g.shadowBlur = 20 + 20 * Math.sin(t * 6); rr(g, -150, 205, 300, 90, 45); g.fill(); g.shadowBlur = 0;
+      g.fillStyle = pr ? "#ff3d5e" : "#ffffff"; g.font = CHAKRA(50); g.fillText("START", 0, 252); g.restore(); g.textAlign = "left";
+    }
     g.fillStyle = "rgba(255,255,255,.035)"; for (let y = 0; y < H; y += 4) g.fillRect(0, y, W, 1);
+    if (black > 0) { g.fillStyle = `rgba(0,0,0,${black})`; g.fillRect(0, 0, W, H); }
     this.texture.needsUpdate = true;
   }
 }
