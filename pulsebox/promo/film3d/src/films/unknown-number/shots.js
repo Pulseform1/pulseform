@@ -122,7 +122,7 @@ export function makeShots(renderer, tl) {
       renderGame(t); const bz = 0.25, grab = 1.0, L = s.L("j02"), show = clamp((lt - grab - 0.25) / 0.35);
       bed.update(lt, litRoom({ lampOn: 0.6, screenBright: 1.1 }));
       if (lt < grab) {
-        seatJay(lt, { lean: 0.3, yaw: -0.45 * clamp((lt - bz) / 0.3), pitch: -0.25 }); phone.position.copy(DESK); phone.rotation.set(Math.PI / 2, 0, 0.3); phone.position.y -= 0.004; buzz(phone, lt, bz, 0.6); phone.userData.set({ bright: 0 });
+        seatJay(lt, { lean: 0.3, yaw: -0.45 * clamp((lt - bz) / 0.3), pitch: -0.25 }); phone.position.copy(DESK); phone.rotation.set(Math.PI / 2, 0, 0.3); phone.position.y -= 0.004; buzz(phone, lt, bz, 0.6); phone.userData.set({ bright: lt > bz ? 0.9 : 0 });
         aim(bed.camera, V(DESK.x - 0.12, DESK.y + 0.4, DESK.z + 0.32), DESK, 46); hand(bed.camera, 0.003, t);
       } else {
         bed.jay.root.position.set(0, 0, -0.45); bed.jay.root.rotation.set(0, Math.PI - 0.25, 0); pose(bed.jay, "text", lt, { sit: true, lean: 0.12, pitch: 0.3, fear: lt > L + 1.2 ? 0.55 : 0.25, smile: lt > L && lt < L + 1.2 ? 0.25 : 0, noBlink: lt > L });
@@ -291,24 +291,24 @@ export function makeShots(renderer, tl) {
       }
       bed.update(tt, darkRoom({ doorOpen: 0, doorIn: true, locked: false, room: 0.5 }));
       if (tt < JUMP) {   // from the corner, above him: he leans his head on the door and breathes out... then slowly turns around
-        const turn = ease(clamp((tt - (JUMP - 0.95)) / 0.9)); j.position.set(1.88, 0, -1.02); j.rotation.set(0, Math.PI / 2 - turn * 0.9, 0);
-        pose(bed.jay, "reach", tt, { k: 0.55 * (1 - turn), fear: 0.55 + turn * 0.4, pitch: 0.35 * (1 - turn), yaw: -turn * 0.6, noBlink: turn > 0 }); bed.jay.J.spine.rotation.x += 0.15 * (1 - turn);
+        const turn = ease(clamp((tt - (JUMP - 1.0)) / 0.95)); j.position.set(1.88, 0, -1.02); j.rotation.set(0, Math.PI / 2 + turn * 0.75, 0);
+        pose(bed.jay, "reach", tt, { k: 0.55 * (1 - turn), fear: 0.5 + turn * 0.45, pitch: 0.3 * (1 - turn), yaw: turn * 0.4, noBlink: turn > 0 }); bed.jay.J.spine.rotation.x += 0.15 * (1 - turn);
         oneHand(bed.jay, phone); phone.userData.set({ bright: 0.35, torchOn: false }); man.root.visible = false;   // (the camera is where he stands)
-        const h = headPos(bed.jay), k = clamp((tt - up - C) / (JUMP - up - C)); aim(bed.camera, V(lerp(2.3, 2.27, k), lerp(2.3, 2.2, k), lerp(-1.78, -1.72, k)), V(h.x, h.y - 0.1, h.z), 50);   // where he is standing
-        faceFill.position.set(h.x + 0.3, h.y - 0.3, h.z + 0.1); faceFill.intensity = 0.5;
+        const h = headPos(bed.jay), k = clamp((tt - up - C) / (JUMP - up - C)); aim(bed.camera, V(lerp(2.47, 2.42, k), lerp(1.5, 1.44, k), lerp(-2.02, -1.95, k)), V(h.x + 0.05, h.y - 0.08, h.z), 54);   // from the dark corner behind the door, close on his face
+        faceFill.position.set(h.x + 0.32, h.y - 0.28, h.z - 0.18); faceFill.intensity = 0.6;
         return { set: bed, fx: { vignette: 0.9 } };
       }
       // JUMP: his eyes, his light swinging up into the face right there. It lunges.
       manDark(false); man.root.visible = true;
       const v = clamp((tt - JUMP) / 0.3), lunge = 1 - Math.pow(1 - v, 3); j.position.set(1.88, 0, -1.02); j.rotation.set(0, -0.1, 0); pose(bed.jay, "torch", tt, { fear: 1 }); bed.jay.J.head.visible = false;
-      man.pose({ tilt: 0.15, turn: 0, hunch: 0.25 + 0.5 * lunge, reach: 0.9 * lunge }); man.J["shoulder-1"].rotation.x = -1.1 * lunge; man.J.mouth.scale.set(1 + 0.7 * lunge, 2.4 + 2.2 * lunge, 0.5);
-      man.root.position.copy(CORNER).add(V(-0.05, 0, 0.18 * lunge));
+      man.pose({ tilt: 0.12, turn: 0, hunch: 0.22 + 0.42 * lunge, reach: 0.85 * lunge }); man.J["shoulder-1"].rotation.x = -1.0 * lunge; man.J.mouth.scale.set(1 + 0.6 * lunge, 2.4 + 2.0 * lunge, 0.5);
+      man.root.position.copy(CORNER).add(V(-0.03, 0, 0.12 * lunge));
       const eye = V(1.93, 1.43, -1.0), face = man.J.head.getWorldPosition(V(0, 0, 0)); aim(bed.camera, eye, face.clone().add(V(0, -0.02, 0)), 62);
       const sh = clamp(1 - v * 0.6); bed.camera.position.x += Math.sin(t * 61) * 0.035 * sh; bed.camera.position.y += Math.sin(t * 53) * 0.03 * sh; bed.camera.rotation.z += Math.sin(t * 37) * 0.05 * sh;
-      phone.position.copy(eye).add(V(0.12, -0.34, -0.12)); phone.lookAt(phone.position.clone().add(phone.position.clone().sub(face).normalize())); phone.userData.set({ bright: 0.4, torchOn: true });
-      moonFill.position.copy(eye).add(V(0.05, -0.45, -0.05)); moonFill.target.position.copy(face); moonFill.intensity = 5;   // the flashlight on his face, from below
+      phone.position.copy(eye).add(V(0.12, -0.34, -0.12)); phone.lookAt(phone.position.clone().add(phone.position.clone().sub(face).normalize())); phone.userData.set({ bright: 0.4, torchOn: false });
+      moonFill.position.copy(eye).add(V(0.08, -0.4, -0.08)); moonFill.target.position.copy(face); moonFill.intensity = 0.65;   // his flashlight on its face, from below
       const frozen = lt >= F;
-      return { set: bed, fx: { vignette: 0.9, flash: tt - JUMP < 0.07 ? 0.5 : 0, chroma: frozen ? 0 : clamp(1 - (tt - JUMP) / 0.3), paused: frozen ? clamp((lt - F) / 0.15) : 0, gray: frozen ? 0.5 : 0, red: frozen ? 0.06 : 0 }, state: frozen ? { cta: ctaTimes() } : {} };
+      return { set: bed, fx: { vignette: 0.9, flash: tt - JUMP < 0.07 ? 0.3 : 0, chroma: frozen ? 0 : clamp(1 - (tt - JUMP) / 0.3), paused: frozen ? clamp((lt - F) / 0.15) : 0, gray: frozen ? 0.5 : 0, red: frozen ? 0.06 : 0 }, state: frozen ? { cta: ctaTimes() } : {} };
     },
   };
   let ctaCache = null;

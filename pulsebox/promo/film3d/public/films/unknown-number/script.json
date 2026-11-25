@@ -116,13 +116,13 @@
    "id": "j02",
    "who": "J",
    "shot": "txt2",
-   "text": "Okay. That's my street. That's not funny.",
-   "cap": "Okay... that's *my street.* That's not funny.",
+   "text": "Wait. That's my street. That's not funny.",
+   "cap": "Wait... that's *my street.* That's not funny.",
    "gap": 3.0,
    "mood": "",
    "prompt": "",
    "fx": "dry",
-   "dur": 1.059,
+   "dur": 3.926,
    "dia": "Wait. (nervous laugh) Okay... that's my street. That's not funny."
   },
   {
@@ -136,7 +136,7 @@
    "mood": "whisper",
    "prompt": "",
    "fx": "dry",
-   "dur": 1.5
+   "dur": 2.717
   },
   {
    "id": "n03",
@@ -172,7 +172,7 @@
    "mood": "",
    "prompt": "",
    "fx": "dry",
-   "dur": 3.07,
+   "dur": 2.258,
    "dia": "(gasps) That's my house. No. No, no, no, no."
   },
   {
@@ -209,7 +209,7 @@
    "mood": "whisper",
    "prompt": "",
    "fx": "dry",
-   "dur": 0.994,
+   "dur": 2.196,
    "dia": "The kitchen... It came from the kitchen."
   },
   {
@@ -222,7 +222,7 @@
    "mood": "whisper",
    "prompt": "",
    "fx": "dry",
-   "dur": 1.753,
+   "dur": 2.137,
    "dia": "Hello...? Is... is someone there?"
   },
   {
@@ -247,7 +247,7 @@
    "mood": "",
    "prompt": "",
    "fx": "dry",
-   "dur": 2.015,
+   "dur": 2.235,
    "dia": "(gasps) No. No, no, no."
   },
   {
@@ -261,7 +261,7 @@
    "mood": "whisper",
    "prompt": "",
    "fx": "dry",
-   "dur": 1.5
+   "dur": 3.116
   },
   {
    "id": "n07",
@@ -309,7 +309,7 @@
    "mood": "",
    "prompt": "",
    "fx": "",
-   "dur": 3.668
+   "dur": 3.289
   },
   {
    "id": "n10",

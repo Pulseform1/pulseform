@@ -54,6 +54,10 @@ def cut(w, sr, want):   # keep up to the end of the last expected word (Dia some
     heard = norm(" ".join(s.text for s in asr.transcribe(y16, beam_size=5)[0]))
     return w, difflib.SequenceMatcher(None, heard, want).ratio(), " ".join(heard)
 
+def level(w, sr, target):   # same speech level from line to line (hushed lines a little quieter), peaks under -1 dBFS
+    n = int(sr * 0.05); r = np.array([np.sqrt(np.mean(w[i:i + n] ** 2)) for i in range(0, len(w) - n, n)]); r = r[r > r.max() * 0.1]
+    g = 10 ** ((target - 20 * np.log10(np.sqrt(np.mean(r ** 2)))) / 20); return w * min(g, 0.89 / (np.abs(w).max() + 1e-9))
+
 for spk, v in script["voices"].items():
     if v.get("engine") != "dia": continue
     pw, psr = sf.read(ROOT / "voices" / "refs" / v["prompt"]); pw = pw if pw.ndim == 1 else pw.mean(1)
@@ -69,6 +73,6 @@ for spk, v in script["voices"].items():
             print(f"  {line['id']} seed {seed}: {score:.2f} {len(w)/sr:.2f}s \"{heard}\"", flush=True)
             if not best or score > best[1]: best = (w, score, sr)
             if score >= 0.9: break
-        w, score, sr = best; sf.write(fdir / "vo" / f"{line['id']}.wav", w, sr); line["dur"] = round(len(w) / sr, 3)
+        w, score, sr = best; w = level(w, sr, -21 if line.get("mood") == "whisper" else -19); sf.write(fdir / "vo" / f"{line['id']}.wav", w, sr); line["dur"] = round(len(w) / sr, 3)
         print(f"{line['id']}: {line['dur']}s (match {score:.2f})", flush=True)
         spath.write_text(json.dumps(script, indent=1, ensure_ascii=False) + "\n")
