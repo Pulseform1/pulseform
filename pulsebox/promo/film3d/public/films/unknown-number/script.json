@@ -4,7 +4,11 @@
   "N": {
    "ref": "narrator.wav",
    "ex": 0.45,
-   "cfg": 0.5
+   "cfg": 0.5,
+   "engine": "dia",
+   "prompt": "narrator-dia.wav",
+   "level": -22,
+   "promptText": "[S1] At two forty-seven in the morning, a number he didn't know sent him a text. Jay was playing The Endless Halls. The game where the tall man only moves when you look away."
   },
   "J": {
    "engine": "dia",
