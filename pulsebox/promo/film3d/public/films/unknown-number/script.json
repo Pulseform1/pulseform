@@ -40,7 +40,7 @@
  },
  "duck": {
   "music": 0.35,
-  "sfx": 0.6
+  "sfx": 0.45
  },
  "lines": [
   {
@@ -206,7 +206,7 @@
    "shot": "txt4",
    "text": "It came from the kitchen.",
    "cap": "It came from the *kitchen.*",
-   "gap": 4.4,
+   "gap": 5.3,
    "mood": "",
    "prompt": "",
    "fx": "",
@@ -247,7 +247,7 @@
    "mood": "",
    "prompt": "",
    "fx": "",
-   "dur": 1.521,
+   "dur": 1.934,
    "dia": "His room. Where he'd just been hiding. Right up there."
   },
   {
