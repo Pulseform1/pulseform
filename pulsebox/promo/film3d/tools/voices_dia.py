@@ -26,6 +26,7 @@ fdir = ROOT / "public" / "films" / film; spath = fdir / "script.json"; (fdir / "
 script = json.loads(spath.read_text())
 torch.set_num_threads(4)
 CK = "nari-labs/Dia-1.6B-0626"
+import os; SEED = int(os.environ.get("DIA_SEED", "100"))   # change it to get different takes
 proc = AutoProcessor.from_pretrained(CK); model = DiaForConditionalGeneration.from_pretrained(CK, torch_dtype=torch.float32).eval()
 asr = WhisperModel("base.en", device="cpu", compute_type="int8")
 
@@ -51,10 +52,11 @@ def cut(w, sr, want):   # keep up to the end of the last expected word (Dia some
     end = len(w) / sr
     if words:   # the shortest prefix of the take that best says the line
         r = [difflib.SequenceMatcher(None, norm(" ".join(x.word for x in words[:k])), want).ratio() for k in range(1, len(words) + 1)]
-        k = int(np.argmax(r)); end = words[k].end if r[k] > 0.5 else end
+        k = int(np.argmax(r)); end = words[k].end if r[k] > 0.5 and k < len(words) - 1 else end   # cut only when it kept talking past the line
     w = w[: min(len(w), int((end + 0.28) * sr))]
     db = 20 * np.log10(np.abs(w) + 1e-7); idx = np.where(db > db.max() - 40)[0]; a = max(0, idx[0] - int(sr * 0.06)) if len(idx) else 0
-    w = w[a:]; f = int(sr * 0.04); w[-f:] *= np.linspace(1, 0, f)
+    b = min(len(w), idx[-1] + int(sr * 0.15)) if len(idx) else len(w)
+    w = w[a:b]; f = int(sr * 0.04); w[-f:] *= np.linspace(1, 0, f)
     y16 = librosa.resample(w.astype(np.float32), orig_sr=sr, target_sr=16000)
     heard = norm(" ".join(s.text for s in asr.transcribe(y16, beam_size=5)[0]))
     return w, difflib.SequenceMatcher(None, heard, want).ratio(), " ".join(heard)
@@ -73,11 +75,11 @@ for spk, v in script["voices"].items():
         want = norm(line["text"]); text = v["promptText"].rstrip() + " " + line.get("dia", line["text"])
         best = None
         for seed in range(4):
-            w, sr = take(pw.astype(np.float32), v["promptText"], line.get("dia", line["text"]), 100 + seed * 7 + len(line["id"]), int((len(want) * 0.6 + 3.5) * 86))
+            w, sr = take(pw.astype(np.float32), v["promptText"], line.get("dia", line["text"]), SEED + seed * 7 + len(line["id"]), int((len(want) * 0.6 + 3.5) * 86))
             w, score, heard = cut(w, sr, want)
             print(f"  {line['id']} seed {seed}: {score:.2f} {len(w)/sr:.2f}s \"{heard}\"", flush=True)
             if not best or score > best[1]: best = (w, score, sr)
-            if score >= 0.9: break
+            if score >= 0.97: break
         w, score, sr = best; w = level(w, sr, v.get("level", -19) - (2 if line.get("mood") == "whisper" else 0)); sf.write(fdir / "vo" / f"{line['id']}.wav", w, sr); line["dur"] = round(len(w) / sr, 3)
         print(f"{line['id']}: {line['dur']}s (match {score:.2f})", flush=True)
         spath.write_text(json.dumps(script, indent=1, ensure_ascii=False) + "\n")

@@ -52,7 +52,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 3.424
+   "dur": 4.635
   },
   {
    "id": "n01",
@@ -64,7 +64,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 4.724
+   "dur": 4.146
   },
   {
    "id": "j01",
@@ -89,7 +89,7 @@
    "mood": "",
    "prompt": "WOULD YOU TEXT BACK?",
    "fx": "",
-   "dur": 2.547
+   "dur": 2.104
   },
   {
    "id": "j07",
@@ -152,7 +152,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 1.966
+   "dur": 1.964
   },
   {
    "id": "n04",
@@ -164,7 +164,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 2.449
+   "dur": 1.874
   },
   {
    "id": "j03",
@@ -189,7 +189,7 @@
    "mood": "",
    "prompt": "RUN OR HIDE?",
    "fx": "",
-   "dur": 2.695
+   "dur": 1.973
   },
   {
    "id": "n05",
@@ -201,7 +201,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 2.64
+   "dur": 2.533
   },
   {
    "id": "j04",
@@ -239,7 +239,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 2.718
+   "dur": 2.355
   },
   {
    "id": "j06",
@@ -277,7 +277,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 2.792
+   "dur": 2.459
   },
   {
    "id": "n08",
@@ -289,7 +289,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 1.343
+   "dur": 1.145
   },
   {
    "id": "e03",
@@ -301,7 +301,7 @@
    "mood": "",
    "prompt": "WHAT HAPPENS NEXT?",
    "fx": "",
-   "dur": 1.892
+   "dur": 1.918
   },
   {
    "id": "n09",
@@ -313,7 +313,7 @@
    "mood": "",
    "prompt": "",
    "fx": "",
-   "dur": 3.289
+   "dur": 3.148
   },
   {
    "id": "n10",
@@ -325,10 +325,11 @@
    "mood": "",
    "prompt": "",
    "fx": "",
-   "dur": 4.307
+   "dur": 5.281
   }
  ],
  "sfx": [
-  "pans"
+  "pans",
+  "scream"
  ]
 }
