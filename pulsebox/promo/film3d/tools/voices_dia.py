@@ -59,7 +59,10 @@ def cut(w, sr, want):   # keep up to the end of the last expected word (Dia some
     w = w[a:b]; f = int(sr * 0.04); w[-f:] *= np.linspace(1, 0, f)
     y16 = librosa.resample(w.astype(np.float32), orig_sr=sr, target_sr=16000)
     heard = norm(" ".join(s.text for s in asr.transcribe(y16, beam_size=5)[0]))
-    return w, difflib.SequenceMatcher(None, heard, want).ratio(), " ".join(heard)
+    n = int(sr * 0.12); tail = 20 * np.log10(np.sqrt(np.mean(w[-n:] ** 2)) / (np.abs(w).max() + 1e-9) + 1e-9)   # loud right at the end = cut off mid-word
+    f0, vf, _ = librosa.pyin(y16, fmin=60, fmax=400, sr=16000, frame_length=1024); f0 = f0[vf & ~np.isnan(f0)]
+    lively = float(np.std(12 * np.log2(f0 / np.median(f0)))) if len(f0) > 10 else 0.0   # pitch movement in semitones: flat reads sound bored
+    return w, difflib.SequenceMatcher(None, heard, want).ratio(), " ".join(heard), tail, lively
 
 def level(w, sr, target):   # same speech level from line to line (hushed lines a little quieter), peaks under -1 dBFS
     n = int(sr * 0.05); r = np.array([np.sqrt(np.mean(w[i:i + n] ** 2)) for i in range(0, len(w) - n, n)]); r = r[r > r.max() * 0.1]
@@ -73,13 +76,16 @@ for spk, v in script["voices"].items():
     for line in script["lines"]:
         if line["who"] != spk or (only and line["id"] not in only): continue
         want = norm(line["text"]); text = v["promptText"].rstrip() + " " + line.get("dia", line["text"])
-        best = None
-        for seed in range(4):
+        best = None; takes = v.get("takes", 1); good = []
+        for seed in range(max(4, takes)):
             w, sr = take(pw.astype(np.float32), v["promptText"], line.get("dia", line["text"]), SEED + seed * 7 + len(line["id"]), int((len(want) * 0.6 + 3.5) * 86))
-            w, score, heard = cut(w, sr, want)
-            print(f"  {line['id']} seed {seed}: {score:.2f} {len(w)/sr:.2f}s \"{heard}\"", flush=True)
+            w, score, heard, tail, lively = cut(w, sr, want)
+            print(f"  {line['id']} seed {seed}: {score:.2f} {len(w)/sr:.2f}s tail {tail:.0f}dB lively {lively:.2f} \"{heard}\"", flush=True)
+            if tail > -30: score -= 0.15   # clipped ending
             if not best or score > best[1]: best = (w, score, sr)
-            if score >= 0.97: break
+            if score >= 0.95: good.append((lively, w, score, sr))
+            if len(good) >= takes: break
+        if good: _, w, score, sr = max(good, key=lambda g: g[0]); best = (w, score, sr)   # of the clean, correct takes: the liveliest read
         w, score, sr = best; w = level(w, sr, v.get("level", -19) - (2 if line.get("mood") == "whisper" else 0)); sf.write(fdir / "vo" / f"{line['id']}.wav", w, sr); line["dur"] = round(len(w) / sr, 3)
         print(f"{line['id']}: {line['dur']}s (match {score:.2f})", flush=True)
         spath.write_text(json.dumps(script, indent=1, ensure_ascii=False) + "\n")
