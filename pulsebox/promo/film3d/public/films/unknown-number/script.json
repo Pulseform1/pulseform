@@ -69,16 +69,15 @@
   },
   {
    "id": "j01",
-   "who": "J",
+   "who": "N",
    "shot": "txt1",
-   "text": "Okay... very funny. Who is this?",
-   "cap": "Okay... very funny. *Who is this?*",
+   "text": "He figured it was a prank.",
+   "cap": "He figured it was a *prank.*",
    "gap": 2.6,
    "mood": "",
    "prompt": "",
-   "fx": "dry",
-   "dur": 4.908,
-   "dia": "(chuckle) Okay... very funny. Who is this?"
+   "fx": "",
+   "dur": 4.908
   },
   {
    "id": "e01",
@@ -94,15 +93,14 @@
   },
   {
    "id": "j07",
-   "who": "J",
+   "who": "N",
    "shot": "break1",
-   "text": "It's probably just Maya messing with me.",
-   "dia": "(laughs) It's probably just Maya messing with me.",
-   "cap": "It's probably just *Maya* messing with me.",
+   "text": "Probably just his friend Maya, messing with him.",
+   "cap": "Probably just his friend *Maya,* messing with him.",
    "gap": 1.4,
    "mood": "",
    "prompt": "",
-   "fx": "dry",
+   "fx": "",
    "dur": 2.577
   },
   {
@@ -119,28 +117,26 @@
   },
   {
    "id": "j02",
-   "who": "J",
+   "who": "N",
    "shot": "txt2",
-   "text": "Wait. That's my street. That's not funny.",
-   "cap": "Wait... that's *my street.* That's not funny.",
+   "text": "Then a photo of his street. It wasn't funny anymore.",
+   "cap": "Then a photo of *his street.* It wasn't funny anymore.",
    "gap": 3.0,
    "mood": "",
    "prompt": "",
-   "fx": "dry",
-   "dur": 3.926,
-   "dia": "Wait. (nervous laugh) Okay... that's my street. That's not funny."
+   "fx": "",
+   "dur": 3.926
   },
   {
    "id": "j08",
-   "who": "J",
+   "who": "N",
    "shot": "wait",
-   "text": "Come on... pick up. Pick up.",
-   "dia": "Come on... pick up. Come on, pick up.",
-   "cap": "Come on... *pick up.*",
+   "text": "He called the number. It just rang... and rang.",
+   "cap": "He called the number. It just *rang...* and rang.",
    "gap": 7.4,
-   "mood": "whisper",
+   "mood": "",
    "prompt": "",
-   "fx": "dry",
+   "fx": "",
    "dur": 2.717
   },
   {
@@ -169,16 +165,15 @@
   },
   {
    "id": "j03",
-   "who": "J",
+   "who": "N",
    "shot": "txt3",
-   "text": "That's my house. No. No, no, no.",
-   "cap": "That's my *house.* No. No, no, no.",
+   "text": "His front porch. His house number.",
+   "cap": "His front porch. *His house number.*",
    "gap": 2.3,
    "mood": "",
    "prompt": "",
-   "fx": "dry",
-   "dur": 2.258,
-   "dia": "(gasps) That's my house. No. No, no, no, no."
+   "fx": "",
+   "dur": 2.258
   },
   {
    "id": "e02",
@@ -206,29 +201,27 @@
   },
   {
    "id": "j04",
-   "who": "J",
+   "who": "N",
    "shot": "txt4",
-   "text": "The kitchen.",
-   "cap": "The *kitchen...*",
+   "text": "It came from the kitchen.",
+   "cap": "It came from the *kitchen.*",
    "gap": 4.4,
-   "mood": "whisper",
+   "mood": "",
    "prompt": "",
-   "fx": "dry",
-   "dur": 2.196,
-   "dia": "The kitchen... It came from the kitchen."
+   "fx": "",
+   "dur": 2.196
   },
   {
    "id": "j05",
-   "who": "J",
+   "who": "N",
    "shot": "kitchen",
-   "text": "Hello? Is someone there?",
-   "cap": "Hello? Is someone *there?*",
+   "text": "He called out. Nobody answered.",
+   "cap": "He called out. *Nobody answered.*",
    "gap": 8.6,
-   "mood": "whisper",
+   "mood": "",
    "prompt": "",
-   "fx": "dry",
-   "dur": 2.137,
-   "dia": "Hello...? Is... is someone there?"
+   "fx": "",
+   "dur": 2.137
   },
   {
    "id": "n06",
@@ -245,28 +238,26 @@
   },
   {
    "id": "j06",
-   "who": "J",
+   "who": "N",
    "shot": "txt5",
-   "text": "No. No, no.",
-   "cap": "No. *No, no.*",
+   "text": "His room. Where he'd just been hiding.",
+   "cap": "His room. Where he'd just been *hiding.*",
    "gap": 2.6,
    "mood": "",
    "prompt": "",
-   "fx": "dry",
-   "dur": 2.235,
-   "dia": "(gasps) No. No, no, no."
+   "fx": "",
+   "dur": 2.235
   },
   {
    "id": "j09",
-   "who": "J",
+   "who": "N",
    "shot": "freeze",
-   "text": "Okay. Okay.",
-   "dia": "(exhales) Okay... okay. Okay.",
-   "cap": "Okay... *okay.*",
+   "text": "He shut the door... and finally let out a breath.",
+   "cap": "He shut the door... and finally let out a *breath.*",
    "gap": 11.0,
-   "mood": "whisper",
+   "mood": "",
    "prompt": "",
-   "fx": "dry",
+   "fx": "",
    "dur": 3.116
   },
   {
