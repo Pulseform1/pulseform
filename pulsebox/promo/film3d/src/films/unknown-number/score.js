@@ -1,7 +1,7 @@
 // Unknown Number: an eerie score and the sounds of a house at 3 AM. All synthesized.
-import { mtof, rnd, filt, panner, tone, hiss, pad, piano, braam, impact, riser, whoosh, heartbeat, glitch, chime, click, screech, buzz, step } from "../../audio.js";
+import { mtof, rnd, filt, panner, tone, hiss, pad, piano, braam, impact, riser, whoosh, heartbeat, glitch, chime, click, screech, buzz, step, softClip } from "../../audio.js";
 
-export function score({ ctx, music, sfx, big, tl, dur }) {
+export function score({ ctx, music, sfx, big, tl, dur, sample }) {
   const lines = tl.lines, shot = (id) => tl.shots.find((s) => s.id === id), line = (id) => lines.find((l) => l.id === id);
   const S = (id) => shot(id).t0, E = (id) => shot(id).t1, at = (id, lt) => S(id) + lt;
   const vibrate = (t, n = 3) => { for (let i = 0; i < n; i++) { tone(ctx, sfx, { t: t + i * 0.42, dur: 0.26, freq: 140, type: "square", gain: 0.06, cutoff: 260, release: 0.05 }); hiss(ctx, sfx, { t: t + i * 0.42, dur: 0.26, gain: 0.04, type: "bandpass", freq: 700, q: 3 }); } };
@@ -88,7 +88,7 @@ export function score({ ctx, music, sfx, big, tl, dur }) {
     hiss(ctx, sfx, { t: grabAt, dur: 0.2, gain: 0.08, type: "lowpass", freq: 900 }); }
   // ===== 3:04: in the house. Silence. Then the pans, downstairs, all at once.
   { const s = shot("txt4"), clang = s.t0 + 2.6; ding(s.t0 + 0.5, 0.05); drone(s.t0, clang - 0.05, 32, 0.08); drone(clang + 1.5, S("kitchen") + 4, 32, 0.1);
-    const end = crash(clang); impact(ctx, sfx, clang + 0.36, 0.35);
+    sample("pans", clang, { gain: 1.35, pan: 0.15 }); impact(ctx, sfx, clang + 0.33, 0.28);   // recorded pots and pans (CC0, FSD50K), mixed in public/films/unknown-number/sfx/pans.wav
     breath(clang + 0.15, 0.35, 0.12); for (let t = clang + 0.6; t < S("kitchen"); t += 0.38) heartbeat(ctx, sfx, t, 0.36); }
   // ===== down to the kitchen: slowly, one creaking stair at a time
   { const k = shot("kitchen"), run = k.t0 + k.L("j05") - 0.3; click(ctx, sfx, k.t0 + 0.05, 0.15);
@@ -101,19 +101,32 @@ export function score({ ctx, music, sfx, big, tl, dur }) {
   // ===== 3:05: in his room
   { const s = shot("txt5"); vibrate(s.t0 + 0.4, 2); ding(s.t0 + 0.55); stinger(s.t0 + 0.7, 0.2); }
   // ===== slowly back up; the door; the flashlight; he shuts it, breathes... turns around. The jump. The freeze.
-  { const f = shot("freeze"), up = f.t0 + 6.5, J9 = f.t0 + f.L("j09"), JUMP = J9 + line("j09").edur + 0.9, F = JUMP + 0.42;
+  { const f = shot("freeze"), up = f.t0 + 6.5, J9 = f.t0 + f.L("j09"), E0 = J9 + line("j09").edur, P = E0 + 2.1, P2 = P + 0.52, J3 = P + 0.96, F = J3 + 0.36;   // (matches SCARE in shots.js)
     for (let t = f.t0 + 0.3; t < up - 0.3; t += 0.98) softStep(t, 0.055);
     for (let t = f.t0 + 0.1; t < up; t += 1.6) breath(t, 0.7, 0.045);
     creak(up + 0.05, 1.4, 0.06, 48);   // the door swinging in
     for (let t = up + 0.7; t < up + 1.5; t += 0.5) softStep(t, 0.05);
     breath(up + 1.6, 0.8, 0.05); creak(up + 3.1, 0.6, 0.04, 52); click(ctx, sfx, up + 4.25, 0.12); tone(ctx, sfx, { t: up + 4.25, dur: 0.05, freq: 700, glideTo: 450, type: "square", gain: 0.012, release: 0.04 });   // eased shut, the latch
     drone(f.t0, up + 4.3, 30, 0.08);
-    tone(ctx, music, { t: up + 4.4, dur: JUMP - 0.3 - up - 4.4, freq: 2600, glideTo: 2900, gain: 0.004, attack: 1.5, release: 0.02 });   // a thin ring... and then nothing at all
-    // the jump: everything at once
-    impact(ctx, big, JUMP, 1.0); impact(ctx, sfx, JUMP, 0.8); braam(ctx, big, JUMP, 33, 0.4); screech(ctx, big, JUMP, 1.1, 0.34);
-    hiss(ctx, sfx, { t: JUMP, dur: 0.4, gain: 0.55, type: "highpass", freq: 700, release: 0.25 });
-    for (const m of [83, 84, 85, 89, 90]) tone(ctx, big, { t: JUMP, dur: 0.7, freq: mtof(m), glideTo: mtof(m + 0.6), type: "sawtooth", gain: 0.045, attack: 0.005, release: 0.3, cutoff: 6500 });
-    tone(ctx, sfx, { t: JUMP, dur: 1.3, freq: 60, glideTo: 24, gain: 0.55, release: 1.1 });
+    tone(ctx, music, { t: up + 4.4, dur: E0 + 0.4 - up - 4.4, freq: 2600, glideTo: 2900, gain: 0.004, attack: 1.5, release: 0.02 });   // a thin ring... and then nothing at all
+    // something breathes in, slowly, right behind him
+    hiss(ctx, sfx, { t: E0 + 0.45, dur: 1.3, gain: 0.09, type: "bandpass", freq: 380, freqTo: 700, q: 1.6, attack: 1.0, pan: 0.35 }); hiss(ctx, big, { t: E0 + 0.45, dur: 1.3, gain: 0.03, type: "bandpass", freq: 900, freqTo: 1400, q: 2, attack: 1.0 });
+    // the flashlight flickers: on (it's in the corner), off, on (closer), off... on
+    for (const t of [P, P + 0.38, P2, P + 0.86, J3]) { click(ctx, sfx, t - 0.01, 0.12); hiss(ctx, sfx, { t: t - 0.01, dur: 0.03, gain: 0.05, type: "highpass", freq: 5000 }); }
+    tone(ctx, sfx, { t: P, dur: 1.0, freq: 52, glideTo: 34, gain: 0.35, release: 0.9 }); for (const m of [70, 71, 77]) tone(ctx, big, { t: P, dur: 0.5, freq: mtof(m), type: "sawtooth", gain: 0.02, release: 0.4, cutoff: 3000 });
+    impact(ctx, sfx, P2, 0.6); for (const m of [76, 77, 82, 83]) tone(ctx, big, { t: P2, dur: 0.45, freq: mtof(m), glideTo: mtof(m + 0.5), type: "sawtooth", gain: 0.035, release: 0.35, cutoff: 5000 });
+    for (let i = 0; i < 4; i++) hiss(ctx, sfx, { t: P2 + 0.02 + i * 0.03 + rnd() * 0.015, dur: 0.012, gain: 0.3, type: "highpass", freq: 1800 });   // its neck cracking as it tilts
+    // the lunge: everything at once, and it shrieks
+    impact(ctx, big, J3, 1.0); impact(ctx, sfx, J3, 0.9); braam(ctx, big, J3, 33, 0.45); screech(ctx, big, J3, 1.2, 0.4);
+    hiss(ctx, sfx, { t: J3, dur: 0.45, gain: 0.6, type: "highpass", freq: 600, release: 0.3 });
+    for (const m of [83, 84, 85, 89, 90, 95]) tone(ctx, big, { t: J3, dur: 0.75, freq: mtof(m), glideTo: mtof(m + 0.8), type: "sawtooth", gain: 0.045, attack: 0.004, release: 0.3, cutoff: 7000 });
+    tone(ctx, sfx, { t: J3, dur: 1.4, freq: 62, glideTo: 22, gain: 0.6, release: 1.2 });
+    { const out = ctx.createGain(), ws = ctx.createWaveShaper(); ws.curve = softClip(4); out.gain.setValueAtTime(0, J3); out.gain.linearRampToValueAtTime(0.22, J3 + 0.03); out.gain.setValueAtTime(0.22, J3 + 0.5); out.gain.exponentialRampToValueAtTime(0.001, J3 + 1.1);
+      const f1 = filt(ctx, "bandpass", 850, 3), f2 = filt(ctx, "bandpass", 1350, 4), f3 = filt(ctx, "bandpass", 2700, 5); ws.connect(f1); ws.connect(f2); ws.connect(f3); f1.connect(out); f2.connect(out); f3.connect(out); out.connect(sfx); out.connect(big);
+      for (let i = 0; i < 6; i++) { const o = ctx.createOscillator(); o.type = "sawtooth"; const f0 = 330 * (1 + i * 0.017); o.frequency.setValueAtTime(f0, J3); o.frequency.exponentialRampToValueAtTime(f0 * 2.6, J3 + 0.5); o.frequency.exponentialRampToValueAtTime(f0 * 2.2, J3 + 1.1);
+        const v = ctx.createOscillator(), vg = ctx.createGain(); v.frequency.value = 21 + i * 3; vg.gain.value = 45; v.connect(vg); vg.connect(o.detune); o.connect(ws); o.start(J3); o.stop(J3 + 1.15); v.start(J3); v.stop(J3 + 1.15); }
+      hiss(ctx, sfx, { t: J3, dur: 1.0, gain: 0.12, type: "bandpass", freq: 2400, q: 1.2, release: 0.4 }); }   // its shriek: a torn throat
+    if (tl.sfx.includes("scream")) sample("scream", J3 + 0.04, { gain: 0.9, bus: sfx });   // and Jay
     // the freeze: a tape stop, then a thin high ring over a low hum
     tone(ctx, sfx, { t: F - 0.05, dur: 0.6, freq: 300, glideTo: 30, type: "sawtooth", gain: 0.12, cutoff: 1200, release: 0.5 }); impact(ctx, big, F, 0.3);
     tone(ctx, music, { t: F + 0.3, dur: dur - F, freq: 3520, gain: 0.006, attack: 1.5, release: 1 }); drone(F + 0.2, dur, 29, 0.1);

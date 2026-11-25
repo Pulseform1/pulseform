@@ -16,7 +16,7 @@ function reverb(ctx, seconds, decay = 3) {
   for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
   const conv = ctx.createConvolver(); conv.buffer = ir; return conv;
 }
-function softClip(k) { const n = 2048, c = new Float32Array(n); for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); } return c; }
+export function softClip(k) { const n = 2048, c = new Float32Array(n); for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); } return c; }
 
 // one shaped note
 export function tone(ctx, bus, { t, dur, freq, type = "sine", gain = 0.2, attack = 0.005, release = 0.2, cutoff = 0, q = 0.7, glideTo = 0, detune = 0, pan = 0, cutoffTo = 0 }) {
@@ -108,7 +108,7 @@ function voiceChain(ctx, src, line, buses) {
 }
 
 // ---------------------------------------------------------------- the mix
-export async function renderAudio(tl, { voDir, score }) {
+export async function renderAudio(tl, { voDir, sfxDir, score }) {
   seed = 5;
   const dur = tl.duration, ctx = new OfflineAudioContext(2, Math.ceil((dur + 0.2) * SR), SR);
   const master = ctx.createDynamicsCompressor(); master.threshold.value = -12; master.ratio.value = 3; master.attack.value = 0.004; master.release.value = 0.25; master.connect(ctx.destination);
@@ -139,8 +139,16 @@ export async function renderAudio(tl, { voDir, score }) {
     if (dk.sfx) { sfx.gain.setTargetAtTime(0.75 * dk.sfx, a, 0.05); sfx.gain.setTargetAtTime(0.75, b + 0.05, 0.3); }
   });
 
+  // ---- recorded sound effects the film asks for (script.json "sfx": public/films/<id>/sfx/<name>.wav), played by the score
+  const samples = {};
+  await Promise.all((tl.sfx || []).map(async (n) => { const r = await fetch(`${sfxDir}/${n}.wav`); samples[n] = await ctx.decodeAudioData(await r.arrayBuffer()); }));
+  const sample = (name, t, { gain = 1, pan = 0, bus = sfx, rate = 1 } = {}) => {
+    const s = ctx.createBufferSource(); s.buffer = samples[name]; s.playbackRate.value = rate; const g = ctx.createGain(); g.gain.value = gain; s.connect(g);
+    if (pan) { const p = panner(ctx, pan); g.connect(p); p.connect(bus); } else g.connect(bus); s.start(Math.max(0, t)); return s;
+  };
+
   // ---- the score and sound effects for this film
-  score({ ctx, music, sfx, big, tl, dur });
+  score({ ctx, music, sfx, big, tl, dur, sample });
 
   music.gain.setTargetAtTime(0, dur - 0.25, 0.12);
 

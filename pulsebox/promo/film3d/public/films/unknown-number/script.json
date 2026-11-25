@@ -269,7 +269,7 @@
    "shot": "freeze",
    "text": "He forgot the only rule of The Endless Halls.",
    "cap": "He forgot the only rule of *The Endless Halls...*",
-   "gap": 2.6,
+   "gap": 4.7,
    "mood": "eerie",
    "prompt": "",
    "fx": "",
@@ -323,5 +323,8 @@
    "fx": "",
    "dur": 4.307
   }
+ ],
+ "sfx": [
+  "pans"
  ]
 }

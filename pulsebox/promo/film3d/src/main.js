@@ -34,7 +34,7 @@ async function boot() {
     shots[shots.length - 1].lines.push(l);
   });
   shots.forEach((s, i) => { s.t1 = shots[i + 1] ? shots[i + 1].t0 : duration; s.dur = s.t1 - s.t0; s.lead = s.lines[0].t - s.t0; s.L = (id) => { const l = s.lines.find((x) => x.id === id); return l ? l.t - s.t0 : 0; }; s.E = (id) => { const l = s.lines.find((x) => x.id === id); return l ? l.t + l.edur - s.t0 : 0; }; });
-  const tl = { lines: script.lines, shots, duration, duck: script.duck };
+  const tl = { lines: script.lines, shots, duration, duck: script.duck, sfx: script.sfx || [] };
 
   // ---- renderer
   const out = document.getElementById("out"), g = out.getContext("2d");
@@ -83,7 +83,7 @@ async function boot() {
     await enc.flush(); muxer.finalize();
     return new Blob([target.buffer], { type: "video/mp4" });
   }
-  async function exportAudio() { const buf = await renderAudio(tl, { voDir: `${base}/vo`, score }); return new Blob([toWav(buf)], { type: "audio/wav" }); }
+  async function exportAudio() { const buf = await renderAudio(tl, { voDir: `${base}/vo`, sfxDir: `${base}/sfx`, score }); return new Blob([toWav(buf)], { type: "audio/wav" }); }
   const download = (blob, name) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); };
 
   window.film = { tl, duration, frames: Math.ceil(duration * FPS), frame, sets: route.sets, exportVideo, exportAudio, download, info: () => shots.map((s) => `${s.id} ${s.t0.toFixed(2)}-${s.t1.toFixed(2)}`) };

@@ -73,7 +73,8 @@ export function makeShots(renderer, tl) {
   const faceFill = new THREE.PointLight(0xcfd8ff, 0, 1.6, 1.6); bed.scene.add(faceFill);
   { const ceil = new THREE.Mesh(new THREE.PlaneGeometry(5.0, 7), new THREE.MeshStandardMaterial({ color: 0x1c1830, roughness: 0.95 })); ceil.rotation.x = Math.PI / 2; ceil.position.set(0.1, 3.2, 0); ceil.receiveShadow = true; bed.scene.add(ceil);
     const front = new THREE.Mesh(new THREE.PlaneGeometry(5.0, 3.2), new THREE.MeshStandardMaterial({ color: 0x2b2446, roughness: 0.95 })); front.rotation.y = Math.PI; front.position.set(0.1, 1.6, 3.45); bed.scene.add(front); }   // a ceiling and a fourth wall (the reveal looks up and across the room)
-  const CORNER = V(2.2, 0, -1.93), UP = 6.5;   // where the pale man stands: the corner behind the door (it opens into the room); how long the climb back up takes
+  const CORNER = V(2.2, 0, -1.93), UP = 6.5;
+  const SCARE = { react: 0.9, pov: 2.1, off1: 0.38, on2: 0.52, off2: 0.86, on3: 0.96, hold: 0.36 };   // after his last "okay": he freezes; his eyes (pov); the flashlight flickers off and on; the lunge; the pause   // where the pale man stands: the corner behind the door (it opens into the room); how long the climb back up takes
   const moonFill = new THREE.SpotLight(0xe6ecff, 0, 7, 0.42, 0.9, 1.2); moonFill.position.set(2.45, 2.95, -1.95); moonFill.target.position.set(1.4, 2.0, -0.6); bed.scene.add(moonFill, moonFill.target);   // a cold key on his face
 
   const TYPE = 2.3, TYPE_AT = () => at("txt1", shot("txt1").L("j01") + 1.0), SENT_AT = () => TYPE_AT() + TYPE + 0.25;   // his joke reply, typed across two shots
@@ -256,7 +257,7 @@ export function makeShots(renderer, tl) {
       return { set: house, fx: { vignette: 0.8 } };
     },
     "freeze"(lt, s, t) {   // slowly back up; into his room; the flashlight finds nothing; he shuts the door and breathes... and turns around
-      const up = UP, J9 = s.L("j09"), JUMP = J9 + line("j09").edur + 0.9, F = JUMP + 0.42, tt = Math.min(lt, F);   // after F everything holds still
+      const up = UP, J9 = s.L("j09"), E0 = J9 + line("j09").edur, JUMP = E0 + SCARE.pov, J3 = JUMP + SCARE.on3, F = J3 + SCARE.hold, tt = Math.min(lt, F);   // after F everything holds still
       if (tt < up) {   // back up the stairs, one step at a time
         const k = clamp(tt / up), st = house.stairs, z = lerp(0.6, -6.9, k * 0.85 + ease(k) * 0.15), y = z < st.topZ ? 3.0 : z > st.bottomZ ? 0 : 3.0 * (z - st.bottomZ) / (st.topZ - st.bottomZ), j = house.jay.root;
         house.update(t, { fallen: 1, sinceFall: 20, roomDoor: 0.22, roomLit: 0.35 }); j.position.set(lerp(2.75, 1.6, clamp((z + 4.9) / -1.8)), y, z); j.rotation.set(0, Math.PI + Math.sin(tt * 0.7) * 0.1, 0);
@@ -292,23 +293,36 @@ export function makeShots(renderer, tl) {
       bed.update(tt, darkRoom({ doorOpen: 0, doorIn: true, locked: false, room: 0.5 }));
       if (tt < JUMP) {   // from the corner, above him: he leans his head on the door and breathes out... then slowly turns around
         const turn = ease(clamp((tt - (JUMP - 1.0)) / 0.95)); j.position.set(1.88, 0, -1.02); j.rotation.set(0, Math.PI / 2 + turn * 0.75, 0);
-        pose(bed.jay, "reach", tt, { k: 0.55 * (1 - turn), fear: 0.5 + turn * 0.45, pitch: 0.3 * (1 - turn), yaw: turn * 0.4, noBlink: turn > 0 }); bed.jay.J.spine.rotation.x += 0.15 * (1 - turn);
+        pose(bed.jay, "reach", tt, { k: 0.55 * (1 - turn), fear: Math.max(tt > E0 + SCARE.react ? 0.82 : 0.5, 0.5 + turn * 0.45), pitch: 0.3 * (1 - turn), yaw: turn * 0.4, noBlink: tt > E0 + SCARE.react });   // a breath behind him: he freezes bed.jay.J.spine.rotation.x += 0.15 * (1 - turn);
         oneHand(bed.jay, phone); phone.userData.set({ bright: 0.35, torchOn: false }); man.root.visible = false;   // (the camera is where he stands)
         const h = headPos(bed.jay), k = clamp((tt - up - C) / (JUMP - up - C)); aim(bed.camera, V(lerp(2.47, 2.42, k), lerp(1.5, 1.44, k), lerp(-2.02, -1.95, k)), V(h.x + 0.05, h.y - 0.08, h.z), 54);   // from the dark corner behind the door, close on his face
         faceFill.position.set(h.x + 0.32, h.y - 0.28, h.z - 0.18); faceFill.intensity = 0.6;
         return { set: bed, fx: { vignette: 0.9 } };
       }
-      // JUMP: his eyes, his light swinging up into the face right there. It lunges.
-      manDark(false); man.root.visible = true;
-      const v = clamp((tt - JUMP) / 0.3), lunge = 1 - Math.pow(1 - v, 3); j.position.set(1.88, 0, -1.02); j.rotation.set(0, -0.1, 0); pose(bed.jay, "torch", tt, { fear: 1 }); bed.jay.J.head.visible = false;
-      man.pose({ tilt: 0.12, turn: 0, hunch: 0.22 + 0.42 * lunge, reach: 0.85 * lunge }); man.J["shoulder-1"].rotation.x = -1.0 * lunge; man.J.mouth.scale.set(1 + 0.6 * lunge, 2.4 + 2.0 * lunge, 0.5);
-      man.root.position.copy(CORNER).add(V(-0.03, 0, 0.12 * lunge));
-      const eye = V(1.93, 1.43, -1.0), face = man.J.head.getWorldPosition(V(0, 0, 0)); aim(bed.camera, eye, face.clone().add(V(0, -0.02, 0)), 62);
-      const sh = clamp(1 - v * 0.6); bed.camera.position.x += Math.sin(t * 61) * 0.035 * sh; bed.camera.position.y += Math.sin(t * 53) * 0.03 * sh; bed.camera.rotation.z += Math.sin(t * 37) * 0.05 * sh;
-      phone.position.copy(eye).add(V(0.12, -0.34, -0.12)); phone.lookAt(phone.position.clone().add(phone.position.clone().sub(face).normalize())); phone.userData.set({ bright: 0.4, torchOn: false });
-      moonFill.position.copy(eye).add(V(0.08, -0.4, -0.08)); moonFill.target.position.copy(face); moonFill.intensity = 0.65;   // his flashlight on its face, from below
-      const frozen = lt >= F;
-      return { set: bed, fx: { vignette: 0.9, flash: tt - JUMP < 0.07 ? 0.3 : 0, chroma: frozen ? 0 : clamp(1 - (tt - JUMP) / 0.3), paused: frozen ? clamp((lt - F) / 0.15) : 0, gray: frozen ? 0.5 : 0, red: frozen ? 0.06 : 0 }, state: frozen ? { cta: ctaTimes() } : {} };
+      // JUMP: his eyes. His flashlight flickers, and every time it comes back on, it's closer. Then it lunges.
+      const u2 = tt - JUMP, phase = u2 < SCARE.off1 ? 1 : u2 < SCARE.on2 ? 0 : u2 < SCARE.off2 ? 2 : u2 < SCARE.on3 ? 0 : 3;
+      j.position.set(1.88, 0, -1.02); j.rotation.set(0, -0.1, 0); pose(bed.jay, "torch", tt, { fear: 1 }); bed.jay.J.head.visible = false;
+      const eye = V(1.93, 1.43, -1.0), lungeK = phase === 3 ? 1 - Math.pow(1 - clamp((u2 - SCARE.on3) / 0.16), 3) : 0;
+      const spot = phase === 1 ? CORNER.clone() : phase === 2 ? CORNER.clone().add(V(-0.22, 0, 0.42)) : CORNER.clone().add(V(-0.3, 0, 0.5 + 0.12 * lungeK));
+      man.root.visible = phase > 0; manDark(false); man.root.position.copy(spot); man.root.rotation.y = Math.atan2(eye.x - spot.x, eye.z - spot.z);
+      if (phase === 1) man.pose({ tilt: 0.1, hunch: 0.12 });
+      if (phase === 2) { man.pose({ tilt: 0.75, turn: 0.15, hunch: 0.3, reach: 0.35 }); man.J["shoulder-1"].rotation.x = -0.45; man.J.mouth.scale.set(1.2, 4.0, 0.5); }
+      if (phase === 3) { const jit = Math.sin(t * 71) * 0.06 * (1 - lungeK * 0.5);
+        man.pose({ tilt: -0.25 + jit, turn: jit, hunch: 0.3 + 0.2 * lungeK, reach: 0.95 * lungeK }); man.J["shoulder-1"].rotation.x = -1.3 * lungeK; man.J.shoulder1.rotation.z = -0.25 * lungeK; man.J["shoulder-1"].rotation.z = 0.25 * lungeK;
+        man.J.mouth.scale.set(1 + 0.9 * lungeK, 2.4 + 4.2 * lungeK, 0.5); }
+      if (phase === 0) man.J.mouth.scale.set(1, 2.4, 0.5);
+      if (phase >= 2) {   // keep the face upright and pointed at him however far it leans, and put it where it needs to be: looming, then in his face
+        man.J.head.rotation.x = -(man.J.spine.rotation.x + man.J.neck.rotation.x) + 0.12;
+        const dirC = V(CORNER.x - eye.x, 0, CORNER.z - eye.z).normalize(), want = eye.clone().addScaledVector(dirC, phase === 2 ? 0.95 : lerp(0.78, 0.47, lungeK)).add(V(phase === 2 ? 0.05 : 0.02, phase === 2 ? 0.42 : lerp(0.25, 0.04, lungeK), 0));
+        man.root.updateMatrixWorld(true); const hw = man.J.head.getWorldPosition(V(0, 0, 0)); man.root.position.add(want.sub(hw)); man.root.updateMatrixWorld(true);
+      }
+      const face = man.J.head.getWorldPosition(V(0, 0, 0)), target = phase ? face.clone().add(V(0, -0.02 - (phase === 1 ? 0.12 : 0), 0)) : V(2.2, 1.9, -1.9);
+      aim(bed.camera, eye, target, phase === 3 ? 66 : 60);
+      const sh = phase === 3 ? clamp(1 - (u2 - SCARE.on3) * 1.6) : phase === 2 ? 0.25 : 0.08; bed.camera.position.x += Math.sin(t * 61) * 0.04 * sh; bed.camera.position.y += Math.sin(t * 53) * 0.035 * sh; bed.camera.rotation.z += Math.sin(t * 37) * 0.06 * sh;
+      phone.position.copy(eye).add(V(0.12, -0.34, -0.12)); phone.lookAt(phone.position.clone().add(phone.position.clone().sub(target).normalize())); phone.userData.set({ bright: phase ? 0.4 : 0.05, torchOn: false });
+      const dist = face.distanceTo(eye); moonFill.position.copy(eye).add(V(0.08, -0.4, -0.08)); moonFill.target.position.copy(face); moonFill.intensity = phase ? (phase === 3 ? 0.5 : 1.05) * Math.pow(dist, 1.2) : 0;   // his flashlight, from below (the same brightness on its face however close it gets)
+      const frozen = lt >= F, k3 = phase === 3 ? u2 - SCARE.on3 : 9;
+      return { set: bed, exposure: phase ? 1 : 0.35, fx: { vignette: 0.92, flash: k3 < 0.07 ? 0.32 : 0, chroma: frozen ? 0 : phase === 3 ? clamp(1 - k3 / 0.3) : phase === 2 && u2 - SCARE.on2 < 0.08 ? 0.6 : 0, paused: frozen ? clamp((lt - F) / 0.15) : 0, gray: frozen ? 0.45 : 0, red: frozen ? 0.1 : phase === 3 ? 0.35 * clamp(1 - k3 / 0.25) : 0 }, state: frozen ? { cta: ctaTimes() } : {} };
     },
   };
   let ctaCache = null;
