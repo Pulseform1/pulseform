@@ -7,9 +7,12 @@
    "cfg": 0.5
   },
   "J": {
-   "ref": "jay.wav",
+   "engine": "dia",
+   "prompt": "jay-dia.wav",
+   "promptText": "[S1] Dude, this game gets me every single time. (laughs) Okay. One more level.",
    "ex": 0.55,
-   "cfg": 0.45
+   "cfg": 0.45,
+   "ref": "jay.wav"
   }
  },
  "moods": {
@@ -63,13 +66,14 @@
    "id": "j01",
    "who": "J",
    "shot": "txt1",
-   "text": "Who is this?",
-   "cap": "Who is this?",
-   "gap": 3.6,
-   "mood": "whisper",
+   "text": "Okay... very funny. Who is this?",
+   "cap": "Okay... very funny. *Who is this?*",
+   "gap": 2.6,
+   "mood": "",
    "prompt": "",
-   "fx": "",
-   "dur": 1.023
+   "fx": "dry",
+   "dur": 4.908,
+   "dia": "(chuckle) Okay... very funny. Who is this?"
   },
   {
    "id": "e01",
@@ -84,12 +88,25 @@
    "dur": 2.547
   },
   {
+   "id": "j07",
+   "who": "J",
+   "shot": "break1",
+   "text": "It's probably just Maya messing with me.",
+   "dia": "(laughs) It's probably just Maya messing with me.",
+   "cap": "It's probably just *Maya* messing with me.",
+   "gap": 1.4,
+   "mood": "",
+   "prompt": "",
+   "fx": "dry",
+   "dur": 2.577
+  },
+  {
    "id": "n02",
    "who": "N",
-   "shot": "txt2",
+   "shot": "break1",
    "text": "Five minutes later.",
    "cap": "*Five minutes later.*",
-   "gap": 0.8,
+   "gap": 3.4,
    "mood": "eerie",
    "prompt": "",
    "fx": "",
@@ -99,13 +116,27 @@
    "id": "j02",
    "who": "J",
    "shot": "txt2",
-   "text": "That's my street.",
-   "cap": "That's... *my street.*",
-   "gap": 2.4,
+   "text": "Okay. That's my street. That's not funny.",
+   "cap": "Okay... that's *my street.* That's not funny.",
+   "gap": 3.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "dry",
+   "dur": 1.059,
+   "dia": "Wait. (nervous laugh) Okay... that's my street. That's not funny."
+  },
+  {
+   "id": "j08",
+   "who": "J",
+   "shot": "wait",
+   "text": "Come on... pick up. Pick up.",
+   "dia": "Come on... pick up. Come on, pick up.",
+   "cap": "Come on... *pick up.*",
+   "gap": 7.4,
    "mood": "whisper",
    "prompt": "",
-   "fx": "",
-   "dur": 1.059
+   "fx": "dry",
+   "dur": 1.5
   },
   {
    "id": "n03",
@@ -113,7 +144,7 @@
    "shot": "wait",
    "text": "Then nothing. For ten whole minutes.",
    "cap": "Then *nothing.* For ten whole minutes.",
-   "gap": 6.5,
+   "gap": 2.2,
    "mood": "eerie",
    "prompt": "",
    "fx": "",
@@ -138,10 +169,11 @@
    "text": "That's my house. No. No, no, no.",
    "cap": "That's my *house.* No. No, no, no.",
    "gap": 2.3,
-   "mood": "panic",
+   "mood": "",
    "prompt": "",
-   "fx": "",
-   "dur": 3.07
+   "fx": "dry",
+   "dur": 3.07,
+   "dia": "(gasps) That's my house. No. No, no, no, no."
   },
   {
    "id": "e02",
@@ -176,8 +208,9 @@
    "gap": 4.4,
    "mood": "whisper",
    "prompt": "",
-   "fx": "",
-   "dur": 0.994
+   "fx": "dry",
+   "dur": 0.994,
+   "dia": "The kitchen... It came from the kitchen."
   },
   {
    "id": "j05",
@@ -185,11 +218,12 @@
    "shot": "kitchen",
    "text": "Hello? Is someone there?",
    "cap": "Hello? Is someone *there?*",
-   "gap": 3.4,
-   "mood": "scared",
+   "gap": 8.6,
+   "mood": "whisper",
    "prompt": "",
-   "fx": "",
-   "dur": 1.753
+   "fx": "dry",
+   "dur": 1.753,
+   "dia": "Hello...? Is... is someone there?"
   },
   {
    "id": "n06",
@@ -210,10 +244,24 @@
    "text": "No. No, no.",
    "cap": "No. *No, no.*",
    "gap": 2.6,
-   "mood": "panic",
+   "mood": "",
    "prompt": "",
-   "fx": "",
-   "dur": 2.015
+   "fx": "dry",
+   "dur": 2.015,
+   "dia": "(gasps) No. No, no, no."
+  },
+  {
+   "id": "j09",
+   "who": "J",
+   "shot": "freeze",
+   "text": "Okay. Okay.",
+   "dia": "(exhales) Okay... okay. Okay.",
+   "cap": "Okay... *okay.*",
+   "gap": 11.0,
+   "mood": "whisper",
+   "prompt": "",
+   "fx": "dry",
+   "dur": 1.5
   },
   {
    "id": "n07",
@@ -221,7 +269,7 @@
    "shot": "freeze",
    "text": "He forgot the only rule of The Endless Halls.",
    "cap": "He forgot the only rule of *The Endless Halls...*",
-   "gap": 7.2,
+   "gap": 2.6,
    "mood": "eerie",
    "prompt": "",
    "fx": "",
@@ -255,8 +303,8 @@
    "id": "n09",
    "who": "N",
    "shot": "freeze",
-   "text": "The Endless Halls is one of seventy-seven free games on Pulsebox.",
-   "cap": "*The Endless Halls* is one of 77 free games on Pulsebox.",
+   "text": "The Endless Halls is one of tons of free games on Pulsebox.",
+   "cap": "*The Endless Halls* is one of *tons* of free games on Pulsebox.",
    "gap": 0.6,
    "mood": "",
    "prompt": "",

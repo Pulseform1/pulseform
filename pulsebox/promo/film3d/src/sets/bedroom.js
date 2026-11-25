@@ -112,7 +112,7 @@ export function createBedroom({ headset = false, lamp = false } = {}) {
       screenLight.intensity = (p.screenBright ?? 1) * 4; scrMat.emissiveIntensity = 1.25 * (p.screenBright ?? 1);
       screenLight.color.set(p.screenRed ? 0xff4a6a : 0x9aa8ff);
       if (!p.screenTex) { scrMat.emissiveMap = screen.texture; screen.draw({ t: lt, ...p.screen }); } else scrMat.emissiveMap = p.screenTex;
-      hinge.rotation.y = (p.doorOpen ?? 0) * 1.5; lock.rotation.z = p.locked ? Math.PI / 2 : 0;
+      hinge.rotation.y = (p.doorOpen ?? 0) * (p.doorIn ? -1.5 : 1.5);   // doorIn: it swings into the room lock.rotation.z = p.locked ? Math.PI / 2 : 0;
       lampLight.intensity = lamp ? (p.lampOn ?? 1) * 2.4 : 0; lampBulb.visible = lamp && (p.lampOn ?? 1) > 0.5;
       const room = p.room ?? 1; hemi.intensity = 0.35 * room; rim.intensity = 6 * room; moon.intensity *= room;   // "his room went dark"
       const ring = p.ring ?? 0; phoneScr.emissiveIntensity = ring * 1.2; phoneGlow.intensity = ring * 1.5 * (Math.sin(lt * 10) > 0 ? 1 : 0.6);

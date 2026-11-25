@@ -109,7 +109,7 @@ export function makePaleMan() {
   const head = add(neck, "head", 0, 0.27, 0.03);
   const skull = new THREE.Mesh(new THREE.SphereGeometry(0.13, 32, 24), skin); skull.scale.set(0.88, 1.42, 1.0); head.add(skull);
   for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.034, 16, 12), hollow); e.position.set(0.047 * s, 0.03, 0.112); e.scale.set(1.05, 1.7, 0.55); head.add(e); }
-  const mouth = new THREE.Mesh(new THREE.SphereGeometry(0.02, 14, 10), hollow); mouth.position.set(0, -0.1, 0.112); mouth.scale.set(1.0, 2.4, 0.5); head.add(mouth);
+  const mouth = new THREE.Mesh(new THREE.SphereGeometry(0.02, 14, 10), hollow); mouth.position.set(0, -0.1, 0.112); mouth.scale.set(1.0, 2.4, 0.5); head.add(mouth); J.mouth = mouth;
   for (const s of [-1, 1]) {
     const sh = add(spine, "shoulder" + s, 0.215 * s, 0.7, 0); sh.add(ball(0.06));
     const up = seg(0.046, 0.5); up.position.y = -0.3; sh.add(up);

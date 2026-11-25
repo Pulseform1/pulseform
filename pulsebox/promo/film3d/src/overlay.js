@@ -144,7 +144,7 @@ function drawCta(g, t, c) {
     g.restore();
     const k2 = clamp((t - c.tFree) / 0.3);
     if (k2 > 0) { g.save(); g.globalAlpha = a1 * k2; g.translate(W / 2, 390); g.scale(0.8 + 0.2 * easeBack(k2), 0.8 + 0.2 * easeBack(k2)); g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round";
-      g.font = "400 104px 'Luckiest Guy', sans-serif"; g.lineWidth = 18; g.strokeStyle = "#0b0d1a"; g.strokeText("77 FREE GAMES", 0, 0); g.fillStyle = "#ffd23d"; g.fillText("77 FREE GAMES", 0, 0); g.restore(); }
+      g.font = "400 104px 'Luckiest Guy', sans-serif"; g.lineWidth = 18; g.strokeStyle = "#0b0d1a"; const ft = c.freeText || "77 FREE GAMES", fw = g.measureText(ft).width; if (fw > 960) g.scale(960 / fw, 960 / fw); g.strokeText(ft, 0, 0); g.fillStyle = "#ffd23d"; g.fillText(ft, 0, 0); g.restore(); }
     const chips = [["RACING", "#ff3df0"], ["HORROR", "#ff2a5a"], ["HEISTS", "#ffd23d"], ["SPORTS", "#3dff7a"]];
     g.save(); g.font = "900 38px 'Inter', sans-serif"; const cw = chips.map(([s]) => g.measureText(s).width + 56), tot = cw.reduce((a, b) => a + b, 0) + 18 * 3; let x = (W - tot) / 2;
     chips.forEach(([s, col], i) => { const kk = clamp((t - c.genres[i]) / 0.25); if (kk > 0) { g.save(); g.globalAlpha = a1 * kk; g.translate(x + cw[i] / 2, 505); g.scale(0.6 + 0.4 * easeBack(kk), 0.6 + 0.4 * easeBack(kk)); g.fillStyle = col; rr(g, -cw[i] / 2, -36, cw[i], 72, 36); g.fill(); g.fillStyle = "#0b0d1a"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(s, 0, 2); g.restore(); } x += cw[i] + 18; });
