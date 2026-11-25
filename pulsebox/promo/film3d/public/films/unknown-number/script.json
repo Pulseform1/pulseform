@@ -53,7 +53,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 4.635
+   "dur": 3.416
   },
   {
    "id": "n01",
@@ -65,7 +65,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 4.146
+   "dur": 3.454
   },
   {
    "id": "j01",
@@ -90,7 +90,7 @@
    "mood": "",
    "prompt": "WOULD YOU TEXT BACK?",
    "fx": "",
-   "dur": 2.104
+   "dur": 1.79
   },
   {
    "id": "j07",
@@ -115,7 +115,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 1.056
+   "dur": 0.942
   },
   {
    "id": "j02",
@@ -153,7 +153,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 1.964
+   "dur": 2.342
   },
   {
    "id": "n04",
@@ -165,7 +165,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 1.874
+   "dur": 2.18
   },
   {
    "id": "j03",
@@ -190,7 +190,7 @@
    "mood": "",
    "prompt": "RUN OR HIDE?",
    "fx": "",
-   "dur": 1.973
+   "dur": 2.206
   },
   {
    "id": "n05",
@@ -202,7 +202,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 2.533
+   "dur": 2.151
   },
   {
    "id": "j04",
@@ -240,7 +240,8 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 2.355
+   "dur": 2.897,
+   "dia": "The pans were on the floor. The kitchen was empty. Completely empty."
   },
   {
    "id": "j06",
@@ -278,7 +279,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 2.459
+   "dur": 2.183
   },
   {
    "id": "n08",
@@ -290,7 +291,7 @@
    "mood": "eerie",
    "prompt": "",
    "fx": "",
-   "dur": 1.145
+   "dur": 1.0
   },
   {
    "id": "e03",
@@ -302,7 +303,7 @@
    "mood": "",
    "prompt": "WHAT HAPPENS NEXT?",
    "fx": "",
-   "dur": 1.918
+   "dur": 1.73
   },
   {
    "id": "n09",
@@ -314,7 +315,7 @@
    "mood": "",
    "prompt": "",
    "fx": "",
-   "dur": 3.148
+   "dur": 2.864
   },
   {
    "id": "n10",
@@ -326,7 +327,7 @@
    "mood": "",
    "prompt": "",
    "fx": "",
-   "dur": 5.281
+   "dur": 4.517
   }
  ],
  "sfx": [
