@@ -29,7 +29,12 @@ CK = "nari-labs/Dia-1.6B-0626"
 proc = AutoProcessor.from_pretrained(CK); model = DiaForConditionalGeneration.from_pretrained(CK, torch_dtype=torch.float32).eval()
 asr = WhisperModel("base.en", device="cpu", compute_type="int8")
 
-def norm(s): return re.sub(r"[^a-z0-9 ]+", " ", re.sub(r"\([^)]*\)", " ", s.lower())).split()
+NUM = {"seventy-seven": "77", "forty-seven": "47", "two forty-seven": "2 47", "three-oh-two": "3 02", "ten": "10", "two": "2", "three": "3", "five": "5"}
+def norm(s):   # compare what was said with what was meant: no tags, times and numbers as digits, the web address as one word
+    s = re.sub(r"\([^)]*\)", " ", s.lower()).replace("box dot pulseform dot org", "boxpulseformorg").replace("box.pulseform.org", "boxpulseformorg")
+    s = re.sub(r"(\d)[:.](\d\d)", r"\1 \2", s)
+    for k, v in sorted(NUM.items(), key=lambda kv: -len(kv[0])): s = re.sub(rf"\b{k}\b", v, s)
+    return re.sub(r"[^a-z0-9 ]+", " ", s).split()
 def take(prompt, ptext, text, seed, max_tokens):
     torch.manual_seed(seed); np.random.seed(seed)
     inputs = proc(text=[ptext + " " + text], audio=[prompt], padding=True, return_tensors="pt", sampling_rate=44100)
@@ -73,6 +78,6 @@ for spk, v in script["voices"].items():
             print(f"  {line['id']} seed {seed}: {score:.2f} {len(w)/sr:.2f}s \"{heard}\"", flush=True)
             if not best or score > best[1]: best = (w, score, sr)
             if score >= 0.9: break
-        w, score, sr = best; w = level(w, sr, -21 if line.get("mood") == "whisper" else -19); sf.write(fdir / "vo" / f"{line['id']}.wav", w, sr); line["dur"] = round(len(w) / sr, 3)
+        w, score, sr = best; w = level(w, sr, v.get("level", -19) - (2 if line.get("mood") == "whisper" else 0)); sf.write(fdir / "vo" / f"{line['id']}.wav", w, sr); line["dur"] = round(len(w) / sr, 3)
         print(f"{line['id']}: {line['dur']}s (match {score:.2f})", flush=True)
         spath.write_text(json.dumps(script, indent=1, ensure_ascii=False) + "\n")
