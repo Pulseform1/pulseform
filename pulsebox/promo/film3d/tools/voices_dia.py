@@ -30,7 +30,7 @@ import os; SEED = int(os.environ.get("DIA_SEED", "100"))   # change it to get di
 proc = AutoProcessor.from_pretrained(CK); model = DiaForConditionalGeneration.from_pretrained(CK, torch_dtype=torch.float32).eval()
 asr = WhisperModel("base.en", device="cpu", compute_type="int8")
 
-NUM = {"seventy-seven": "77", "seventy-one": "71", "forty-seven": "47", "two forty-seven": "2 47", "three-oh-two": "3 02", "ninety": "90", "twenty": "20", "nine": "9", "ten": "10", "forty-six": "46", "thirty": "30", "twelve": "12", "ninety-eight": "98", "a hundred": "100", "one hundred": "100", "eighty-four thousand": "84000", "two": "2", "three": "3", "five": "5", "irongramps": "iron gramps"}
+NUM = {"seventy-seven": "77", "seventy-one": "71", "forty-seven": "47", "two forty-seven": "2 47", "three-oh-two": "3 02", "ninety": "90", "twenty": "20", "nine": "9", "ten": "10", "forty-six": "46", "thirty": "30", "twelve": "12", "ninety-eight": "98", "a hundred": "100", "one hundred": "100", "eighty-four thousand": "84000", "one": "1", "two": "2", "three": "3", "five": "5", "irongramps": "iron gramps"}
 def norm(s):   # compare what was said with what was meant: no tags, times and numbers as digits, the web address as one word
     s = re.sub(r"\([^)]*\)", " ", s.lower()).replace("box dot pulseform dot org", "boxpulseformorg").replace("box.pulseform.org", "boxpulseformorg")
     s = re.sub(r"(\d)[:.](\d\d)", r"\1 \2", s)
@@ -64,6 +64,18 @@ def cut(w, sr, want):   # keep up to the end of the last expected word (Dia some
     lively = float(np.std(12 * np.log2(f0 / np.median(f0)))) if len(f0) > 10 else 0.0   # pitch movement in semitones: flat reads sound bored
     return w, difflib.SequenceMatcher(None, heard, want).ratio(), " ".join(heard), tail, lively
 
+def respace(w, sr, step):   # a countdown: each word on its own beat, `step` seconds apart (a line's "space")
+    import librosa
+    y16 = librosa.resample(w.astype(np.float32), orig_sr=sr, target_sr=16000)
+    words = [x for s in asr.transcribe(y16, beam_size=5, word_timestamps=True)[0] for x in s.words]
+    if len(words) < 2: return w
+    out = np.zeros(int(sr * (step * len(words) + 1.5)))
+    for i, x in enumerate(words):
+        a = int(max(0, x.start - 0.04) * sr); b = int((words[i + 1].start - 0.02) * sr) if i + 1 < len(words) else len(w)
+        seg = w[a:b].copy(); f = min(len(seg), int(sr * 0.03)); seg[len(seg) - f:] *= np.linspace(1, 0, f)
+        o = int(i * step * sr); n = min(len(seg), len(out) - o); out[o:o + n] += seg[:n]
+    idx = np.where(np.abs(out) > np.abs(out).max() * 0.01)[0]; return out[: idx[-1] + int(sr * 0.15)] if len(idx) else out
+
 def level(w, sr, target):   # same speech level from line to line (hushed lines a little quieter), peaks under -1 dBFS
     n = int(sr * 0.05); r = np.array([np.sqrt(np.mean(w[i:i + n] ** 2)) for i in range(0, len(w) - n, n)]); r = r[r > r.max() * 0.1]
     g = 10 ** ((target - 20 * np.log10(np.sqrt(np.mean(r ** 2)))) / 20); return w * min(g, 0.89 / (np.abs(w).max() + 1e-9))
@@ -86,6 +98,8 @@ for spk, v in script["voices"].items():
             if score >= 0.95: good.append((lively, w, score, sr))
             if len(good) >= takes: break
         if good: _, w, score, sr = max(good, key=lambda g: g[0]); best = (w, score, sr)   # of the clean, correct takes: the liveliest read
-        w, score, sr = best; w = level(w, sr, v.get("level", -19) - (2 if line.get("mood") == "whisper" else 0)); sf.write(fdir / "vo" / f"{line['id']}.wav", w, sr); line["dur"] = round(len(w) / sr, 3)
+        w, score, sr = best
+        if line.get("space"): w = respace(w, sr, line["space"])
+        w = level(w, sr, v.get("level", -19) - (2 if line.get("mood") == "whisper" else 0)); sf.write(fdir / "vo" / f"{line['id']}.wav", w, sr); line["dur"] = round(len(w) / sr, 3)
         print(f"{line['id']}: {line['dur']}s (match {score:.2f})", flush=True)
         spath.write_text(json.dumps(script, indent=1, ensure_ascii=False) + "\n")
