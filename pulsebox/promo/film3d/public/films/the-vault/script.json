@@ -104,7 +104,7 @@
    "shot": "cams",
    "text": "She froze the cameras. Twenty seconds. That was all they had.",
    "cap": "She *froze the cameras.* Twenty seconds. That was all they had.",
-   "gap": 1.6,
+   "gap": 3.6,
    "mood": "",
    "prompt": "",
    "fx": "",
@@ -140,11 +140,11 @@
    "shot": "open",
    "text": "The door swung open... and it was full of gold.",
    "cap": "The door swung open... and it was full of *gold.*",
-   "gap": 1.4,
+   "gap": 2.4,
    "mood": "",
    "prompt": "",
    "fx": "",
-   "dur": 2.008,
+   "dur": 2.243,
    "dia": "The door swung open... and it was full of gold. Real gold."
   },
   {
@@ -177,7 +177,7 @@
    "shot": "freeze",
    "text": "Even Maya didn't know which was which.",
    "cap": "Even Maya didn't know *which was which.*",
-   "gap": 1.6,
+   "gap": 2.2,
    "mood": "",
    "prompt": "",
    "fx": "",
@@ -193,7 +193,7 @@
    "mood": "",
    "prompt": "RED OR BLUE?",
    "fx": "",
-   "dur": 1.625,
+   "dur": 1.92,
    "dia": "Red door, or blue door? Comment it. Go."
   },
   {

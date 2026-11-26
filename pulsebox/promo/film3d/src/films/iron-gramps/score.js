@@ -26,7 +26,7 @@ export function score({ ctx, music, sfx, big, tl, dur }) {
     synthwave(n3, cr, 1); impact(ctx, big, cr, 0.45); horn(cr + 0.05, false); tone(ctx, sfx, { t: cr, dur: 0.5, freq: 900, glideTo: 300, type: "triangle", gain: 0.04, release: 0.4 });
     [64, 67, 69, 67, 64, 62].forEach((m, i) => pluck(e1 + i * 0.32, m, 0.045)); }   // the mystery
   // the chat: a ping for each message, a sneaky pluck line
-  { const s = shot("chat"); [/^nice/i, /^eat/i, /^bedtime/i].forEach((re) => ping(wordT("n05", re) - 0.1));
+  { const s = shot("chat"); [/^\W*nice/i, /^\W*eat/i, /^\W*bedtime/i].forEach((re) => ping(wordT("n05", re) - 0.1));
     for (let t = s.t0 + 0.2, i = 0; t < s.t1; t += 0.32, i++) pluck(t, [64, 67, 69, 67, 64, 62, 60, 62][i % 8], 0.035);
     tone(ctx, music, { t: s.t0, dur: s.dur, freq: mtof(40), type: "sawtooth", gain: 0.03, cutoff: 300, attack: 0.5, release: 0.5 }); }
   // the cheer: the race lost again, then silence... a thump downstairs

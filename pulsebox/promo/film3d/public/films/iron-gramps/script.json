@@ -36,7 +36,8 @@
    "mood": "",
    "prompt": "",
    "fx": "",
-   "dur": 1.73
+   "dur": 2.719,
+   "dia": "His name was Iron Gramps. Nobody knew who he was. Nobody."
   },
   {
    "id": "n02",
@@ -66,13 +67,14 @@
    "id": "e01",
    "who": "N",
    "shot": "practice",
-   "text": "Who do you think Iron Gramps is? Comment it.",
-   "cap": "Who do you think *IronGramps* is? Comment it.",
+   "text": "Who do you think Iron Gramps is? Comment below.",
+   "cap": "Who do you think *IronGramps* is? Comment below.",
    "gap": 1.0,
    "mood": "",
    "prompt": "WHO IS IRONGRAMPS?",
    "fx": "",
-   "dur": 1.272
+   "dur": 2.08,
+   "dia": "Who do you think Iron Gramps is? Comment below. Go."
   },
   {
    "id": "n04",
@@ -116,7 +118,7 @@
    "shot": "stairs",
    "text": "He crept down to see who it was.",
    "cap": "He crept down to see *who it was.*",
-   "gap": 1.0,
+   "gap": 2.0,
    "mood": "",
    "prompt": "",
    "fx": "",
@@ -128,7 +130,7 @@
    "shot": "reveal",
    "text": "It was Grandpa.",
    "cap": "It was *Grandpa.*",
-   "gap": 1.6,
+   "gap": 2.2,
    "mood": "",
    "prompt": "",
    "fx": "",
@@ -204,7 +206,7 @@
    "mood": "",
    "prompt": "",
    "fx": "",
-   "dur": 2.0
+   "dur": 3.924
   }
  ]
 }

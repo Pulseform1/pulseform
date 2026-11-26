@@ -35,7 +35,7 @@ export function score({ ctx, music, sfx, big, tl, dur }) {
   { const s = shot("lasers"), go = wordT("n05", /^go/i); laserHum(s.t0, s.t1); for (let t = s.t0 + 3; t < go; t += 3) zap(t);
     riser(ctx, sfx, go - 1.0, 1.0, 0.07); whoosh(ctx, sfx, go, 0.5, 0.18); hiss(ctx, sfx, { t: go + 0.05, dur: 0.45, gain: 0.1, type: "lowpass", freq: 1200 }); for (let t = go + 0.6; t < go + 2.6; t += 0.22) step(ctx, sfx, t, 0.08, true); whoosh(ctx, sfx, go + 1.2, 0.3, 0.12); }
   // the cameras: servos, then Maya freezes them
-  { const s = shot("cams"), fz = wordT("n06", /^froze/i); for (let t = s.t0; t < fz; t += 1.4) servo(t, 0.6); glitch(ctx, sfx, fz, 0.3, 0.07); tone(ctx, sfx, { t: fz, dur: 0.6, freq: 600, glideTo: 80, gain: 0.05, release: 0.5 });
+  { const s = shot("cams"), fz = wordT("n06", /^froze/i); for (let t = s.t0 + 2.6; t < fz; t += 1.4) servo(t, 0.6); glitch(ctx, sfx, fz, 0.3, 0.07); tone(ctx, sfx, { t: fz, dur: 0.6, freq: 600, glideTo: 80, gain: 0.05, release: 0.5 });
     for (let t = fz + 0.3; t < fz + 1.4; t += 0.08 + rnd() * 0.06) tick(t, 0.04); for (let t = fz + 1.5; t < s.t1; t += 0.24) step(ctx, sfx, t, 0.08, true); }
   // the dial: it ticks as it turns; a heavier click at each number; the clock ticks
   { const s = shot("vault"), e = s.L("e02"), c0 = Math.max(0.6, e - 2.0), c1 = s.dur - 0.25, hits = [0, 1, 2].map((i) => s.t0 + c0 + (c1 - c0) * (i + 0.85) / 3);

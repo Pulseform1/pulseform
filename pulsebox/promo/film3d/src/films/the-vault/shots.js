@@ -98,8 +98,15 @@ export function makeShots(renderer, tl) {
       return { set: bank, fx: { vignette: 0.78 }, state: { timer: timer(t) } };
     },
     "cams"(lt, s, t) {   // the camera sweeps... freezes (Maya); he slips into the vault room
-      const fz = wordT("n06", /^froze/i) - s.t0, m0 = fz + 0.15, m1 = m0 + 1.3, frozen = clamp((lt - fz) / 0.2);
+      const RUN = 2.6, fz = wordT("n06", /^froze/i) - s.t0, m0 = fz + 0.15, m1 = m0 + 1.3, frozen = clamp((lt - fz) / 0.2);
       G.root.visible = false;
+      if (lt < RUN) {   // (right after "go!") under, over, through
+        bank.update(t, { laserT: wordT("n05", /^go/i) - at("lasers"), torchOn: 0 }); J.root.visible = true; const k = clamp(lt / RUN), z = lerp(-11.55, -20.3, k), ph = k * 7;
+        J.root.position.set(Math.sin(k * 9) * 0.25, 0, z); J.root.rotation.set(0, Math.PI, 0);
+        if (ph % 2 < 0.9) slide(J); else if (ph % 2 < 1.4) pose(J, "jump", lt); else pose(J, "run", lt, { phase: lt * 13 });
+        aim(bank.camera, V(0.9, 0.55, z - 1.8), V(J.root.position.x, 0.5, z), 60); hand(bank.camera, 0.01, t);
+        return { set: bank, fx: { vignette: 0.78 }, state: { timer: timer(t) } };
+      }
       if (lt < m0) { bank.update(t, { laserT: t, camFrozen: frozen, torchOn: 0 }); J.root.visible = false; const c = bank.cams[0].pivot.position; aim(bank.camera, V(c.x + 0.7, c.y - 0.3, c.z + 1.1), V(c.x, c.y, c.z), 40); hand(bank.camera, 0.002, t);
         return { set: bank, fx: { vignette: 0.75, chroma: lt > fz && lt < fz + 0.25 ? 0.8 : 0 }, state: { timer: timer(t) } }; }
       if (lt < m1) { if (lt < m0 + 0.05) renderFeeds(t); seat(maya, lt, { lean: 0.45, smile: 0.25, click: lt * 6 }); bed2.update(lt, { screenTex: feedRT.texture, lampOn: 0.6, led: 1 });
@@ -150,7 +157,7 @@ export function makeShots(renderer, tl) {
       bank.update(frozen ? s.t0 + Fl : t, { laserT: t, camFrozen: 1, lasersOn: 0, bolts: 1, doorOpen: 1, alarm: 1, gate: 1, doorsLit: 1, torchOn: 0, haze: 0, gold: 0.6 }); J.root.visible = true; G.root.visible = false;
       const look = Math.sin(tt * 2.4); J.root.position.set(0.15, 0, -26.0); J.root.rotation.set(0, look * 0.35, 0); pose(J, "reach", tt, { k: clamp(tt / 1.2) * 0.8, fear: 0.9, noBlink: true, yaw: look * 0.5 });
       const k = ease(clamp(tt / Fl)); place(bank.camera, V(0.05, 1.75, -33.6), V(0.05, 1.8, -32.6), k, V(0, 1.5, -21.5), V(0, 1.45, -21.5), lerp(68, 64, k)); if (!frozen) hand(bank.camera, 0.004, t);
-      return { set: bank, fx: { vignette: 0.85, red: frozen ? 0.05 : 0.08 * (0.5 + 0.5 * Math.sin(t * 12)), paused: frozen ? clamp((lt - Fl) / 0.15) : 0, gray: frozen ? 0.45 : 0 }, state: frozen ? { cta: ctaTimes(), timer: { now: 3, record: 10, label: "GET OUT" } } : { timer: timer(t) } };
+      return { set: bank, fx: { vignette: 0.85, red: frozen ? 0.05 : 0.08 * (0.5 + 0.5 * Math.sin(t * 12)), paused: frozen ? clamp((lt - Fl) / 0.15) : 0, gray: frozen ? 0.45 : 0 }, state: frozen ? { cta: ctaTimes() } : { timer: timer(t) } };
     },
   };
   let ctaCache = null;

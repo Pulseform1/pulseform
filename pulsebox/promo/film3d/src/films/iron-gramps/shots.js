@@ -46,11 +46,12 @@ export function makeShots(renderer, tl) {
   const grampsSit = (lt, p = {}) => { G.root.position.set(1.4, 0.02, -1.35); G.root.rotation.set(0, -0.45 + Math.PI, 0); G.root.rotation.y = Math.PI - 0.45 - Math.PI; pose(G, "sit", lt, p); };
   const dance = (rig, lt, k) => { const j = rig.J, b = Math.sin(lt * 9); j.shoulder1.rotation.x = -2.5 + b * 0.35; j["shoulder-1"].rotation.x = -2.5 - b * 0.35; j.elbow1.rotation.x = -0.6; j["elbow-1"].rotation.x = -0.6; j.spine.rotation.z = Math.sin(lt * 4.5) * 0.12 * k; j.head.rotation.z = Math.sin(lt * 4.5 + 1) * 0.15 * k; j.hips.position.y += Math.abs(b) * 0.03 * k; };
   const wins = (text, when, until, color = "#e6ecff", y = 560, px = 110) => ({ text, t: when, until, color, y, px });
+  const flipSigns = (on) => hl.gates.forEach((g) => g.children.forEach((c) => { if (c.isMesh && c.geometry.type === "PlaneGeometry" && c.material.map) c.scale.x = on ? -1 : 1; }));   // the gate signs read right when we look back down the road
 
   const S = {
     "hook"(lt, s, t) {   // 9:00 PM: the finish line, the silver car takes it by inches (slow motion)
       const cross = s.dur * 0.62, slow = (u) => u < cross - 0.5 ? u * 55 : (cross - 0.5) * 55 + (u - cross + 0.5) * 9, dist = slow(lt);
-      race(t, { dist, jz: 0.0, rz: -0.55, finishAt: -((cross - 0.5) * 55 + 0.5 * 9) });
+      race(t, { dist, jz: 0.0, rz: -0.55, finishAt: -((cross - 0.5) * 55 + 0.5 * 9) }); flipSigns(true);
       const k = ease(clamp(lt / s.dur)); aim(hl.camera, V(lerp(0.6, 0.3, k), lerp(1.7, 1.45, k), lerp(-10.5, -9.0, k)), V(0, 0.75, -1.3), 36); hand(hl.camera, 0.006, t);   // on the road past the line, looking back at them
       return { set: hl, fx: { vignette: 0.6, flash: lt > cross && lt < cross + 0.06 ? 0.25 : 0 }, state: { slams: [wins("9:00 PM", at("hook", 0.15), at("hook", cross), "#ffffff", 300, 90), wins("IRONGRAMPS WINS", at("hook", cross), at("hook", s.dur), "#e6ecff", 560, 100)] } };
     },
@@ -77,7 +78,7 @@ export function makeShots(renderer, tl) {
     },
     "chat"(lt, s, t) {   // the messages: "nice try kiddo" ... "eat your vegetables" ... "bedtime soon"
       renderRace(t, { dist: t * 50, jz: 0.3, rz: -1.2 }); const n5 = s.L("n05");
-      const items = [["nice try kiddo", /^nice/i], ["eat your vegetables", /^eat/i], ["bedtime soon :)", /^bedtime/i]].map(([text, re]) => ({ name: "IRONGRAMPS", text, t: wordT("n05", re) - 0.1, color: "#e6ecff" }));
+      const items = [["nice try kiddo", /^\W*nice/i], ["eat your vegetables", /^\W*eat/i], ["bedtime soon :)", /^\W*bedtime/i]].map(([text, re]) => ({ name: "IRONGRAMPS", text, t: wordT("n05", re) - 0.1, color: "#e6ecff" }));
       seat(lt, { lean: 0.3, pitch: 0.05, fear: lt > n5 + 1.2 ? 0.35 : 0, smile: 0 }); bed.jay.J.head.rotation.z = lt > n5 + 1.5 ? 0.18 : 0; bed.update(lt, { screenTex: raceRT.texture, lampOn: 0.6, led: 1 });
       if (lt < n5 + 0.6) { aim(bed.camera, V(0.05, 1.22, -1.05), V(0, 1.2, -1.8), 46); hand(bed.camera, 0.002, t); }   // the screen
       else { const h = bed.jay.J.head.getWorldPosition(V(0, 0, 0)); aim(bed.camera, V(0.16, 1.05, -1.65), V(h.x, h.y - 0.08, h.z), 50); hand(bed.camera, 0.003, t); }   // his face: what?
@@ -85,7 +86,7 @@ export function makeShots(renderer, tl) {
     },
     "cheer"(lt, s, t) {   // he loses again... then a cheer from downstairs: headset off, he turns to the door
       const c = s.L("n06") + 1.6;
-      if (lt < 1.3) { const dist = lt * 50; race(t, { dist, jz: 0, rz: -0.3, finishAt: -50 }); aim(hl.camera, V(0.4, 1.55, -9.8), V(0, 0.75, -1.3), 36); hand(hl.camera, 0.006, t);
+      if (lt < 1.3) { const dist = lt * 50; race(t, { dist, jz: 0, rz: -0.3, finishAt: -50 }); flipSigns(true); aim(hl.camera, V(0.4, 1.55, -9.8), V(0, 0.75, -1.3), 36); hand(hl.camera, 0.006, t);
         return { set: hl, fx: { vignette: 0.6 }, state: { slams: [wins("IRONGRAMPS WINS", at("cheer", 1.0), at("cheer", 1.3), "#e6ecff", 560, 100)] } }; }
       renderRace(t, { dist: 200, jz: 0, rz: -2 }); const turn = ease(clamp((lt - c) / 0.5));
       seat(lt, { lean: 0.2 * (1 - turn), yaw: -turn * 1.1, pitch: 0, fear: turn * 0.45, noBlink: turn > 0 }); bed.jay.J.headset.visible = !(lt > c + 0.5);
@@ -120,7 +121,7 @@ export function makeShots(renderer, tl) {
     },
     "race2"(lt, s, t) {   // that night, side by side: the race... Jay by a nose. Grandpa winks.
       const r1 = s.dur * 0.45;
-      if (lt < r1) { const cross = r1 * 0.7, dist = lt < cross ? lt * 50 : cross * 50 + (lt - cross) * 6; race(t, { dist, jz: -0.35, rz: 0, finishAt: -cross * 50 });
+      if (lt < r1) { const cross = r1 * 0.7, dist = lt < cross ? lt * 50 : cross * 50 + (lt - cross) * 6; race(t, { dist, jz: -0.35, rz: 0, finishAt: -cross * 50 }); flipSigns(true);
         aim(hl.camera, V(-0.4, 1.55, -9.8), V(0, 0.75, -1.3), 36); hand(hl.camera, 0.006, t);
         return { set: hl, fx: { vignette: 0.55, flash: lt > cross && lt < cross + 0.06 ? 0.25 : 0 }, state: { slams: lt > cross ? [wins("JAY WINS!", at("race2", cross), at("race2", r1), "#ffd23d", 560, 130)] : [] } }; }
       room.update(t, { screen: raceRT.texture, lampOn: 0.8 }); renderRace(t, { dist: 600, jz: -2, rz: 0 });
@@ -145,7 +146,7 @@ export function makeShots(renderer, tl) {
     return (ctaCache = { freeText: "TONS OF FREE GAMES", t17: a.t, tFree: wt(a, /^tons|free/i), genres: [/racing/i, /horror/i, /heists/i, /sports/i].map((re) => wt(a, re)), t18: b.t + 0.2, tPc: wt(b, /^play/i), t19: tl.duration + 10 });
   }
   const route = (sh, lt, t) => {
-    bed.jay.J.headset.visible = true; G.J.headset.visible = true; G.J.pupil1.visible = true; finish.visible = false;
+    bed.jay.J.headset.visible = true; G.J.headset.visible = true; G.J.pupil1.visible = true; finish.visible = false; flipSigns(false);
     return (S[sh.id] || S["desk"])(lt, sh, t);
   };
   route.sets = { hl, bed, room, cta };
