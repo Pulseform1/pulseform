@@ -1,0 +1,200 @@
+{
+ "title": "The Floor Is Lava",
+ "voices": {
+  "N": {
+   "engine": "dia",
+   "prompt": "narrator-dia.wav",
+   "level": -22,
+   "takes": 2,
+   "promptText": "[S1] At two forty-seven in the morning, a number he didn't know sent him a text. Jay was playing The Endless Halls. The game where the tall man only moves when you look away."
+  }
+ },
+ "duck": {
+  "music": 0.35,
+  "sfx": 0.5
+ },
+ "lines": [
+  {
+   "id": "h01",
+   "who": "N",
+   "shot": "hook",
+   "text": "A hundred players. The floor is lava. And only one of these best friends can win.",
+   "cap": "A hundred players. The floor is *lava.* And only *one* of these best friends can win.",
+   "gap": 0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "A hundred players. The floor is lava. And only one of these best friends can win. Just one."
+  },
+  {
+   "id": "n01",
+   "who": "N",
+   "shot": "start",
+   "text": "Every Friday night, Jay and Maya played Floor Is Lava.",
+   "cap": "Every Friday night, Jay and Maya played *Floor Is Lava.*",
+   "gap": 0.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Every Friday night, Jay and Maya played Floor Is Lava. Every week."
+  },
+  {
+   "id": "n02",
+   "who": "N",
+   "shot": "drop",
+   "text": "The floor drops away one tile at a time. Fall in, and you're out.",
+   "cap": "The floor drops away *one tile at a time.* Fall in, and you're *out.*",
+   "gap": 0.8,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "The floor drops away one tile at a time. Fall in, and you're out. Simple."
+  },
+  {
+   "id": "n03",
+   "who": "N",
+   "shot": "deal",
+   "text": "They made a deal. Stick together, no matter what.",
+   "cap": "They made a deal. *Stick together,* no matter what.",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "They made a deal. Stick together, no matter what. Always."
+  },
+  {
+   "id": "e01",
+   "who": "N",
+   "shot": "deal",
+   "text": "Who would you team up with? Comment it.",
+   "cap": "Who would *you* team up with? Comment it.",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "WHO'S YOUR TEAMMATE?",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Who would you team up with? Comment it. Go on."
+  },
+  {
+   "id": "n04",
+   "who": "N",
+   "shot": "chaos",
+   "text": "Ninety players gone. Then ninety-eight.",
+   "cap": "*Ninety* players gone. Then *ninety-eight.*",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Ninety players gone. Then ninety-eight. Just two left."
+  },
+  {
+   "id": "n05",
+   "who": "N",
+   "shot": "last",
+   "text": "One platform left. Room for one.",
+   "cap": "One platform left. Room for *one.*",
+   "gap": 1.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "One platform left. Room for one. Only one."
+  },
+  {
+   "id": "n06",
+   "who": "N",
+   "shot": "look",
+   "text": "Maya had never won a single round. Not once.",
+   "cap": "Maya had never won a single round. *Not once.*",
+   "gap": 1.2,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Maya had never won a single round. Not once. Ever."
+  },
+  {
+   "id": "e02",
+   "who": "N",
+   "shot": "look",
+   "text": "Would you jump, or let her win? Comment it.",
+   "cap": "Would you *jump,* or *let her win?* Comment it.",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "JUMP OR LET HER WIN?",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Would you jump, or let her win? Comment it. Be honest."
+  },
+  {
+   "id": "n07",
+   "who": "N",
+   "shot": "fall",
+   "text": "Jay stepped back... and let the floor take him.",
+   "cap": "Jay stepped back... and let the floor *take him.*",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Jay stepped back... and let the floor take him. Gone."
+  },
+  {
+   "id": "n08",
+   "who": "N",
+   "shot": "unlock",
+   "text": "Then something popped up that nobody had ever seen.",
+   "cap": "Then something popped up that *nobody had ever seen.*",
+   "gap": 2.2,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Then something popped up that nobody had ever seen. Ever."
+  },
+  {
+   "id": "e03",
+   "who": "N",
+   "shot": "unlock",
+   "text": "Would you do what Jay did? Comment it.",
+   "cap": "Would you do what *Jay* did? Comment it.",
+   "gap": 1.8,
+   "mood": "",
+   "prompt": "WOULD YOU DO IT?",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Would you do what Jay did? Comment it. Be honest."
+  },
+  {
+   "id": "n09",
+   "who": "N",
+   "shot": "cta",
+   "text": "Floor Is Lava is one of tons of free games on Pulsebox. Racing, heists, horror, sports.",
+   "cap": "*Floor Is Lava* is one of *tons* of free games on Pulsebox. Racing, heists, horror, sports.",
+   "gap": 0.8,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Floor Is Lava is one of tons of free games on Pulsebox. Racing, heists, horror, sports. And more."
+  },
+  {
+   "id": "n10",
+   "who": "N",
+   "shot": "cta",
+   "text": "Free at box dot pulseform dot org. Play it on a computer.",
+   "cap": "Free at... *box.pulseform.org.* Play it on a *computer.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Free at box dot pulseform dot org. Play it on a computer. Today."
+  }
+ ]
+}

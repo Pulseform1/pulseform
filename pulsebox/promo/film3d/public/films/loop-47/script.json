@@ -1,0 +1,186 @@
+{
+ "title": "Loop 47",
+ "voices": {
+  "N": {
+   "engine": "dia",
+   "prompt": "narrator-dia.wav",
+   "level": -22,
+   "takes": 2,
+   "promptText": "[S1] At two forty-seven in the morning, a number he didn't know sent him a text. Jay was playing The Endless Halls. The game where the tall man only moves when you look away."
+  }
+ },
+ "duck": {
+  "music": 0.35,
+  "sfx": 0.5
+ },
+ "lines": [
+  {
+   "id": "h01",
+   "who": "N",
+   "shot": "hook",
+   "text": "Jay has lived this exact night forty-seven times.",
+   "cap": "Jay has lived this *exact night* forty-seven times.",
+   "gap": 0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.229
+  },
+  {
+   "id": "n01",
+   "who": "N",
+   "shot": "fail",
+   "text": "Every time he misses the last jump in Rooftop Rush, the clock goes back to nine. And nobody else remembers.",
+   "cap": "Every time he misses the last jump in *Rooftop Rush,* the clock goes back to *9:00.* And nobody else remembers.",
+   "gap": 0.5,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Every time he misses the last jump in Rooftop Rush, the clock goes back to nine. And nobody else remembers. Nobody."
+  },
+  {
+   "id": "n02",
+   "who": "N",
+   "shot": "loop1",
+   "text": "Loop one, he thought it was a glitch.",
+   "cap": "Loop one, he thought it was a *glitch.*",
+   "gap": 1.2,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Loop one, he thought it was a glitch. Just a glitch."
+  },
+  {
+   "id": "n03",
+   "who": "N",
+   "shot": "loop12",
+   "text": "Loop twelve, he tried every route on the map.",
+   "cap": "Loop twelve, he tried *every route* on the map.",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Loop twelve, he tried every route on the map. Every one."
+  },
+  {
+   "id": "n04",
+   "who": "N",
+   "shot": "loop30",
+   "text": "Loop thirty, he tried to stop playing. The game turned itself back on.",
+   "cap": "Loop thirty, he tried to *stop playing.* The game turned itself *back on.*",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Loop thirty, he tried to stop playing. The game turned itself back on. By itself."
+  },
+  {
+   "id": "e01",
+   "who": "N",
+   "shot": "loop30",
+   "text": "What would you try? Comment it.",
+   "cap": "What would *you* try? Comment it.",
+   "gap": 1.4,
+   "mood": "",
+   "prompt": "WHAT WOULD YOU TRY?",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "What would you try? Comment it. Go on."
+  },
+  {
+   "id": "n05",
+   "who": "N",
+   "shot": "loop46",
+   "text": "Loop forty-six, he saw something new. Another player, on the very last roof.",
+   "cap": "Loop forty-six, he saw something *new.* Another player, on the very *last roof.*",
+   "gap": 1.2,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Loop forty-six, he saw something new. Another player, on the very last roof. Waiting."
+  },
+  {
+   "id": "n06",
+   "who": "N",
+   "shot": "maya",
+   "text": "It was Maya. She'd been stuck in the same night... every single time.",
+   "cap": "It was *Maya.* She'd been stuck in the same night... *every single time.*",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "It was Maya. She'd been stuck in the same night... every single time. Just like him."
+  },
+  {
+   "id": "n07",
+   "who": "N",
+   "shot": "plan",
+   "text": "They had one idea left. Jump at the exact same time.",
+   "cap": "They had one idea left. Jump at the *exact same time.*",
+   "gap": 0.8,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "They had one idea left. Jump at the exact same time. Together."
+  },
+  {
+   "id": "n08",
+   "who": "N",
+   "shot": "jump",
+   "text": "Three... two... one...",
+   "cap": "Three... two... *one...*",
+   "gap": 1.4,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Three... two... one... Jump."
+  },
+  {
+   "id": "e02",
+   "who": "N",
+   "shot": "jump",
+   "text": "Did they make it? Comment it.",
+   "cap": "Did they *make it?* Comment it.",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "DID THEY MAKE IT?",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Did they make it? Comment it. Tell me."
+  },
+  {
+   "id": "n09",
+   "who": "N",
+   "shot": "jump",
+   "text": "Rooftop Rush is one of tons of free games on Pulsebox. Racing, heists, horror, sports.",
+   "cap": "*Rooftop Rush* is one of *tons* of free games on Pulsebox. Racing, heists, horror, sports.",
+   "gap": 0.8,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Rooftop Rush is one of tons of free games on Pulsebox. Racing, heists, horror, sports. And more."
+  },
+  {
+   "id": "n10",
+   "who": "N",
+   "shot": "jump",
+   "text": "Free at box dot pulseform dot org. Play it on a computer... if you can stop.",
+   "cap": "Free at... *box.pulseform.org.* Play it on a *computer...* if you can stop.",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0,
+   "dia": "Free at box dot pulseform dot org. Play it on a computer... if you can stop. Good luck."
+  }
+ ]
+}

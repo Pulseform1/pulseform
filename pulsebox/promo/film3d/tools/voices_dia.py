@@ -30,7 +30,7 @@ import os; SEED = int(os.environ.get("DIA_SEED", "100"))   # change it to get di
 proc = AutoProcessor.from_pretrained(CK); model = DiaForConditionalGeneration.from_pretrained(CK, torch_dtype=torch.float32).eval()
 asr = WhisperModel("base.en", device="cpu", compute_type="int8")
 
-NUM = {"seventy-seven": "77", "seventy-one": "71", "forty-seven": "47", "two forty-seven": "2 47", "three-oh-two": "3 02", "ninety": "90", "twenty": "20", "nine": "9", "ten": "10", "two": "2", "three": "3", "five": "5", "irongramps": "iron gramps"}
+NUM = {"seventy-seven": "77", "seventy-one": "71", "forty-seven": "47", "two forty-seven": "2 47", "three-oh-two": "3 02", "ninety": "90", "twenty": "20", "nine": "9", "ten": "10", "forty-six": "46", "thirty": "30", "twelve": "12", "ninety-eight": "98", "a hundred": "100", "one hundred": "100", "eighty-four thousand": "84000", "two": "2", "three": "3", "five": "5", "irongramps": "iron gramps"}
 def norm(s):   # compare what was said with what was meant: no tags, times and numbers as digits, the web address as one word
     s = re.sub(r"\([^)]*\)", " ", s.lower()).replace("box dot pulseform dot org", "boxpulseformorg").replace("box.pulseform.org", "boxpulseformorg")
     s = re.sub(r"(\d)[:.](\d\d)", r"\1 \2", s)

@@ -90,7 +90,7 @@ function drawRewind(g, t, k) {
   for (let i = 0; i < 7; i++) { const y = ((t * 900 + i * 331) % (H + 200)) - 100, h = 14 + (i % 3) * 18; g.fillStyle = i % 2 ? "rgba(255,255,255,.22)" : "rgba(120,200,255,.16)"; g.fillRect(0, y, W, h); }
   g.globalCompositeOperation = "source-over"; g.fillStyle = "#ffffff"; g.font = "700 64px 'Chakra Petch', sans-serif"; g.textAlign = "left"; g.textBaseline = "middle"; g.shadowColor = "#000"; g.shadowBlur = 10;
   g.fillText("◀◀ REWIND", 70, 170); g.textAlign = "center"; g.font = "400 96px 'Luckiest Guy', sans-serif"; g.lineWidth = 16; g.strokeStyle = "#0b0d1a"; g.lineJoin = "round";
-  const label = drawRewind.text || "2 HOURS EARLIER"; g.strokeText(label, W / 2, H * 0.42); g.fillStyle = "#ffd23d"; g.fillText(label, W / 2, H * 0.42); g.restore();
+  const label = drawRewind.text ?? "2 HOURS EARLIER"; g.strokeText(label, W / 2, H * 0.42); g.fillStyle = "#ffd23d"; g.fillText(label, W / 2, H * 0.42); g.restore();
 }
 // Five Stars: wanted level, the run timer against the record, power-up pops, and big words slammed on screen
 const fmt = (x) => { const m = Math.floor(x / 60), sec = x - m * 60; return `${m}:${sec < 10 ? "0" : ""}${sec.toFixed(1)}`; };
@@ -187,7 +187,7 @@ function drawChat(g, t, chat) {
   const items = chat.items.filter((m) => t >= m.t); if (!items.length) return;
   const x = 70, w = W - 140, lh = 74, h = 64 + chat.items.length * lh, y = chat.y ?? 1150;
   g.save(); g.globalAlpha = clamp((t - items[0].t) / 0.25); g.fillStyle = "rgba(8,10,20,.82)"; rr(g, x, y, w, h, 28); g.fill(); g.strokeStyle = "rgba(61,224,255,.35)"; g.lineWidth = 3; rr(g, x, y, w, h, 28); g.stroke();
-  g.font = "700 24px 'Chakra Petch', sans-serif"; g.fillStyle = "#7a86b8"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText("HYPERLANE  ·  CHAT", x + 32, y + 34);
+  g.font = "700 24px 'Chakra Petch', sans-serif"; g.fillStyle = "#7a86b8"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText(chat.title || "HYPERLANE  ·  CHAT", x + 32, y + 34);
   items.forEach((m, i) => { const k = clamp((t - m.t) / 0.2), yy = y + 64 + i * lh + lh / 2 + (1 - k) * 12; g.globalAlpha = k;
     g.font = "700 38px 'Chakra Petch', sans-serif"; g.fillStyle = m.color || "#c9d2e6"; g.fillText(m.name + ":", x + 32, yy); const nw = g.measureText(m.name + ": ").width;
     g.font = "600 38px Inter, sans-serif"; g.fillStyle = "#ffffff"; g.fillText(m.text, x + 32 + nw, yy); });
@@ -204,6 +204,23 @@ function drawBoard(g, t, b) {
   g.restore();
 }
 
+// an achievement toast ({ t, title, sub, pct }): slides down from the top, a gold trophy, a shimmer, the rarity
+function trophy(g, x, y, s) { g.save(); g.translate(x, y); g.scale(s, s); g.fillStyle = "#ffd23d"; g.beginPath(); g.moveTo(-34, -40); g.lineTo(34, -40); g.quadraticCurveTo(34, 18, 0, 24); g.quadraticCurveTo(-34, 18, -34, -40); g.fill();
+  g.lineWidth = 8; g.strokeStyle = "#ffd23d"; g.beginPath(); g.arc(-34, -18, 16, Math.PI * 0.5, Math.PI * 1.5); g.stroke(); g.beginPath(); g.arc(34, -18, 16, -Math.PI * 0.5, Math.PI * 0.5); g.stroke();
+  g.fillRect(-7, 22, 14, 16); rr(g, -26, 36, 52, 12, 4); g.fill(); g.fillStyle = "rgba(255,255,255,.55)"; g.fillRect(-20, -34, 8, 34); g.restore(); }
+function drawAchieve(g, t, a) {
+  const k = t - a.t; if (k < 0) return; const inK = easeBack(clamp(k / 0.45)), w = 940, h = 250, x = (W - w) / 2, y = (a.y ?? 300) - (1 - inK) * 420;
+  g.save(); g.shadowColor = "#ffb800"; g.shadowBlur = 26 + 14 * Math.sin(k * 5); g.fillStyle = "rgba(14,12,22,.94)"; rr(g, x, y, w, h, 40); g.fill(); g.shadowBlur = 0;
+  g.lineWidth = 5; g.strokeStyle = "#ffc83a"; rr(g, x, y, w, h, 40); g.stroke();
+  g.save(); rr(g, x, y, w, h, 40); g.clip(); const sx = x - 300 + ((k * 900) % (w + 600)); const gr = g.createLinearGradient(sx, 0, sx + 220, 0); gr.addColorStop(0, "rgba(255,230,150,0)"); gr.addColorStop(0.5, "rgba(255,230,150,.16)"); gr.addColorStop(1, "rgba(255,230,150,0)"); g.fillStyle = gr; g.fillRect(x, y, w, h); g.restore();
+  g.fillStyle = "rgba(255,200,58,.14)"; g.beginPath(); g.arc(x + 130, y + h / 2, 86, 0, 7); g.fill(); trophy(g, x + 130, y + h / 2 - 4, 1.35);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.font = "700 34px 'Chakra Petch', sans-serif"; g.fillStyle = "#ffc83a"; g.fillText("ACHIEVEMENT UNLOCKED", x + 250, y + 52);
+  g.font = "400 84px 'Luckiest Guy', sans-serif"; g.fillStyle = "#ffffff"; g.fillText(a.title, x + 250, y + 124);
+  g.font = "600 32px Inter, sans-serif"; g.fillStyle = "#c9c2dc"; g.fillText(a.sub, x + 250, y + 190);
+  if (a.pct) { const pk = clamp((k - 0.9) / 0.3); g.globalAlpha = pk; g.font = "700 34px 'Chakra Petch', sans-serif"; const pw = g.measureText(a.pct).width + 50; g.fillStyle = "#ffc83a"; rr(g, x + w / 2 - pw / 2, y + h + 26, pw, 64, 32); g.fill(); g.fillStyle = "#1a1206"; g.textAlign = "center"; g.fillText(a.pct, x + w / 2, y + h + 58); }
+  g.restore();
+}
+
 export function drawOverlay(g, tl, t, fx = {}, state = {}) {
   if (fx.chroma) { /* drawn by caller */ }
   grain(g, t); vignette(g, fx.vignette ?? 0.55);
@@ -216,6 +233,7 @@ export function drawOverlay(g, tl, t, fx = {}, state = {}) {
   drawHud(g, tl, t, state);
   if (state.board) drawBoard(g, t, state.board);
   if (state.chat) drawChat(g, t, state.chat);
+  if (state.achieve) drawAchieve(g, t, state.achieve);
   if (state.cta) drawCta(g, t, state.cta);
   drawPrompt(g, tl, t);
   drawCaption(g, tl, t);
