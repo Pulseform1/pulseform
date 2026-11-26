@@ -1,0 +1,210 @@
+{
+ "title": "Iron Gramps",
+ "voices": {
+  "N": {
+   "engine": "dia",
+   "prompt": "narrator-dia.wav",
+   "level": -22,
+   "takes": 2,
+   "promptText": "[S1] At two forty-seven in the morning, a number he didn't know sent him a text. Jay was playing The Endless Halls. The game where the tall man only moves when you look away."
+  }
+ },
+ "duck": {
+  "music": 0.35,
+  "sfx": 0.5
+ },
+ "lines": [
+  {
+   "id": "h01",
+   "who": "N",
+   "shot": "hook",
+   "text": "Every night at nine o'clock, the same player beat Jay in Hyperlane.",
+   "cap": "Every night at *9:00,* the same player beat Jay in *Hyperlane.*",
+   "gap": 0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n01",
+   "who": "N",
+   "shot": "desk",
+   "text": "His name was Iron Gramps. Nobody knew who he was.",
+   "cap": "His name was *IRONGRAMPS.* Nobody knew who he was.",
+   "gap": 0.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n02",
+   "who": "N",
+   "shot": "practice",
+   "text": "Jay practiced every single day after school.",
+   "cap": "Jay practiced *every single day* after school.",
+   "gap": 0.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n03",
+   "who": "N",
+   "shot": "practice",
+   "text": "And every night at nine, Iron Gramps still won. By inches.",
+   "cap": "And every night at nine, IronGramps still won. *By inches.*",
+   "gap": 1.4,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "e01",
+   "who": "N",
+   "shot": "practice",
+   "text": "Who do you think Iron Gramps is? Comment it.",
+   "cap": "Who do you think *IronGramps* is? Comment it.",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "WHO IS IRONGRAMPS?",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n04",
+   "who": "N",
+   "shot": "chat",
+   "text": "Then he started sending messages.",
+   "cap": "Then he started sending *messages.*",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n05",
+   "who": "N",
+   "shot": "chat",
+   "text": "Nice try, kiddo. Eat your vegetables. Bedtime soon.",
+   "cap": "\"Nice try, kiddo.\" \"Eat your vegetables.\" \"Bedtime soon.\"",
+   "gap": 0.8,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n06",
+   "who": "N",
+   "shot": "cheer",
+   "text": "Then one night, right as Jay lost... someone cheered. Downstairs.",
+   "cap": "Then one night, right as Jay lost... someone *cheered.* Downstairs.",
+   "gap": 1.4,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n07",
+   "who": "N",
+   "shot": "stairs",
+   "text": "He crept down to see who it was.",
+   "cap": "He crept down to see *who it was.*",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n08",
+   "who": "N",
+   "shot": "reveal",
+   "text": "It was Grandpa.",
+   "cap": "It was *Grandpa.*",
+   "gap": 1.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n09",
+   "who": "N",
+   "shot": "reveal",
+   "text": "Seventy-one years old. Giant headset. Doing a victory dance.",
+   "cap": "Seventy-one years old. Giant headset. Doing a *victory dance.*",
+   "gap": 0.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n10",
+   "who": "N",
+   "shot": "why",
+   "text": "He'd been practicing for months... just so Jay would play with him.",
+   "cap": "He'd been practicing for months... just so Jay would *play with him.*",
+   "gap": 1.2,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n11",
+   "who": "N",
+   "shot": "race2",
+   "text": "So that night, they raced side by side. And Jay finally won.",
+   "cap": "So that night, they raced *side by side.* And Jay finally *won.*",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "e02",
+   "who": "N",
+   "shot": "race2",
+   "text": "Did Grandpa let him win? Comment it.",
+   "cap": "Did Grandpa *let him win?* Comment it.",
+   "gap": 1.4,
+   "mood": "",
+   "prompt": "DID GRANDPA LET HIM WIN?",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n12",
+   "who": "N",
+   "shot": "cta",
+   "text": "Hyperlane is one of tons of free games on Pulsebox. Racing, heists, horror, sports.",
+   "cap": "*Hyperlane* is one of *tons* of free games on Pulsebox. Racing, heists, horror, sports.",
+   "gap": 0.8,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n13",
+   "who": "N",
+   "shot": "cta",
+   "text": "Free at box dot pulseform dot org. Play it on a computer... maybe with your grandpa.",
+   "cap": "Free at... *box.pulseform.org.* Play it on a *computer...* maybe with your *grandpa.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  }
+ ]
+}

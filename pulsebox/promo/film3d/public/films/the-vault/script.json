@@ -1,0 +1,222 @@
+{
+ "title": "The Vault",
+ "voices": {
+  "N": {
+   "engine": "dia",
+   "prompt": "narrator-dia.wav",
+   "level": -22,
+   "takes": 2,
+   "promptText": "[S1] At two forty-seven in the morning, a number he didn't know sent him a text. Jay was playing The Endless Halls. The game where the tall man only moves when you look away."
+  }
+ },
+ "duck": {
+  "music": 0.35,
+  "sfx": 0.5
+ },
+ "lines": [
+  {
+   "id": "h01",
+   "who": "N",
+   "shot": "hook",
+   "text": "Nobody had ever opened the vault in Safecracker. Not one player. Ever.",
+   "cap": "Nobody had ever opened *the vault* in Safecracker. Not one player. *Ever.*",
+   "gap": 0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 3.287
+  },
+  {
+   "id": "n01",
+   "who": "N",
+   "shot": "desk",
+   "text": "Until two kids found a way in.",
+   "cap": "Until two kids found *a way in.*",
+   "gap": 0.4,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 1.577
+  },
+  {
+   "id": "n02",
+   "who": "N",
+   "shot": "maya",
+   "text": "Jay would go inside. His best friend Maya would run the cameras, from her house.",
+   "cap": "Jay would go inside. His best friend *Maya* would run the cameras, from her house.",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n03",
+   "who": "N",
+   "shot": "lobby",
+   "text": "Ninety seconds on the clock. One guard. One flashlight.",
+   "cap": "*Ninety seconds* on the clock. One guard. One *flashlight.*",
+   "gap": 1.2,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "e01",
+   "who": "N",
+   "shot": "lobby",
+   "text": "Sneak past him, or wait? Comment it.",
+   "cap": "*Sneak* past him, or *wait?* Comment it.",
+   "gap": 2.6,
+   "mood": "",
+   "prompt": "SNEAK OR WAIT?",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n04",
+   "who": "N",
+   "shot": "lasers",
+   "text": "Then the lasers. They moved every three seconds.",
+   "cap": "Then *the lasers.* They moved every three seconds.",
+   "gap": 1.4,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n05",
+   "who": "N",
+   "shot": "lasers",
+   "text": "Maya counted him through. Three... two... go!",
+   "cap": "Maya counted him through. Three... two... *GO!*",
+   "gap": 1.2,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n06",
+   "who": "N",
+   "shot": "cams",
+   "text": "She froze the cameras. Twenty seconds. That was all they had.",
+   "cap": "She *froze the cameras.* Twenty seconds. That was all they had.",
+   "gap": 1.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n07",
+   "who": "N",
+   "shot": "vault",
+   "text": "The vault. Three numbers. One wrong click, and every alarm in the building goes off.",
+   "cap": "*The vault.* Three numbers. One wrong click, and every alarm in the building goes off.",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "e02",
+   "who": "N",
+   "shot": "vault",
+   "text": "Could you crack it? Comment yes or no.",
+   "cap": "Could you *crack it?* Comment yes or no.",
+   "gap": 4.2,
+   "mood": "",
+   "prompt": "COULD YOU CRACK IT?",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n08",
+   "who": "N",
+   "shot": "open",
+   "text": "The door swung open... and it was full of gold.",
+   "cap": "The door swung open... and it was full of *gold.*",
+   "gap": 1.4,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n09",
+   "who": "N",
+   "shot": "alarm",
+   "text": "Then every alarm in the building went off.",
+   "cap": "Then every *alarm* in the building went off.",
+   "gap": 1.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n10",
+   "who": "N",
+   "shot": "alarm",
+   "text": "Ten seconds. Two doors. One way out... and one trap.",
+   "cap": "*Ten seconds.* Two doors. One way out... and *one trap.*",
+   "gap": 1.0,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n11",
+   "who": "N",
+   "shot": "freeze",
+   "text": "Even Maya didn't know which was which.",
+   "cap": "Even Maya didn't know *which was which.*",
+   "gap": 1.6,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "e03",
+   "who": "N",
+   "shot": "freeze",
+   "text": "Red door, or blue door? Comment it.",
+   "cap": "*Red* door, or *blue* door? Comment it.",
+   "gap": 0.6,
+   "mood": "",
+   "prompt": "RED OR BLUE?",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n12",
+   "who": "N",
+   "shot": "freeze",
+   "text": "Safecracker is one of tons of free games on Pulsebox. Racing, heists, horror, sports.",
+   "cap": "*Safecracker* is one of *tons* of free games on Pulsebox. Racing, heists, horror, sports.",
+   "gap": 0.8,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  },
+  {
+   "id": "n13",
+   "who": "N",
+   "shot": "freeze",
+   "text": "Free at box dot pulseform dot org. Play it on a computer.",
+   "cap": "Free at... *box.pulseform.org.* Play it on a *computer.*",
+   "gap": 0.3,
+   "mood": "",
+   "prompt": "",
+   "fx": "",
+   "dur": 2.0
+  }
+ ]
+}

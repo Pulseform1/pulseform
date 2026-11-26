@@ -7,10 +7,19 @@ function hang(mesh, len) { mesh.position.y = -len / 2; return mesh; }   // a lim
 
 export function makeJay({ variant = "jay", headset = false } = {}) {
   const S = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, ...o });
-  const dark = variant === "copy", maya = variant === "maya";
+  const dark = variant === "copy", maya = variant === "maya", guard = variant === "guard", gramps = variant === "gramps";
   const m = dark ? {
     hood: S(0x0d0d14, { roughness: 0.35, metalness: 0.4 }), skin: S(0x15151c, { roughness: 0.3, metalness: 0.3 }), hair: S(0x0a0a10, { roughness: 0.3 }), jeans: S(0x0a0a12, { roughness: 0.4 }),
     shoe: S(0x111118, { roughness: 0.3 }), eyeW: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xdfe8ff, emissiveIntensity: 1.3 }), pupil: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1.8 }), mouth: S(0x000000),
+  } : guard ? {   // a night guard: navy uniform, dark hair
+    hood: S(0x1f2b48, { roughness: 0.7 }), skin: new THREE.MeshPhysicalMaterial({ color: 0xc98f6a, roughness: 0.55, sheen: 0.4, sheenColor: new THREE.Color(0xffd6c0) }),
+    hair: S(0x241812, { roughness: 0.6 }), jeans: S(0x161b2c, { roughness: 0.8 }), shoe: S(0x101014, { roughness: 0.35 }),
+    eyeW: S(0xffffff, { roughness: 0.15 }), pupil: S(0x16110e, { roughness: 0.08 }), mouth: S(0x5a2a22, { roughness: 0.6 }),
+  } : gramps ? {   // Grandpa: a maroon cardigan, white hair
+    hood: new THREE.MeshPhysicalMaterial({ color: 0x7a2f3a, roughness: 0.95, sheen: 1, sheenColor: new THREE.Color(0xb86a74), sheenRoughness: 0.7 }),
+    skin: new THREE.MeshPhysicalMaterial({ color: 0xe8b493, roughness: 0.6, sheen: 0.3, sheenColor: new THREE.Color(0xffd6c0) }),
+    hair: S(0xe9e6e0, { roughness: 0.7 }), jeans: S(0x6b5a44, { roughness: 0.9 }), shoe: S(0x3a2618, { roughness: 0.5 }),
+    eyeW: S(0xffffff, { roughness: 0.15 }), pupil: S(0x16110e, { roughness: 0.08 }), mouth: S(0x5a2a22, { roughness: 0.6 }),
   } : maya ? {
     hood: new THREE.MeshPhysicalMaterial({ color: 0x7a4dff, roughness: 0.9, sheen: 1, sheenColor: new THREE.Color(0xb9a2ff), sheenRoughness: 0.6 }),
     skin: new THREE.MeshPhysicalMaterial({ color: 0xe9b48f, roughness: 0.55, sheen: 0.4, sheenColor: new THREE.Color(0xffd6c0) }),
@@ -47,13 +56,20 @@ export function makeJay({ variant = "jay", headset = false } = {}) {
     const brow = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.022, 0.03), m.hair); brow.position.set(0.105 * s, 0.14, 0.27); brow.rotation.z = -0.12 * s; head.add(brow); J["brow" + s] = brow;
   }
   const mouth = cap(0.022, 0.06, m.mouth); mouth.rotation.z = Math.PI / 2; mouth.position.set(0, -0.13, 0.27); head.add(mouth); J.mouth = mouth;
+  if (gramps) {   // a white moustache and round glasses; the hair is mostly gone on top
+    const stache = cap(0.035, 0.13, m.hair); stache.rotation.z = Math.PI / 2; stache.scale.set(1, 1, 0.7); stache.position.set(0, -0.085, 0.285); head.add(stache); J.stache = stache;
+    const rimM = S(0x2a2a30, { roughness: 0.3, metalness: 0.6 }), lensM = new THREE.MeshStandardMaterial({ color: 0xcfe4ff, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.22 });
+    for (const sx of [-1, 1]) { const r = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.009, 8, 28), rimM); r.position.set(0.105 * sx, 0.03, 0.315); head.add(r); const l = new THREE.Mesh(new THREE.CircleGeometry(0.082, 24), lensM); l.position.set(0.105 * sx, 0.03, 0.318); head.add(l); }
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.01, 0.01), rimM); bridge.position.set(0, 0.04, 0.322); head.add(bridge);
+    hairCap.scale.set(0.98, 0.7, 0.98); hairCap.position.y = -0.06;
+  }
   const nose = ball(0.035, m.skin); nose.position.set(0, -0.04, 0.3); head.add(nose);
   // a smile that can stretch (hidden unless a pose asks for it): a dark arc with a row of teeth
   const smile = new THREE.Group(); smile.position.set(0, -0.1, 0.28); smile.visible = false; head.add(smile); J.smile = smile;
   const lips = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.022, 8, 28, Math.PI), S(0x1a0606, { roughness: 0.4 })); lips.rotation.z = Math.PI; smile.add(lips);
   const teeth = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 28, Math.PI), S(0xf2eee4, { roughness: 0.3 })); teeth.rotation.z = Math.PI; teeth.position.z = 0.012; teeth.scale.set(0.96, 0.8, 1); smile.add(teeth);
   if (headset) {   // band over the head, ear cups, a mic, a status light
-    const hs = new THREE.Group(); head.add(hs); const black = S(0x15151c, { roughness: 0.35, metalness: 0.3 });
+    const hs = new THREE.Group(); head.add(hs); J.headset = hs; const black = S(0x15151c, { roughness: 0.35, metalness: 0.3 });
     const band = new THREE.Mesh(new THREE.TorusGeometry(0.345, 0.028, 8, 28, Math.PI), black); band.position.y = 0.02; hs.add(band);
     for (const sx of [-1, 1]) { const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.08, 24), black); cup.rotation.z = Math.PI / 2; cup.position.set(0.33 * sx, 0.0, 0); hs.add(cup);
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.012, 6, 24), new THREE.MeshBasicMaterial({ color: 0x3de0ff })); ring.rotation.y = Math.PI / 2; ring.position.set(0.375 * sx, 0, 0); hs.add(ring); }

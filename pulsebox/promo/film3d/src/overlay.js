@@ -99,7 +99,13 @@ function drawRun(g, t, state) {
   if (state.stars != null) { const n = state.starsMax ?? 3, w = 60 + n * 58; g.fillStyle = "rgba(5,5,10,.62)"; rr(g, W - 40 - w, 236, w, 76, 38); g.fill();
     for (let i = 0; i < n; i++) { const on = i < state.stars, fresh = state.starT != null && i === state.stars - 1 ? clamp((t - state.starT) / 0.4) : 1; g.save(); g.translate(W - 40 - w + 58 + i * 58, 274); g.scale(fresh < 1 ? 1 + (1 - fresh) * 1.2 : 1, fresh < 1 ? 1 + (1 - fresh) * 1.2 : 1);
       g.fillStyle = on ? (Math.sin(t * 8 + i) > 0 ? "#ffd23d" : "#fff3b0") : "rgba(255,255,255,.18)"; if (on) { g.shadowColor = "#ffd23d"; g.shadowBlur = 16; } star(g, 0, 0, 24); g.restore(); } }
-  if (state.timer) { const { now, record } = state.timer, beat = now >= record;
+  if (state.timer && state.timer.label) {   // a countdown: time left, red and pulsing in the last ten seconds
+    const { now, record, label } = state.timer, low = now < 10, k = clamp(now / record);
+    g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "rgba(5,5,10,.62)"; rr(g, W / 2 - 200, 120, 400, 150, 30); g.fill();
+    g.font = "700 88px 'Chakra Petch', sans-serif"; g.fillStyle = low ? (Math.sin(t * 12) > 0 ? "#ff3d5e" : "#ff8a9c") : "#ffffff"; if (low) { g.shadowColor = "#ff3d5e"; g.shadowBlur = 24; } g.fillText(fmt(Math.max(0, now)), W / 2, 182); g.shadowBlur = 0;
+    g.font = "700 26px 'Chakra Petch', sans-serif"; g.fillStyle = low ? "#ff8a9c" : "#9aa3c7"; g.fillText(label, W / 2, 240);
+    g.fillStyle = "rgba(255,255,255,.15)"; rr(g, W / 2 - 170, 256, 340, 6, 3); g.fill(); g.fillStyle = low ? "#ff3d5e" : "#c6ff3d"; rr(g, W / 2 - 170, 256, 340 * k, 6, 3); g.fill();
+  } else if (state.timer) { const { now, record } = state.timer, beat = now >= record;
     g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "rgba(5,5,10,.62)"; rr(g, W / 2 - 200, 120, 400, 150, 30); g.fill();
     g.font = "700 88px 'Chakra Petch', sans-serif"; g.fillStyle = beat ? "#ffd23d" : "#ffffff"; if (beat) { g.shadowColor = "#ffd23d"; g.shadowBlur = 30; } g.fillText(fmt(now), W / 2, 182); g.shadowBlur = 0;
     g.font = "700 26px 'Chakra Petch', sans-serif"; g.fillStyle = beat ? "#ffd23d" : "#9aa3c7"; g.fillText(beat ? "NEW RECORD" : `MAYA'S RECORD ${fmt(record).replace(/\.\d$/, "")}`, W / 2, 240);
@@ -176,6 +182,28 @@ function drawPaused(g, t, k) {
   g.restore();
 }
 
+// an in-game chat box: messages appear one by one (each { name, text, t })
+function drawChat(g, t, chat) {
+  const items = chat.items.filter((m) => t >= m.t); if (!items.length) return;
+  const x = 70, w = W - 140, lh = 74, h = 64 + chat.items.length * lh, y = chat.y ?? 1150;
+  g.save(); g.globalAlpha = clamp((t - items[0].t) / 0.25); g.fillStyle = "rgba(8,10,20,.82)"; rr(g, x, y, w, h, 28); g.fill(); g.strokeStyle = "rgba(61,224,255,.35)"; g.lineWidth = 3; rr(g, x, y, w, h, 28); g.stroke();
+  g.font = "700 24px 'Chakra Petch', sans-serif"; g.fillStyle = "#7a86b8"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText("HYPERLANE  ·  CHAT", x + 32, y + 34);
+  items.forEach((m, i) => { const k = clamp((t - m.t) / 0.2), yy = y + 64 + i * lh + lh / 2 + (1 - k) * 12; g.globalAlpha = k;
+    g.font = "700 38px 'Chakra Petch', sans-serif"; g.fillStyle = m.color || "#c9d2e6"; g.fillText(m.name + ":", x + 32, yy); const nw = g.measureText(m.name + ": ").width;
+    g.font = "600 38px Inter, sans-serif"; g.fillStyle = "#ffffff"; g.fillText(m.text, x + 32 + nw, yy); });
+  g.restore();
+}
+// a leaderboard card ({ t, title, rows: [[rank, name, time, highlight]] })
+function drawBoard(g, t, b) {
+  const k = clamp((t - b.t) / 0.3); if (k <= 0) return; const x = 90, w = W - 180, y = b.y ?? 330, rh = 92, h = 110 + b.rows.length * rh;
+  g.save(); g.globalAlpha = k; g.translate(0, (1 - k) * 30); g.fillStyle = "rgba(8,10,20,.84)"; rr(g, x, y, w, h, 30); g.fill(); g.strokeStyle = "rgba(255,61,240,.4)"; g.lineWidth = 3; rr(g, x, y, w, h, 30); g.stroke();
+  g.textBaseline = "middle"; g.textAlign = "center"; g.font = "700 34px 'Chakra Petch', sans-serif"; g.fillStyle = "#ff8ad8"; g.fillText(b.title || "LEADERBOARD", W / 2, y + 54);
+  b.rows.forEach(([rank, name, time, hi], i) => { const yy = y + 110 + i * rh + rh / 2 - 8; if (hi) { g.fillStyle = "rgba(255,210,61,.12)"; rr(g, x + 20, yy - 38, w - 40, 76, 18); g.fill(); }
+    g.textAlign = "left"; g.font = "700 46px 'Chakra Petch', sans-serif"; g.fillStyle = hi ? "#ffd23d" : "#9aa3c7"; g.fillText(rank, x + 44, yy); g.fillStyle = hi ? "#ffffff" : "#c9d2e6"; g.fillText(name, x + 150, yy);
+    g.textAlign = "right"; g.fillStyle = hi ? "#ffd23d" : "#9aa3c7"; g.fillText(time, x + w - 44, yy); });
+  g.restore();
+}
+
 export function drawOverlay(g, tl, t, fx = {}, state = {}) {
   if (fx.chroma) { /* drawn by caller */ }
   grain(g, t); vignette(g, fx.vignette ?? 0.55);
@@ -186,6 +214,8 @@ export function drawOverlay(g, tl, t, fx = {}, state = {}) {
   if (fx.gray) { g.save(); g.globalCompositeOperation = "saturation"; g.fillStyle = `rgba(128,128,128,${clamp(fx.gray)})`; g.fillRect(0, 0, W, H); g.restore(); }
   if (fx.paused) drawPaused(g, t, fx.paused);
   drawHud(g, tl, t, state);
+  if (state.board) drawBoard(g, t, state.board);
+  if (state.chat) drawChat(g, t, state.chat);
   if (state.cta) drawCta(g, t, state.cta);
   drawPrompt(g, tl, t);
   drawCaption(g, tl, t);
