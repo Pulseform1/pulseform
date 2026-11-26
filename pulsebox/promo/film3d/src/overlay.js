@@ -12,6 +12,7 @@ export function captionWords(line) {
   const hot = (line.cap || "").includes("*");
   const weights = words.map((w) => w.w.length + 2), sum = weights.reduce((a, b) => a + b, 0);
   let acc = 0; const span = line.edur * 0.95;
+  if (line.at && line.at.length === words.length) return words.map((w, i) => ({ ...w, hot: hot ? w.hot : false, t: line.t + line.at[i] }));   // exact word times (a countdown)
   return words.map((w, i) => { const t = line.t + (acc / sum) * span; acc += weights[i]; return { ...w, hot: hot ? w.hot : false, t }; });
 }
 function chunks(words) { const out = []; let cur = []; words.forEach((w, i) => { cur.push(i); if (cur.length >= 3 || /[.,!?…:]$/.test(w.w)) { out.push(cur); cur = []; } }); if (cur.length) out.push(cur); return out; }

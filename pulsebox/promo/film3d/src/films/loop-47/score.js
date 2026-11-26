@@ -17,7 +17,7 @@ export function score({ ctx, music, sfx, big, tl, dur }) {
   const pulse = (t0, t1, bpm, g = 1, root = 33, drums = true) => { const b = 60 / bpm; for (let t = t0, i = 0; t < t1 - 0.05; t += b / 2, i++) { bass(t, root + [0, 0, 12, 0, 3, 0, 12, 2][i % 8], b * 0.4, 0.07 * g); if (drums && i % 4 === 0) kick(ctx, music, t, 0.4 * g); if (drums && i % 8 === 4) snare(ctx, music, t, 0.07 * g); if (drums) hat(ctx, music, t + b / 4, 0.025 * g); } };
 
   // ===== hook: the falls, faster and faster, the counter racing to 47
-  const hk = shot("hook"), t47 = Math.max(1.2, wordT("h01", /^forty|^47/) - hk.t0);
+  const hk = shot("hook"), t47 = Math.max(1.2, wordT("h01", /^forty|^47/i) - hk.t0);
   { let c = 0, i = 0; while (c < t47 - 0.05) { const len = Math.max(0.12, (0.55 + (0.12 - 0.55) * Math.pow(c / t47, 0.7))); if (i > 0) zip(hk.t0 + c, 0.06 + 0.04 * (c / t47)); c += len; i++; }
     let last = 1; for (let x = 0; x < t47; x += 1 / 120) { const n = Math.min(46, Math.floor(1 + 46 * Math.pow(x / t47, 1.35))); if (n !== last) { tick(hk.t0 + x, 0.035); last = n; } } }
   riser(ctx, sfx, hk.t0, t47, 0.07); for (let t = hk.t0; t < hk.t0 + t47; t += 0.5) heartbeat(ctx, sfx, t, 0.22);
@@ -26,7 +26,7 @@ export function score({ ctx, music, sfx, big, tl, dur }) {
   hiss(ctx, sfx, { t: hk.t0 + t47 + 0.2, dur: hk.dur - t47, gain: 0.07, freq: 900, freqTo: 250, q: 0.8, attack: 0.3 });   // the wind as he falls away
   rain(0, E("hook"), 0.035);
   // ===== fail: his room, the game; the miss; the clock rewinds; nobody remembers
-  { const s = shot("fail"), mT = wordT("n01", /^misses/), cT = wordT("n01", /^clock/) - 0.15, nT = wordT("n01", /^9/) - 0.4;
+  { const s = shot("fail"), mT = wordT("n01", /^misses/i), cT = wordT("n01", /^clock/i) - 0.15, nT = wordT("n01", /^9/i) - 0.4;
     pulse(s.t0, cT, 112, 0.7, 33, false); whoosh(ctx, sfx, mT - 0.1, 0.4, 0.06); [67, 66, 65, 63].forEach((m, i) => tone(ctx, sfx, { t: mT + 1.0 + i * 0.16, dur: 0.18, freq: mtof(m), type: "square", gain: 0.03, cutoff: 2400, release: 0.1 }));   // game over (from the speakers)
     for (let t = cT; t < nT; t += 1.0) tick(t, 0.03); rewind(nT, 0.45, 0.09); impact(ctx, big, nT + 0.45, 0.3);
     [0, 0.18, 0.5, 0.68].forEach((d) => beep(nT + 0.55 + d, 2100, 0.035)); tone(ctx, music, { t: nT + 0.5, dur: s.t1 - nT, freq: mtof(81), gain: 0.008, attack: 1, release: 0.6 });
@@ -39,14 +39,14 @@ export function score({ ctx, music, sfx, big, tl, dur }) {
     for (let t = s.t0, i = 0; t < s.t1; t += 60 / 124 / 4, i++) tone(ctx, music, { t, dur: 0.08, freq: mtof(71 + [0, 3, 7, 10, 12, 10, 7, 3][i % 8]), type: "square", gain: 0.012, cutoff: 3000, release: 0.05 });
     const x = s.t0 + s.dur * 0.8 * 0.55; [0, 0.22].forEach((d) => tone(ctx, sfx, { t: x + d, dur: 0.18, freq: 140, type: "square", gain: 0.05, cutoff: 1200, release: 0.04 })); }
   // ===== loop 30: off... silence... it turns itself back on
-  { const s = shot("loop30"), off = wordT("n04", /^stop/) + 0.1, on = wordT("n04", /^turned/) - 0.15;
+  { const s = shot("loop30"), off = wordT("n04", /^stop/i) + 0.1, on = wordT("n04", /^turned/i) - 0.15;
     zip(s.t0, 0.06); pulse(s.t0, off, 112, 0.5, 33, false); click(ctx, sfx, off, 0.25); tone(ctx, sfx, { t: off, dur: 0.5, freq: 900, glideTo: 60, gain: 0.03, release: 0.4 });   // the monitor dies
     for (let t = off + 0.6; t < on; t += 0.55) step(ctx, sfx, t, 0.04, false);   // creeping to the door
     glitch(ctx, sfx, on, 0.35, 0.06); tone(ctx, sfx, { t: on, dur: 0.4, freq: 60, glideTo: 7000, gain: 0.012, release: 0.3 }); impact(ctx, big, on + 0.05, 0.35);
     [72, 76, 79, 84].forEach((m, i) => tone(ctx, sfx, { t: on + 0.45 + i * 0.22, dur: 0.3, freq: mtof(m - 1), type: "square", gain: 0.022, cutoff: 1800, release: 0.2, detune: -30 }));   // the game's jingle, a little wrong
     braam(ctx, big, on + 0.1, 33, 0.14); pad(ctx, music, on + 0.3, s.t1 - on, [33, 39, 45, 46], { gain: 0.04, cutoff: 600, attack: 0.8, release: 0.8 }); for (let t = on + 0.4; t < s.t1; t += 0.85) heartbeat(ctx, sfx, t, 0.2); }
   // ===== loop 46: the rain, his steps slowing... lightning: someone on the last roof
-  { const s = shot("loop46"), rv = wordT("n05", /^another/) - 0.1; zip(s.t0, 0.06); rain(s.t0, s.t1, 0.05); for (let t = s.t0 + 0.05, i = 0; t < s.t0 + 1.5; t += 0.18 + i * 0.03, i++) step(ctx, sfx, t, 0.06, true);
+  { const s = shot("loop46"), rv = wordT("n05", /^another/i) - 0.1; zip(s.t0, 0.06); rain(s.t0, s.t1, 0.05); for (let t = s.t0 + 0.05, i = 0; t < s.t0 + 1.5; t += 0.18 + i * 0.03, i++) step(ctx, sfx, t, 0.06, true);
     pulse(s.t0, rv, 112, 0.6, 33, false); thunder(rv, 0.32); braam(ctx, big, rv + 0.02, 30, 0.22); tone(ctx, music, { t: rv, dur: s.t1 - rv + 0.5, freq: mtof(69), type: "sawtooth", gain: 0.012, cutoff: 1500, attack: 0.6, release: 0.4 });
     tone(ctx, music, { t: rv, dur: s.t1 - rv + 0.5, freq: mtof(70), type: "sawtooth", gain: 0.01, cutoff: 1500, attack: 0.6, release: 0.4 }); for (let t = rv + 0.3; t < s.t1; t += 0.7) heartbeat(ctx, sfx, t, 0.24); }
   // ===== Maya: thunder at her name, then a piano in her room

@@ -89,7 +89,7 @@ export function makeShots(renderer, tl) {
   const face = (cam, rig, d = V(0.16, 0.0, -1.2), fov = 48) => { const h = rig.J.head.getWorldPosition(V(0, 0, 0)); aim(cam, h.clone().add(d), V(h.x, h.y - 0.06, h.z), fov); };
 
   // ---- the hook: a montage of falls, faster and faster, the loop counter racing up to 47
-  const hk = shot("hook"), t47 = Math.max(1.2, wordT("h01", /^forty|^47/) - hk.t0), cuts = [];
+  const hk = shot("hook"), t47 = Math.max(1.2, wordT("h01", /^forty|^47/i) - hk.t0), cuts = [];
   { let c = 0, i = 0; const U = [0.55, 1.25, 0.2, 0.95, 1.6, 0.4, 1.1, 0.7, 1.45, 0.3, 1.0, 1.3, 0.6, 1.5];
     while (c < t47 - 0.05) { const len = Math.max(0.12, lerp(0.55, 0.12, Math.pow(c / t47, 0.7))); cuts.push({ t0: c, len, ang: [0, 2, 1, 3, 4][i % 5], u0: U[i % U.length] }); c += len; i++; } }
   function fallCam(cam, ang, x, p) {   // five ways to watch the same fall
@@ -116,7 +116,7 @@ export function makeShots(renderer, tl) {
       return { set: rf, fx: { vignette: 0.75, red: 0.06, flash: clamp(1 - (lt - t47) / 0.2) * 0.35 }, state: { slams: [loopTag(47, at("hook", t47), at("hook", s.dur), "#ff3a4a", 170)] } };
     },
     "fail"(lt, s, t) {   // the game on his monitor: he misses... the clock rewinds to 9:00... nobody else remembers
-      const mT = wordT("n01", /^misses/) - s.t0, cT = wordT("n01", /^clock/) - s.t0 - 0.15, nT = wordT("n01", /^9/) - s.t0 - 0.4, wT = nT + 1.1;
+      const mT = wordT("n01", /^misses/i) - s.t0, cT = wordT("n01", /^clock/i) - s.t0 - 0.15, nT = wordT("n01", /^9/i) - s.t0 - 0.4, wT = nT + 1.1;
       if (lt < cT) { gameChase(40 + lt, lt - mT - 0.1); seat(bed.jay, lt, { lean: 0.45, click: lt * 5, fear: lt > mT + 1.2 ? 0.4 : 0 }); bed.update(lt, { screenTex: gameRT.texture, lampOn: 0.5, led: 1 }); clock.set("9:47");
         const k = ease(clamp(lt / cT)); place(bed.camera, V(0.78, 1.62, -0.12), V(0.58, 1.55, -0.48), k, V(0, 1.2, -1.8), V(0, 1.2, -1.8), 44); hand(bed.camera, 0.003, t);
         return { set: bed, fx: { vignette: 0.6 } }; }
@@ -145,7 +145,7 @@ export function makeShots(renderer, tl) {
       return { set: rf, fx: { vignette: 0.6 }, state: { slams: [loopTag(12, at("loop12", 0.05), at("loop12", s.dur))] } };
     },
     "loop30"(lt, s, t) {   // loop thirty: he switches it off and walks away... it turns itself back on
-      const off = wordT("n04", /^stop/) - s.t0 + 0.1, on = wordT("n04", /^turned/) - s.t0 - 0.15, e1 = s.L("e01") - 0.2; clock.set("9:00");
+      const off = wordT("n04", /^stop/i) - s.t0 + 0.1, on = wordT("n04", /^turned/i) - s.t0 - 0.15, e1 = s.L("e01") - 0.2; clock.set("9:00");
       if (lt < off + 0.4) { seat(bed.jay, lt, { lean: 0.2 }); const r = clamp((lt - off + 0.5) / 0.4); bed.jay.J.shoulder1.rotation.x = lerp(-0.95, -1.5, r); bed.jay.J.elbow1.rotation.x = lerp(-0.75, -0.2, r);
         const dark = lt > off; if (!dark) gameChase(90 + lt, -1.6 + lt * 0.3); bed.update(lt, { screenTex: dark ? again.tex : gameRT.texture, screenBright: dark ? 0 : 0.9, lampOn: 0, led: 1, room: 0.7 });
         aim(bed.camera, V(1.05, 1.5, -0.35), V(0.05, 1.12, -1.6), 46); hand(bed.camera, 0.003, t);
@@ -160,16 +160,16 @@ export function makeShots(renderer, tl) {
       // what would you try? the screen, waiting
       bed.jay.root.position.set(1.55, 0, -0.95); bed.jay.root.rotation.set(0, 4.21, 0); pose(bed.jay, "stand", lt, { fear: 0.8, noBlink: true }); again.draw(Math.sin(lt * 5) > 0);
       bed.update(lt, { screenTex: again.tex, screenBright: 1.05, screenRed: true, lampOn: 0, led: 1, room: 0.55 });
-      const k = ease(clamp((lt - e1) / (s.dur - e1))); place(bed.camera, V(2.25, 1.55, -0.55), V(2.0, 1.45, -0.75), k, V(0, 1.15, -1.8), V(0, 1.18, -1.8), 44); hand(bed.camera, 0.003, t);
+      const k = ease(clamp((lt - e1) / (s.dur - e1))); place(bed.camera, V(0.8, 1.42, 0.6), V(0.62, 1.36, 0.25), k, V(0, 1.2, -1.8), V(0, 1.2, -1.8), 46); hand(bed.camera, 0.003, t);
       return { set: bed, fx: { vignette: 0.7 } };
     },
     "loop46"(lt, s, t) {   // loop forty-six: someone on the last roof
-      const T = 60 + lt, rv = wordT("n05", /^another/) - s.t0 - 0.1, stop = clamp(lt / 1.6);
+      const T = 60 + lt, rv = wordT("n05", /^another/i) - s.t0 - 0.1, stop = clamp(lt / 1.6);
       stand(J, 0, lerp(-89, -95.2, ease(stop)), T); if (stop < 1) pose(J, "run", T, { phase: lt * 11 * (1 - stop), fear: 0.4 });
       M.root.visible = true; stand(M, 0.6, -106.5, T, { face: 0.15 }); mayaTag.visible = false; unknownTag.visible = lt > rv;
       rf.update(T, { lightning: flashAt(lt, [rv, rv + 0.25]), center: V(0, y4, -98) });
       if (lt < rv) { const j = J.root.position; aim(rf.camera, V(1.3, j.y + 1.7, j.z + 3.6), V(0, j.y + 0.6, j.z - 8), 52); hand(rf.camera, 0.008, t); }
-      else { const k = ease(clamp((lt - rv) / (s.dur - rv))); place(rf.camera, V(0.9, y4 + 1.45, -94.2), V(0.8, y4 + 1.5, -95.2), k, V(0.6, y5 + 1.0, -106.5), V(0.6, y5 + 1.15, -106.5), lerp(40, 20, k)); hand(rf.camera, 0.004, t); }
+      else { const k = ease(clamp((lt - rv) / (s.dur - rv))); place(rf.camera, V(0.9, y4 + 1.45, -94.2), V(0.7, y4 + 1.6, -96.6), k, V(0.6, y5 + 1.0, -106.5), V(0.6, y5 + 1.2, -106.5), lerp(40, 13, k)); hand(rf.camera, 0.004, t); }
       return { set: rf, fx: { vignette: 0.7 }, state: { slams: [loopTag(46, at("loop46", 0.05), at("loop46", s.dur))] } };
     },
     "maya"(lt, s, t) {   // it was Maya... and she's been stuck in the same night: her room, her clock, her tally sheet
@@ -190,7 +190,7 @@ export function makeShots(renderer, tl) {
       stand(J, -0.48, -86, T, { yaw: lt < ex ? -0.5 : 0, smile: 0 }); stand(M, 0.48, -86, T, { yaw: lt < ex ? 0.5 : 0, smile: lt < ex ? 0.2 : 0 });
       rf.update(T, { lightning: flashAt(lt, [ex + 0.1]), center: V(0, y4, -88) });
       if (lt < ex) { const k = ease(clamp(lt / ex)); place(rf.camera, V(0, y4 + 1.2, -90.4), V(0, y4 + 1.25, -89.6), k, V(0, y4 + 1.05, -86), V(0, y4 + 1.1, -86), 46); }   // their faces: a nod
-      else { const k = ease(clamp((lt - ex) / (s.dur - ex))); place(rf.camera, V(0.3, y4 + 1.4, -82.6), V(0.2, y4 + 1.25, -83.6), k, V(0, y4 + 0.2, -100), V(0, y4 + 0.6, -104), 50); }   // behind them: the gap, the finish
+      else { const k = ease(clamp((lt - ex) / (s.dur - ex))); place(rf.camera, V(0.3, y4 + 2.6, -81.4), V(0.2, y4 + 2.4, -82.4), k, V(0, y4 - 0.6, -100), V(0, y4 - 0.2, -104), 50); }   // behind them: the gap, the finish
       hand(rf.camera, 0.004, t);
       return { set: rf, fx: { vignette: 0.65 }, state: { slams: [loopTag(47, at("plan", 0.05), at("plan", s.dur), "#ff3a4a")] } };
     },

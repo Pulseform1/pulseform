@@ -140,9 +140,14 @@
    "mood": "",
    "prompt": "",
    "fx": "",
-   "dur": 0.992,
+   "dur": 2.227,
    "dia": "Three... two... one... Jump.",
-   "space": 0.85
+   "space": 0.85,
+   "at": [
+    0.15,
+    1.0,
+    1.85
+   ]
   },
   {
    "id": "e02",
@@ -154,7 +159,7 @@
    "mood": "",
    "prompt": "DID THEY MAKE IT?",
    "fx": "",
-   "dur": 1.494,
+   "dur": 1.31,
    "dia": "Did they make it? Comment it. Tell me."
   },
   {
