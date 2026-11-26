@@ -141,7 +141,8 @@
    "prompt": "",
    "fx": "",
    "dur": 0.992,
-   "dia": "Three... two... one... Jump."
+   "dia": "Three... two... one... Jump.",
+   "space": 0.85
   },
   {
    "id": "e02",
@@ -162,7 +163,7 @@
    "shot": "jump",
    "text": "Rooftop Rush is one of tons of free games on Pulsebox. Racing, heists, horror, sports.",
    "cap": "*Rooftop Rush* is one of *tons* of free games on Pulsebox. Racing, heists, horror, sports.",
-   "gap": 0.8,
+   "gap": 1.2,
    "mood": "",
    "prompt": "",
    "fx": "",
@@ -179,7 +180,7 @@
    "mood": "",
    "prompt": "",
    "fx": "",
-   "dur": 2.0,
+   "dur": 4.32,
    "dia": "Free at box dot pulseform dot org. Play it on a computer... if you can stop. Good luck."
   }
  ]
